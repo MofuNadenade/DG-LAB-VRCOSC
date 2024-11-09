@@ -9,13 +9,12 @@ from PySide6.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QW
                                QTextEdit, QCheckBox, QToolTip, QProgressBar)
 from PySide6.QtGui import QIcon, QTextCursor
 from PySide6.QtCore import Qt, QTimer, QPoint
-from pydglab_ws import StrengthData, FeedbackButton, Channel, StrengthOperationType, RetCode, DGLabWSServer
+from pydglab_ws import Channel, StrengthOperationType
 from config import load_settings, save_settings, get_active_ip_addresses
-from pythonosc import dispatcher, osc_server, udp_client
 
-from util import generate_qrcode, resource_path
+from pulse import PulseRegistry
+from util import resource_path
 from dglab_controller import DGLabController, UICallback, run_server
-from pulse_data import PULSE_NAME
 from ton_websocket_handler import WebSocketClient
 
 import logging
@@ -181,10 +180,13 @@ class MainWindow(QMainWindow, UICallback):
         # 将水平布局添加到主布局
         self.controller_form.addRow(dynamic_bone_layout)
 
+        # 初始化波形注册表
+        self.pulse_registry = PulseRegistry()
+
         # 波形模式选择
         self.pulse_mode_a_combobox = QComboBox()
         self.pulse_mode_b_combobox = QComboBox()
-        for pulse_name in PULSE_NAME:
+        for pulse_name in self.pulse_registry.pulses_by_name.keys():
             self.pulse_mode_a_combobox.addItem(pulse_name)
             self.pulse_mode_b_combobox.addItem(pulse_name)
         self.controller_form.addRow("A通道波形模式:", self.pulse_mode_a_combobox)
@@ -400,7 +402,7 @@ class MainWindow(QMainWindow, UICallback):
                 self.a_channel_slider.setRange(0, self.controller.last_strength.a_limit)  # 根据限制更新范围
                 self.a_channel_slider.setValue(self.controller.last_strength.a)
                 self.a_channel_slider.blockSignals(False)
-                self.a_channel_label.setText(f"A 通道强度: {self.controller.last_strength.a} 强度上限: {self.controller.last_strength.a_limit}  波形: {PULSE_NAME[self.controller.pulse_mode_a]}")
+                self.a_channel_label.setText(f"A 通道强度: {self.controller.last_strength.a} 强度上限: {self.controller.last_strength.a_limit}  波形: {self.pulse_registry.pulses[self.controller.pulse_mode_a].name}")
 
             # 仅当允许外部更新时更新 B 通道滑动条
             if self.allow_b_channel_update:
@@ -408,7 +410,7 @@ class MainWindow(QMainWindow, UICallback):
                 self.b_channel_slider.setRange(0, self.controller.last_strength.b_limit)  # 根据限制更新范围
                 self.b_channel_slider.setValue(self.controller.last_strength.b)
                 self.b_channel_slider.blockSignals(False)
-                self.b_channel_label.setText(f"B 通道强度: {self.controller.last_strength.b} 强度上限: {self.controller.last_strength.b_limit}  波形: {PULSE_NAME[self.controller.pulse_mode_b]}")
+                self.b_channel_label.setText(f"B 通道强度: {self.controller.last_strength.b} 强度上限: {self.controller.last_strength.b_limit}  波形: {self.pulse_registry.pulses[self.controller.pulse_mode_b].name}")
 
     def update_connection_status(self, is_online):
         self.app_status_online = is_online
@@ -559,12 +561,12 @@ class MainWindow(QMainWindow, UICallback):
     def update_pulse_mode_a(self, index):
         if self.controller:
             asyncio.create_task(self.controller.set_pulse_data(None, Channel.A, index, update_ui=False))
-            logger.info(f"Pulse mode A updated to {PULSE_NAME[index]}")
+            logger.info(f"Pulse mode A updated to {self.pulse_registry.pulses[index].name}")
 
     def update_pulse_mode_b(self, index):
         if self.controller:
             asyncio.create_task(self.controller.set_pulse_data(None, Channel.B, index, update_ui=False))
-            logger.info(f"Pulse mode B updated to {PULSE_NAME[index]}")
+            logger.info(f"Pulse mode B updated to {self.pulse_registry.pulses[index].name}")
 
     def update_chatbox_status(self, state):
         if self.controller:
