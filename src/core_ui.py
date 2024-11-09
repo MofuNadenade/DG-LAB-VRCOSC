@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QW
 from PySide6.QtGui import QIcon, QTextCursor
 from PySide6.QtCore import Qt, QTimer, QPoint
 from pydglab_ws import Channel, StrengthOperationType
+from pydglab_ws.typing import PulseOperation
 from config import load_settings, save_settings, get_active_ip_addresses
 
 from pulse import PulseRegistry
@@ -55,7 +56,8 @@ class MainWindow(QMainWindow, UICallback):
             'interface': '',
             'ip': '',
             'port': 5678,
-            'osc_port': 9001
+            'osc_port': 9001,
+            'custom_pulses': []
         }
         # 创建主布局
         self.main_layout = QVBoxLayout()
@@ -182,6 +184,7 @@ class MainWindow(QMainWindow, UICallback):
 
         # 初始化波形注册表
         self.pulse_registry = PulseRegistry()
+        self.load_custom_pulses()
 
         # 波形模式选择
         self.pulse_mode_a_combobox = QComboBox()
@@ -609,6 +612,28 @@ class MainWindow(QMainWindow, UICallback):
 
         # 显示提示框
         QToolTip.showText(QPoint(tooltip_x, tooltip_y), f"{value}", slider)
+
+    def parse_custom_pulse_data(self, data: list[list[list[int]]]) -> list[PulseOperation]:
+        parsed_data = []
+        for operation in data:
+            frequency_operation = operation[0]
+            strength_operation = operation[1]
+            parsed_frequency_operation = (frequency_operation[0], frequency_operation[1], frequency_operation[2], frequency_operation[3])
+            parsed_strength_operation = (strength_operation[0], strength_operation[1], strength_operation[2], strength_operation[3])
+            parsed_operation = (parsed_frequency_operation, parsed_strength_operation)
+            parsed_data.append(parsed_operation)
+        return parsed_data
+
+    def load_custom_pulses(self):
+        """加载自定义脉冲"""
+        custom_pulses = self.settings['custom_pulses']
+        if custom_pulses and isinstance(custom_pulses, list):
+            for pulse in custom_pulses:
+                name = pulse['name']
+                data = pulse['data']
+                logger.info(f"加载自定义脉冲：{name}")
+                parsed_data = self.parse_custom_pulse_data(data)
+                self.pulse_registry.register_pulse(name, parsed_data)
 
     def app_setup_logging(self):
         """设置日志系统输出到 QTextEdit 和控制台"""

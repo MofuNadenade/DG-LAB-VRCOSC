@@ -7,7 +7,7 @@ class Pulse:
         self.data = data
 
 class PulseRegistry:
-    def __init__(self):
+    def __init__(self, ):
         self.pulses: list[Pulse] = []
         self.pulses_by_name: dict[str, Pulse] = {}
 
