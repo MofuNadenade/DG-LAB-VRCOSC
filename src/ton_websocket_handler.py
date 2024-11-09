@@ -1,5 +1,3 @@
-# ton_websocket_handler.py
-import asyncio
 import websockets
 import json
 import logging

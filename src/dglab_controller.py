@@ -1,31 +1,51 @@
-"""
-dglab_controller.py
-"""
 import asyncio
 import math
+from typing import Optional
 
-from pydglab_ws import StrengthData, FeedbackButton, Channel, StrengthOperationType, RetCode, DGLabWSServer
+from PySide6.QtWidgets import (QPushButton, QComboBox, QSpinBox, QTextEdit, QCheckBox)
+from PySide6.QtGui import QPixmap
+
+from pydglab_ws import StrengthData, FeedbackButton, Channel, StrengthOperationType, RetCode, DGLabWSServer, DGLabLocalClient
 from pulse_data import PULSE_DATA, PULSE_NAME
+from pythonosc import dispatcher, osc_server, udp_client
+
+from util import generate_qrcode
+from pulse_data import PULSE_NAME
 
 import logging
-from logger_config import setup_logging
-setup_logging()
 logger = logging.getLogger(__name__)
 
+class UICallback:
+    controller: 'DGLabController'
+
+    start_button: QPushButton
+    pulse_mode_a_combobox: QComboBox
+    pulse_mode_b_combobox: QComboBox
+    enable_chatbox_status_checkbox: QCheckBox
+    dynamic_bone_mode_a_checkbox: QCheckBox
+    dynamic_bone_mode_b_checkbox: QCheckBox
+    strength_step_spinbox: QSpinBox
+    enable_panel_control_checkbox: QCheckBox
+    log_text_edit: QTextEdit
+
+    def update_current_channel_display(self, channel_name: str): ...
+    def update_qrcode(self, qrcode_pixmap: QPixmap): ...
+    def bind_controller_settings(self): ...
+    def update_connection_status(self, is_online: bool): ...
+    def update_status(self, strength_data: StrengthData): ...
 
 class DGLabController:
-    def __init__(self, client, osc_client, ui_callback=None):
+    def __init__(self, client: DGLabLocalClient, osc_client: udp_client.SimpleUDPClient, ui_callback: UICallback):
         """
         初始化 DGLabController 实例
         :param client: DGLabWSServer 的客户端实例
         :param osc_client: 用于发送 OSC 回复的客户端实例
-        :param is_dynamic_bone_mode 强度控制模式，交互模式通过动骨和Contact控制输出强度，非动骨交互模式下仅可通过按键控制输出
-        此处的默认参数会被 UI 界面的默认参数覆盖
+        :param ui_callback: UI 回调函数
         """
         self.client = client
         self.osc_client = osc_client
         self.ui_callback = ui_callback
-        self.last_strength = None  # 记录上次的强度值, 从 app更新, 包含 a b a_limit b_limit
+        self.last_strength: Optional[StrengthData] = None  # 记录上次的强度值, 从 app更新, 包含 a b a_limit b_limit
         self.app_status_online = False  # App 端在线情况
         # 功能控制参数
         self.enable_panel_control = True   # 禁用面板控制功能 (双向)
@@ -119,14 +139,12 @@ class DGLabController:
         """
         动骨与碰撞体激活对应通道输出
         """
-        if value >= 0.0:
+        if value >= 0.0 and self.last_strength:
             if channel == Channel.A and self.is_dynamic_bone_mode_a:
-                final_output_a = math.ceil(
-                    self.map_value(value, self.last_strength.a_limit * 0.2, self.last_strength.a_limit))
+                final_output_a = math.ceil(self.map_value(value, self.last_strength.a_limit * 0.2, self.last_strength.a_limit))
                 await self.client.set_strength(channel, StrengthOperationType.SET_TO, final_output_a)
             elif channel == Channel.B and self.is_dynamic_bone_mode_b:
-                final_output_b = math.ceil(
-                    self.map_value(value, self.last_strength.b_limit * 0.2, self.last_strength.b_limit))
+                final_output_b = math.ceil(self.map_value(value, self.last_strength.b_limit * 0.2, self.last_strength.b_limit))
                 await self.client.set_strength(channel, StrengthOperationType.SET_TO, final_output_b)
 
     async def chatbox_toggle_timer_handle(self):
@@ -422,3 +440,85 @@ class DGLabController:
             )
         else:
             self.send_message_to_vrchat_chatbox("未连接")
+
+def handle_osc_message_task_pad(address, list_object, *args):
+    asyncio.create_task(list_object[0].handle_osc_message_pad(address, *args))
+
+
+def handle_osc_message_task_pb(address, list_object, *args):
+    asyncio.create_task(list_object[0].handle_osc_message_pb(address, *args))
+
+
+async def run_server(window: UICallback, ip: str, port: int, osc_port: int):
+    """运行服务器并启动OSC服务器"""
+    try:
+        async with DGLabWSServer(ip, port, 60) as server:
+            client = server.new_local_client()
+            logger.info("WebSocket 客户端已初始化")
+
+            # 生成二维码
+            url = client.get_qrcode(f"ws://{ip}:{port}")
+            if (not url):
+                raise RuntimeError("无法生成二维码")
+            qrcode_image = generate_qrcode(url)
+            window.update_qrcode(qrcode_image)
+            logger.info(f"二维码已生成，WebSocket URL: ws://{ip}:{port}")
+
+            osc_client = udp_client.SimpleUDPClient("127.0.0.1", 9000)
+            # 初始化控制器
+            controller = DGLabController(client, osc_client, window)
+            window.controller = controller
+            logger.info("DGLabController 已初始化")
+            # 在 controller 初始化后调用绑定函数
+            window.bind_controller_settings()
+
+            # 设置OSC服务器
+            disp = dispatcher.Dispatcher()
+            # 面板控制对应的 OSC 地址
+            disp.map("/avatar/parameters/SoundPad/Button/*", handle_osc_message_task_pad, controller)
+            disp.map("/avatar/parameters/SoundPad/Volume", handle_osc_message_task_pad, controller)
+            disp.map("/avatar/parameters/SoundPad/Page", handle_osc_message_task_pad, controller)
+            disp.map("/avatar/parameters/SoundPad/PanelControl", handle_osc_message_task_pad, controller)
+            # PB/Contact 交互对应的 OSC 地址
+            disp.map("/avatar/parameters/DG-LAB/*", handle_osc_message_task_pb, controller)
+            disp.map("/avatar/parameters/Tail_Stretch",handle_osc_message_task_pb, controller)
+
+            event_loop = asyncio.get_event_loop()
+            if (not isinstance(event_loop, asyncio.BaseEventLoop)):
+                raise RuntimeError("无法获取事件循环")
+            osc_server_instance = osc_server.AsyncIOOSCUDPServer(("0.0.0.0", osc_port), disp, event_loop)
+            osc_transport, osc_protocol = await osc_server_instance.create_serve_endpoint()
+            logger.info(f"OSC Server Listening on port {osc_port}")
+
+            async for data in client.data_generator():
+                if isinstance(data, StrengthData):
+                    controller.last_strength = data
+                    controller.data_updated_event.set()  # 数据更新，触发开火操作的后续事件
+                    logger.info(f"接收到数据包 - A通道: {data.a}, B通道: {data.b}")
+                    controller.app_status_online = True
+                    window.update_connection_status(controller.app_status_online)
+                    window.update_status(data)
+                # 接收 App 反馈按钮
+                elif isinstance(data, FeedbackButton):
+                    logger.info(f"App 触发了反馈按钮：{data.name}")
+                # 接收 心跳 / App 断开通知
+                elif data == RetCode.CLIENT_DISCONNECTED:
+                    logger.info("App 已断开连接，你可以尝试重新扫码进行连接绑定")
+                    controller.app_status_online = False
+                    window.update_connection_status(controller.app_status_online)
+                    await client.rebind()
+                    logger.info("重新绑定成功")
+                    controller.app_status_online = True
+                    window.update_connection_status(controller.app_status_online)
+
+            osc_transport.close()
+    except Exception as e:
+        # Handle specific errors and log them
+        error_message = f"WebSocket 服务器启动失败: {str(e)}"
+        logger.error(error_message)
+
+        # 启动过程中发生异常，恢复按钮状态为可点击的红色
+        window.start_button.setText("启动失败，请重试")
+        window.start_button.setStyleSheet("background-color: red; color: white;")
+        window.start_button.setEnabled(True)
+        window.log_text_edit.append(f"ERROR: {error_message}")

@@ -39,6 +39,7 @@ def setup_logging():
     # 获取根记录器，并添加文件和控制台处理器
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)  # 全局日志级别
+    logger.handlers.clear()
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 

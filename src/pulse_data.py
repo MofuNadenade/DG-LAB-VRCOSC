@@ -1,4 +1,7 @@
-PULSE_NAME = [
+from pydglab_ws.typing import PulseOperation
+
+
+PULSE_NAME: list[str] = [
     '呼吸',
     '潮汐',
     '连击',
@@ -17,7 +20,7 @@ PULSE_NAME = [
     '挑逗2'
 ]
 
-PULSE_DATA = {
+PULSE_DATA: dict[str, list[PulseOperation]] = {
     '呼吸': [
         ((10, 10, 10, 10), (0, 0, 0, 0)), ((10, 10, 10, 10), (0, 5, 10, 20)),
         ((10, 10, 10, 10), (20, 25, 30, 40)), ((10, 10, 10, 10), (40, 45, 50, 60)),

@@ -1,4 +1,5 @@
 import os
+from typing import Any
 import yaml
 import psutil
 import socket
@@ -8,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Get active IP addresses (unchanged)
-def get_active_ip_addresses():
+def get_active_ip_addresses() -> dict[str, str]:
     ip_addresses = {}
     for interface, addrs in psutil.net_if_addrs().items():
         if psutil.net_if_stats()[interface].isup:
@@ -18,7 +19,7 @@ def get_active_ip_addresses():
     return ip_addresses
 
 # Validate IP address (unchanged)
-def validate_ip(ip):
+def validate_ip(ip: str) -> bool:
     try:
         ipaddress.ip_address(ip)
         return True
@@ -26,7 +27,7 @@ def validate_ip(ip):
         return False
 
 # Validate port (unchanged)
-def validate_port(port):
+def validate_port(port: str | int) -> bool:
     try:
         port = int(port)
         return 0 < port < 65536
@@ -34,7 +35,7 @@ def validate_port(port):
         return False
 
 # Load the configuration from a YAML file
-def load_settings():
+def load_settings() -> Any:
     if os.path.exists('settings.yml'):
         with open('settings.yml', 'r') as f:
             logger.info("settings.yml found")
@@ -43,7 +44,7 @@ def load_settings():
     return None
 
 # Save the configuration to a YAML file
-def save_settings(settings):
+def save_settings(settings: Any):
     with open('settings.yml', 'w') as f:
         yaml.dump(settings, f)
         logger.info("settings.yml saved")
