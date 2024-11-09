@@ -558,12 +558,12 @@ class MainWindow(QMainWindow, UICallback):
 
     def update_pulse_mode_a(self, index):
         if self.controller:
-            asyncio.create_task(self.controller.set_pulse_data(None, Channel.A, index))
+            asyncio.create_task(self.controller.set_pulse_data(None, Channel.A, index, update_ui=False))
             logger.info(f"Pulse mode A updated to {PULSE_NAME[index]}")
 
     def update_pulse_mode_b(self, index):
         if self.controller:
-            asyncio.create_task(self.controller.set_pulse_data(None, Channel.B, index))
+            asyncio.create_task(self.controller.set_pulse_data(None, Channel.B, index, update_ui=False))
             logger.info(f"Pulse mode B updated to {PULSE_NAME[index]}")
 
     def update_chatbox_status(self, state):

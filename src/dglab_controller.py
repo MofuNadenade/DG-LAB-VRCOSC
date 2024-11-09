@@ -118,16 +118,18 @@ class DGLabController:
                 await asyncio.sleep(5)  # 延迟后重试
             await asyncio.sleep(3)  # 每 x 秒发送一次
 
-    async def set_pulse_data(self, value, channel, pulse_index):
+    async def set_pulse_data(self, value, channel, pulse_index, update_ui=True):
         """
             立即切换为当前指定波形，清空原有波形
         """
         if channel == Channel.A:
             self.pulse_mode_a = pulse_index
-            self.ui_callback.pulse_mode_a_combobox.setCurrentIndex(pulse_index)
+            if (update_ui):
+                self.ui_callback.pulse_mode_a_combobox.setCurrentIndex(pulse_index)
         else:
             self.pulse_mode_b = pulse_index
-            self.ui_callback.pulse_mode_b_combobox.setCurrentIndex(pulse_index)
+            if (update_ui):
+                self.ui_callback.pulse_mode_b_combobox.setCurrentIndex(pulse_index)
 
         await self.client.clear_pulses(channel)  # 清空当前的生效的波形队列
 
@@ -220,17 +222,17 @@ class DGLabController:
 
     async def increase_strength(self, value, channel):
         """
-        增大强度, 固定 5
+        增大强度, 固定 1
         """
         if value:
-            await self.client.set_strength(channel, StrengthOperationType.INCREASE, 5)
+            await self.client.set_strength(channel, StrengthOperationType.INCREASE, 1)
 
     async def decrease_strength(self, value, channel):
         """
-        减小强度, 固定 5
+        减小强度, 固定 1
         """
         if value:
-            await self.client.set_strength(channel, StrengthOperationType.DECREASE, 5)
+            await self.client.set_strength(channel, StrengthOperationType.DECREASE, 1)
 
     async def strength_fire_mode(self, value, channel, fire_strength, last_strength):
         """
