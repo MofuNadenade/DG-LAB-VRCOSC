@@ -5,10 +5,11 @@ from typing import Optional
 from PySide6.QtWidgets import (QPushButton, QComboBox, QSpinBox, QTextEdit, QCheckBox)
 from PySide6.QtGui import QPixmap
 
-from pydglab_ws import StrengthData, FeedbackButton, Channel, StrengthOperationType, RetCode, DGLabWSServer, DGLabLocalClient
+from pydglab_ws import StrengthData, FeedbackButton, Channel, StrengthOperationType, RetCode, DGLabWSServer, DGLabLocalClient, PulseDataTooLong
+from pydglab_ws.typing import PulseOperation
 from pythonosc import dispatcher, osc_server, udp_client
 
-from pulse import PulseRegistry
+from pulse import Pulse, PulseRegistry
 from util import generate_qrcode
 
 import logging
@@ -33,6 +34,55 @@ class UICallback:
     def bind_controller_settings(self): ...
     def update_connection_status(self, is_online: bool): ...
     def update_status(self, strength_data: StrengthData): ...
+
+class ChannelPulseTask:
+    def __init__(self, client: DGLabLocalClient, channel: Channel):
+        self.client = client
+        self.channel = channel
+        self.pulse: Optional[Pulse] = None
+        self.task: Optional[asyncio.Task] = None
+
+    def set_pulse(self, pulse: Pulse):
+        """
+        设置波形
+        """
+        old_pulse = self.pulse
+        self.pulse = pulse
+        if old_pulse is None or pulse.index != old_pulse.index:
+            self.set_pulse_data(pulse.data)
+
+    def set_pulse_data(self, data: list[PulseOperation]):
+        """
+        设置波形数据
+        """
+        self.data = data
+        if self.task and not self.task.cancelled() and not self.task.done():
+            self.task.cancel()
+        self.task = asyncio.create_task(self.internal_task(data))
+
+    async def internal_task(self, data: list[PulseOperation], send_duration=5, send_interval=1):
+        try:
+            await self.client.clear_pulses(self.channel)
+
+            data_duration = len(data) * 0.1
+            repeat_num = int(send_duration // data_duration)
+            duration = repeat_num * data_duration
+            pulse_num = int(50 // duration)
+            pulse_data = data * repeat_num
+
+            try:
+                for _ in range(pulse_num):
+                    await self.client.add_pulses(self.channel, *pulse_data)
+                    await asyncio.sleep(send_interval)
+
+                await asyncio.sleep(abs(data_duration - send_interval))
+                while True:
+                    await self.client.add_pulses(self.channel, *pulse_data)
+                    await asyncio.sleep(data_duration)
+            except PulseDataTooLong:
+                logger.warning(f"发送失败，波形数据过长")
+        except Exception as e:
+            logger.error(f"send_pulse_task 任务中发生错误: {e}")
 
 class DGLabController:
     def __init__(self, client: DGLabLocalClient, osc_client: udp_client.SimpleUDPClient, ui_callback: UICallback):
@@ -64,7 +114,9 @@ class DGLabController:
         self.previous_chatbox_status = 1  # ChatBox 状态记录, 关闭 ChatBox 后进行内容清除
         # 定时任务
         self.send_status_task = asyncio.create_task(self.periodic_status_update())  # 启动ChatBox发送任务
-        self.send_pulse_task = asyncio.create_task(self.periodic_send_pulse_data())  # 启动设定波形发送任务
+        # 波形发送任务
+        self.channel_a_pulse_task = ChannelPulseTask(client, Channel.A)
+        self.channel_b_pulse_task = ChannelPulseTask(client, Channel.B)
         # 按键延迟触发计时
         self.chatbox_toggle_timer = None
         self.set_mode_timer = None
@@ -89,32 +141,18 @@ class DGLabController:
                 await asyncio.sleep(5)  # 延迟后重试
             await asyncio.sleep(3)  # 每 x 秒发送一次
 
-    async def periodic_send_pulse_data(self):
-        # 顺序发送波形
-        # TODO： 修复重连后自动发送中断
-        # TODO:  波形应该能按指定的缓冲区大小发送，而不是固定发送三次
-        while True:
-            try:
-                if self.last_strength:  # 当收到设备状态后再发送波形
-                    pulse_a = self.ui_callback.pulse_registry.pulses[self.pulse_mode_a]
-                    pulse_b = self.ui_callback.pulse_registry.pulses[self.pulse_mode_b]
-                    logger.info(f"更新波形 A {pulse_a.name} B {pulse_b.name}")
+    async def update_pulse_data(self):
+        """
+            更新波形数据
+        """
+        pulse_a = self.ui_callback.pulse_registry.pulses[self.pulse_mode_a]
+        pulse_b = self.ui_callback.pulse_registry.pulses[self.pulse_mode_b]
+        logger.info(f"更新波形 A {pulse_a.name} B {pulse_b.name}")
+        # A B 通道设定波形
+        self.channel_a_pulse_task.set_pulse(pulse_a)
+        self.channel_b_pulse_task.set_pulse(pulse_b)
 
-                    # A 通道发送当前设定波形
-                    specific_pulse_data_a = pulse_a.data
-                    await self.client.clear_pulses(Channel.A)
-                    await self.client.add_pulses(Channel.A, *(specific_pulse_data_a * 3))  # 发送三组波形
-
-                    # B 通道发送当前设定波形
-                    specific_pulse_data_b = pulse_b.data
-                    await self.client.clear_pulses(Channel.B)
-                    await self.client.add_pulses(Channel.B, *(specific_pulse_data_b * 3))  # 发送三组波形
-            except Exception as e:
-                logger.error(f"periodic_send_pulse_data 任务中发生错误: {e}")
-                await asyncio.sleep(5)  # 延迟后重试
-            await asyncio.sleep(3)  # 每 x 秒发送一次
-
-    async def set_pulse_data(self, value, channel, pulse_index, update_ui=True):
+    async def set_pulse_data(self, value, channel: Channel, pulse_index: int, update_ui=True):
         """
             立即切换为当前指定波形，清空原有波形
         """
@@ -126,14 +164,9 @@ class DGLabController:
             self.pulse_mode_b = pulse_index
             if (update_ui):
                 self.ui_callback.pulse_mode_b_combobox.setCurrentIndex(pulse_index)
+        await self.update_pulse_data()
 
-        await self.client.clear_pulses(channel)  # 清空当前的生效的波形队列
-
-        logger.info(f"开始发送波形 {self.ui_callback.pulse_registry.pulses[pulse_index].name}")
-        specific_pulse_data = self.ui_callback.pulse_registry.pulses[pulse_index].data
-        await self.client.add_pulses(channel, *(specific_pulse_data * 3))  # 发送三份新选中的波形
-
-    async def set_float_output(self, value, channel):
+    async def set_float_output(self, value, channel: Channel):
         """
         动骨与碰撞体激活对应通道输出
         """
@@ -490,6 +523,9 @@ async def run_server(ui_callback: UICallback, ip: str, port: int, osc_port: int)
 
             async for data in client.data_generator():
                 if isinstance(data, StrengthData):
+                    # 首次连接更新波形数据
+                    if controller.last_strength is None:
+                        asyncio.create_task(controller.update_pulse_data())
                     controller.last_strength = data
                     controller.data_updated_event.set()  # 数据更新，触发开火操作的后续事件
                     logger.info(f"接收到数据包 - A通道: {data.a}, B通道: {data.b}")

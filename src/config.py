@@ -37,7 +37,7 @@ def validate_port(port: str | int) -> bool:
 # Load the configuration from a YAML file
 def load_settings() -> Any:
     if os.path.exists('settings.yml'):
-        with open('settings.yml', 'r') as f:
+        with open('settings.yml', 'r', encoding='utf-8') as f:
             logger.info("settings.yml found")
             return yaml.safe_load(f)
     logger.info("No settings.yml found")
@@ -45,6 +45,6 @@ def load_settings() -> Any:
 
 # Save the configuration to a YAML file
 def save_settings(settings: Any):
-    with open('settings.yml', 'w') as f:
+    with open('settings.yml', 'w', encoding='utf-8') as f:
         yaml.dump(settings, f)
         logger.info("settings.yml saved")
