@@ -9,6 +9,7 @@ from pydglab_ws import StrengthData, FeedbackButton, Channel, StrengthOperationT
 from pydglab_ws.typing import PulseOperation
 from pythonosc import dispatcher, osc_server, udp_client
 
+from button_binding import OSCActionRegistry, OSCButtonBindings, OSCButtonRegistry
 from pulse import Pulse, PulseRegistry
 from util import generate_qrcode
 
@@ -34,6 +35,7 @@ class UICallback:
     def bind_controller_settings(self): ...
     def update_connection_status(self, is_online: bool): ...
     def update_status(self, strength_data: StrengthData): ...
+    def load_button_bindings(self, bindings: OSCButtonBindings): ...
 
 class ChannelPulseTask:
     def __init__(self, client: DGLabLocalClient, channel: Channel):
@@ -95,6 +97,11 @@ class DGLabController:
         self.client = client
         self.osc_client = osc_client
         self.ui_callback = ui_callback
+        ui_callback.controller = self
+        
+        self.button_registry = OSCButtonRegistry()
+        self.action_registry = self.setup_action_registry()
+        self.button_bindings = self.setup_button_bindings()
         self.last_strength: Optional[StrengthData] = None  # 记录上次的强度值, 从 app更新, 包含 a b a_limit b_limit
         self.app_status_online = False  # App 端在线情况
         # 功能控制参数
@@ -123,6 +130,23 @@ class DGLabController:
         self.set_mode_timer = None
         #TODO: 增加状态消息OSC发送, 比使用 ChatBox 反馈更快
         # 回报速率设置为 1HZ，Updates every 0.1 to 1 seconds as needed based on parameter changes (1 to 10 updates per second), but you shouldn't rely on it for fast sync.
+
+    def setup_action_registry(self) -> OSCActionRegistry:
+        registry = OSCActionRegistry()
+        registry.register_action("设置模式", lambda *args: self.set_mode(args[0], self.current_select_channel))
+        registry.register_action("重置强度", lambda *args: self.reset_strength(args[0], self.current_select_channel))
+        registry.register_action("降低强度", lambda *args: self.decrease_strength(args[0], self.current_select_channel))
+        registry.register_action("增加强度", lambda *args: self.increase_strength(args[0], self.current_select_channel))
+        registry.register_action("一键开火", lambda *args: self.strength_fire_mode(args[0], self.current_select_channel, self.fire_mode_strength_step, self.last_strength))
+        registry.register_action("ChatBox状态开关", lambda *args: self.toggle_chatbox(args[0]))
+        for pulse in self.ui_callback.pulse_registry.pulses:
+            registry.register_action(f"设置波形为({pulse.name})", lambda *args: self.set_pulse_data(args[0], self.current_select_channel, pulse.index))
+        return registry
+
+    def setup_button_bindings(self) -> OSCButtonBindings:
+        bindings = OSCButtonBindings()
+        self.ui_callback.load_button_bindings(bindings)
+        return bindings
 
     async def periodic_status_update(self):
         """
@@ -360,7 +384,6 @@ class DGLabController:
         self.ui_callback.enable_panel_control_checkbox.setChecked(self.enable_panel_control)
         self.ui_callback.enable_panel_control_checkbox.blockSignals(False)
 
-
     async def handle_osc_message_pad(self, address, *args):
         """
         处理 OSC 消息
@@ -377,41 +400,12 @@ class DGLabController:
             logger.info(f"已禁用面板控制功能")
             return
 
-        #按键功能
-        if address == "/avatar/parameters/SoundPad/Button/1":
-            await self.set_mode(args[0], self.current_select_channel)
-        elif address == "/avatar/parameters/SoundPad/Button/2":
-            await self.reset_strength(args[0], self.current_select_channel)
-        elif address == "/avatar/parameters/SoundPad/Button/3":
-            await self.decrease_strength(args[0], self.current_select_channel)
-        elif address == "/avatar/parameters/SoundPad/Button/4":
-            await self.increase_strength(args[0], self.current_select_channel)
-        elif address == "/avatar/parameters/SoundPad/Button/5":
-            await self.strength_fire_mode(args[0], self.current_select_channel, self.fire_mode_strength_step, self.last_strength)
-
-        # ChatBox 开关控制
-        elif address == "/avatar/parameters/SoundPad/Button/6":#
-            await self.toggle_chatbox(args[0])
-        # 波形控制
-        elif address == "/avatar/parameters/SoundPad/Button/7":
-            await self.set_pulse_data(args[0], self.current_select_channel, 2)
-        elif address == "/avatar/parameters/SoundPad/Button/8":
-            await self.set_pulse_data(args[0], self.current_select_channel, 14)
-        elif address == "/avatar/parameters/SoundPad/Button/9":
-            await self.set_pulse_data(args[0], self.current_select_channel, 4)
-        elif address == "/avatar/parameters/SoundPad/Button/10":
-            await self.set_pulse_data(args[0], self.current_select_channel, 5)
-        elif address == "/avatar/parameters/SoundPad/Button/11":
-            await self.set_pulse_data(args[0], self.current_select_channel, 6)
-        elif address == "/avatar/parameters/SoundPad/Button/12":
-            await self.set_pulse_data(args[0], self.current_select_channel, 7)
-        elif address == "/avatar/parameters/SoundPad/Button/13":
-            await self.set_pulse_data(args[0], self.current_select_channel, 8)
-        elif address == "/avatar/parameters/SoundPad/Button/14":
-            await self.set_pulse_data(args[0], self.current_select_channel, 9)
-        elif address == "/avatar/parameters/SoundPad/Button/15":
-            await self.set_pulse_data(args[0], self.current_select_channel, 1)
-
+        # OSC按钮
+        if address.startswith("/avatar/parameters/SoundPad/Button/"):
+            button_code = address[len("/avatar/parameters/SoundPad/Button/"):]
+            if button_code in self.button_registry.buttons_by_code:
+                button = self.button_registry.buttons_by_code[button_code]
+                await self.button_bindings.handle(button, *args)
         # 数值调节
         elif address == "/avatar/parameters/SoundPad/Volume": # Float
             await self.set_strength_step(args[0])
@@ -502,7 +496,6 @@ async def run_server(ui_callback: UICallback, ip: str, port: int, osc_port: int)
             osc_client = udp_client.SimpleUDPClient("127.0.0.1", 9000)
             # 初始化控制器
             controller = DGLabController(client, osc_client, ui_callback)
-            ui_callback.controller = controller
             logger.info("DGLabController 已初始化")
             # 在 controller 初始化后调用绑定函数
             ui_callback.bind_controller_settings()

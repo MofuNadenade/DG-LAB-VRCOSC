@@ -11,7 +11,8 @@ from PySide6.QtGui import QIcon, QTextCursor
 from PySide6.QtCore import Qt, QTimer, QPoint
 from pydglab_ws import Channel, StrengthOperationType
 from pydglab_ws.typing import PulseOperation
-from config import load_settings, save_settings, get_active_ip_addresses
+from button_binding import OSCButtonBindings
+from config import save_load_settings, save_settings, get_active_ip_addresses
 
 from pulse import PulseRegistry
 from util import resource_path
@@ -52,13 +53,30 @@ class MainWindow(QMainWindow, UICallback):
         self.setWindowIcon(QIcon(resource_path('docs/images/fish-cake.ico')))
 
         # Load settings from file or use defaultss
-        self.settings = load_settings() or {
+        self.settings = save_load_settings({
             'interface': '',
             'ip': '',
             'port': 5678,
             'osc_port': 9001,
+            'button_bindings': [
+                { 'button_name': '按钮1', 'action_name': '设置模式' },
+                { 'button_name': '按钮2', 'action_name': '重置强度' },
+                { 'button_name': '按钮3', 'action_name': '降低强度' },
+                { 'button_name': '按钮4', 'action_name': '增加强度' },
+                { 'button_name': '按钮5', 'action_name': '一键开火' },
+                { 'button_name': '按钮6', 'action_name': 'ChatBox状态开关' },
+                { 'button_name': '按钮7', 'action_name': '设置波形为(连击)' },
+                { 'button_name': '按钮8', 'action_name': '设置波形为(挑逗1)' },
+                { 'button_name': '按钮9', 'action_name': '设置波形为(按捏渐强)' },
+                { 'button_name': '按钮10', 'action_name': '设置波形为(心跳节奏)' },
+                { 'button_name': '按钮11', 'action_name': '设置波形为(压缩)' },
+                { 'button_name': '按钮12', 'action_name': '设置波形为(节奏步伐)' },
+                { 'button_name': '按钮13', 'action_name': '设置波形为(颗粒摩擦)' },
+                { 'button_name': '按钮14', 'action_name': '设置波形为(渐变弹跳)' },
+                { 'button_name': '按钮15', 'action_name': '设置波形为(潮汐)' },
+            ],
             'custom_pulses': []
-        }
+        })
         # 创建主布局
         self.main_layout = QVBoxLayout()
 
@@ -637,6 +655,27 @@ class MainWindow(QMainWindow, UICallback):
             parsed_data.append(parsed_operation)
         return parsed_data
 
+    def load_button_bindings(self, bindings: OSCButtonBindings):
+        """加载按钮绑定"""
+        if self.controller:
+            button_registry = self.controller.button_registry
+            action_registry = self.controller.action_registry
+            button_bindings = self.settings['button_bindings']
+            if button_bindings and isinstance(button_bindings, list):
+                for binding in button_bindings:
+                    button_name = binding['button_name']
+                    action_name = binding['action_name']
+                    logger.info(f"加载按钮绑定：{button_name} -> {action_name}")
+                    if button_name not in button_registry.buttons_by_name:
+                        logger.warning(f"未找到OSC按钮：{button_name}")
+                        continue
+                    if action_name not in action_registry.actions_by_name:
+                        logger.warning(f"未找到OSC操作：{action_name}")
+                        continue
+                    button = button_registry.buttons_by_name[button_name]
+                    action = action_registry.actions_by_name[action_name]
+                    bindings.bind(button, action)
+
     def load_custom_pulses(self):
         """加载自定义脉冲"""
         custom_pulses = self.settings['custom_pulses']
@@ -647,6 +686,7 @@ class MainWindow(QMainWindow, UICallback):
                 logger.info(f"加载自定义脉冲：{name}")
                 parsed_data = self.parse_custom_pulse_data(data)
                 self.pulse_registry.register_pulse(name, parsed_data)
+
 
     def app_setup_logging(self):
         """设置日志系统输出到 QTextEdit 和控制台"""
