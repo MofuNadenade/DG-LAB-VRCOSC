@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt, QTimer, QPoint
 from pydglab_ws import Channel, StrengthOperationType
 from pydglab_ws.typing import PulseOperation
 from osc_binding import OSCParameterBindings
-from config import save_load_settings, save_settings, get_active_ip_addresses
+from config import default_load_settings, save_settings, get_active_ip_addresses
 
 from pulse import PulseRegistry
 from util import resource_path
@@ -53,36 +53,7 @@ class MainWindow(QMainWindow, UICallback):
         self.setWindowIcon(QIcon(resource_path('docs/images/fish-cake.ico')))
 
         # Load settings from file or use defaultss
-        self.settings = save_load_settings({
-            'interface': '',
-            'ip': '',
-            'port': 5678,
-            'osc_port': 9001,
-            'parameter_bindings': [
-                { 'parameter_name': '碰左小腿', 'action_name': 'A通道触碰' },
-                { 'parameter_name': '碰右小腿', 'action_name': 'B通道触碰' },
-                { 'parameter_name': '拉尾巴', 'action_name': '当前通道触碰' },
-                { 'parameter_name': '按钮面板控制', 'action_name': '面板控制' },
-                { 'parameter_name': '按钮数值调节', 'action_name': '数值调节' },
-                { 'parameter_name': '按钮通道调节', 'action_name': '通道调节' },
-                { 'parameter_name': '按钮1', 'action_name': '设置模式' },
-                { 'parameter_name': '按钮2', 'action_name': '重置强度' },
-                { 'parameter_name': '按钮3', 'action_name': '降低强度' },
-                { 'parameter_name': '按钮4', 'action_name': '增加强度' },
-                { 'parameter_name': '按钮5', 'action_name': '一键开火' },
-                { 'parameter_name': '按钮6', 'action_name': 'ChatBox状态开关' },
-                { 'parameter_name': '按钮7', 'action_name': '设置波形为(连击)' },
-                { 'parameter_name': '按钮8', 'action_name': '设置波形为(挑逗1)' },
-                { 'parameter_name': '按钮9', 'action_name': '设置波形为(按捏渐强)' },
-                { 'parameter_name': '按钮10', 'action_name': '设置波形为(心跳节奏)' },
-                { 'parameter_name': '按钮11', 'action_name': '设置波形为(压缩)' },
-                { 'parameter_name': '按钮12', 'action_name': '设置波形为(节奏步伐)' },
-                { 'parameter_name': '按钮13', 'action_name': '设置波形为(颗粒摩擦)' },
-                { 'parameter_name': '按钮14', 'action_name': '设置波形为(渐变弹跳)' },
-                { 'parameter_name': '按钮15', 'action_name': '设置波形为(潮汐)' },
-            ],
-            'custom_pulses': []
-        })
+        self.settings = default_load_settings()
         # 创建主布局
         self.main_layout = QVBoxLayout()
 
