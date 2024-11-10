@@ -350,13 +350,12 @@ class DGLabController:
         """
           开火模式步进值设定
         """
-        if value > 0.0:
-            self.fire_mode_strength_step = math.ceil(self.map_value(value, 0, 100))  # 向上取整
-            logger.info(f"current strength step: {self.fire_mode_strength_step}")
-            # 更新 UI 组件 (QSpinBox) 以反映新的值
-            self.ui_callback.strength_step_spinbox.blockSignals(True)  # 防止触发 valueChanged 事件
-            self.ui_callback.strength_step_spinbox.setValue(self.fire_mode_strength_step)
-            self.ui_callback.strength_step_spinbox.blockSignals(False)
+        self.fire_mode_strength_step = math.floor(self.map_value(value, 0, 100))
+        logger.info(f"current strength step: {self.fire_mode_strength_step}")
+        # 更新 UI 组件 (QSpinBox) 以反映新的值
+        self.ui_callback.strength_step_spinbox.blockSignals(True)  # 防止触发 valueChanged 事件
+        self.ui_callback.strength_step_spinbox.setValue(self.fire_mode_strength_step)
+        self.ui_callback.strength_step_spinbox.blockSignals(False)
 
     async def set_channel(self, value):
         """
