@@ -3,7 +3,7 @@ qrcode
 python-osc
 colorlog
 pillow
-pyyaml
+ruamel.yaml
 psutil
 PySide6
 qasync

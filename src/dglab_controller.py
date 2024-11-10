@@ -10,7 +10,7 @@ from pydglab_ws import StrengthData, FeedbackButton, Channel, StrengthOperationT
 from pydglab_ws.typing import PulseOperation
 from pythonosc import dispatcher, osc_server, udp_client
 
-from button_binding import OSCActionRegistry, OSCButtonBindings, OSCButtonRegistry
+from osc_binding import OSCActionRegistry, OSCParameterBindings, OSCParameterRegistry
 from pulse import Pulse, PulseRegistry
 from util import generate_qrcode
 
@@ -36,7 +36,7 @@ class UICallback:
     def bind_controller_settings(self): ...
     def update_connection_status(self, is_online: bool): ...
     def update_status(self, strength_data: StrengthData): ...
-    def load_button_bindings(self, bindings: OSCButtonBindings): ...
+    def load_parameter_bindings(self, bindings: OSCParameterBindings): ...
 
 class ChannelPulseTask:
     def __init__(self, client: DGLabLocalClient, channel: Channel):
@@ -100,9 +100,9 @@ class DGLabController:
         self.ui_callback = ui_callback
         ui_callback.controller = self
         
-        self.button_registry = OSCButtonRegistry()
+        self.parameter_registry = OSCParameterRegistry()
         self.action_registry = self.setup_action_registry()
-        self.button_bindings = self.setup_button_bindings()
+        self.parameter_bindings = self.setup_parameter_bindings()
         self.last_strength: Optional[StrengthData] = None  # 记录上次的强度值, 从 app更新, 包含 a b a_limit b_limit
         self.app_status_online = False  # App 端在线情况
         # 功能控制参数
@@ -134,6 +134,15 @@ class DGLabController:
 
     def setup_action_registry(self) -> OSCActionRegistry:
         registry = OSCActionRegistry()
+
+        registry.register_action("A通道触碰", lambda *args: self.set_float_output(args[0], Channel.A))
+        registry.register_action("B通道触碰", lambda *args: self.set_float_output(args[0], Channel.B))
+        registry.register_action("当前通道触碰", lambda *args: self.set_float_output(args[0], self.current_select_channel))
+
+        registry.register_action("面板控制", lambda *args: self.set_panel_control(args[0]))
+        registry.register_action("数值调节", lambda *args: self.set_strength_step(args[0]))
+        registry.register_action("通道调节", lambda *args: self.set_channel(args[0]))
+
         registry.register_action("设置模式", lambda *args: self.set_mode(args[0], self.current_select_channel))
         registry.register_action("重置强度", lambda *args: self.reset_strength(args[0], self.current_select_channel))
         registry.register_action("降低强度", lambda *args: self.decrease_strength(args[0], self.current_select_channel))
@@ -144,9 +153,9 @@ class DGLabController:
             registry.register_action(f"设置波形为({pulse.name})", functools.partial(lambda pulse, *args: self.set_pulse_data(args[0], self.current_select_channel, pulse.index), pulse))
         return registry
 
-    def setup_button_bindings(self) -> OSCButtonBindings:
-        bindings = OSCButtonBindings()
-        self.ui_callback.load_button_bindings(bindings)
+    def setup_parameter_bindings(self) -> OSCParameterBindings:
+        bindings = OSCParameterBindings()
+        self.ui_callback.load_parameter_bindings(bindings)
         return bindings
 
     async def periodic_status_update(self):
@@ -196,6 +205,10 @@ class DGLabController:
         """
         动骨与碰撞体激活对应通道输出
         """
+        # 不启用面板控制时，直接返回
+        if not self.enable_panel_control:
+            return
+
         if value >= 0.0 and self.last_strength:
             if channel == Channel.A and self.is_dynamic_bone_mode_a:
                 final_output_a = math.ceil(self.map_value(value, self.last_strength.a_limit * 0.2, self.last_strength.a_limit))
@@ -384,7 +397,7 @@ class DGLabController:
         self.ui_callback.enable_panel_control_checkbox.setChecked(self.enable_panel_control)
         self.ui_callback.enable_panel_control_checkbox.blockSignals(False)
 
-    async def handle_osc_message_pad(self, address, *args):
+    async def handle_osc_message(self, address, *args):
         """
         处理 OSC 消息
         1. Bool: Bool 类型变量触发时，VRC 会先后发送 True 与 False, 回调中仅处理 True
@@ -393,46 +406,12 @@ class DGLabController:
         # Parameters Debug
         logger.info(f"Received OSC message on {address} with arguments {args}")
 
-        # 面板控制功能禁用
-        if address == "/avatar/parameters/SoundPad/PanelControl":
-            await self.set_panel_control(args[0])
-        if not self.enable_panel_control:
-            logger.info(f"已禁用面板控制功能")
-            return
-
-        # OSC按钮
-        if address.startswith("/avatar/parameters/SoundPad/Button/"):
-            button_code = address[len("/avatar/parameters/SoundPad/Button/"):]
-            if button_code in self.button_registry.buttons_by_code:
-                button = self.button_registry.buttons_by_code[button_code]
-                await self.button_bindings.handle(button, *args)
-        # 数值调节
-        elif address == "/avatar/parameters/SoundPad/Volume": # Float
-            await self.set_strength_step(args[0])
-        # 通道调节
-        elif address == "/avatar/parameters/SoundPad/Page": # INT
-            await self.set_channel(args[0])
-
-    async def handle_osc_message_pb(self, address, *args):
-        """
-        处理 OSC 消息
-        1. Bool: Bool 类型变量触发时，VRC 会先后发送 True 与 False, 回调中仅处理 True
-        2. Float: -1.0 to 1.0， 但对于 Contact 与  Physbones 来说范围为 0.0-1.0
-        """
-        # Parameters Debug
-        logger.debug(f"Received OSC message on {address} with arguments {args}")
-
-        if not self.enable_panel_control:
-            return
-
-        # Float 参数映射为强度数值
-        # Note: 好像没有下限设置，那就默认为上限的 40% 吧
-        if address == "/avatar/parameters/DG-LAB/UpperLeg_R":
-            await self.set_float_output(args[0], Channel.A)
-        elif address == "/avatar/parameters/DG-LAB/UpperLeg_L":
-            await self.set_float_output(args[0], Channel.A)
-        elif address == "/avatar/parameters/Tail_Stretch":
-            await self.set_float_output(args[0], Channel.B)
+        # OSC参数
+        if address.startswith("/avatar/parameters/"):
+            parameter_code = address[len("/avatar/parameters/"):]
+            if parameter_code in self.parameter_registry.parameters_by_code:
+                parameter = self.parameter_registry.parameters_by_code[parameter_code]
+                await self.parameter_bindings.handle(parameter, *args)
 
     def map_value(self, value, min_value, max_value):
         """
@@ -470,12 +449,8 @@ class DGLabController:
         else:
             self.send_message_to_vrchat_chatbox("未连接")
 
-def handle_osc_message_task_pad(address, list_object, *args):
-    asyncio.create_task(list_object[0].handle_osc_message_pad(address, *args))
-
-
-def handle_osc_message_task_pb(address, list_object, *args):
-    asyncio.create_task(list_object[0].handle_osc_message_pb(address, *args))
+def handle_osc_message_task(address, list_object, *args):
+    asyncio.create_task(list_object[0].handle_osc_message(address, *args))
 
 
 async def run_server(ui_callback: UICallback, ip: str, port: int, osc_port: int):
@@ -503,13 +478,12 @@ async def run_server(ui_callback: UICallback, ip: str, port: int, osc_port: int)
             # 设置OSC服务器
             disp = dispatcher.Dispatcher()
             # 面板控制对应的 OSC 地址
-            disp.map("/avatar/parameters/SoundPad/Button/*", handle_osc_message_task_pad, controller)
-            disp.map("/avatar/parameters/SoundPad/Volume", handle_osc_message_task_pad, controller)
-            disp.map("/avatar/parameters/SoundPad/Page", handle_osc_message_task_pad, controller)
-            disp.map("/avatar/parameters/SoundPad/PanelControl", handle_osc_message_task_pad, controller)
-            # PB/Contact 交互对应的 OSC 地址
-            disp.map("/avatar/parameters/DG-LAB/*", handle_osc_message_task_pb, controller)
-            disp.map("/avatar/parameters/Tail_Stretch",handle_osc_message_task_pb, controller)
+            disp.map("/avatar/parameters/SoundPad/Button/*", handle_osc_message_task, controller)
+            disp.map("/avatar/parameters/SoundPad/Volume", handle_osc_message_task, controller)
+            disp.map("/avatar/parameters/SoundPad/Page", handle_osc_message_task, controller)
+            disp.map("/avatar/parameters/SoundPad/PanelControl", handle_osc_message_task, controller)
+            disp.map("/avatar/parameters/DG-LAB/*", handle_osc_message_task, controller)
+            disp.map("/avatar/parameters/Tail_Stretch",handle_osc_message_task, controller)
 
             event_loop = asyncio.get_event_loop()
             if (not isinstance(event_loop, asyncio.BaseEventLoop)):
@@ -546,7 +520,7 @@ async def run_server(ui_callback: UICallback, ip: str, port: int, osc_port: int)
     except Exception as e:
         # Handle specific errors and log them
         error_message = f"WebSocket 服务器启动失败: {str(e)}"
-        logger.error(error_message)
+        logger.exception(error_message)
 
         # 启动过程中发生异常，恢复按钮状态为可点击的红色
         ui_callback.start_button.setText("启动失败，请重试")

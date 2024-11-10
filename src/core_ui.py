@@ -11,7 +11,7 @@ from PySide6.QtGui import QIcon, QTextCursor
 from PySide6.QtCore import Qt, QTimer, QPoint
 from pydglab_ws import Channel, StrengthOperationType
 from pydglab_ws.typing import PulseOperation
-from button_binding import OSCButtonBindings
+from osc_binding import OSCParameterBindings
 from config import save_load_settings, save_settings, get_active_ip_addresses
 
 from pulse import PulseRegistry
@@ -58,22 +58,28 @@ class MainWindow(QMainWindow, UICallback):
             'ip': '',
             'port': 5678,
             'osc_port': 9001,
-            'button_bindings': [
-                { 'button_name': '按钮1', 'action_name': '设置模式' },
-                { 'button_name': '按钮2', 'action_name': '重置强度' },
-                { 'button_name': '按钮3', 'action_name': '降低强度' },
-                { 'button_name': '按钮4', 'action_name': '增加强度' },
-                { 'button_name': '按钮5', 'action_name': '一键开火' },
-                { 'button_name': '按钮6', 'action_name': 'ChatBox状态开关' },
-                { 'button_name': '按钮7', 'action_name': '设置波形为(连击)' },
-                { 'button_name': '按钮8', 'action_name': '设置波形为(挑逗1)' },
-                { 'button_name': '按钮9', 'action_name': '设置波形为(按捏渐强)' },
-                { 'button_name': '按钮10', 'action_name': '设置波形为(心跳节奏)' },
-                { 'button_name': '按钮11', 'action_name': '设置波形为(压缩)' },
-                { 'button_name': '按钮12', 'action_name': '设置波形为(节奏步伐)' },
-                { 'button_name': '按钮13', 'action_name': '设置波形为(颗粒摩擦)' },
-                { 'button_name': '按钮14', 'action_name': '设置波形为(渐变弹跳)' },
-                { 'button_name': '按钮15', 'action_name': '设置波形为(潮汐)' },
+            'parameter_bindings': [
+                { 'parameter_name': '碰左小腿', 'action_name': 'A通道触碰' },
+                { 'parameter_name': '碰右小腿', 'action_name': 'B通道触碰' },
+                { 'parameter_name': '拉尾巴', 'action_name': '当前通道触碰' },
+                { 'parameter_name': '按钮面板控制', 'action_name': '面板控制' },
+                { 'parameter_name': '按钮数值调节', 'action_name': '数值调节' },
+                { 'parameter_name': '按钮通道调节', 'action_name': '通道调节' },
+                { 'parameter_name': '按钮1', 'action_name': '设置模式' },
+                { 'parameter_name': '按钮2', 'action_name': '重置强度' },
+                { 'parameter_name': '按钮3', 'action_name': '降低强度' },
+                { 'parameter_name': '按钮4', 'action_name': '增加强度' },
+                { 'parameter_name': '按钮5', 'action_name': '一键开火' },
+                { 'parameter_name': '按钮6', 'action_name': 'ChatBox状态开关' },
+                { 'parameter_name': '按钮7', 'action_name': '设置波形为(连击)' },
+                { 'parameter_name': '按钮8', 'action_name': '设置波形为(挑逗1)' },
+                { 'parameter_name': '按钮9', 'action_name': '设置波形为(按捏渐强)' },
+                { 'parameter_name': '按钮10', 'action_name': '设置波形为(心跳节奏)' },
+                { 'parameter_name': '按钮11', 'action_name': '设置波形为(压缩)' },
+                { 'parameter_name': '按钮12', 'action_name': '设置波形为(节奏步伐)' },
+                { 'parameter_name': '按钮13', 'action_name': '设置波形为(颗粒摩擦)' },
+                { 'parameter_name': '按钮14', 'action_name': '设置波形为(渐变弹跳)' },
+                { 'parameter_name': '按钮15', 'action_name': '设置波形为(潮汐)' },
             ],
             'custom_pulses': []
         })
@@ -655,26 +661,26 @@ class MainWindow(QMainWindow, UICallback):
             parsed_data.append(parsed_operation)
         return parsed_data
 
-    def load_button_bindings(self, bindings: OSCButtonBindings):
-        """加载按钮绑定"""
+    def load_parameter_bindings(self, bindings: OSCParameterBindings):
+        """加载OSC参数绑定"""
         if self.controller:
-            button_registry = self.controller.button_registry
+            parameter_registry = self.controller.parameter_registry
             action_registry = self.controller.action_registry
-            button_bindings = self.settings['button_bindings']
-            if button_bindings and isinstance(button_bindings, list):
-                for binding in button_bindings:
-                    button_name = binding['button_name']
+            parameter_bindings = self.settings['parameter_bindings']
+            if parameter_bindings and isinstance(parameter_bindings, list):
+                for binding in parameter_bindings:
+                    parameter_name = binding['parameter_name']
                     action_name = binding['action_name']
-                    logger.info(f"加载按钮绑定：{button_name} -> {action_name}")
-                    if button_name not in button_registry.buttons_by_name:
-                        logger.warning(f"未找到OSC按钮：{button_name}")
+                    logger.info(f"加载OSC参数绑定：{parameter_name} -> {action_name}")
+                    if parameter_name not in parameter_registry.parameters_by_name:
+                        logger.warning(f"未找到OSC参数：{parameter_name}")
                         continue
                     if action_name not in action_registry.actions_by_name:
                         logger.warning(f"未找到OSC操作：{action_name}")
                         continue
-                    button = button_registry.buttons_by_name[button_name]
+                    parameter = parameter_registry.parameters_by_name[parameter_name]
                     action = action_registry.actions_by_name[action_name]
-                    bindings.bind(button, action)
+                    bindings.bind(parameter, action)
 
     def load_custom_pulses(self):
         """加载自定义脉冲"""
