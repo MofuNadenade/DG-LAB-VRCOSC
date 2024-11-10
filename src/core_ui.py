@@ -151,6 +151,11 @@ class MainWindow(QMainWindow, UICallback):
         self.allow_a_channel_update = True
         self.allow_b_channel_update = True
 
+        # 是否禁用一键开火
+        self.fire_mode_disabled_checkbox = QCheckBox("禁用一键开火")
+        self.fire_mode_disabled_checkbox.setChecked(False)
+        self.controller_form.addRow(self.fire_mode_disabled_checkbox)
+
         # 是否启用面板控制
         self.enable_panel_control_checkbox = QCheckBox("允许 avatar 控制设备")  # PanelControl 关闭后忽略所有游戏内传入的控制
         self.enable_panel_control_checkbox.setChecked(True)
@@ -346,6 +351,7 @@ class MainWindow(QMainWindow, UICallback):
 
         # Connect UI to controller update methods
         self.strength_step_spinbox.valueChanged.connect(self.update_strength_step)
+        self.fire_mode_disabled_checkbox.stateChanged.connect(self.update_fire_mode_disabled)
         self.enable_panel_control_checkbox.stateChanged.connect(self.update_panel_control)
         self.dynamic_bone_mode_a_checkbox.stateChanged.connect(self.update_dynamic_bone_mode_a)
         self.dynamic_bone_mode_b_checkbox.stateChanged.connect(self.update_dynamic_bone_mode_b)
@@ -504,6 +510,7 @@ class MainWindow(QMainWindow, UICallback):
             params = (
                 f"Device online: app_status_online= {self.controller.app_status_online}\n "
                 f"Enable Panel Control: {self.controller.enable_panel_control}\n"
+                f"Fire Mode Disabled: {self.controller.fire_mode_disabled}\n"
                 f"Dynamic Bone Mode A: {self.controller.is_dynamic_bone_mode_a}\n"
                 f"Dynamic Bone Mode B: {self.controller.is_dynamic_bone_mode_b}\n"
                 f"Pulse Mode A: {self.controller.pulse_mode_a}\n"
@@ -528,6 +535,7 @@ class MainWindow(QMainWindow, UICallback):
         """将GUI设置与DGLabController变量绑定"""
         if self.controller:
             self.controller.fire_mode_strength_step = self.strength_step_spinbox.value()
+            self.controller.fire_mode_disabled = self.fire_mode_disabled_checkbox.isChecked()
             self.controller.enable_panel_control = self.enable_panel_control_checkbox.isChecked()
             self.controller.is_dynamic_bone_mode_a = self.dynamic_bone_mode_a_checkbox.isChecked()
             self.controller.is_dynamic_bone_mode_b = self.dynamic_bone_mode_b_checkbox.isChecked()
@@ -544,6 +552,11 @@ class MainWindow(QMainWindow, UICallback):
             self.controller.fire_mode_strength_step = value
             logger.info(f"Updated strength step to {value}")
             self.controller.send_value_to_vrchat("/avatar/parameters/SoundPad/Volume", 0.01*value)
+
+    def update_fire_mode_disabled(self, state):
+        if self.controller:
+            self.controller.fire_mode_disabled = bool(state)
+            logger.info(f"Fire mode disabled: {self.controller.fire_mode_disabled}")
 
     def update_panel_control(self, state):
         if self.controller:

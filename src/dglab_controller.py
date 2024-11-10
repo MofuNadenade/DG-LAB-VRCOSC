@@ -104,6 +104,7 @@ class DGLabController:
         self.pulse_mode_a = 0  # pulse mode for Channel A (双向 - 更新名称)
         self.pulse_mode_b = 0  # pulse mode for Channel B (双向 - 更新名称)
         self.current_select_channel = Channel.A  # 游戏内面板控制的通道选择, 默认为 A (双向)
+        self.fire_mode_disabled = False  # 禁用一键开火模式
         self.fire_mode_strength_step = 30    # 一键开火默认强度 (双向)
         self.fire_mode_active = False  # 标记当前是否在进行开火操作
         self.fire_mode_lock = asyncio.Lock()  # 一键开火模式锁
@@ -270,6 +271,9 @@ class DGLabController:
             松开后恢复为通道进入前的强度
         TODO: 修复连点开火按键导致输出持续上升的问题
         """
+        if self.fire_mode_disabled:
+            return
+
         logger.info(f"Trigger FireMode: {value}")
 
         await asyncio.sleep(0.01)
