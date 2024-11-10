@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import math
 from typing import Optional
 
@@ -140,7 +141,7 @@ class DGLabController:
         registry.register_action("一键开火", lambda *args: self.strength_fire_mode(args[0], self.current_select_channel, self.fire_mode_strength_step, self.last_strength))
         registry.register_action("ChatBox状态开关", lambda *args: self.toggle_chatbox(args[0]))
         for pulse in self.ui_callback.pulse_registry.pulses:
-            registry.register_action(f"设置波形为({pulse.name})", lambda *args: self.set_pulse_data(args[0], self.current_select_channel, pulse.index))
+            registry.register_action(f"设置波形为({pulse.name})", functools.partial(lambda pulse, *args: self.set_pulse_data(args[0], self.current_select_channel, pulse.index), pulse))
         return registry
 
     def setup_button_bindings(self) -> OSCButtonBindings:
