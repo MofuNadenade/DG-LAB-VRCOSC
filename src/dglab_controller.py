@@ -1,5 +1,4 @@
 import asyncio
-import functools
 import math
 from typing import Optional
 
@@ -20,6 +19,9 @@ logger = logging.getLogger(__name__)
 class UICallback:
     controller: 'DGLabController'
     pulse_registry: PulseRegistry
+    parameter_registry: OSCParameterRegistry
+    action_registry: OSCActionRegistry
+    parameter_bindings: OSCParameterBindings
 
     start_button: QPushButton
     pulse_mode_a_combobox: QComboBox
@@ -36,7 +38,6 @@ class UICallback:
     def bind_controller_settings(self): ...
     def update_connection_status(self, is_online: bool): ...
     def update_status(self, strength_data: StrengthData): ...
-    def load_parameter_bindings(self, bindings: OSCParameterBindings): ...
 
 class ChannelPulseTask:
     def __init__(self, client: DGLabLocalClient, channel: Channel):
@@ -100,9 +101,6 @@ class DGLabController:
         self.ui_callback = ui_callback
         ui_callback.controller = self
         
-        self.parameter_registry = OSCParameterRegistry()
-        self.action_registry = self.setup_action_registry()
-        self.parameter_bindings = self.setup_parameter_bindings()
         self.last_strength: Optional[StrengthData] = None  # 记录上次的强度值, 从 app更新, 包含 a b a_limit b_limit
         self.app_status_online = False  # App 端在线情况
         # 功能控制参数
@@ -131,32 +129,6 @@ class DGLabController:
         self.set_mode_timer = None
         #TODO: 增加状态消息OSC发送, 比使用 ChatBox 反馈更快
         # 回报速率设置为 1HZ，Updates every 0.1 to 1 seconds as needed based on parameter changes (1 to 10 updates per second), but you shouldn't rely on it for fast sync.
-
-    def setup_action_registry(self) -> OSCActionRegistry:
-        registry = OSCActionRegistry()
-
-        registry.register_action("A通道触碰", lambda *args: self.set_float_output(args[0], Channel.A))
-        registry.register_action("B通道触碰", lambda *args: self.set_float_output(args[0], Channel.B))
-        registry.register_action("当前通道触碰", lambda *args: self.set_float_output(args[0], self.current_select_channel))
-
-        registry.register_action("面板控制", lambda *args: self.set_panel_control(args[0]))
-        registry.register_action("数值调节", lambda *args: self.set_strength_step(args[0]))
-        registry.register_action("通道调节", lambda *args: self.set_channel(args[0]))
-
-        registry.register_action("设置模式", lambda *args: self.set_mode(args[0], self.current_select_channel))
-        registry.register_action("重置强度", lambda *args: self.reset_strength(args[0], self.current_select_channel))
-        registry.register_action("降低强度", lambda *args: self.decrease_strength(args[0], self.current_select_channel))
-        registry.register_action("增加强度", lambda *args: self.increase_strength(args[0], self.current_select_channel))
-        registry.register_action("一键开火", lambda *args: self.strength_fire_mode(args[0], self.current_select_channel, self.fire_mode_strength_step, self.last_strength))
-        registry.register_action("ChatBox状态开关", lambda *args: self.toggle_chatbox(args[0]))
-        for pulse in self.ui_callback.pulse_registry.pulses:
-            registry.register_action(f"设置波形为({pulse.name})", functools.partial(lambda pulse, *args: self.set_pulse_data(args[0], self.current_select_channel, pulse.index), pulse))
-        return registry
-
-    def setup_parameter_bindings(self) -> OSCParameterBindings:
-        bindings = OSCParameterBindings()
-        self.ui_callback.load_parameter_bindings(bindings)
-        return bindings
 
     async def periodic_status_update(self):
         """
@@ -409,9 +381,9 @@ class DGLabController:
         # OSC参数
         if address.startswith("/avatar/parameters/"):
             parameter_code = address[len("/avatar/parameters/"):]
-            if parameter_code in self.parameter_registry.parameters_by_code:
-                parameter = self.parameter_registry.parameters_by_code[parameter_code]
-                await self.parameter_bindings.handle(parameter, *args)
+            if parameter_code in self.ui_callback.parameter_registry.parameters_by_code:
+                parameter = self.ui_callback.parameter_registry.parameters_by_code[parameter_code]
+                await self.ui_callback.parameter_bindings.handle(parameter, *args)
 
     def map_value(self, value, min_value, max_value):
         """

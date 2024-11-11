@@ -1,6 +1,7 @@
+import functools
 import math
 import asyncio
-from typing import Optional
+from typing import Any, Coroutine, Optional, Protocol
 import logging
 import json
 
@@ -11,7 +12,7 @@ from PySide6.QtGui import QIcon, QTextCursor
 from PySide6.QtCore import Qt, QTimer, QPoint
 from pydglab_ws import Channel, StrengthOperationType
 from pydglab_ws.typing import PulseOperation
-from osc_binding import OSCParameterBindings
+from osc_binding import OSCActionRegistry, OSCParameterBindings, OSCParameterCallback, OSCParameterRegistry
 from config import default_load_settings, save_settings, get_active_ip_addresses
 
 from pulse import PulseRegistry
@@ -362,6 +363,11 @@ class MainWindow(QMainWindow, UICallback):
         self.port_spinbox.valueChanged.connect(self.save_network_settings)
         self.osc_port_spinbox.valueChanged.connect(self.save_network_settings)
 
+        # 初始化OSC参数
+        self.parameter_registry = OSCParameterRegistry()
+        self.action_registry = self.load_action_registry()
+        self.parameter_bindings = self.load_parameter_bindings()
+
     def apply_settings_to_ui(self):
         """Apply the loaded settings to the UI elements."""
         # Find the correct index for the loaded interface and IP
@@ -632,26 +638,56 @@ class MainWindow(QMainWindow, UICallback):
             parsed_data.append(parsed_operation)
         return parsed_data
 
-    def load_parameter_bindings(self, bindings: OSCParameterBindings):
+    def load_action_registry(self):
+        registry = OSCActionRegistry()
+
+        class OSCParameterCallbackWithController(Protocol):
+            def __call__(self, controller: DGLabController, *args: Any) -> Coroutine[Any, Any, Any]:
+                ...
+
+        def register_action(name: str, callback: OSCParameterCallbackWithController):
+            async def wrapper(*args, **kwargs):
+                if self.controller:
+                    await callback(self.controller, *args, **kwargs)
+            registry.register_action(name, wrapper)
+
+        register_action("A通道触碰", lambda controller, *args: controller.set_float_output(args[0], Channel.A))
+        register_action("B通道触碰", lambda controller, *args: controller.set_float_output(args[0], Channel.B))
+        register_action("当前通道触碰", lambda controller, *args: controller.set_float_output(args[0], controller.current_select_channel))
+
+        register_action("面板控制", lambda controller, *args: controller.set_panel_control(args[0]))
+        register_action("数值调节", lambda controller, *args: controller.set_strength_step(args[0]))
+        register_action("通道调节", lambda controller, *args: controller.set_channel(args[0]))
+
+        register_action("设置模式", lambda controller, *args: controller.set_mode(args[0], controller.current_select_channel))
+        register_action("重置强度", lambda controller, *args: controller.reset_strength(args[0], controller.current_select_channel))
+        register_action("降低强度", lambda controller, *args: controller.decrease_strength(args[0], controller.current_select_channel))
+        register_action("增加强度", lambda controller, *args: controller.increase_strength(args[0], controller.current_select_channel))
+        register_action("一键开火", lambda controller, *args: controller.strength_fire_mode(args[0], controller.current_select_channel, controller.fire_mode_strength_step, controller.last_strength))
+        register_action("ChatBox状态开关", lambda controller, *args: controller.toggle_chatbox(args[0]))
+        for pulse in self.pulse_registry.pulses:
+            register_action(f"设置波形为({pulse.name})", functools.partial(lambda pulse, controller, *args: controller.set_pulse_data(args[0], controller.current_select_channel, pulse.index), pulse))
+        return registry
+
+    def load_parameter_bindings(self):
         """加载OSC参数绑定"""
-        if self.controller:
-            parameter_registry = self.controller.parameter_registry
-            action_registry = self.controller.action_registry
-            parameter_bindings = self.settings['parameter_bindings']
-            if parameter_bindings and isinstance(parameter_bindings, list):
-                for binding in parameter_bindings:
-                    parameter_name = binding['parameter_name']
-                    action_name = binding['action_name']
-                    logger.info(f"加载OSC参数绑定：{parameter_name} -> {action_name}")
-                    if parameter_name not in parameter_registry.parameters_by_name:
-                        logger.warning(f"未找到OSC参数：{parameter_name}")
-                        continue
-                    if action_name not in action_registry.actions_by_name:
-                        logger.warning(f"未找到OSC操作：{action_name}")
-                        continue
-                    parameter = parameter_registry.parameters_by_name[parameter_name]
-                    action = action_registry.actions_by_name[action_name]
-                    bindings.bind(parameter, action)
+        bindings = OSCParameterBindings()
+        parameter_bindings = self.settings['parameter_bindings']
+        if parameter_bindings and isinstance(parameter_bindings, list):
+            for binding in parameter_bindings:
+                parameter_name = binding['parameter_name']
+                action_name = binding['action_name']
+                logger.info(f"加载OSC参数绑定：{parameter_name} -> {action_name}")
+                if parameter_name not in self.parameter_registry.parameters_by_name:
+                    logger.warning(f"未找到OSC参数：{parameter_name}")
+                    continue
+                if action_name not in self.action_registry.actions_by_name:
+                    logger.warning(f"未找到OSC操作：{action_name}")
+                    continue
+                parameter = self.parameter_registry.parameters_by_name[parameter_name]
+                action = self.action_registry.actions_by_name[action_name]
+                bindings.bind(parameter, action)
+        return bindings
 
     def load_custom_pulses(self):
         """加载自定义脉冲"""

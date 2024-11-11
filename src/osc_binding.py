@@ -1,5 +1,3 @@
-
-import enum
 from typing import Any, Coroutine, Protocol
 
 import logging
