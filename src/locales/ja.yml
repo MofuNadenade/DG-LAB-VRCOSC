@@ -1,0 +1,110 @@
+# 日本語翻訳ファイル
+main:
+  title: "DG-Lab WebSocket Controller for VRChat"
+  tabs:
+    connection: "接続設定"
+    controller: "デバイス制御"
+    game: "ゲーム連携"
+    debug: "ログ・デバッグ"
+    about: "について"
+    osc_address: "OSCアドレス"
+  settings:
+    language: "言語"
+
+connection_tab:
+  title: "ネットワーク設定"
+  interface: "ネットワークインターフェース"
+  websocket_port: "WebSocketポート"
+  osc_port: "OSCポート"
+  remote_address: "リモートアドレス"
+  enable_remote: "リモートモードを有効にする"
+  get_public_ip: "パブリックIPを取得"
+  please_enter_valid_ip: "有効なIPアドレスを入力してください"
+  connect: "接続"
+  disconnect: "接続済み"
+  status: "クライアント接続状態"
+  online: "接続済み"
+  offline: "未接続、接続クリック後にQRコードをスキャンしてください"
+  failed: "接続失敗、再試行してください"
+  cancel: "キャンセル"
+  connecting: "接続中"
+  error: "エラー"
+
+controller_tab:
+  title: "DGLabController設定"
+  channel_intensity: "チャンネル強度"
+  intensity_limit: "強度上限"
+  waveform: "波形"
+  disable_fire_mode: "ワンクリック発火を無効化"
+  enable_panel_control: "アバターによるデバイス制御を許可"
+  enable_chatbox: "ChatBoxステータス表示を有効化"
+  interaction_mode: "インタラクションモード"
+  current_panel_channel: "現在のパネル制御チャンネル"
+  not_set: "未設定"
+  strength_step: "発火強度ステップ"
+
+game_tab:
+  title: "Terrors of Nowhere"
+  enable_damage_system: "ToN Damage System"
+  user_display_name: "User Display Name"
+  websocket_status: "WebSocket Status"
+  connected: "接続済み"
+  disconnected: "Disconnected"
+  error: "エラー"
+  unknown: "不明"
+  accumulated_damage: "累積ダメージ"
+  damage_reduction: "1秒あたりのダメージ軽減"
+  damage_strength: "ダメージ強度上限"
+  death_penalty: "死亡ペナルティ強度"
+  death_penalty_time: "死亡ペナルティ持続時間 (秒)"
+
+debug_tab:
+  title: "デバッグ"
+  simple_log: "シンプルログ"
+  debug_info: "デバッグ情報"
+  controller_params: "DGLabControllerパラメータ"
+  loading_params: "コントローラーパラメータを読み込み中..."
+  controller_not_initialized: "コントローラーが初期化されていません。"
+
+# チャンネル強度表示
+channel:
+  strength_display: "チャンネル強度"
+  strength_limit: "強度上限"
+  waveform: "波形"
+  current_control: "現在のパネル制御チャンネル"
+
+# WebSocketステータス
+websocket:
+  error_status: "エラー"
+
+about_tab:
+  current_version: "現在のバージョン"
+  feedback: "フィードバック"
+
+osc_address_tab:
+  title: "OSCアドレス管理"
+  address_list: "アドレスリスト"
+  address_binding: "アドレスバインディング"
+  index: "インデックス"
+  address_name: "アドレス名"
+  osc_code: "OSCアドレス"
+  action_name: "アクション名"
+  add_address: "アドレス追加"
+  delete_address: "アドレス削除"
+  refresh: "更新"
+  save_config: "設定保存"
+  address_name_placeholder: "アドレス名を入力してください（例：左手タッチ）"
+  osc_code_placeholder: "OSCアドレスを入力してください（例：/avatar/parameters/Contact_LeftHand）"
+  input_error: "入力エラー"
+  name_code_required: "パラメータ名とOSCアドレスの両方が必要です"
+  error: "エラー"
+  success: "成功"
+  registry_not_available: "パラメータレジストリが初期化されていません"
+  address_exists: "アドレス名が既に存在します"
+  code_exists: "OSCアドレスが既に存在します"
+  confirm_delete: "削除確認"
+  delete_address_confirm: "アドレス '{0}' を削除してもよろしいですか？"
+  config_saved: "設定が保存されました"
+  save_not_available: "保存機能が利用できません"
+  status: "ステータス"
+  add_binding: "バインディング追加"

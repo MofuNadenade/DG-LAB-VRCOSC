@@ -1,0 +1,54 @@
+"""
+OSC选项提供模块
+
+为UI组件提供OSC相关的选项数据。
+"""
+
+from typing import List
+
+from .osc_common import OSCActionType
+from .osc_address import OSCAddressRegistry
+from .osc_action import OSCActionRegistry
+from .osc_template import OSCTemplateRegistry
+
+
+class OSCOptionsProvider:
+    """OSC选项数据提供者"""
+    
+    def __init__(self, address_registry: OSCAddressRegistry, 
+                 action_registry: OSCActionRegistry, 
+                 template_registry: OSCTemplateRegistry) -> None:
+        self.address_registry = address_registry
+        self.action_registry = action_registry
+        self.template_registry = template_registry
+    
+    def get_address_name_options(self) -> List[str]:
+        """获取地址名称选项"""
+        return [addr.name for addr in self.address_registry.addresses]
+    
+    def get_action_name_options(self) -> List[str]:
+        """获取动作名称选项"""
+        return [action.name for action in self.action_registry.actions]
+    
+    def get_action_name_options_by_type(self, action_type: OSCActionType) -> List[str]:
+        """根据类型获取动作名称选项"""
+        actions = self.action_registry.get_actions_by_type(action_type)
+        return [action.name for action in actions]
+    
+    def get_osc_code_options(self) -> List[str]:
+        """获取OSC代码选项"""
+        # 从模板获取预定义选项
+        template_options = self.template_registry.get_template_options()
+        
+        # 从已注册的地址获取选项
+        registered_options = [addr.code for addr in self.address_registry.addresses]
+        
+        # 合并并去重
+        all_options = list(set(template_options + registered_options))
+        all_options.sort()
+        return all_options
+    
+    def get_osc_code_options_by_prefix(self, prefix: str) -> List[str]:
+        """根据前缀获取OSC代码选项"""
+        templates = self.template_registry.get_templates_by_prefix(prefix)
+        return [template.code for template in templates]

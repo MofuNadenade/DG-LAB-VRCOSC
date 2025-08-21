@@ -1,0 +1,110 @@
+# English translation file
+main:
+  title: "DG-Lab WebSocket Controller for VRChat"
+  tabs:
+    connection: "Connection"
+    controller: "Device Control"
+    game: "Game Integration"
+    debug: "Log & Debug"
+    about: "About"
+    osc_address: "OSC Addresses"
+  settings:
+    language: "Language"
+
+connection_tab:
+  title: "Network Configuration"
+  interface: "Network Interface"
+  websocket_port: "WebSocket Port"
+  osc_port: "OSC Port"
+  remote_address: "Remote Address"
+  enable_remote: "Enable Remote Mode"
+  get_public_ip: "Get Public IP"
+  please_enter_valid_ip: "Please enter a valid IP address"
+  connect: "Connect"
+  disconnect: "Connected"
+  status: "Client Connection Status"
+  online: "Connected"
+  offline: "Disconnected, scan QR code after clicking connect"
+  failed: "Connection failed, please retry"
+  cancel: "Cancel"
+  connecting: "Connecting"
+  error: "Error"
+
+controller_tab:
+  title: "DGLabController Settings"
+  channel_intensity: "Channel Intensity"
+  intensity_limit: "Intensity Limit"
+  waveform: "Waveform"
+  disable_fire_mode: "Disable One-Click Fire"
+  enable_panel_control: "Allow avatar to control device"
+  enable_chatbox: "Enable ChatBox Status Display"
+  interaction_mode: "Interaction Mode"
+  current_panel_channel: "Current Panel Control Channel"
+  not_set: "Not Set"
+  strength_step: "Fire Intensity Step"
+
+game_tab:
+  title: "Terrors of Nowhere"
+  enable_damage_system: "ToN Damage System"
+  user_display_name: "User Display Name"
+  websocket_status: "WebSocket Status"
+  connected: "Connected"
+  disconnected: "Disconnected"
+  error: "Error"
+  unknown: "Unknown"
+  accumulated_damage: "Accumulated Damage"
+  damage_reduction: "Damage Reduction per Second"
+  damage_strength: "Damage Strength Limit"
+  death_penalty: "Death Penalty Strength"
+  death_penalty_time: "Death Penalty Duration (s)"
+
+debug_tab:
+  title: "Debug"
+  simple_log: "Simple Log"
+  debug_info: "Debug Information"
+  controller_params: "DGLabController Parameters"
+  loading_params: "Loading controller parameters..."
+  controller_not_initialized: "Controller not initialized."
+
+# Channel strength display
+channel:
+  strength_display: "Channel Strength"
+  strength_limit: "Strength Limit"
+  waveform: "Waveform"
+  current_control: "Current Panel Control Channel"
+
+# WebSocket status
+websocket:
+  error_status: "Error"
+
+about_tab:
+  current_version: "Current Version"
+  feedback: "Feedback"
+
+osc_address_tab:
+  title: "OSC Address Management"
+  address_list: "Address List"
+  address_binding: "Address Binding"
+  index: "Index"
+  address_name: "Address Name"
+  osc_code: "OSC Address"
+  action_name: "Action Name"
+  add_address: "Add Address"
+  delete_address: "Delete Address"
+  refresh: "Refresh"
+  save_config: "Save Config"
+  address_name_placeholder: "Enter address name, e.g.: Touch Left Hand"
+  osc_code_placeholder: "Enter OSC address, e.g.: /avatar/parameters/Contact_LeftHand"
+  input_error: "Input Error"
+  name_code_required: "Both address name and OSC address are required"
+  error: "Error"
+  success: "Success"
+  registry_not_available: "Address registry not initialized"
+  address_exists: "Address name already exists"
+  code_exists: "OSC address already exists"
+  confirm_delete: "Confirm Delete"
+  delete_address_confirm: "Are you sure you want to delete address '{0}'?"
+  config_saved: "Configuration saved"
+  save_not_available: "Save function not available"
+  status: "Status"
+  add_binding: "Add Binding"

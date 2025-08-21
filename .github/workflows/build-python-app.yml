@@ -26,37 +26,84 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for version generation
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.11"
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pyinstaller
+        pip install flake8
         if (Test-Path requirements.txt) {
           pip install -r requirements.txt
         }
       shell: pwsh
 
-#    - name: Lint with flake8
-#      run: |
-#        python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-#      shell: pwsh
+    - name: Generate version file
+      run: |
+        python scripts/generate_version.py
+        Write-Host "Generated version file:"
+        Get-Content src/version.py
+      shell: pwsh
+
+    - name: Type check with mypy
+      run: |
+        python -m mypy src/ --ignore-missing-imports
+      shell: pwsh
+      continue-on-error: true
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller -F --windowed -i docs/images/fish-cake.ico --name DG-LAB-VRCOSC --add-data "docs/images/fish-cake.ico;docs/images" src/app.py
+        # Use direct PyInstaller command with all necessary hidden imports
+        pyinstaller -F --windowed `
+          -i docs/images/fish-cake.ico `
+          --name DG-LAB-VRCOSC `
+          --add-data "docs/images/fish-cake.ico;docs/images" `
+          --add-data "src/locales;locales" `
+          --add-data "src/version.py;." `
+          --hidden-import urllib.parse `
+          --hidden-import urllib.request `
+          --hidden-import urllib.error `
+          --hidden-import zipfile `
+          --hidden-import pathlib `
+          --hidden-import logging.handlers `
+          --hidden-import asyncio `
+          --hidden-import qasync `
+          --hidden-import pydglab_ws `
+          --hidden-import pythonosc.dispatcher `
+          --hidden-import pythonosc.osc_server `
+          --hidden-import pythonosc.udp_client `
+          --hidden-import ruamel.yaml `
+          --hidden-import qrcode `
+          --hidden-import psutil `
+          --hidden-import requests `
+          --hidden-import PIL.Image `
+          --hidden-import PIL.ImageDraw `
+          --hidden-import PySide6.QtCore `
+          --hidden-import PySide6.QtGui `
+          --hidden-import PySide6.QtWidgets `
+          --hidden-import PySide6.QtNetwork `
+          --hidden-import shiboken6 `
+          --collect-submodules PySide6 `
+          --collect-submodules shiboken6 `
+          src/app.py
       shell: pwsh
 
-    - name: Generate commit hash and timestamp file
+    - name: Copy additional resources
       run: |
-        $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-        $commitHash = (git rev-parse --short HEAD)
-        $fileContent = "Commit Hash: $commitHash`nTimestamp: $timestamp"
-        Set-Content -Path dist/build-info.txt -Value $fileContent
+        # Copy version info to dist
+        Copy-Item src/version.py dist/version.txt
+        
+        # Copy build information
+        $version = (python -c "from src.version import get_version; print(get_version())")
+        $buildInfo = (python -c "from src.version import get_build_info; import json; print(json.dumps(get_build_info(), indent=2))")
+        Set-Content -Path dist/build-info.json -Value $buildInfo
+        
+        Write-Host "Build completed for version: $version"
       shell: pwsh
 
     - name: Upload artifact

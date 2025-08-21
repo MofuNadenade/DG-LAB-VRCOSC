@@ -4,7 +4,7 @@ import asyncio
 from PySide6.QtWidgets import (QApplication)
 from qasync import QEventLoop
 
-from core_ui import MainWindow
+from gui.main_window import MainWindow
 
 # 配置日志记录器
 from logger_config import setup_logging

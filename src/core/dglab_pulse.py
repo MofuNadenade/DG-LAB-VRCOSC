@@ -1,26 +1,27 @@
+from typing import Dict, List
 from pydglab_ws.typing import PulseOperation
 
 class Pulse:
-    def __init__(self, index: int, name: str, data: list[PulseOperation]):
-        self.index = index
-        self.name = name
-        self.data = data
+    def __init__(self, index: int, name: str, data: List[PulseOperation]) -> None:
+        self.index: int = index
+        self.name: str = name
+        self.data: List[PulseOperation] = data
 
 class PulseRegistry:
-    def __init__(self, ):
-        self.pulses: list[Pulse] = []
-        self.pulses_by_name: dict[str, Pulse] = {}
+    def __init__(self) -> None:
+        self.pulses: List[Pulse] = []
+        self.pulses_by_name: Dict[str, Pulse] = {}
 
         self.register_default_pulses()
 
-    def register_pulse(self, name: str, data: list[PulseOperation]) -> Pulse:
+    def register_pulse(self, name: str, data: List[PulseOperation]) -> Pulse:
         pulse = Pulse(len(self.pulses), name, data)
         self.pulses.append(pulse)
         self.pulses_by_name[pulse.name] = pulse
         return pulse
 
-    def register_default_pulses(self):
-        default_pulses: dict[str, list[PulseOperation]] = {
+    def register_default_pulses(self) -> None:
+        default_pulses: Dict[str, List[PulseOperation]] = {
             '呼吸': [
                 ((10, 10, 10, 10), (0, 0, 0, 0)), ((10, 10, 10, 10), (0, 5, 10, 20)),
                 ((10, 10, 10, 10), (20, 25, 30, 40)), ((10, 10, 10, 10), (40, 45, 50, 60)),

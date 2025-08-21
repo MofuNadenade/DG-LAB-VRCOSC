@@ -8,3 +8,8 @@ psutil
 PySide6
 qasync
 websockets
+requests
+types-requests
+mypy>=1.17.0
+watchdog
+pyinstaller
