@@ -170,6 +170,8 @@ async def run_server(ui_callback: UIInterface, ip: str, port: int, osc_port: int
                 # 等待与 DG-Lab App 的绑定
                 logger.info("等待 DG-Lab App 扫码绑定...")
                 await client.bind()
+                controller.app_status_online = True
+                ui_callback.on_client_connected()
                 logger.info(f"已与 App {client.target_id} 成功绑定")
                 
                 # 开始处理数据流
