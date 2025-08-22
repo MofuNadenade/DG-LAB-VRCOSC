@@ -1,5 +1,6 @@
+import asyncio
 import logging
-from typing import Optional, Dict, List, Any, TYPE_CHECKING
+from typing import Optional, Dict, List, Any, TYPE_CHECKING, Callable, Awaitable
 
 from PySide6.QtWidgets import QMainWindow, QTabWidget
 from PySide6.QtGui import QIcon, QPixmap
@@ -22,6 +23,7 @@ from gui.ton_damage_system_tab import TonDamageSystemTab
 from gui.log_viewer_tab import LogViewerTab
 from gui.about_tab import AboutTab
 from gui.osc_address_tab import OSCAddressTab
+from gui.pulse_editor_tab import PulseEditorTab
 
 logger = logging.getLogger(__name__)
 
@@ -47,17 +49,18 @@ class MainWindow(QMainWindow):
         self.options_provider: OSCOptionsProvider = OSCOptionsProvider(
             self.address_registry, self.action_registry, self.template_registry)
         
-        # 加载自定义OSC地址
-        self.load_custom_osc_addresses()
+        # 从配置加载所有数据
+        self.load_all_configs()
         
         # GUI组件类型注解
         self.tab_widget: QTabWidget
         self.network_tab: 'NetworkConfigTab'
         self.controller_tab: 'ControllerSettingsTab'
         self.ton_tab: 'TonDamageSystemTab'
+        self.osc_address_tab: 'OSCAddressTab'
+        self.pulse_editor_tab: 'PulseEditorTab'
         self.log_tab: 'LogViewerTab'
         self.about_tab: 'AboutTab'
-        self.osc_address_tab: 'OSCAddressTab'
         
         self.init_ui()
         
@@ -65,7 +68,7 @@ class MainWindow(QMainWindow):
         self._current_connection_state: ConnectionState = ConnectionState.DISCONNECTED
         
         # 连接语言变更信号
-        language_signals.language_changed.connect(self.update_ui_text)
+        language_signals.language_changed.connect(self.update_ui_texts)
 
     def init_ui(self) -> None:
         """初始化用户界面"""
@@ -98,6 +101,10 @@ class MainWindow(QMainWindow):
         self.osc_address_tab = OSCAddressTab(self)
         self.tab_widget.addTab(self.osc_address_tab, _("main.tabs.osc_address"))
         
+        # 波形编辑器选项卡
+        self.pulse_editor_tab = PulseEditorTab(self)
+        self.tab_widget.addTab(self.pulse_editor_tab, _("main.tabs.pulse_editor"))
+        
         # 调试选项卡
         self.log_tab = LogViewerTab(self, self.settings)
         self.tab_widget.addTab(self.log_tab, _("main.tabs.debug"))
@@ -114,11 +121,11 @@ class MainWindow(QMainWindow):
             # 绑定控制器设置
             self.controller_tab.bind_controller_settings()
             
-            # 加载自定义脉冲并注册OSC操作（现在控制器可用）
-            self.load_custom_pulses()
+            # 为控制器注册脉冲OSC操作
+            self.register_pulse_actions()
             
             # 注册OSC操作（现在控制器可用）
-            self._register_osc_actions_with_controller()
+            self.register_osc_actions()
             
             # 加载OSC地址绑定（在操作注册后）
             self.load_osc_address_bindings()
@@ -144,47 +151,45 @@ class MainWindow(QMainWindow):
             self.controller_tab.controller_group.setEnabled(False)
             # 注意：不自动禁用ton_tab的damage_group，保持用户的选择状态
 
-    def load_custom_pulses(self) -> None:
-        """加载自定义脉冲并注册OSC操作"""
-        if self.controller is None:
-            logger.warning("Controller not available, cannot load custom pulses")
-            return
-            
-        custom_pulses: List[Dict[str, Any]] = self.settings.get('custom_pulses', [])
-        pulse_data: Dict[str, Any]
-        for pulse_data in custom_pulses:
-            try:
-                name: str = pulse_data.get('name', '')
-                pulse_sequence: List[Any] = pulse_data.get('data', [])
-                if name and pulse_sequence:
-                    self.pulse_registry.register_pulse(name, pulse_sequence)
-                    logger.info(f"加载自定义脉冲：{name}")
-                    
-                    # 为自定义波形注册OSC操作
-                    pulse_index = self.pulse_registry.pulses_by_name[name].index
-                    controller = self.controller  # 在闭包中捕获引用
-                    
-                    def make_pulse_action(idx: int, ctrl: Optional['DGLabController']):
-                        async def pulse_action(*args) -> None:
-                            if ctrl:
-                                await ctrl.dglab_service.set_pulse_data(args[0], ctrl.current_select_channel, idx)
-                        return pulse_action
-                    
-                    self.action_registry.register_action(f"设置波形为({name})", 
-                        make_pulse_action(pulse_index, controller),
-                        OSCActionType.WAVEFORM_CONTROL, {"waveform", "custom", "pulse"})
-            except Exception as e:
-                logger.error(f"加载自定义脉冲失败：{e}")
+    def load_all_configs(self) -> None:
+        """从配置加载所有数据"""
+        # 加载地址
+        addresses = self.settings.get('addresses', [])
+        self.address_registry.load_from_config(addresses)
         
-        # 重新填充控制器选项卡的波形下拉框
-        self.update_pulse_comboboxes()
+        # 加载脉冲
+        pulses = self.settings.get('pulses', {})
+        self.pulse_registry.load_from_config(pulses)
+        
+        # 加载模板
+        templates = self.settings.get('templates', [])
+        self.template_registry.load_from_config(templates)
+        
+        logger.info("All configurations loaded from settings")
     
-    def load_custom_osc_addresses(self) -> None:
-        """加载自定义OSC地址"""
-        custom_addresses: list[dict[str, Any]] = self.settings.get('custom_addresses', [])
-        if custom_addresses:
-            self.address_registry.load_custom_addresses(custom_addresses)
-            logger.info(f"Loaded {len(custom_addresses)} custom OSC addresses")
+    def register_pulse_actions(self) -> None:
+        """为控制器注册脉冲OSC操作"""
+        if self.controller is None:
+            logger.warning("Controller not available, cannot register pulse actions")
+            return
+        
+        # 为所有脉冲注册OSC操作
+        for pulse in self.pulse_registry.pulses:
+            controller = self.controller
+            pulse_index = pulse.index
+            
+            def make_pulse_action(idx: int, ctrl: Optional['DGLabController']) -> Callable[..., Awaitable[None]]:
+                async def pulse_action(*args: Any) -> None:
+                    if ctrl:
+                        await ctrl.dglab_service.set_pulse_data(args[0], ctrl.current_select_channel, idx)
+                return pulse_action
+            
+            self.action_registry.register_action(_("main.action.set_pulse").format(pulse.name), 
+                make_pulse_action(pulse_index, controller),
+                OSCActionType.PULSE_CONTROL, {"pulse"})
+        
+        # 更新波形下拉框
+        self.update_pulse_comboboxes()
     
     def load_controller_settings(self) -> None:
         """从配置文件加载设备控制器设置"""
@@ -246,13 +251,22 @@ class MainWindow(QMainWindow):
             self.controller.dglab_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
             self.controller.dglab_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
             
+            # 同步波形设置并更新设备
+            if a_index >= 0:
+                self.controller.dglab_service.pulse_mode_a = a_index
+            if b_index >= 0:
+                self.controller.dglab_service.pulse_mode_b = b_index
+                
+            # 立即更新设备上的波形数据
+            asyncio.create_task(self.controller.dglab_service.update_pulse_data())
+            
         logger.info("Controller settings loaded from configuration")
 
     def update_pulse_comboboxes(self) -> None:
         """更新控制器选项卡中的波形下拉框"""
         self.controller_tab.update_pulse_comboboxes()
 
-    def _register_osc_actions_with_controller(self) -> None:
+    def register_osc_actions(self) -> None:
         """在控制器可用时注册OSC操作"""
         if not self.controller:
             return
@@ -298,38 +312,16 @@ class MainWindow(QMainWindow):
         self.action_registry.register_action("ChatBox状态开关", 
             lambda *args: self.controller.chatbox_service.toggle_chatbox(args[0]),
             OSCActionType.CHATBOX_CONTROL, {"toggle"})
-        
-        # 脉冲波形操作
-        controller = self.controller  # 在闭包中捕获引用
-        
-        def make_pulse_action(idx: int, ctrl: Optional['DGLabController']):
-            async def pulse_action(*args) -> None:
-                if ctrl:
-                    await ctrl.dglab_service.set_pulse_data(args[0], ctrl.current_select_channel, idx)
-            return pulse_action
-        
-        for pulse in self.pulse_registry.pulses:
-            self.action_registry.register_action(f"设置波形为({pulse.name})", 
-                make_pulse_action(pulse.index, controller),
-                OSCActionType.WAVEFORM_CONTROL, {"waveform", "pulse"})
 
     def load_osc_address_bindings(self) -> None:
         """加载OSC地址绑定"""
-        # 获取配置文件中的自定义绑定
-        custom_bindings: List[Dict[str, str]] = self.settings.get('address_bindings', [])
+        bindings: List[Dict[str, str]] = self.settings.get('bindings', [])
         
-        # 合并默认绑定和自定义绑定
-        binding_templates = self.binding_registry.get_binding_templates()
-        all_bindings = binding_templates + custom_bindings
-        
-        for binding in all_bindings:
-            # 获取地址名称
+        for binding in bindings:
             address_name: Optional[str] = binding.get('address_name')
             action_name: Optional[str] = binding.get('action_name')
             
             if address_name and action_name:
-                logger.info(f"加载OSC地址绑定：{address_name} -> {action_name}")
-                
                 if address_name not in self.address_registry.addresses_by_name:
                     logger.warning(f"未找到OSC地址：{address_name}")
                     continue
@@ -341,6 +333,8 @@ class MainWindow(QMainWindow):
                 address = self.address_registry.addresses_by_name[address_name]
                 action = self.action_registry.actions_by_name[action_name]
                 self.binding_registry.register_binding(address, action)
+        
+        logger.info(f"Loaded {len(self.binding_registry.bindings)} OSC bindings")
 
     # UIInterface interface implementation
     def update_current_channel_display(self, channel_name: str) -> None:
@@ -364,7 +358,7 @@ class MainWindow(QMainWindow):
         """更新通道强度和波形"""
         self.controller_tab.update_status(strength_data)
 
-    def update_ui_text(self) -> None:
+    def update_ui_texts(self) -> None:
         """更新UI上的所有文本为当前语言"""
         self.setWindowTitle(_("main.title"))
         
@@ -373,15 +367,17 @@ class MainWindow(QMainWindow):
         self.tab_widget.setTabText(1, _("main.tabs.controller"))
         self.tab_widget.setTabText(2, _("main.tabs.game"))
         self.tab_widget.setTabText(3, _("main.tabs.osc_address"))
-        self.tab_widget.setTabText(4, _("main.tabs.debug"))
-        self.tab_widget.setTabText(5, _("main.tabs.about"))
+        self.tab_widget.setTabText(4, _("main.tabs.pulse_editor"))
+        self.tab_widget.setTabText(5, _("main.tabs.debug"))
+        self.tab_widget.setTabText(6, _("main.tabs.about"))
         
         # 更新各个选项卡的文本
-        self.network_tab.update_ui_text()
-        self.controller_tab.update_ui_text()
-        self.ton_tab.update_ui_text()
+        self.network_tab.update_ui_texts()
+        self.controller_tab.update_ui_texts()
+        self.ton_tab.update_ui_texts()
         self.osc_address_tab.update_ui_texts()
-        self.log_tab.update_ui_text()
+        self.pulse_editor_tab.update_ui_texts()
+        self.log_tab.update_ui_texts()
         self.about_tab.update_ui_texts()
     
     def save_settings(self) -> None:

@@ -45,11 +45,14 @@ class ControllerSettingsTab(QWidget):
         self.pulse_mode_b_combobox: QComboBox
         self.strength_step_spinbox: QSpinBox
         self.save_settings_btn: QPushButton
+        self.pulse_mode_a_label: QLabel
+        self.pulse_mode_b_label: QLabel
+        self.strength_step_label: QLabel
         
         self.init_ui()
         
         # 连接语言变更信号
-        language_signals.language_changed.connect(self.update_ui_text)
+        language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
     def controller(self) -> Optional['DGLabController']:
@@ -121,15 +124,17 @@ class ControllerSettingsTab(QWidget):
         # 波形模式选择
         pulse_options = list(self.pulse_registry.pulses_by_name.keys())
         
-        self.pulse_mode_a_combobox = EditableComboBox(pulse_options)
+        self.pulse_mode_a_combobox = EditableComboBox(pulse_options, allow_manual_input = False)
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.pulse_mode_a_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         
-        self.pulse_mode_b_combobox = EditableComboBox(pulse_options)
+        self.pulse_mode_b_combobox = EditableComboBox(pulse_options, allow_manual_input = False)
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.pulse_mode_b_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        controller_form.addRow(f"A{_('controller_tab.waveform')}:", self.pulse_mode_a_combobox)
-        controller_form.addRow(f"B{_('controller_tab.waveform')}:", self.pulse_mode_b_combobox)
+        self.pulse_mode_a_label = QLabel(f"A{_('controller_tab.pulse')}:")
+        self.pulse_mode_b_label = QLabel(f"B{_('controller_tab.pulse')}:")
+        controller_form.addRow(self.pulse_mode_a_label, self.pulse_mode_a_combobox)
+        controller_form.addRow(self.pulse_mode_b_label, self.pulse_mode_b_combobox)
         
         # 强度步长
         self.strength_step_spinbox = QSpinBox()
@@ -137,7 +142,8 @@ class ControllerSettingsTab(QWidget):
         self.strength_step_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.strength_step_spinbox.setRange(0, 100)
         self.strength_step_spinbox.setValue(30)
-        controller_form.addRow(_("controller_tab.strength_step") + ":", self.strength_step_spinbox)
+        self.strength_step_label = QLabel(_("controller_tab.strength_step_label"))
+        controller_form.addRow(self.strength_step_label, self.strength_step_spinbox)
         
         # 添加保存设置按钮
         self.save_settings_btn = QPushButton(_("osc_address_tab.save_config"))
@@ -159,7 +165,7 @@ class ControllerSettingsTab(QWidget):
                 background-color: #3d8b40;
             }
         """)
-        self.save_settings_btn.setToolTip("保存所有设备控制设置到配置文件")
+        self.save_settings_btn.setToolTip(_("controller_tab.save_settings_tooltip"))
         controller_form.addRow(self.save_settings_btn)
         
         controller_group.setLayout(controller_form)
@@ -234,12 +240,16 @@ class ControllerSettingsTab(QWidget):
         if self.controller:
             self.controller.dglab_service.pulse_mode_a = index
             logger.info(f"Pulse mode A updated to {self.pulse_registry.pulses[index].name}")
+            # 立即更新设备上的波形数据
+            asyncio.create_task(self.controller.dglab_service.update_pulse_data())
 
     def on_pulse_mode_b_changed(self, index: int) -> None:
         """当波形B模式发生变化时"""
         if self.controller:
             self.controller.dglab_service.pulse_mode_b = index
             logger.info(f"Pulse mode B updated to {self.pulse_registry.pulses[index].name}")
+            # 立即更新设备上的波形数据
+            asyncio.create_task(self.controller.dglab_service.update_pulse_data())
 
     def on_chatbox_status_enabled_changed(self, state: bool) -> None:
         """当ChatBox状态启用复选框状态改变时"""
@@ -270,14 +280,14 @@ class ControllerSettingsTab(QWidget):
             self.ui_callback.save_settings()
             
             # 显示成功消息
-            QMessageBox.information(self, "保存成功", 
-                                  "设备控制器设置已成功保存到配置文件")
+            QMessageBox.information(self, _("common.save_success"), 
+                                  _("controller_tab.settings_saved"))
             logger.info("Controller settings saved successfully")
             
         except Exception as e:
-            error_msg = f"保存设备控制器设置失败: {str(e)}"
+            error_msg = _("controller_tab.save_failed").format(str(e))
             logger.error(error_msg)
-            QMessageBox.critical(self, "保存失败", error_msg)
+            QMessageBox.critical(self, _("common.save_failed"), error_msg)
 
     def set_a_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 A 通道强度"""
@@ -336,7 +346,7 @@ class ControllerSettingsTab(QWidget):
                 self.a_channel_slider.setRange(0, self.controller.last_strength.a_limit)  # 根据限制更新范围
                 self.a_channel_slider.setValue(self.controller.last_strength.a)
                 self.a_channel_slider.blockSignals(False)
-                self.a_channel_label.setText(f"A {_('channel.strength_display')}: {self.controller.last_strength.a} {_('channel.strength_limit')}: {self.controller.last_strength.a_limit}  {_('channel.waveform')}: {self.pulse_registry.pulses[self.controller.pulse_mode_a].name}")
+                self.a_channel_label.setText(f"A {_('channel.strength_display')}: {self.controller.last_strength.a} {_('channel.strength_limit')}: {self.controller.last_strength.a_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.pulse_mode_a].name}")
 
             # 仅当允许外部更新时更新 B 通道滑动条
             if self.allow_b_channel_update:
@@ -344,13 +354,13 @@ class ControllerSettingsTab(QWidget):
                 self.b_channel_slider.setRange(0, self.controller.last_strength.b_limit)  # 根据限制更新范围
                 self.b_channel_slider.setValue(self.controller.last_strength.b)
                 self.b_channel_slider.blockSignals(False)
-                self.b_channel_label.setText(f"B {_('channel.strength_display')}: {self.controller.last_strength.b} {_('channel.strength_limit')}: {self.controller.last_strength.b_limit}  {_('channel.waveform')}: {self.pulse_registry.pulses[self.controller.pulse_mode_b].name}")
+                self.b_channel_label.setText(f"B {_('channel.strength_display')}: {self.controller.last_strength.b} {_('channel.strength_limit')}: {self.controller.last_strength.b_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.pulse_mode_b].name}")
 
     def update_current_channel_display(self, channel_name: str) -> None:
         """更新当前选择通道显示"""
         self.current_channel_label.setText(f"{_('channel.current_control')}: {channel_name}")
 
-    def update_ui_text(self) -> None:
+    def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""
         self.controller_group.setTitle(_("controller_tab.title"))
         self.fire_mode_disabled_checkbox.setText(_("controller_tab.disable_fire_mode"))
@@ -379,7 +389,10 @@ class ControllerSettingsTab(QWidget):
         else:
             self.current_channel_label.setText(f"{_('controller_tab.current_panel_channel')}: {_('controller_tab.not_set')}")
         
-        # 更新波形模式标签（如果有表单布局）
-        if hasattr(self, 'controller_form'):
-            # 这些标签在表单中，需要遍历更新
-            pass
+        # 更新表单行标签
+        self.pulse_mode_a_label.setText(f"A{_('controller_tab.pulse')}:")
+        self.pulse_mode_b_label.setText(f"B{_('controller_tab.pulse')}:")
+        self.strength_step_label.setText(_("controller_tab.strength_step_label"))
+        
+        # 更新工具提示
+        self.save_settings_btn.setToolTip(_("controller_tab.save_settings_tooltip"))

@@ -56,7 +56,7 @@ class NetworkConfigTab(QWidget):
         self.load_settings()
         
         # 连接语言变更信号
-        language_signals.language_changed.connect(self.update_ui_text)
+        language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
     def controller(self) -> Optional[DGLabController]:
@@ -81,7 +81,7 @@ class NetworkConfigTab(QWidget):
         self.ip_combobox = EditableComboBox(ip_options)
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.ip_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.interface_label = QLabel(_("connection_tab.interface") + ":")
+        self.interface_label = QLabel(_("connection_tab.interface_label"))
         self.form_layout.addRow(self.interface_label, self.ip_combobox)
         
         # 端口选择
@@ -90,7 +90,7 @@ class NetworkConfigTab(QWidget):
         self.port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.port_spinbox.setRange(1024, 65535)
         self.port_spinbox.setValue(self.settings['port'])
-        self.websocket_port_label = QLabel(_("connection_tab.websocket_port") + ":")
+        self.websocket_port_label = QLabel(_("connection_tab.websocket_port_label"))
         self.form_layout.addRow(self.websocket_port_label, self.port_spinbox)
         
         # OSC端口选择
@@ -99,7 +99,7 @@ class NetworkConfigTab(QWidget):
         self.osc_port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.osc_port_spinbox.setRange(1024, 65535)
         self.osc_port_spinbox.setValue(self.settings['osc_port'])
-        self.osc_port_label = QLabel(_("connection_tab.osc_port") + ":")
+        self.osc_port_label = QLabel(_("connection_tab.osc_port_label"))
         self.form_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
         
         # 创建远程地址控制布局
@@ -129,7 +129,7 @@ class NetworkConfigTab(QWidget):
         self.remote_address_layout.addWidget(self.remote_address_edit)
         self.remote_address_layout.addWidget(self.get_public_ip_button)
         
-        self.remote_address_label = QLabel(_("connection_tab.remote_address") + ":")
+        self.remote_address_label = QLabel(_("connection_tab.remote_address_label"))
         self.form_layout.addRow(self.remote_address_label, self.remote_address_layout)
         
         # 添加客户端连接状态标签
@@ -144,7 +144,7 @@ class NetworkConfigTab(QWidget):
             }
         """)
         self.connection_status_label.adjustSize()
-        self.status_label = QLabel(_("connection_tab.status") + ":")
+        self.status_label = QLabel(_("connection_tab.status_label"))
         self.form_layout.addRow(self.status_label, self.connection_status_label)
         
         # 启动按钮
@@ -155,7 +155,7 @@ class NetworkConfigTab(QWidget):
         
         # 语言选择
         self.language_layout = QHBoxLayout()
-        self.language_label = QLabel(_("main.settings.language") + ":")
+        self.language_label = QLabel(_("main.settings.language_label"))
         
         language_options = list(LANGUAGES.values())
         self.language_combo = EditableComboBox(language_options)
@@ -291,9 +291,9 @@ class NetworkConfigTab(QWidget):
         if self.enable_remote_checkbox.isChecked():
             remote_addr_text = self.remote_address_edit.text()
             if remote_addr_text and not self.validate_ip_address(remote_addr_text):
-                error_msg = "远程地址格式无效，无法启动服务器"
+                error_msg = _("connection_tab.invalid_remote_address")
                 logger.error(error_msg)
-                QMessageBox.warning(self, "错误", error_msg)
+                QMessageBox.warning(self, _("common.error"), error_msg)
                 return
         
         selected_ip = self.ip_combobox.currentText().split(": ")[-1]
@@ -315,7 +315,7 @@ class NetworkConfigTab(QWidget):
             logger.info("WebSocket 服务器已启动")
                 
         except Exception as e:
-            error_message = f"启动服务器失败: {str(e)}"
+            error_message = _("connection_tab.start_server_failed").format(str(e))
             logger.error(error_message)
             
             # 恢复按钮状态 - 使用统一接口
@@ -347,9 +347,10 @@ class NetworkConfigTab(QWidget):
             logger.info("服务器任务被取消")
             raise
         except Exception as e:
-            logger.error(f"服务器运行异常: {str(e)}")
+            error_msg = _("connection_tab.server_error").format(str(e))
+            logger.error(error_msg)
             # 服务器异常后重置UI状态 - 使用统一接口
-            self.ui_callback.set_connection_state(ConnectionState.FAILED, f"服务器运行异常: {str(e)}")
+            self.ui_callback.set_connection_state(ConnectionState.FAILED, error_msg)
             self.update_connection_status(False)
             raise
         finally:
@@ -367,10 +368,10 @@ class NetworkConfigTab(QWidget):
             # 保存设置
             self.save_network_settings()
         except Exception as e:
-            error_msg = f"获取公网IP失败: {str(e)}"
+            error_msg = _("connection_tab.get_public_ip_failed").format(str(e))
             logger.error(error_msg)
             # 显示错误提示框
-            QMessageBox.warning(self, "错误", error_msg)
+            QMessageBox.warning(self, _("common.error"), error_msg)
 
     def validate_ip_address(self, ip: str) -> bool:
         """验证IP地址格式是否正确"""
@@ -457,10 +458,10 @@ class NetworkConfigTab(QWidget):
         self.start_button.setEnabled(False)
         self.start_button.setStyleSheet("background-color: grey; color: white;")
 
-    def update_ui_text(self) -> None:
+    def update_ui_texts(self) -> None:
         """更新UI上的文本为当前语言"""
         self.network_config_group.setTitle(_("connection_tab.title"))
-        self.language_label.setText(_("main.settings.language") + ":")
+        self.language_label.setText(_("main.settings.language_label"))
         # start_button的文本现在通过统一接口管理，这里不需要直接设置
         # 保持当前连接状态的显示文本
         current_state = self.ui_callback.get_connection_state()
@@ -470,19 +471,21 @@ class NetworkConfigTab(QWidget):
             self.start_button.setText(_("connection_tab.connect"))
         
         # 更新表单标签 - 使用直接引用而不是文本匹配
-        self.interface_label.setText(_("connection_tab.interface") + ":")
-        self.websocket_port_label.setText(_("connection_tab.websocket_port") + ":")
-        self.osc_port_label.setText(_("connection_tab.osc_port") + ":")
-        self.status_label.setText(_("connection_tab.status") + ":")
-        self.remote_address_label.setText(_("connection_tab.remote_address") + ":")
+        self.interface_label.setText(_("connection_tab.interface_label"))
+        self.websocket_port_label.setText(_("connection_tab.websocket_port_label"))
+        self.osc_port_label.setText(_("connection_tab.osc_port_label"))
+        self.status_label.setText(_("connection_tab.status_label"))
+        self.remote_address_label.setText(_("connection_tab.remote_address_label"))
         
-        # 更新连接状态标签
+        # 更新连接状态标签 - 保持当前状态但更新语言
         if self.controller:
             if self.controller.app_status_online:
                 self.connection_status_label.setText(_("connection_tab.online"))
             else:
                 self.connection_status_label.setText(_("connection_tab.offline"))
-        
+        else:
+            # 没有控制器时，显示默认离线状态
+            self.connection_status_label.setText(_("connection_tab.offline"))
         # 更新其他UI文本
         self.enable_remote_checkbox.setText(_("connection_tab.enable_remote"))
         self.remote_address_edit.setPlaceholderText(_("connection_tab.please_enter_valid_ip"))

@@ -43,7 +43,7 @@ class TonDamageSystemTab(QWidget):
         self.init_ui()
         
         # 连接语言变更信号
-        language_signals.language_changed.connect(self.update_ui_text)
+        language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
     def controller(self) -> Optional[DGLabController]:
@@ -76,7 +76,8 @@ class TonDamageSystemTab(QWidget):
         self.damage_progress_bar = QProgressBar()
         self.damage_progress_bar.setRange(0, 100)
         self.damage_progress_bar.setValue(0)
-        damage_layout.addRow(_("game_tab.accumulated_damage") + ":", self.damage_progress_bar)
+        self.accumulated_damage_label = QLabel(_("game_tab.accumulated_damage_label"))
+        damage_layout.addRow(self.accumulated_damage_label, self.damage_progress_bar)
         
         # 配置滑动条
         slider_max_width = 450
@@ -88,7 +89,7 @@ class TonDamageSystemTab(QWidget):
         self.damage_reduction_slider.setRange(0, 10)
         self.damage_reduction_slider.setValue(2)
         self.damage_reduction_slider.setMaximumWidth(slider_max_width)
-        self.damage_reduction_slider.valueChanged.connect(lambda value: self.damage_reduction_label.setText(f"{_('game_tab.damage_reduction')}: {value} / 10"))
+        self.damage_reduction_slider.valueChanged.connect(self.update_damage_reduction_label)
         self.damage_reduction_slider.valueChanged.connect(lambda: self.show_tooltip(self.damage_reduction_slider))
         damage_reduction_layout.addWidget(self.damage_reduction_label)
         damage_reduction_layout.addWidget(self.damage_reduction_slider)
@@ -102,7 +103,7 @@ class TonDamageSystemTab(QWidget):
         self.damage_strength_slider.setRange(0, 200)
         self.damage_strength_slider.setValue(60)
         self.damage_strength_slider.setMaximumWidth(slider_max_width)
-        self.damage_strength_slider.valueChanged.connect(lambda value: self.damage_strength_label.setText(f"{_('game_tab.damage_strength')}: {value} / 200"))
+        self.damage_strength_slider.valueChanged.connect(self.update_damage_strength_label)
         self.damage_strength_slider.valueChanged.connect(lambda: self.show_tooltip(self.damage_strength_slider))
         damage_strength_layout.addWidget(self.damage_strength_label)
         damage_strength_layout.addWidget(self.damage_strength_slider)
@@ -116,7 +117,7 @@ class TonDamageSystemTab(QWidget):
         self.death_penalty_strength_slider.setRange(0, 100)
         self.death_penalty_strength_slider.setValue(30)
         self.death_penalty_strength_slider.setMaximumWidth(slider_max_width)
-        self.death_penalty_strength_slider.valueChanged.connect(lambda value: self.death_penalty_strength_label.setText(f"{_('game_tab.death_penalty')}: {value} / 100"))
+        self.death_penalty_strength_slider.valueChanged.connect(self.update_death_penalty_label)
         self.death_penalty_strength_slider.valueChanged.connect(lambda: self.show_tooltip(self.death_penalty_strength_slider))
         death_penalty_strength_layout.addWidget(self.death_penalty_strength_label)
         death_penalty_strength_layout.addWidget(self.death_penalty_strength_slider)
@@ -127,7 +128,8 @@ class TonDamageSystemTab(QWidget):
         self.death_penalty_time_spinbox = QSpinBox()
         self.death_penalty_time_spinbox.setRange(0, 60)
         self.death_penalty_time_spinbox.setValue(5)
-        damage_layout.addRow(_("game_tab.death_penalty_time") + ":", self.death_penalty_time_spinbox)
+        self.death_penalty_time_label = QLabel(_("game_tab.death_penalty_time_label"))
+        damage_layout.addRow(self.death_penalty_time_label, self.death_penalty_time_spinbox)
         
         damage_group.setLayout(damage_layout)
         layout.addWidget(damage_group)
@@ -316,7 +318,22 @@ class TonDamageSystemTab(QWidget):
             # self.controller.set_damage_intensity(0)
             self.damage_progress_bar.setValue(0)
 
-    def update_ui_text(self) -> None:
+    def update_damage_reduction_label(self) -> None:
+        """更新伤害减免标签"""
+        value = self.damage_reduction_slider.value()
+        self.damage_reduction_label.setText(f"{_('game_tab.damage_reduction')}: {value} / 10")
+    
+    def update_damage_strength_label(self) -> None:
+        """更新伤害强度标签"""
+        value = self.damage_strength_slider.value()
+        self.damage_strength_label.setText(f"{_('game_tab.damage_strength')}: {value} / 200")
+    
+    def update_death_penalty_label(self) -> None:
+        """更新死亡惩罚标签"""
+        value = self.death_penalty_strength_slider.value()
+        self.death_penalty_strength_label.setText(f"{_('game_tab.death_penalty')}: {value} / 100")
+
+    def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""
         self.damage_group.setTitle(_("game_tab.title"))
         self.enable_damage_checkbox.setText(_("game_tab.enable_damage_system"))
@@ -355,3 +372,7 @@ class TonDamageSystemTab(QWidget):
         
         death_penalty_value = self.death_penalty_strength_slider.value()
         self.death_penalty_strength_label.setText(f"{_('game_tab.death_penalty')}: {death_penalty_value} / 100")
+        
+        # 更新其他标签
+        self.accumulated_damage_label.setText(_("game_tab.accumulated_damage_label"))
+        self.death_penalty_time_label.setText(_("game_tab.death_penalty_time_label"))

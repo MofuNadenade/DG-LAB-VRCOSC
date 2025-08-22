@@ -4,15 +4,21 @@ OSC动作管理模块
 提供OSC动作的定义和注册管理功能。
 """
 
-from typing import Any, Set, Optional, List, Dict
+from typing import Any, Set, Optional, List, Dict, Awaitable, Protocol
 
-from .osc_common import OSCActionType, OSCAddressCallback, OSCAddressValidator, OSCRegistryObserver
+from .osc_common import OSCActionType, OSCAddressValidator, OSCRegistryObserver
+
+
+class OSCActionCallback(Protocol):
+    """OSC动作回调协议"""
+    def __call__(self, *args: Any) -> Awaitable[None]:
+        ...
 
 
 class OSCAction:
     """OSC动作"""
     
-    def __init__(self, index: int, name: str, callback: OSCAddressCallback, 
+    def __init__(self, index: int, name: str, callback: OSCActionCallback, 
                  action_type: OSCActionType = OSCActionType.CUSTOM,
                  tags: Optional[Set[str]] = None) -> None:
         # 验证输入
@@ -22,7 +28,7 @@ class OSCAction:
             
         self.index: int = index
         self.name: str = name.strip()
-        self.callback: OSCAddressCallback = callback
+        self.callback: OSCActionCallback = callback
         self.action_type: OSCActionType = action_type
         self.tags: Set[str] = tags or set()
     
@@ -77,7 +83,7 @@ class OSCActionRegistry:
         for observer in self.observers:
             observer.on_action_removed(action)
 
-    def register_action(self, name: str, callback: OSCAddressCallback, 
+    def register_action(self, name: str, callback: OSCActionCallback, 
                        action_type: OSCActionType = OSCActionType.CUSTOM,
                        tags: Optional[Set[str]] = None) -> OSCAction:
         """注册动作（增强版本）"""
@@ -91,7 +97,7 @@ class OSCActionRegistry:
         
         return action
     
-    def remove_action(self, action: OSCAction) -> None:
+    def unregister_action(self, action: OSCAction) -> None:
         """移除动作"""
         if action in self.actions:
             self.actions.remove(action)

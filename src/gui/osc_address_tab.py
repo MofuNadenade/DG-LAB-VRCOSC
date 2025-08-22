@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QHeaderView, QMessageBox, QDialog, QDialogButtonBox, QTabWidget, QComboBox
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 import logging
 
 from i18n import translate as _, language_signals
@@ -52,13 +53,13 @@ class AddBindingDialog(QDialog):
         
         # 地址选择
         address_options = [addr.name for addr in self.address_registry.addresses]
-        self.address_combo = EditableComboBox(address_options)
-        form_layout.addRow(_("osc_address_tab.address_name") + ":", self.address_combo)
+        self.address_combo = EditableComboBox(address_options, allow_manual_input = False)
+        form_layout.addRow(_("osc_address_tab.address_name_label"), self.address_combo)
         
         # 动作选择
         action_options = [action.name for action in self.action_registry.actions]
-        self.action_combo = EditableComboBox(action_options)
-        form_layout.addRow(_("osc_address_tab.action_name") + ":", self.action_combo)
+        self.action_combo = EditableComboBox(action_options, allow_manual_input = False)
+        form_layout.addRow(_("osc_address_tab.action_name_label"), self.action_combo)
         
         layout.addLayout(form_layout)
         
@@ -84,7 +85,7 @@ class AddBindingDialog(QDialog):
         address_name, action_name = self.get_binding_data()
         if not address_name or not action_name:
             QMessageBox.warning(self, _("osc_address_tab.input_error"), 
-                              "请选择地址和动作")
+                              _("osc_address_tab.select_address_action"))
             return False
         return True
 
@@ -127,7 +128,7 @@ class AddAddressDialog(QDialog):
         name_line_edit = self.name_combo.lineEdit()
         if name_line_edit:
             name_line_edit.setPlaceholderText(_("osc_address_tab.address_name_placeholder"))
-        form_layout.addRow(_("osc_address_tab.address_name") + ":", self.name_combo)
+        form_layout.addRow(_("osc_address_tab.address_name_label"), self.name_combo)
         
         # OSC地址/代码 - 可编辑下拉列表
         osc_code_options = self.options_provider.get_osc_code_options()
@@ -136,7 +137,7 @@ class AddAddressDialog(QDialog):
         code_line_edit = self.code_combo.lineEdit()
         if code_line_edit:
             code_line_edit.setPlaceholderText(_("osc_address_tab.osc_code_placeholder"))
-        form_layout.addRow(_("osc_address_tab.osc_code") + ":", self.code_combo)
+        form_layout.addRow(_("osc_address_tab.osc_code_label"), self.code_combo)
         
         layout.addLayout(form_layout)
         
@@ -189,6 +190,7 @@ class OSCAddressListTab(QWidget):
         self.refresh_btn: QPushButton
         self.save_addresses_btn: QPushButton
         self.status_label: QLabel
+        self.address_list_group: QGroupBox
         
         self.init_ui()
         
@@ -207,7 +209,8 @@ class OSCAddressListTab(QWidget):
     
     def create_address_list_group(self, parent_layout: QVBoxLayout) -> None:
         """创建地址列表组"""
-        group = QGroupBox(_("osc_address_tab.address_list"))
+        self.address_list_group = QGroupBox(_("osc_address_tab.address_list"))
+        group = self.address_list_group
         layout = QVBoxLayout(group)
         
         # 地址表格
@@ -245,7 +248,7 @@ class OSCAddressListTab(QWidget):
         layout.addWidget(self.address_table)
         
         # 状态标签
-        self.status_label = QLabel("地址总数: 0 (默认: 0, 自定义: 0)")
+        self.status_label = QLabel(_("osc_address_tab.total_addresses").format(0))
         self.status_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -280,7 +283,7 @@ class OSCAddressListTab(QWidget):
                 background-color: #3d8b40;
             }
         """)
-        self.add_address_btn.setToolTip("添加新的自定义OSC地址")
+        self.add_address_btn.setToolTip(_("osc_address_tab.add_address_tooltip"))
         button_layout.addWidget(self.add_address_btn)
         
         # 删除地址按钮
@@ -307,7 +310,7 @@ class OSCAddressListTab(QWidget):
                 color: #666666;
             }
         """)
-        self.delete_address_btn.setToolTip("删除选中的自定义地址（不能删除默认地址）")
+        self.delete_address_btn.setToolTip(_("osc_address_tab.delete_address_tooltip"))
         button_layout.addWidget(self.delete_address_btn)
         
         # 刷新按钮
@@ -329,12 +332,12 @@ class OSCAddressListTab(QWidget):
                 background-color: #1565C0;
             }
         """)
-        self.refresh_btn.setToolTip("刷新地址列表")
+        self.refresh_btn.setToolTip(_("osc_address_tab.refresh_tooltip"))
         button_layout.addWidget(self.refresh_btn)
         
         # 保存地址按钮
         self.save_addresses_btn = QPushButton(_("osc_address_tab.save_config"))
-        self.save_addresses_btn.clicked.connect(self.save_custom_addresses)
+        self.save_addresses_btn.clicked.connect(self.save_addresses)
         self.save_addresses_btn.setStyleSheet("""
             QPushButton {
                 background-color: #FF9800;
@@ -351,7 +354,7 @@ class OSCAddressListTab(QWidget):
                 background-color: #E65100;
             }
         """)
-        self.save_addresses_btn.setToolTip("保存自定义地址到配置文件")
+        self.save_addresses_btn.setToolTip(_("osc_address_tab.save_addresses_tooltip"))
         button_layout.addWidget(self.save_addresses_btn)
         
         button_layout.addStretch()  # 添加弹性空间
@@ -391,17 +394,12 @@ class OSCAddressListTab(QWidget):
             code_item = QTableWidgetItem(addr.code)
             self.address_table.setItem(row, 1, code_item)
             
-            # 状态列
-            is_custom = addr in self.address_registry.get_custom_addresses()
-            status_item = QTableWidgetItem("自定义" if is_custom else "默认")
+            # 状态列 - 所有地址都显示为可用状态
+            status_item = QTableWidgetItem(_("osc_address_tab.available"))
             
-            # 设置状态列样式
-            if is_custom:
-                status_item.setBackground(Qt.GlobalColor.green)
-                status_item.setForeground(Qt.GlobalColor.darkGreen)
-            else:
-                status_item.setBackground(Qt.GlobalColor.cyan)
-                status_item.setForeground(Qt.GlobalColor.darkBlue)
+            # 设置状态列样式为绿色
+            status_item.setBackground(QColor(144, 238, 144))  # 浅绿色背景
+            status_item.setForeground(QColor(0, 128, 0))      # 深绿色文字
             
             # 状态列不可编辑
             status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -409,9 +407,7 @@ class OSCAddressListTab(QWidget):
         
         # 更新状态标签
         total_count = len(addresses)
-        custom_count = len(self.address_registry.get_custom_addresses())
-        default_count = total_count - custom_count
-        self.status_label.setText(f"地址总数: {total_count} (默认: {default_count}, 自定义: {custom_count})")
+        self.status_label.setText(_("osc_address_tab.total_addresses").format(total_count))
     
     def add_address(self) -> None:
         """添加新地址"""
@@ -422,7 +418,7 @@ class OSCAddressListTab(QWidget):
         
         if not self.options_provider:
             QMessageBox.warning(self, _("osc_address_tab.error"), 
-                              "下拉列表数据提供者未初始化")
+                              _("osc_address_tab.provider_not_initialized"))
             return
         
         dialog = AddAddressDialog(self.options_provider, self)
@@ -443,14 +439,14 @@ class OSCAddressListTab(QWidget):
                 
                 # 添加地址
                 try:
-                    self.address_registry.register_custom_address(name, code)
+                    self.address_registry.register_address(name, code)
                     self.refresh_address_table()
-                    self.save_custom_addresses_silent()  # 静默自动保存到配置文件
+                    self.save_addresses_silent()  # 静默自动保存到配置文件
                     logger.info(f"Added OSC address: {name} -> {code}")
                     
                     # 显示成功消息
                     QMessageBox.information(self, _("osc_address_tab.success"),
-                                          f"成功添加地址: {name}，已自动保存到配置文件")
+                                          _("osc_address_tab.address_added").format(name))
                 except Exception as e:
                     QMessageBox.critical(self, _("osc_address_tab.error"),
                                        f"Failed to add address: {str(e)}")
@@ -474,12 +470,7 @@ class OSCAddressListTab(QWidget):
         if not addr:
             return
         
-        # 检查是否为自定义地址
-        is_custom = addr in self.address_registry.get_custom_addresses()
-        if not is_custom:
-            QMessageBox.warning(self, _("osc_address_tab.error"),
-                              "不能删除默认地址，只能删除自定义地址")
-            return
+        # 由于core模块简化，现在所有地址都可以删除
         
         # 确认删除
         reply = QMessageBox.question(self, _("osc_address_tab.confirm_delete"),
@@ -489,59 +480,59 @@ class OSCAddressListTab(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 # 使用注册表的remove_address方法
-                self.address_registry.remove_address(addr)
+                self.address_registry.unregister_address(addr)
                 self.refresh_address_table()
-                self.save_custom_addresses_silent()  # 静默自动保存到配置文件
+                self.save_addresses_silent()  # 静默自动保存到配置文件
                 logger.info(f"Deleted OSC address: {address_name}")
                 
                 # 显示成功消息
                 QMessageBox.information(self, _("osc_address_tab.success"),
-                                      f"成功删除地址: {address_name}，已自动保存到配置文件")
+                                      _("osc_address_tab.address_deleted").format(address_name))
                 
             except Exception as e:
                 QMessageBox.critical(self, _("osc_address_tab.error"),
                                    f"Failed to delete address: {str(e)}")
     
-    def save_custom_addresses(self) -> None:
-        """保存自定义地址到配置文件"""
+    def save_addresses(self) -> None:
+        """保存地址到配置文件"""
         if self.address_registry:
             try:
-                # 导出自定义地址
-                custom_addresses = self.address_registry.export_custom_addresses()
+                # 导出所有地址
+                all_addresses = self.address_registry.export_to_config()
                 
                 # 更新settings
-                self.ui_callback.settings['custom_addresses'] = custom_addresses
+                self.ui_callback.settings['addresses'] = all_addresses
                 
                 # 保存到文件
                 self.ui_callback.save_settings()
-                logger.info(f"Saved {len(custom_addresses)} custom addresses to config")
+                logger.info(f"Saved {len(all_addresses)} addresses to config")
                 
                 # 显示成功消息
                 QMessageBox.information(self, _("osc_address_tab.success"),
-                                      f"成功保存 {len(custom_addresses)} 个自定义地址到配置文件")
+                                      _("osc_address_tab.addresses_saved").format(len(all_addresses)))
             except Exception as e:
-                logger.error(f"Failed to save custom addresses: {e}")
+                logger.error(f"Failed to save addresses: {e}")
                 QMessageBox.critical(self, _("osc_address_tab.error"),
-                                   f"保存自定义地址失败: {str(e)}")
+                                   _("osc_address_tab.save_addresses_failed").format(str(e)))
         else:
             QMessageBox.warning(self, _("osc_address_tab.error"),
                               _("osc_address_tab.registry_not_available"))
     
-    def save_custom_addresses_silent(self) -> None:
-        """静默保存自定义地址到配置文件（用于自动保存，不显示消息框）"""
+    def save_addresses_silent(self) -> None:
+        """静默保存地址到配置文件（用于自动保存，不显示消息框）"""
         if self.address_registry:
             try:
-                # 导出自定义地址
-                custom_addresses = self.address_registry.export_custom_addresses()
+                # 导出所有地址
+                all_addresses = self.address_registry.export_to_config()
                 
                 # 更新settings
-                self.ui_callback.settings['custom_addresses'] = custom_addresses
+                self.ui_callback.settings['addresses'] = all_addresses
                 
                 # 保存到文件
                 self.ui_callback.save_settings()
-                logger.info(f"Auto-saved {len(custom_addresses)} custom addresses to config")
+                logger.info(f"Auto-saved {len(all_addresses)} addresses to config")
             except Exception as e:
-                logger.error(f"Failed to auto-save custom addresses: {e}")
+                logger.error(f"Failed to auto-save addresses: {e}")
     
     def on_address_selection_changed(self) -> None:
         """地址选择变化时的处理"""
@@ -550,6 +541,9 @@ class OSCAddressListTab(QWidget):
     
     def update_ui_texts(self) -> None:
         """更新UI文本"""
+        # 更新分组框标题
+        self.address_list_group.setTitle(_("osc_address_tab.address_list"))
+        
         # 更新表格标题
         self.address_table.setHorizontalHeaderLabels([
             _("osc_address_tab.address_name"), 
@@ -563,8 +557,18 @@ class OSCAddressListTab(QWidget):
         self.refresh_btn.setText(_("osc_address_tab.refresh"))
         self.save_addresses_btn.setText(_("osc_address_tab.save_config"))
         
+        # 更新工具提示
+        self.add_address_btn.setToolTip(_("osc_address_tab.add_address_tooltip"))
+        self.delete_address_btn.setToolTip(_("osc_address_tab.delete_address_tooltip"))
+        self.refresh_btn.setToolTip(_("osc_address_tab.refresh_tooltip"))
+        self.save_addresses_btn.setToolTip(_("osc_address_tab.save_addresses_tooltip"))
+        
         # 刷新表格内容以更新状态列
         self.refresh_address_table()
+        
+        # 如果没有注册表，至少更新状态标签的文本格式
+        if not self.address_registry:
+            self.status_label.setText(_("osc_address_tab.total_addresses").format(0))
 
 
 class OSCAddressBindingTab(QWidget):
@@ -585,6 +589,7 @@ class OSCAddressBindingTab(QWidget):
         self.refresh_btn: QPushButton
         self.save_config_btn: QPushButton
         self.binding_status_label: QLabel
+        self.address_binding_group: QGroupBox
         
         self.init_ui()
         
@@ -603,7 +608,8 @@ class OSCAddressBindingTab(QWidget):
     
     def create_address_binding_group(self, parent_layout: QVBoxLayout) -> None:
         """创建地址绑定组"""
-        group = QGroupBox(_("osc_address_tab.address_binding"))
+        self.address_binding_group = QGroupBox(_("osc_address_tab.address_binding"))
+        group = self.address_binding_group
         layout = QVBoxLayout(group)
         
         # 绑定表格
@@ -641,7 +647,7 @@ class OSCAddressBindingTab(QWidget):
         layout.addWidget(self.binding_table)
         
         # 绑定状态标签
-        self.binding_status_label = QLabel("绑定总数: 0 (有效: 0, 无效: 0)")
+        self.binding_status_label = QLabel(_("osc_address_tab.binding_status_all_valid").format(0))
         self.binding_status_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -658,7 +664,7 @@ class OSCAddressBindingTab(QWidget):
         button_layout = QHBoxLayout()
         
         # 添加绑定按钮
-        self.add_binding_btn = QPushButton("添加绑定")
+        self.add_binding_btn = QPushButton(_("osc_address_tab.add_binding"))
         self.add_binding_btn.clicked.connect(self.add_binding)
         self.add_binding_btn.setStyleSheet("""
             QPushButton {
@@ -676,11 +682,11 @@ class OSCAddressBindingTab(QWidget):
                 background-color: #3d8b40;
             }
         """)
-        self.add_binding_btn.setToolTip("添加新的地址绑定")
+        self.add_binding_btn.setToolTip(_("osc_address_tab.add_binding_tooltip"))
         button_layout.addWidget(self.add_binding_btn)
         
         # 删除绑定按钮
-        self.delete_binding_btn = QPushButton("删除绑定")
+        self.delete_binding_btn = QPushButton(_("osc_address_tab.delete_binding"))
         self.delete_binding_btn.clicked.connect(self.delete_binding)
         self.delete_binding_btn.setEnabled(False)
         self.delete_binding_btn.setStyleSheet("""
@@ -703,7 +709,7 @@ class OSCAddressBindingTab(QWidget):
                 color: #666666;
             }
         """)
-        self.delete_binding_btn.setToolTip("删除选中的自定义地址绑定（不能删除默认绑定）")
+        self.delete_binding_btn.setToolTip(_("osc_address_tab.delete_binding_tooltip"))
         button_layout.addWidget(self.delete_binding_btn)
         
         # 刷新按钮
@@ -725,7 +731,7 @@ class OSCAddressBindingTab(QWidget):
                 background-color: #1565C0;
             }
         """)
-        self.refresh_btn.setToolTip("刷新地址绑定列表")
+        self.refresh_btn.setToolTip(_("osc_address_tab.refresh_binding_tooltip"))
         button_layout.addWidget(self.refresh_btn)
         
         # 保存配置按钮
@@ -747,7 +753,7 @@ class OSCAddressBindingTab(QWidget):
                 background-color: #E65100;
             }
         """)
-        self.save_config_btn.setToolTip("保存当前的地址绑定配置到文件")
+        self.save_config_btn.setToolTip(_("osc_address_tab.save_config_tooltip"))
         button_layout.addWidget(self.save_config_btn)
         
         button_layout.addStretch()  # 添加弹性空间
@@ -782,10 +788,9 @@ class OSCAddressBindingTab(QWidget):
         bindings = list(self.address_bindings.bindings.items())
         self.binding_table.setRowCount(len(bindings))
         
+        # 统计有效和无效绑定数量
         valid_count = 0
         invalid_count = 0
-        default_count = 0
-        custom_count = 0
         
         for row, (addr, action) in enumerate(bindings):
             # 地址名
@@ -796,104 +801,75 @@ class OSCAddressBindingTab(QWidget):
             action_item = QTableWidgetItem(action.name)
             self.binding_table.setItem(row, 1, action_item)
             
-            # 检查是否为默认绑定
-            binding_dict = {'address_name': addr.name, 'action_name': action.name}
-            is_default = self.address_bindings.is_binding_template(binding_dict)
+            # 验证绑定有效性
+            is_valid, error_msg = self.address_bindings.validate_binding(
+                addr, action, self.address_registry, self.action_registry)
             
-            # 状态列 - 显示默认/自定义和有效性
-            is_valid = self._is_binding_valid(addr, action)
-            
-            if is_default:
-                status_text = "默认"
-                default_count += 1
-            else:
-                status_text = "自定义"
-                custom_count += 1
-            
-            # 如果绑定无效，在状态文本后添加标识
-            if not is_valid:
-                status_text += " (无效)"
-                invalid_count += 1
-            else:
+            # 状态列
+            if is_valid:
+                status_text = _("osc_address_tab.available")
+                status_item = QTableWidgetItem(status_text)
+                # 有效绑定：明显的绿色背景
+                status_item.setBackground(QColor(144, 238, 144))  # 浅绿色
+                status_item.setForeground(QColor(0, 128, 0))      # 深绿色文字
+                status_item.setToolTip(_("osc_address_tab.binding_valid_tooltip"))
                 valid_count += 1
-            
-            status_item = QTableWidgetItem(status_text)
-            
-            # 设置状态列样式
-            if is_default:
-                if is_valid:
-                    status_item.setBackground(Qt.GlobalColor.cyan)
-                    status_item.setForeground(Qt.GlobalColor.darkBlue)
-                else:
-                    status_item.setBackground(Qt.GlobalColor.yellow)
-                    status_item.setForeground(Qt.GlobalColor.darkRed)
+                
+                # 为有效绑定的行设置正常样式
+                addr_item.setBackground(Qt.GlobalColor.white)
+                action_item.setBackground(Qt.GlobalColor.white)
             else:
-                if is_valid:
-                    status_item.setBackground(Qt.GlobalColor.green)
-                    status_item.setForeground(Qt.GlobalColor.darkGreen)
-                else:
-                    status_item.setBackground(Qt.GlobalColor.red)
-                    status_item.setForeground(Qt.GlobalColor.white)
+                status_text = _("osc_address_tab.invalid")
+                status_item = QTableWidgetItem(status_text)
+                # 无效绑定：浅红色背景
+                status_item.setBackground(QColor(255, 200, 200))  # 浅红色
+                status_item.setForeground(QColor(150, 0, 0))      # 深红色文字
+                status_item.setToolTip(_("osc_address_tab.binding_invalid").format(error_msg))
+                invalid_count += 1
+                
+                # 为无效绑定的行设置警告样式
+                addr_item.setBackground(QColor(240, 240, 240))    # 浅灰色
+                action_item.setBackground(QColor(240, 240, 240))  # 浅灰色
+                addr_item.setForeground(QColor(150, 0, 0))        # 深红色文字
+                action_item.setForeground(QColor(150, 0, 0))      # 深红色文字
             
             # 状态列不可编辑
             status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.binding_table.setItem(row, 2, status_item)
         
-        # 更新状态标签
+        # 更新状态标签，显示详细统计
         total_count = len(bindings)
-        self.binding_status_label.setText(f"绑定总数: {total_count} (默认: {default_count}, 自定义: {custom_count}, 有效: {valid_count}, 无效: {invalid_count})")
+        if invalid_count > 0:
+            self.binding_status_label.setText(_("osc_address_tab.binding_status_with_invalid").format(total_count, valid_count, invalid_count))
+            self.binding_status_label.setStyleSheet("""
+                QLabel {
+                    color: #d32f2f;
+                    font-size: 12px;
+                    padding: 5px;
+                    font-weight: bold;
+                }
+            """)
+        else:
+            self.binding_status_label.setText(_("osc_address_tab.binding_status_all_valid").format(total_count))
+            self.binding_status_label.setStyleSheet("""
+                QLabel {
+                    color: #2e7d32;
+                    font-size: 12px;
+                    padding: 5px;
+                    font-weight: bold;
+                }
+            """)
     
-    def _is_binding_valid(self, addr: 'OSCAddress', action: 'OSCAction') -> bool:
-        """检查绑定是否有效"""
-        try:
-            # 检查注册表是否存在
-            if not self.address_registry or not self.action_registry:
-                return False
-            
-            # 检查地址是否仍然存在于注册表中
-            addr_exists = addr.name in self.address_registry.addresses_by_name
-            
-            # 检查动作是否仍然存在于注册表中
-            action_exists = action.name in self.action_registry.actions_by_name
-            
-            # 如果地址或动作不存在，则绑定无效
-            if not addr_exists or not action_exists:
-                return False
-            
-            # 检查地址和动作的对象是否与注册表中的一致
-            addr_valid = self.address_registry.addresses_by_name[addr.name] == addr
-            action_valid = self.action_registry.actions_by_name[action.name] == action
-            
-            return addr_valid and action_valid
-            
-        except Exception as e:
-            logger.warning(f"Error validating binding: {e}")
-            return False
+
     
     def save_config(self) -> None:
         """保存配置到文件"""
         try:
-            # 首先将当前绑定状态同步到settings
+            # 保存所有绑定
             if self.address_bindings:
-                # 从内存对象提取当前绑定状态
-                address_bindings = []
-                for address, action in self.address_bindings.bindings.items():
-                    binding_data = {
-                        'address_name': address.name,
-                        'action_name': action.name
-                    }
-                    address_bindings.append(binding_data)
-                
-                # 过滤掉默认绑定，只保存用户自定义的绑定
-                custom_bindings = self.address_bindings.filter_non_binding_templates(address_bindings)
-                
-                # 只有当存在用户自定义绑定时才保存address_bindings字段
-                if custom_bindings:
-                    self.ui_callback.settings['address_bindings'] = custom_bindings
-                else:
-                    # 如果只有默认绑定，则从配置中移除address_bindings字段
-                    if 'address_bindings' in self.ui_callback.settings:
-                        del self.ui_callback.settings['address_bindings']
+                # 获取所有绑定
+                all_bindings = self.address_bindings.export_to_config()
+                self.ui_callback.settings['bindings'] = all_bindings
                     
             # 调用UIInterface的保存方法
             self.ui_callback.save_settings()
@@ -901,13 +877,13 @@ class OSCAddressBindingTab(QWidget):
                                   _("osc_address_tab.config_saved"))
         except Exception as e:
             QMessageBox.critical(self, _("osc_address_tab.error"),
-                               f"Failed to save config: {str(e)}")
+                               _("osc_address_tab.save_config_failed").format(str(e)))
     
     def add_binding(self) -> None:
         """添加新的地址绑定"""
         if not self.address_registry or not self.action_registry or not self.address_bindings:
             QMessageBox.warning(self, _("osc_address_tab.error"), 
-                              "注册表不可用，请等待初始化完成")
+                              _("osc_address_tab.registry_not_ready"))
             return
         
         dialog = AddBindingDialog(self.address_registry, self.action_registry, self)
@@ -921,13 +897,13 @@ class OSCAddressBindingTab(QWidget):
                 
                 if not address or not action:
                     QMessageBox.critical(self, _("osc_address_tab.error"),
-                                       f"未找到地址或动作: {address_name}, {action_name}")
+                                       _("osc_address_tab.address_action_not_found").format(address_name, action_name))
                     return
                 
                 # 检查是否已存在的绑定
                 if address in self.address_bindings.bindings:
-                    reply = QMessageBox.question(self, "确认替换",
-                                                f"地址 '{address_name}' 已有绑定，是否替换？",
+                    reply = QMessageBox.question(self, _("osc_address_tab.confirm_replace"),
+                                                _("osc_address_tab.replace_binding_msg").format(address_name),
                                                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                     if reply != QMessageBox.StandardButton.Yes:
                         return
@@ -940,10 +916,10 @@ class OSCAddressBindingTab(QWidget):
                     
                     # 显示成功消息
                     QMessageBox.information(self, _("osc_address_tab.success"),
-                                          f"成功添加绑定: {address_name} -> {action_name}")
+                                          _("osc_address_tab.binding_added").format(address_name, action_name))
                 except Exception as e:
                     QMessageBox.critical(self, _("osc_address_tab.error"),
-                                       f"添加绑定失败: {str(e)}")
+                                       _("osc_address_tab.add_binding_failed").format(str(e)))
     
     def delete_binding(self) -> None:
         """删除选中的地址绑定"""
@@ -961,18 +937,11 @@ class OSCAddressBindingTab(QWidget):
         
         address, action = bindings[current_row]
         
-        # 检查是否为默认绑定
-        binding_dict = {'address_name': address.name, 'action_name': action.name}
-        is_default = self.address_bindings.is_binding_template(binding_dict)
-        
-        if is_default:
-            QMessageBox.warning(self, _("osc_address_tab.error"),
-                              "不能删除默认绑定，只能删除自定义绑定")
-            return
+        # 由于core模块简化，现在所有绑定都可以删除
         
         # 确认删除
-        reply = QMessageBox.question(self, "确认删除",
-                                   f"是否删除绑定: {address.name} -> {action.name}？",
+        reply = QMessageBox.question(self, _("osc_address_tab.confirm_delete"),
+                                   _("osc_address_tab.delete_binding_msg").format(address.name, action.name),
                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         
         if reply == QMessageBox.StandardButton.Yes:
@@ -983,11 +952,11 @@ class OSCAddressBindingTab(QWidget):
                 
                 # 显示成功消息
                 QMessageBox.information(self, _("osc_address_tab.success"),
-                                      f"成功删除绑定: {address.name} -> {action.name}")
+                                      _("osc_address_tab.binding_deleted").format(address.name, action.name))
                 
             except Exception as e:
                 QMessageBox.critical(self, _("osc_address_tab.error"),
-                                   f"删除绑定失败: {str(e)}")
+                                   _("osc_address_tab.delete_binding_failed").format(str(e)))
     
     def on_binding_selection_changed(self) -> None:
         """绑定选择变化时的处理"""
@@ -996,6 +965,9 @@ class OSCAddressBindingTab(QWidget):
     
     def update_ui_texts(self) -> None:
         """更新UI文本"""
+        # 更新分组框标题
+        self.address_binding_group.setTitle(_("osc_address_tab.address_binding"))
+        
         # 更新表格标题
         self.binding_table.setHorizontalHeaderLabels([
             _("osc_address_tab.address_name"),
@@ -1004,13 +976,23 @@ class OSCAddressBindingTab(QWidget):
         ])
         
         # 更新按钮文本
-        self.add_binding_btn.setText("添加绑定")
-        self.delete_binding_btn.setText("删除绑定")
+        self.add_binding_btn.setText(_("osc_address_tab.add_binding"))
+        self.delete_binding_btn.setText(_("osc_address_tab.delete_binding"))
         self.refresh_btn.setText(_("osc_address_tab.refresh"))
         self.save_config_btn.setText(_("osc_address_tab.save_config"))
         
+        # 更新工具提示
+        self.add_binding_btn.setToolTip(_("osc_address_tab.add_binding_tooltip"))
+        self.delete_binding_btn.setToolTip(_("osc_address_tab.delete_binding_tooltip"))
+        self.refresh_btn.setToolTip(_("osc_address_tab.refresh_binding_tooltip"))
+        self.save_config_btn.setToolTip(_("osc_address_tab.save_config_tooltip"))
+        
         # 刷新表格内容以更新状态列
         self.refresh_binding_table()
+        
+        # 如果没有绑定注册表，至少更新状态标签的文本格式
+        if not self.address_bindings:
+            self.binding_status_label.setText(_("osc_address_tab.binding_status_all_valid").format(0))
 
 
 class OSCAddressTab(QWidget):

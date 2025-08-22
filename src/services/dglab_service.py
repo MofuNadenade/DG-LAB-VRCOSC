@@ -247,10 +247,10 @@ class DGLabService:
 
         # 防止重复触发
         if value and self.fire_mode_active:
-            print("已有开火操作在进行中，跳过本次开始请求")
+            logger.debug("已有开火操作在进行中，跳过本次开始请求")
             return
         if not value and not self.fire_mode_active:
-            print("没有进行中的开火操作，跳过本次结束请求")
+            logger.debug("没有进行中的开火操作，跳过本次结束请求")
             return
 
         async with self.fire_mode_lock:

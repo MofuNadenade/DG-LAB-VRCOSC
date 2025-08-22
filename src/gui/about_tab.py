@@ -44,7 +44,7 @@ class AboutTab(QWidget):
         version_layout = QVBoxLayout()
         current_version = get_version()
         build_info = get_build_info()
-        self.version_label = QLabel(_('about_tab.current_version') + f": {current_version}")
+        self.version_label = QLabel(_("about_tab.current_version_label").format(current_version))
         
         # 添加构建信息
         if build_info.get('commit_short') != 'unknown':
@@ -111,4 +111,4 @@ class AboutTab(QWidget):
         """更新UI上的所有文本为当前语言"""
         self.feedback_btn.setText(_('about_tab.feedback'))
         current_version = get_version()
-        self.version_label.setText(_('about_tab.current_version') + f": {current_version}")
+        self.version_label.setText(_("about_tab.current_version_label").format(current_version))

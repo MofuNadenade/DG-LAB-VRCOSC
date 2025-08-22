@@ -1,0 +1,370 @@
+"""
+精细脉冲编辑器
+支持4元组频率和强度的详细编辑，确保不丢失精度
+"""
+
+import logging
+from typing import Optional, Tuple, List
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QSpinBox, QGroupBox, QDialog, QDialogButtonBox, QGridLayout,
+    QTabWidget, QScrollArea, QFrame
+)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFont
+
+from pydglab_ws.typing import PulseOperation, WaveformFrequencyOperation, WaveformStrengthOperation
+from i18n import translate as _, language_signals
+
+logger = logging.getLogger(__name__)
+
+
+class DetailedPulseStepDialog(QDialog):
+    """单个脉冲步骤的详细编辑对话框"""
+    
+    def __init__(self, pulse_operation: PulseOperation, step_index: int, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.pulse_operation = pulse_operation
+        self.step_index = step_index
+        self.frequency_spinboxes: List[QSpinBox] = []
+        self.strength_spinboxes: List[QSpinBox] = []
+        
+        self.setup_ui()
+        self.load_data()
+        
+        # 连接语言变更信号
+        language_signals.language_changed.connect(self.update_ui_texts)
+        
+    def setup_ui(self) -> None:
+        """设置UI"""
+        self.setWindowTitle(_("pulse_editor.detailed_edit_title"))
+        self.setModal(True)
+        self.setMinimumSize(500, 400)
+        
+        layout = QVBoxLayout(self)
+        
+        # 标题
+        title_label = QLabel(_("pulse_editor.detailed_edit_step").format(self.step_index + 1))
+        title_font = QFont()
+        title_font.setPointSize(14)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
+        
+        # 创建标签页
+        tab_widget = QTabWidget()
+        
+        # 频率编辑标签页
+        freq_tab = self.create_frequency_tab()
+        tab_widget.addTab(freq_tab, _("pulse_editor.frequency_tab"))
+        
+        # 强度编辑标签页
+        strength_tab = self.create_strength_tab()
+        tab_widget.addTab(strength_tab, _("pulse_editor.strength_tab"))
+        
+        # 预览标签页
+        preview_tab = self.create_preview_tab()
+        tab_widget.addTab(preview_tab, _("pulse_editor.preview_tab"))
+        
+        layout.addWidget(tab_widget)
+        
+        # 按钮
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+        
+        self.apply_theme()
+        
+    def create_frequency_tab(self) -> QWidget:
+        """创建频率编辑标签页"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # 说明文字
+        desc_label = QLabel(_("pulse_editor.frequency_desc"))
+        desc_label.setWordWrap(True)
+        layout.addWidget(desc_label)
+        
+        # 频率编辑组
+        freq_group = QGroupBox(_("pulse_editor.frequency_values"))
+        freq_layout = QGridLayout(freq_group)
+        
+        self.frequency_spinboxes = []
+        for i in range(4):
+            label = QLabel(_("pulse_editor.frequency_channel").format(i + 1))
+            spinbox = QSpinBox()
+            spinbox.setRange(10, 240)
+            spinbox.setSuffix("")
+            spinbox.valueChanged.connect(self.update_preview)
+            
+            freq_layout.addWidget(label, i, 0)
+            freq_layout.addWidget(spinbox, i, 1)
+            self.frequency_spinboxes.append(spinbox)
+            
+        layout.addWidget(freq_group)
+        
+        # 快速设置按钮
+        quick_group = QGroupBox(_("pulse_editor.quick_frequency_settings"))
+        quick_layout = QHBoxLayout(quick_group)
+        
+        # 统一设置
+        uniform_btn = QPushButton(_("pulse_editor.set_uniform_frequency"))
+        uniform_btn.clicked.connect(self.set_uniform_frequency)
+        quick_layout.addWidget(uniform_btn)
+        
+        # 渐变设置
+        gradient_btn = QPushButton(_("pulse_editor.set_gradient_frequency"))
+        gradient_btn.clicked.connect(self.set_gradient_frequency)
+        quick_layout.addWidget(gradient_btn)
+        
+        # 复制第一个值
+        copy_first_btn = QPushButton(_("pulse_editor.copy_first_frequency"))
+        copy_first_btn.clicked.connect(self.copy_first_frequency)
+        quick_layout.addWidget(copy_first_btn)
+        
+        layout.addWidget(quick_group)
+        layout.addStretch()
+        
+        return widget
+        
+    def create_strength_tab(self) -> QWidget:
+        """创建强度编辑标签页"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # 说明文字
+        desc_label = QLabel(_("pulse_editor.strength_desc"))
+        desc_label.setWordWrap(True)
+        layout.addWidget(desc_label)
+        
+        # 强度编辑组
+        strength_group = QGroupBox(_("pulse_editor.strength_values"))
+        strength_layout = QGridLayout(strength_group)
+        
+        self.strength_spinboxes = []
+        for i in range(4):
+            label = QLabel(_("pulse_editor.strength_channel").format(i + 1))
+            spinbox = QSpinBox()
+            spinbox.setRange(0, 100)
+            spinbox.setSuffix("%")
+            spinbox.valueChanged.connect(self.update_preview)
+            
+            strength_layout.addWidget(label, i, 0)
+            strength_layout.addWidget(spinbox, i, 1)
+            self.strength_spinboxes.append(spinbox)
+            
+        layout.addWidget(strength_group)
+        
+        # 快速设置按钮
+        quick_group = QGroupBox(_("pulse_editor.quick_strength_settings"))
+        quick_layout = QHBoxLayout(quick_group)
+        
+        # 统一设置
+        uniform_btn = QPushButton(_("pulse_editor.set_uniform_strength"))
+        uniform_btn.clicked.connect(self.set_uniform_strength)
+        quick_layout.addWidget(uniform_btn)
+        
+        # 渐变设置
+        gradient_btn = QPushButton(_("pulse_editor.set_gradient_strength"))
+        gradient_btn.clicked.connect(self.set_gradient_strength)
+        quick_layout.addWidget(gradient_btn)
+        
+        # 复制第一个值
+        copy_first_btn = QPushButton(_("pulse_editor.copy_first_strength"))
+        copy_first_btn.clicked.connect(self.copy_first_strength)
+        quick_layout.addWidget(copy_first_btn)
+        
+        layout.addWidget(quick_group)
+        layout.addStretch()
+        
+        return widget
+        
+    def create_preview_tab(self) -> QWidget:
+        """创建预览标签页"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # 预览组
+        preview_group = QGroupBox(_("pulse_editor.data_preview"))
+        preview_layout = QVBoxLayout(preview_group)
+        
+        self.preview_label = QLabel()
+        self.preview_label.setWordWrap(True)
+        self.preview_label.setStyleSheet("""
+            QLabel {
+                background-color: #2b2b2b;
+                border: 1px solid #d4af37;
+                border-radius: 5px;
+                padding: 10px;
+                font-family: 'Courier New', monospace;
+                color: white;
+            }
+        """)
+        
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(self.preview_label)
+        scroll_area.setWidgetResizable(True)
+        preview_layout.addWidget(scroll_area)
+        
+        layout.addWidget(preview_group)
+        
+        return widget
+        
+    def load_data(self) -> None:
+        """加载数据到编辑器"""
+        frequency_tuple, strength_tuple = self.pulse_operation
+        
+        # 加载频率数据
+        for i, freq in enumerate(frequency_tuple):
+            self.frequency_spinboxes[i].setValue(freq)
+            
+        # 加载强度数据
+        for i, strength in enumerate(strength_tuple):
+            self.strength_spinboxes[i].setValue(strength)
+            
+        self.update_preview()
+        
+    def update_preview(self) -> None:
+        """更新预览"""
+        frequency_values = [spinbox.value() for spinbox in self.frequency_spinboxes]
+        strength_values = [spinbox.value() for spinbox in self.strength_spinboxes]
+        
+        preview_text = _("pulse_editor.preview_format").format(
+            self.step_index + 1,
+            ', '.join(map(str, frequency_values)),
+            ', '.join(map(str, strength_values))
+        )
+        
+        # 添加数据分析
+        preview_text += "\n\n" + _("pulse_editor.data_analysis") + ":\n"
+        preview_text += f"• {_('pulse_editor.frequency_range')}: {min(frequency_values)} - {max(frequency_values)}\n"
+        preview_text += f"• {_('pulse_editor.strength_range')}: {min(strength_values)} - {max(strength_values)}%\n"
+        preview_text += f"• {_('pulse_editor.frequency_uniform')}: {_('pulse_editor.yes') if len(set(frequency_values)) == 1 else _('pulse_editor.no')}\n"
+        preview_text += f"• {_('pulse_editor.strength_uniform')}: {_('pulse_editor.yes') if len(set(strength_values)) == 1 else _('pulse_editor.no')}\n"
+        
+        self.preview_label.setText(preview_text)
+        
+    def get_pulse_operation(self) -> PulseOperation:
+        """获取编辑后的脉冲操作数据"""
+        frequency_values = tuple(spinbox.value() for spinbox in self.frequency_spinboxes)
+        strength_values = tuple(spinbox.value() for spinbox in self.strength_spinboxes)
+        return (frequency_values, strength_values)
+        
+    def set_uniform_frequency(self) -> None:
+        """设置统一频率"""
+        if self.frequency_spinboxes:
+            first_value = self.frequency_spinboxes[0].value()
+            for spinbox in self.frequency_spinboxes[1:]:
+                spinbox.setValue(first_value)
+                
+    def set_gradient_frequency(self) -> None:
+        """设置渐变频率"""
+        if len(self.frequency_spinboxes) >= 2:
+            start_value = self.frequency_spinboxes[0].value()
+            end_value = self.frequency_spinboxes[-1].value()
+            
+            for i, spinbox in enumerate(self.frequency_spinboxes[1:-1], 1):
+                # 线性插值
+                progress = i / (len(self.frequency_spinboxes) - 1)
+                value = int(start_value + (end_value - start_value) * progress)
+                spinbox.setValue(value)
+                
+    def copy_first_frequency(self) -> None:
+        """复制第一个频率值到所有位置"""
+        self.set_uniform_frequency()
+        
+    def set_uniform_strength(self) -> None:
+        """设置统一强度"""
+        if self.strength_spinboxes:
+            first_value = self.strength_spinboxes[0].value()
+            for spinbox in self.strength_spinboxes[1:]:
+                spinbox.setValue(first_value)
+                
+    def set_gradient_strength(self) -> None:
+        """设置渐变强度"""
+        if len(self.strength_spinboxes) >= 2:
+            start_value = self.strength_spinboxes[0].value()
+            end_value = self.strength_spinboxes[-1].value()
+            
+            for i, spinbox in enumerate(self.strength_spinboxes[1:-1], 1):
+                # 线性插值
+                progress = i / (len(self.strength_spinboxes) - 1)
+                value = int(start_value + (end_value - start_value) * progress)
+                spinbox.setValue(value)
+                
+    def copy_first_strength(self) -> None:
+        """复制第一个强度值到所有位置"""
+        self.set_uniform_strength()
+        
+    def apply_theme(self) -> None:
+        """应用主题"""
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #1a1a1a;
+                color: white;
+            }
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #d4af37;
+                border-radius: 8px;
+                margin: 5px;
+                padding-top: 15px;
+                color: #d4af37;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 8px 0 8px;
+                background-color: #1a1a1a;
+            }
+            QSpinBox {
+                background-color: #2b2b2b;
+                border: 1px solid #d4af37;
+                border-radius: 3px;
+                padding: 3px;
+                color: white;
+                min-width: 80px;
+            }
+            QSpinBox:focus {
+                border: 2px solid #d4af37;
+            }
+            QPushButton {
+                background-color: #d4af37;
+                color: black;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #f0c040;
+            }
+            QPushButton:pressed {
+                background-color: #b8860b;
+            }
+            QTabWidget::pane {
+                border: 1px solid #d4af37;
+                background-color: #1a1a1a;
+            }
+            QTabBar::tab {
+                background-color: #333;
+                color: white;
+                padding: 8px 16px;
+                border: 1px solid #d4af37;
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                background-color: #d4af37;
+                color: black;
+            }
+            QLabel {
+                color: white;
+            }
+        """)
+        
+    def update_ui_texts(self) -> None:
+        """更新UI文本"""
+        self.setWindowTitle(_("pulse_editor.detailed_edit_title"))
+        # 这里可以添加更多UI文本更新逻辑

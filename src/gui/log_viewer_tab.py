@@ -83,7 +83,7 @@ class LogViewerTab(QWidget):
         self.setup_logging()
         
         # 连接语言变更信号
-        language_signals.language_changed.connect(self.update_ui_text)
+        language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
     def controller(self) -> Optional[DGLabController]:
@@ -117,7 +117,7 @@ class LogViewerTab(QWidget):
         self.debug_group = debug_info_group  # 保持引用
         
         debug_info_layout = QVBoxLayout()
-        self.controller_params_label = QLabel(_("debug_tab.controller_params") + ":")
+        self.controller_params_label = QLabel(_("debug_tab.controller_params_label"))
         debug_info_layout.addWidget(self.controller_params_label)
         
         self.param_label = QLabel(_("debug_tab.loading_params"))
@@ -178,10 +178,10 @@ class LogViewerTab(QWidget):
         else:
             self.param_label.setText(_("debug_tab.controller_not_initialized"))
 
-    def update_ui_text(self) -> None:
+    def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""
         self.log_groupbox.setTitle(_("debug_tab.simple_log"))
         self.debug_group.setTitle(_("debug_tab.debug_info"))
         
         # 更新调试信息组内的标签 - 使用直接引用
-        self.controller_params_label.setText(_("debug_tab.controller_params") + ":")
+        self.controller_params_label.setText(_("debug_tab.controller_params_label"))

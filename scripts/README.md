@@ -100,6 +100,62 @@ python scripts/dev_build.py
 python scripts/dev_build.py --watch
 ```
 
+### `i18n_manager.py`
+国际化管理工具，用于管理和维护多语言支持。
+
+**Features:**
+- 提取代码中使用的本地化键
+- 提取语言文件中定义的键
+- 查找未使用的本地化键
+- 分析本地化键的使用情况
+- 验证语言文件的一致性
+
+**Usage:**
+```bash
+# 分析本地化键使用情况
+python scripts/i18n_manager.py analyze
+
+# 检查语言文件一致性
+python scripts/i18n_manager.py check
+
+# 列出代码中使用的所有键
+python scripts/i18n_manager.py list-used
+
+# 列出语言文件中定义的所有键
+python scripts/i18n_manager.py list-defined
+
+# 查找未使用的键
+python scripts/i18n_manager.py find-unused
+
+# 详细分析（包含更多信息）
+python scripts/i18n_manager.py analyze --verbose
+
+# 自定义源代码目录和语言文件
+python scripts/i18n_manager.py analyze --src-dir custom/src --locales custom/zh.yml custom/en.yml
+```
+
+### `i18n_checker.py`
+国际化文件一致性检查工具，专门用于验证多语言文件的完整性和一致性。
+
+**Features:**
+- 检查键的数量是否相同
+- 检查键的顺序是否一致
+- 检查是否存在重复键
+- 检查是否有缺失的键
+- YAML格式验证
+
+**Usage:**
+```bash
+# 基本一致性检查
+python scripts/i18n_checker.py
+
+# 显示详细的键对比信息
+python scripts/i18n_checker.py --details
+
+# 只显示不一致的键
+python scripts/i18n_checker.py --issues-only
+```
+
 ### Platform Scripts
 - `build.bat` - Windows batch script
 - `build.sh` - Unix/Linux/macOS shell script

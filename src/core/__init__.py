@@ -5,19 +5,19 @@ OSC核心模块
 """
 
 # 通用类型和枚举
-from .osc_common import OSCActionType, OSCAddressCallback, OSCRegistryObserver, OSCAddressValidator
+from .osc_common import OSCActionType, OSCRegistryObserver, OSCAddressValidator
 
 # 地址管理
 from .osc_address import OSCAddress, OSCAddressRegistry
 
 # 动作管理  
-from .osc_action import OSCAction, OSCActionRegistry
+from .osc_action import OSCAction, OSCActionRegistry, OSCActionCallback
 
 # 模板管理
-from .osc_template import OSCTemplate, OSCTemplateRegistry, OSCBindingTemplate, OSCBindingTemplateRegistry
+from .osc_template import OSCTemplate, OSCTemplateRegistry
 
 # 绑定管理
-from .osc_binding import OSCBindingRegistry
+from .osc_binding import OSCBindingRegistry, OSCBindingTemplate
 
 # 选项提供
 from .osc_provider import OSCOptionsProvider
@@ -29,7 +29,6 @@ from .dglab_controller import DGLabController, run_server
 __all__ = [
     # 通用
     'OSCActionType',
-    'OSCAddressCallback', 
     'OSCRegistryObserver',
     'OSCAddressValidator',
     
@@ -38,17 +37,17 @@ __all__ = [
     'OSCAddressRegistry',
     
     # 动作
-    'OSCAction', 
+    'OSCAction',
     'OSCActionRegistry',
+    'OSCActionCallback',
     
     # 模板
     'OSCTemplate',
     'OSCTemplateRegistry',
-    'OSCBindingTemplate',
-    'OSCBindingTemplateRegistry',
     
     # 绑定
     'OSCBindingRegistry',
+    'OSCBindingTemplate',
     
     # 提供者
     'OSCOptionsProvider',

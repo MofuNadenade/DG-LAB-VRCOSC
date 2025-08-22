@@ -4,7 +4,7 @@ OSC通用模块
 包含OSC系统的通用类型、枚举、协议和验证器。
 """
 
-from typing import Any, Coroutine, Protocol, Set, Optional, TYPE_CHECKING
+from typing import Any, Protocol, Set, Optional, TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:
@@ -17,15 +17,9 @@ class OSCActionType(Enum):
     CHANNEL_CONTROL = "channel_control"      # 通道控制
     STRENGTH_CONTROL = "strength_control"    # 强度控制  
     PANEL_CONTROL = "panel_control"          # 面板控制
-    WAVEFORM_CONTROL = "waveform_control"    # 波形控制
+    PULSE_CONTROL = "pulse_control"          # 波形控制
     CHATBOX_CONTROL = "chatbox_control"      # ChatBox控制
     CUSTOM = "custom"
-
-
-class OSCAddressCallback(Protocol):
-    """OSC地址回调协议"""
-    def __call__(self, *args: Any) -> Coroutine[Any, Any, Any]:
-        ...
 
 
 class OSCRegistryObserver(Protocol):

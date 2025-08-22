@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, Dict
 from ruamel.yaml import YAML
 import psutil
 import socket
@@ -8,27 +8,40 @@ import ipaddress
 import logging
 logger = logging.getLogger(__name__)
 
-DEFAULT_SETTINGS = """
-    interface: ""
-    ip: ""
-    port: 5678
-    osc_port: 9001
-    language: "zh"
-    enable_remote: false
-    remote_address: ""
-    custom_pulses: []
-    custom_addresses: []
-    enable_chatbox_status: false
-    strength_step: 30
-    fire_mode_disabled: false
-    enable_panel_control: true
-    dynamic_bone_mode_a: false
-    dynamic_bone_mode_b: false
-    pulse_mode_a: "连击"
-    pulse_mode_b: "连击"
-    """
+def get_default_settings() -> Dict[str, Any]:
+    """获取默认设置，包含所有默认配置"""
+    from core.defaults import DEFAULT_ADDRESSES, DEFAULT_PULSES, DEFAULT_TEMPLATES, DEFAULT_BINDINGS
+    
+    return {
+        # 网络设置
+        'interface': "",
+        'ip': "",
+        'port': 5678,
+        'osc_port': 9001,
+        'language': "zh",
+        'enable_remote': False,
+        'remote_address': "",
+        
+        # 控制器设置
+        'enable_chatbox_status': False,
+        'strength_step': 30,
+        'fire_mode_disabled': False,
+        'enable_panel_control': True,
+        'dynamic_bone_mode_a': False,
+        'dynamic_bone_mode_b': False,
+        'pulse_mode_a': "连击",
+        'pulse_mode_b': "连击",
+        
+        # 默认配置数据
+        'addresses': DEFAULT_ADDRESSES,
+        'pulses': {name: list(data) for name, data in DEFAULT_PULSES.items()},
+        'templates': DEFAULT_TEMPLATES,
+        'bindings': DEFAULT_BINDINGS
+    }
 
 yaml=YAML()
+# 禁用YAML引用以提高可读性
+yaml.representer.ignore_aliases = lambda *args: True
 
 # Get active IP addresses (unchanged)
 def get_active_ip_addresses() -> dict[str, str]:
@@ -56,13 +69,19 @@ def validate_port(port: str | int) -> bool:
     except ValueError:
         return False
 
-def default_load_settings(default_settings: Any = DEFAULT_SETTINGS) -> Any:
+def default_load_settings() -> Dict[str, Any]:
+    """加载设置，如果不存在则创建默认设置"""
     if not os.path.exists('settings.yml'):
-        settings = yaml.load(default_settings)
+        settings = get_default_settings()
         save_settings(settings)
+        logger.info("Created default settings.yml with all default configurations")
         return settings
     else:
         settings = load_settings()
+        if settings is None:
+            settings = get_default_settings()
+            save_settings(settings)
+            logger.info("Recreated corrupted settings.yml")
         return settings
 
 # Load the configuration from a YAML file
