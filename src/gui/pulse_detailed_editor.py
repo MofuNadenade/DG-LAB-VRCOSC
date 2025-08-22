@@ -8,7 +8,7 @@ from typing import Optional, Tuple, List
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QSpinBox, QGroupBox, QDialog, QDialogButtonBox, QGridLayout,
-    QTabWidget, QScrollArea, QFrame
+    QTabWidget, QScrollArea, QFrame, QSlider
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
@@ -26,8 +26,10 @@ class DetailedPulseStepDialog(QDialog):
         super().__init__(parent)
         self.pulse_operation = pulse_operation
         self.step_index = step_index
-        self.frequency_spinboxes: List[QSpinBox] = []
-        self.strength_spinboxes: List[QSpinBox] = []
+        self.frequency_sliders: List[QSlider] = []
+        self.frequency_labels: List[QLabel] = []
+        self.strength_sliders: List[QSlider] = []
+        self.strength_labels: List[QLabel] = []
         
         self.setup_ui()
         self.load_data()
@@ -91,17 +93,55 @@ class DetailedPulseStepDialog(QDialog):
         freq_group = QGroupBox(_("pulse_editor.frequency_values"))
         freq_layout = QGridLayout(freq_group)
         
-        self.frequency_spinboxes = []
+        self.frequency_sliders = []
+        self.frequency_labels = []
         for i in range(4):
-            label = QLabel(_("pulse_editor.frequency_channel").format(i + 1))
-            spinbox = QSpinBox()
-            spinbox.setRange(10, 240)
-            spinbox.setSuffix("")
-            spinbox.valueChanged.connect(self.update_preview)
+            # 通道标签
+            channel_label = QLabel(_("pulse_editor.frequency_channel").format(i + 1))
+            freq_layout.addWidget(channel_label, i, 0)
             
-            freq_layout.addWidget(label, i, 0)
-            freq_layout.addWidget(spinbox, i, 1)
-            self.frequency_spinboxes.append(spinbox)
+            # 数值显示标签
+            value_label = QLabel("10")
+            value_label.setMinimumWidth(40)
+            value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            value_label.setStyleSheet("""
+                QLabel {
+                    background-color: #333;
+                    color: #d4af37;
+                    border: 1px solid #555;
+                    border-radius: 3px;
+                    padding: 2px;
+                    font-weight: bold;
+                }
+            """)
+            freq_layout.addWidget(value_label, i, 1)
+            self.frequency_labels.append(value_label)
+            
+            # 滑动条
+            slider = QSlider(Qt.Orientation.Horizontal)
+            slider.setRange(10, 240)
+            slider.setValue(10)
+            slider.setStyleSheet("""
+                QSlider::groove:horizontal {
+                    background: #333;
+                    height: 6px;
+                    border-radius: 3px;
+                }
+                QSlider::handle:horizontal {
+                    background: #d4af37;
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    margin: -6px 0;
+                }
+                QSlider::sub-page:horizontal {
+                    background: #d4af37;
+                    border-radius: 3px;
+                }
+            """)
+            slider.valueChanged.connect(lambda value, idx=i: self._on_frequency_slider_changed(idx, value))
+            freq_layout.addWidget(slider, i, 2)
+            self.frequency_sliders.append(slider)
             
         layout.addWidget(freq_group)
         
@@ -143,17 +183,55 @@ class DetailedPulseStepDialog(QDialog):
         strength_group = QGroupBox(_("pulse_editor.strength_values"))
         strength_layout = QGridLayout(strength_group)
         
-        self.strength_spinboxes = []
+        self.strength_sliders = []
+        self.strength_labels = []
         for i in range(4):
-            label = QLabel(_("pulse_editor.strength_channel").format(i + 1))
-            spinbox = QSpinBox()
-            spinbox.setRange(0, 100)
-            spinbox.setSuffix("%")
-            spinbox.valueChanged.connect(self.update_preview)
+            # 通道标签
+            channel_label = QLabel(_("pulse_editor.strength_channel").format(i + 1))
+            strength_layout.addWidget(channel_label, i, 0)
             
-            strength_layout.addWidget(label, i, 0)
-            strength_layout.addWidget(spinbox, i, 1)
-            self.strength_spinboxes.append(spinbox)
+            # 数值显示标签
+            value_label = QLabel("0%")
+            value_label.setMinimumWidth(50)
+            value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            value_label.setStyleSheet("""
+                QLabel {
+                    background-color: #333;
+                    color: #d4af37;
+                    border: 1px solid #555;
+                    border-radius: 3px;
+                    padding: 2px;
+                    font-weight: bold;
+                }
+            """)
+            strength_layout.addWidget(value_label, i, 1)
+            self.strength_labels.append(value_label)
+            
+            # 滑动条
+            slider = QSlider(Qt.Orientation.Horizontal)
+            slider.setRange(0, 100)
+            slider.setValue(0)
+            slider.setStyleSheet("""
+                QSlider::groove:horizontal {
+                    background: #333;
+                    height: 6px;
+                    border-radius: 3px;
+                }
+                QSlider::handle:horizontal {
+                    background: #d4af37;
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    margin: -6px 0;
+                }
+                QSlider::sub-page:horizontal {
+                    background: #d4af37;
+                    border-radius: 3px;
+                }
+            """)
+            slider.valueChanged.connect(lambda value, idx=i: self._on_strength_slider_changed(idx, value))
+            strength_layout.addWidget(slider, i, 2)
+            self.strength_sliders.append(slider)
             
         layout.addWidget(strength_group)
         
@@ -212,24 +290,36 @@ class DetailedPulseStepDialog(QDialog):
         
         return widget
         
+    def _on_frequency_slider_changed(self, index: int, value: int) -> None:
+        """频率滑动条值改变处理"""
+        self.frequency_labels[index].setText(str(value))
+        self.update_preview()
+        
+    def _on_strength_slider_changed(self, index: int, value: int) -> None:
+        """强度滑动条值改变处理"""
+        self.strength_labels[index].setText(f"{value}%")
+        self.update_preview()
+        
     def load_data(self) -> None:
         """加载数据到编辑器"""
         frequency_tuple, strength_tuple = self.pulse_operation
         
         # 加载频率数据
         for i, freq in enumerate(frequency_tuple):
-            self.frequency_spinboxes[i].setValue(freq)
+            self.frequency_sliders[i].setValue(freq)
+            self.frequency_labels[i].setText(str(freq))
             
         # 加载强度数据
         for i, strength in enumerate(strength_tuple):
-            self.strength_spinboxes[i].setValue(strength)
+            self.strength_sliders[i].setValue(strength)
+            self.strength_labels[i].setText(f"{strength}%")
             
         self.update_preview()
         
     def update_preview(self) -> None:
         """更新预览"""
-        frequency_values = [spinbox.value() for spinbox in self.frequency_spinboxes]
-        strength_values = [spinbox.value() for spinbox in self.strength_spinboxes]
+        frequency_values = [slider.value() for slider in self.frequency_sliders]
+        strength_values = [slider.value() for slider in self.strength_sliders]
         
         preview_text = _("pulse_editor.preview_format").format(
             self.step_index + 1,
@@ -248,28 +338,28 @@ class DetailedPulseStepDialog(QDialog):
         
     def get_pulse_operation(self) -> PulseOperation:
         """获取编辑后的脉冲操作数据"""
-        frequency_values = tuple(spinbox.value() for spinbox in self.frequency_spinboxes)
-        strength_values = tuple(spinbox.value() for spinbox in self.strength_spinboxes)
+        frequency_values = tuple(slider.value() for slider in self.frequency_sliders)
+        strength_values = tuple(slider.value() for slider in self.strength_sliders)
         return (frequency_values, strength_values)
         
     def set_uniform_frequency(self) -> None:
         """设置统一频率"""
-        if self.frequency_spinboxes:
-            first_value = self.frequency_spinboxes[0].value()
-            for spinbox in self.frequency_spinboxes[1:]:
-                spinbox.setValue(first_value)
+        if self.frequency_sliders:
+            first_value = self.frequency_sliders[0].value()
+            for slider in self.frequency_sliders[1:]:
+                slider.setValue(first_value)
                 
     def set_gradient_frequency(self) -> None:
         """设置渐变频率"""
-        if len(self.frequency_spinboxes) >= 2:
-            start_value = self.frequency_spinboxes[0].value()
-            end_value = self.frequency_spinboxes[-1].value()
+        if len(self.frequency_sliders) >= 2:
+            start_value = self.frequency_sliders[0].value()
+            end_value = self.frequency_sliders[-1].value()
             
-            for i, spinbox in enumerate(self.frequency_spinboxes[1:-1], 1):
+            for i, slider in enumerate(self.frequency_sliders[1:-1], 1):
                 # 线性插值
-                progress = i / (len(self.frequency_spinboxes) - 1)
+                progress = i / (len(self.frequency_sliders) - 1)
                 value = int(start_value + (end_value - start_value) * progress)
-                spinbox.setValue(value)
+                slider.setValue(value)
                 
     def copy_first_frequency(self) -> None:
         """复制第一个频率值到所有位置"""
@@ -277,22 +367,22 @@ class DetailedPulseStepDialog(QDialog):
         
     def set_uniform_strength(self) -> None:
         """设置统一强度"""
-        if self.strength_spinboxes:
-            first_value = self.strength_spinboxes[0].value()
-            for spinbox in self.strength_spinboxes[1:]:
-                spinbox.setValue(first_value)
+        if self.strength_sliders:
+            first_value = self.strength_sliders[0].value()
+            for slider in self.strength_sliders[1:]:
+                slider.setValue(first_value)
                 
     def set_gradient_strength(self) -> None:
         """设置渐变强度"""
-        if len(self.strength_spinboxes) >= 2:
-            start_value = self.strength_spinboxes[0].value()
-            end_value = self.strength_spinboxes[-1].value()
+        if len(self.strength_sliders) >= 2:
+            start_value = self.strength_sliders[0].value()
+            end_value = self.strength_sliders[-1].value()
             
-            for i, spinbox in enumerate(self.strength_spinboxes[1:-1], 1):
+            for i, slider in enumerate(self.strength_sliders[1:-1], 1):
                 # 线性插值
-                progress = i / (len(self.strength_spinboxes) - 1)
+                progress = i / (len(self.strength_sliders) - 1)
                 value = int(start_value + (end_value - start_value) * progress)
-                spinbox.setValue(value)
+                slider.setValue(value)
                 
     def copy_first_strength(self) -> None:
         """复制第一个强度值到所有位置"""

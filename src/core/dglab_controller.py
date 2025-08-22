@@ -167,22 +167,22 @@ async def run_server(ui_callback: UIInterface, ip: str, port: int, osc_port: int
                     raise  # Re-raise other OSErrors
 
             try:
+                # 等待与 DG-Lab App 的绑定
+                logger.info("等待 DG-Lab App 扫码绑定...")
+                await client.bind()
+                logger.info(f"已与 App {client.target_id} 成功绑定")
+                
+                # 开始处理数据流
                 async for data in client.data_generator():
                     if isinstance(data, StrengthData):
-                        # 首次连接更新波形数据
+                        # 首次接收数据时更新波形数据
                         if controller.last_strength is None:
                             asyncio.create_task(controller.dglab_service.update_pulse_data())
                         controller.dglab_service.update_strength_data(data)
                         logger.info(f"接收到数据包 - A通道: {data.a}, B通道: {data.b}")
                         
-                        # 检查是否是首次连接
-                        was_offline = not controller.app_status_online
+                        # 更新应用状态
                         controller.app_status_online = True
-                        
-                        # 如果是首次连接，触发连接回调
-                        if was_offline:
-                            ui_callback.on_client_connected()
-                        
                         ui_callback.update_status(data)
                     # 接收 App 反馈按钮
                     elif isinstance(data, FeedbackButton):
