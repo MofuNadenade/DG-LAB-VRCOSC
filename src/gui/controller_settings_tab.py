@@ -292,7 +292,7 @@ class ControllerSettingsTab(QWidget):
     def set_a_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 A 通道强度"""
         if self.controller and self.allow_a_channel_update:
-            asyncio.create_task(self.controller.client.set_strength(Channel.A, StrengthOperationType.SET_TO, value))
+            asyncio.create_task(self.controller.dglab_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.A))
             last_strength = self.controller.dglab_service.get_last_strength()
             if last_strength:
                 last_strength.a = value  # 同步更新 last_strength 的 A 通道值
@@ -302,7 +302,7 @@ class ControllerSettingsTab(QWidget):
     def set_b_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 B 通道强度"""
         if self.controller and self.allow_b_channel_update:
-            asyncio.create_task(self.controller.client.set_strength(Channel.B, StrengthOperationType.SET_TO, value))
+            asyncio.create_task(self.controller.dglab_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.B))
             last_strength = self.controller.dglab_service.get_last_strength()
             if last_strength:
                 last_strength.b = value  # 同步更新 last_strength 的 B 通道值

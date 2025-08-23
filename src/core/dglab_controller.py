@@ -1,9 +1,8 @@
 import asyncio
-from typing import Optional, Any, List
+from typing import Optional, Any
 
 from pydglab_ws import DGLabWSServer, DGLabLocalClient
 from models import StrengthData, Channel, FeedbackButton, RetCode
-from pythonosc import dispatcher, osc_server, udp_client
 from PySide6.QtGui import QPixmap
 
 from gui.ui_interface import UIInterface, ConnectionState
@@ -44,24 +43,26 @@ class DGLabController:
     注意：此类不再包含任何方法，纯粹是数据容器。
     """
     
-    def __init__(self, client: DGLabLocalClient, osc_client: udp_client.SimpleUDPClient, ui_interface: UIInterface) -> None:
+    def __init__(self, client: DGLabLocalClient, ui_interface: UIInterface) -> None:
         """
         初始化 DGLabController 实例
         
         Args:
             client: DGLab WebSocket 客户端
-            osc_client: OSC UDP 客户端
             ui_interface: UI 回调接口
         """
         self.client: DGLabLocalClient = client
-        self.osc_client: udp_client.SimpleUDPClient = osc_client
         self.ui_interface: UIInterface = ui_interface
         ui_interface.controller = self
         
         # 初始化服务
         self.dglab_service: IDGLabService = DGLabWebSocketService(client, ui_interface)
-        self.osc_service: OSCService = OSCService(osc_client, ui_interface)
+        self.osc_service: OSCService = OSCService(ui_interface)
         self.chatbox_service: ChatboxService = ChatboxService(self.dglab_service, self.osc_service, ui_interface)
+        
+        # 设置服务间的引用关系
+        self.osc_service.set_dglab_service(self.dglab_service)
+        self.osc_service.set_chatbox_service(self.chatbox_service)
         
         # 应用状态
         self.app_status_online: bool = False
@@ -107,14 +108,8 @@ class DGLabController:
         return self.dglab_service.fire_mode_strength_step
 
 
-def handle_osc_message_task(address: str, list_object: List[DGLabController], *args: Any) -> None:
-    """处理 OSC 消息任务"""
-    asyncio.create_task(list_object[0].osc_service.handle_osc_message(address, *args))
-
-
 async def run_server(ui_interface: UIInterface, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> None:
-    """运行服务器并启动OSC服务器"""
-    osc_transport: Optional[Any] = None
+    """运行服务器 - 重构后的版本，OSC功能完全封装在OSCService中"""
     try:
         async with DGLabWSServer(ip, port, 60) as server:
             client: DGLabLocalClient = server.new_local_client()
@@ -134,39 +129,24 @@ async def run_server(ui_interface: UIInterface, ip: str, port: int, osc_port: in
             qrcode_image: QPixmap = generate_qrcode(url)
             ui_interface.update_qrcode(qrcode_image)
 
-            osc_client: udp_client.SimpleUDPClient = udp_client.SimpleUDPClient("127.0.0.1", 9000)
-            # 初始化控制器
-            controller: DGLabController = DGLabController(client, osc_client, ui_interface)
+            # 初始化控制器（不再需要OSC客户端参数）
+            controller: DGLabController = DGLabController(client, ui_interface)
             logger.info("DGLabController 已初始化")
+            
             # 将控制器设置到UI回调中
             ui_interface.set_controller(controller)
             # 在 controller 初始化后调用绑定函数
             ui_interface.bind_controller_settings()
 
-            # 设置OSC服务器
-            disp: dispatcher.Dispatcher = dispatcher.Dispatcher()
-            # 面板控制对应的 OSC 地址
-            disp.map("*", handle_osc_message_task, controller)
+            # 启动OSC服务器（完全封装在OSCService中）
+            osc_started = await controller.osc_service.start_server(osc_port)
+            if not osc_started:
+                logger.error("OSC服务器启动失败")
+                return
 
-            event_loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-            if (not isinstance(event_loop, asyncio.BaseEventLoop)):
-                raise RuntimeError("无法获取事件循环")
+            # 服务器启动成功，设置等待设备连接状态
+            ui_interface.set_connection_state(ConnectionState.WAITING)
             
-            try:
-                osc_server_instance: osc_server.AsyncIOOSCUDPServer = osc_server.AsyncIOOSCUDPServer(("0.0.0.0", osc_port), disp, event_loop)
-                osc_transport, _ = await osc_server_instance.create_serve_endpoint()
-                logger.info(f"OSC Server Listening on port {osc_port}")
-                # 服务器启动成功，设置等待设备连接状态
-                ui_interface.set_connection_state(ConnectionState.WAITING)
-            except OSError as osc_error:
-                if osc_error.errno == 10048:  # Port already in use
-                    error_message = f"OSC端口 {osc_port} 已被占用，请尝试使用其他端口或关闭占用该端口的程序"
-                    logger.error(error_message)
-                    ui_interface.set_connection_state(ConnectionState.ERROR, "OSC端口被占用")
-                    return
-                else:
-                    raise  # Re-raise other OSErrors
-
             try:
                 # 等待与 DG-Lab App 的绑定
                 logger.info("等待 DG-Lab App 扫码绑定...")
@@ -201,16 +181,11 @@ async def run_server(ui_interface: UIInterface, ip: str, port: int, osc_port: in
                         controller.app_status_online = True
                         ui_interface.on_client_reconnected()
             finally:
-                # 确保OSC传输被正确关闭
-                if osc_transport:
-                    osc_transport.close()
-                    logger.info("OSC传输已关闭")
+                # 停止OSC服务器
+                await controller.osc_service.stop_server()
 
     except asyncio.CancelledError:
         logger.info("服务器任务被取消")
-        if osc_transport:
-            osc_transport.close()
-            logger.info("OSC传输已关闭（任务取消）")
         raise
     except Exception as e:
         # Handle specific errors and log them
@@ -219,8 +194,3 @@ async def run_server(ui_interface: UIInterface, ip: str, port: int, osc_port: in
 
         # 启动过程中发生异常，恢复按钮状态为可点击的红色
         ui_interface.set_connection_state(ConnectionState.FAILED, error_message)
-    finally:
-        # 最终清理，确保传输被关闭
-        if osc_transport:
-            osc_transport.close()
-            logger.info("OSC传输已关闭（最终清理）")

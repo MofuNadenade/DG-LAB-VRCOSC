@@ -124,8 +124,7 @@ class MainWindow(QMainWindow):
             # 为控制器注册脉冲OSC操作
             self.register_pulse_actions()
             
-            # 注册OSC操作（现在控制器可用）
-            self.register_osc_actions()
+            # OSC操作现在由OSCService自动注册，无需手动调用
             
             # 加载OSC地址绑定（在操作注册后）
             self.load_osc_address_bindings()
@@ -266,52 +265,7 @@ class MainWindow(QMainWindow):
         """更新控制器选项卡中的波形下拉框"""
         self.controller_tab.update_pulse_comboboxes()
 
-    def register_osc_actions(self) -> None:
-        """在控制器可用时注册OSC操作"""
-        if not self.controller:
-            return
-            
-        # 通道控制操作
-        self.action_registry.register_action("A通道触碰", 
-            lambda *args: self.controller.dglab_service.set_float_output(args[0], Channel.A),
-            OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"})
-        self.action_registry.register_action("B通道触碰", 
-            lambda *args: self.controller.dglab_service.set_float_output(args[0], Channel.B),
-            OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"})
-        self.action_registry.register_action("当前通道触碰", 
-            lambda *args: self.controller.dglab_service.set_float_output(args[0], self.controller.dglab_service.get_current_channel()),
-            OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"})
-        
-        # 面板控制操作
-        self.action_registry.register_action("面板控制", 
-            lambda *args: self.controller.dglab_service.set_panel_control(args[0]),
-            OSCActionType.PANEL_CONTROL, {"panel"})
-        self.action_registry.register_action("数值调节", 
-            lambda *args: self.controller.dglab_service.set_strength_step(args[0]),
-            OSCActionType.PANEL_CONTROL, {"value_adjust"})
-        self.action_registry.register_action("通道调节", 
-            self._set_channel_async,
-            OSCActionType.PANEL_CONTROL, {"channel_adjust"})
-        
-        # 强度控制操作
-        self.action_registry.register_action("设置模式", 
-            lambda *args: self.controller.dglab_service.set_mode(args[0], self.controller.dglab_service.get_current_channel()),
-            OSCActionType.STRENGTH_CONTROL, {"mode"})
-        self.action_registry.register_action("重置强度", 
-            lambda *args: self.controller.dglab_service.reset_strength(args[0], self.controller.dglab_service.get_current_channel()),
-            OSCActionType.STRENGTH_CONTROL, {"reset"})
-        self.action_registry.register_action("降低强度", 
-            lambda *args: self.controller.dglab_service.decrease_strength(args[0], self.controller.dglab_service.get_current_channel()),
-            OSCActionType.STRENGTH_CONTROL, {"decrease"})
-        self.action_registry.register_action("增加强度", 
-            lambda *args: self.controller.dglab_service.increase_strength(args[0], self.controller.dglab_service.get_current_channel()),
-            OSCActionType.STRENGTH_CONTROL, {"increase"})
-        self.action_registry.register_action("一键开火", 
-            lambda *args: self.controller.dglab_service.strength_fire_mode(args[0], self.controller.dglab_service.get_current_channel(), self.controller.dglab_service.fire_mode_strength_step, self.controller.dglab_service.get_last_strength()),
-            OSCActionType.STRENGTH_CONTROL, {"fire"})
-        self.action_registry.register_action("ChatBox状态开关", 
-            lambda *args: self.controller.chatbox_service.toggle_chatbox(args[0]),
-            OSCActionType.CHATBOX_CONTROL, {"toggle"})
+    # 注意：OSC动作注册现在由OSCService自动处理，此方法已废弃
 
     def load_osc_address_bindings(self) -> None:
         """加载OSC地址绑定"""
