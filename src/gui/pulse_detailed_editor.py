@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
-from pydglab_ws.typing import PulseOperation, WaveformFrequencyOperation, WaveformStrengthOperation
+from models import PulseOperation, WaveformFrequencyOperation, WaveformStrengthOperation
 from i18n import translate as _, language_signals
 
 logger = logging.getLogger(__name__)
@@ -338,8 +338,18 @@ class DetailedPulseStepDialog(QDialog):
         
     def get_pulse_operation(self) -> PulseOperation:
         """获取编辑后的脉冲操作数据"""
-        frequency_values = tuple(slider.value() for slider in self.frequency_sliders)
-        strength_values = tuple(slider.value() for slider in self.strength_sliders)
+        frequency_values = (
+            self.frequency_sliders[0].value(),
+            self.frequency_sliders[1].value(),
+            self.frequency_sliders[2].value(),
+            self.frequency_sliders[3].value()
+        )
+        strength_values = (
+            self.strength_sliders[0].value(),
+            self.strength_sliders[1].value(),
+            self.strength_sliders[2].value(),
+            self.strength_sliders[3].value()
+        )
         return (frequency_values, strength_values)
         
     def set_uniform_frequency(self) -> None:

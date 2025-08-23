@@ -1,6 +1,6 @@
 import asyncio
 from typing import Optional, TYPE_CHECKING
-from pydglab_ws import Channel
+from models import Channel
 import logging
 
 from gui.ui_interface import UIInterface, UIFeature
@@ -17,10 +17,27 @@ class ChatboxService:
         self._dglab_service = dglab_service
         self._osc_service = osc_service
         self._ui_interface = ui_interface
-        self.enable_chatbox_status: int = 1
+        self._enable_chatbox_status: bool = True
         self._previous_chatbox_status: bool = True
         self._chatbox_toggle_timer: Optional[asyncio.Task[None]] = None
         self._send_status_task: Optional[asyncio.Task[None]] = None
+
+    @property
+    def is_enabled(self) -> bool:
+        """获取ChatBox状态是否启用"""
+        return self._enable_chatbox_status
+    
+    def set_enabled(self, enabled: bool) -> None:
+        """设置ChatBox状态启用/禁用"""
+        if self._enable_chatbox_status != enabled:
+            self._enable_chatbox_status = enabled
+            mode_name = "开启" if enabled else "关闭"
+            logger.info(f"ChatBox显示状态设置为: {mode_name}")
+            # 更新UI
+            self._ui_interface.set_feature_state(UIFeature.CHATBOX_STATUS, enabled, silent=True)
+            # 如果禁用，立即清空chatbox
+            if not enabled:
+                self._osc_service.send_message_to_vrchat_chatbox("")
 
     def start_periodic_status_update(self) -> None:
         """启动周期性状态更新任务"""
@@ -33,7 +50,7 @@ class ChatboxService:
         """
         while True:
             try:
-                if self.enable_chatbox_status:
+                if self._enable_chatbox_status:
                     await self.send_strength_status()
                     self._previous_chatbox_status = True
                 elif self._previous_chatbox_status:  # clear chatbox
@@ -48,15 +65,9 @@ class ChatboxService:
         """1秒计时器 计时结束后切换 Chatbox 状态"""
         await asyncio.sleep(1)
 
-        self.enable_chatbox_status = not self.enable_chatbox_status
-        mode_name = "开启" if self.enable_chatbox_status else "关闭"
-        logger.info("ChatBox显示状态切换为:" + mode_name)
-        # 若关闭 ChatBox, 则立即发送一次空字符串
-        if not self.enable_chatbox_status:
-            self._osc_service.send_message_to_vrchat_chatbox("")
+        # 使用API方法切换状态
+        self.set_enabled(not self._enable_chatbox_status)
         self._chatbox_toggle_timer = None
-        # 更新UI
-        self._ui_interface.set_feature_state(UIFeature.CHATBOX_STATUS, self.enable_chatbox_status, silent=True)
 
     async def toggle_chatbox(self, value: int) -> None:
         """开关 ChatBox 内容发送"""

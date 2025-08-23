@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFo
                                QComboBox, QSpinBox, QLabel, QCheckBox, QSlider, QToolTip, 
                                QPushButton, QMessageBox)
 from PySide6.QtCore import Qt, QPoint, QLocale
-from pydglab_ws import Channel, StrengthData, StrengthOperationType
+from models import Channel, StrengthData, StrengthOperationType
 
 from .ui_interface import UIInterface
 from .widgets import EditableComboBox
@@ -254,8 +254,8 @@ class ControllerSettingsTab(QWidget):
     def on_chatbox_status_enabled_changed(self, state: bool) -> None:
         """当ChatBox状态启用复选框状态改变时"""
         if self.controller:
-            self.controller.chatbox_service.enable_chatbox_status = state
-            logger.info(f"ChatBox status enabled: {self.controller.chatbox_service.enable_chatbox_status}")
+            self.controller.chatbox_service.set_enabled(state)
+            logger.info(f"ChatBox status enabled: {self.controller.chatbox_service.is_enabled}")
 
     def save_controller_settings(self) -> None:
         """保存设备控制器设置到配置文件"""

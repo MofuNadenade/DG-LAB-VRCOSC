@@ -15,8 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QFont, QCloseEvent
 
-from pydglab_ws.typing import PulseOperation
-from pydglab_ws import Channel
+from models import PulseOperation, Channel
 from core.dglab_pulse import Pulse, PulseRegistry
 from i18n import translate as _, language_signals
 from .ui_interface import UIInterface

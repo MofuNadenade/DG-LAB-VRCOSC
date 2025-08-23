@@ -1,7 +1,8 @@
 import asyncio
 from typing import Optional, Any, List
 
-from pydglab_ws import StrengthData, FeedbackButton, Channel, RetCode, DGLabWSServer, DGLabLocalClient
+from pydglab_ws import DGLabWSServer, DGLabLocalClient
+from models import StrengthData, Channel, FeedbackButton, RetCode
 from pythonosc import dispatcher, osc_server, udp_client
 from PySide6.QtGui import QPixmap
 

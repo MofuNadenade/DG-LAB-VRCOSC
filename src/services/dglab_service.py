@@ -1,8 +1,8 @@
 import asyncio
 import math
 from typing import Optional, List, Union, Dict
-from pydglab_ws import DGLabLocalClient, Channel, StrengthData, StrengthOperationType, PulseDataTooLong
-from pydglab_ws.typing import PulseOperation
+from pydglab_ws import DGLabLocalClient, PulseDataTooLong
+from models import Channel, StrengthData, PulseOperation, StrengthOperationType
 from core.dglab_pulse import Pulse
 import logging
 from gui.ui_interface import UIInterface, UIFeature

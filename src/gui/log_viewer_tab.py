@@ -4,7 +4,7 @@ from typing import Any, Optional, Dict
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QTextEdit, QLabel)
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QTextCursor
-from pydglab_ws import Channel
+from models import Channel
 
 from core.dglab_controller import DGLabController
 from .ui_interface import UIInterface
@@ -170,7 +170,7 @@ class LogViewerTab(QWidget):
                 f"Pulse Mode A: {self.controller.dglab_service.get_pulse_mode(Channel.A)}\n"
                 f"Pulse Mode B: {self.controller.dglab_service.get_pulse_mode(Channel.B)}\n"
                 f"Fire Mode Strength Step: {self.controller.dglab_service.fire_mode_strength_step}\n"
-                f"Enable ChatBox Status: {self.controller.chatbox_service.enable_chatbox_status}\n"
+                f"Enable ChatBox Status: {self.controller.chatbox_service.is_enabled}\n"
                 f"GUI Parameters:\n"
                 f"A  strength allow update:{getattr(self, 'allow_a_channel_update', 'N/A')}\n"
                 f"B  strength allow update:{getattr(self, 'allow_b_channel_update', 'N/A')}\n"

@@ -14,10 +14,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QTimer, QRect, QSize, QPoint, QEvent
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPaintEvent, QMouseEvent, QFont, QLinearGradient
 
-from pydglab_ws.typing import PulseOperation
+from models import PulseOperation, Channel
 from i18n import translate as _, language_signals
 from core.dglab_pulse import Pulse
-from pydglab_ws import Channel
 import logging
 
 logger = logging.getLogger(__name__)

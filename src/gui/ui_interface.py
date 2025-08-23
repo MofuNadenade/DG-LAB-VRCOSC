@@ -1,7 +1,7 @@
 from typing import Optional, TYPE_CHECKING, Dict, Any, Protocol
 from enum import Enum
 from PySide6.QtGui import QPixmap
-from pydglab_ws import StrengthData, Channel
+from models import StrengthData, Channel
 
 if TYPE_CHECKING:
     from core.dglab_controller import DGLabController

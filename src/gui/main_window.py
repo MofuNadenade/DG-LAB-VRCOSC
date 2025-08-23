@@ -4,7 +4,7 @@ from typing import Optional, Dict, List, Any, TYPE_CHECKING, Callable, Awaitable
 
 from PySide6.QtWidgets import QMainWindow, QTabWidget
 from PySide6.QtGui import QIcon, QPixmap
-from pydglab_ws import StrengthData, Channel
+from models import StrengthData, Channel
 
 from config import default_load_settings, save_settings
 from i18n import translate as _, language_signals, set_language
@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
         enable_chatbox = self.settings.get('enable_chatbox_status', False)
         self.set_feature_state(UIFeature.CHATBOX_STATUS, enable_chatbox, silent=True)
         if self.controller is not None:
-            self.controller.chatbox_service.enable_chatbox_status = enable_chatbox
+            self.controller.chatbox_service.set_enabled(enable_chatbox)
         
         # 强度步长
         strength_step = self.settings.get('strength_step', 30)
@@ -290,7 +290,7 @@ class MainWindow(QMainWindow):
             lambda *args: self.controller.dglab_service.set_strength_step(args[0]),
             OSCActionType.PANEL_CONTROL, {"value_adjust"})
         self.action_registry.register_action("通道调节", 
-            lambda *args: self.controller.dglab_service.set_channel(args[0]),
+            self._set_channel_async,
             OSCActionType.PANEL_CONTROL, {"channel_adjust"})
         
         # 强度控制操作
@@ -547,6 +547,11 @@ class MainWindow(QMainWindow):
         logger.info("客户端已断开连接")
         self.set_connection_state(ConnectionState.WAITING)  # 等待重新连接
         self.update_connection_status(False)
+    
+    async def _set_channel_async(self, *args: Any) -> None:
+        """异步设置通道的辅助方法"""
+        if args and self.controller is not None:
+            await self.controller.dglab_service.set_channel(args[0])
     
     def on_client_reconnected(self) -> None:
         """客户端重新连接时的回调"""

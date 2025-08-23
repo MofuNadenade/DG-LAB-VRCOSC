@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, List
-from pydglab_ws.typing import PulseOperation
+from models import PulseOperation
 
 logger = logging.getLogger(__name__)
 

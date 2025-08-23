@@ -5,7 +5,7 @@
 """
 
 from typing import Dict, List
-from pydglab_ws.typing import PulseOperation
+from models import PulseOperation
 
 # 默认OSC地址配置
 DEFAULT_ADDRESSES = [

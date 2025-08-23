@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from pydglab_ws.typing import PulseOperation
+from models import PulseOperation
 from core.dglab_pulse import Pulse
 from i18n import translate as _
 import logging
@@ -300,8 +300,8 @@ class ImportPulseDialog(QDialog):
             warnings.append(_("pulse_dialogs.import_pulse.validation.many_steps").format(len(pulse_data)))
         
         # 统计频率和强度使用情况
-        frequencies = []
-        intensities = []
+        frequencies: List[int] = []
+        intensities: List[int] = []
         
         for freq, intensity in pulse_data:
             frequencies.extend(freq)
