@@ -4,14 +4,13 @@ from ruamel.yaml import YAML
 import psutil
 import socket
 import ipaddress
+from core.defaults import DEFAULT_ADDRESSES, DEFAULT_PULSES, DEFAULT_TEMPLATES, DEFAULT_BINDINGS
 
 import logging
 logger = logging.getLogger(__name__)
 
 def get_default_settings() -> Dict[str, Any]:
     """获取默认设置，包含所有默认配置"""
-    from core.defaults import DEFAULT_ADDRESSES, DEFAULT_PULSES, DEFAULT_TEMPLATES, DEFAULT_BINDINGS
-    
     return {
         # 网络设置
         'interface': "",

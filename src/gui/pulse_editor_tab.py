@@ -21,6 +21,7 @@ from i18n import translate as _, language_signals
 from .ui_interface import UIInterface
 from .pulse_widgets import PulsePreviewWidget, PulseStepEditor, ParameterControlPanel
 from .pulse_dialogs import NewPulseDialog, ImportPulseDialog, ExportPulseDialog, PulseInfoDialog
+from .pulse_detailed_editor import DetailedPulseStepDialog
 
 if TYPE_CHECKING:
     from core.dglab_controller import DGLabController
@@ -522,8 +523,6 @@ class PulseEditorTab(QWidget):
         
     def on_detailed_edit_requested(self, position: int, pulse_operation: PulseOperation) -> None:
         """处理精细编辑请求"""
-        from .pulse_detailed_editor import DetailedPulseStepDialog
-        
         dialog = DetailedPulseStepDialog(pulse_operation, position, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # 获取编辑后的数据

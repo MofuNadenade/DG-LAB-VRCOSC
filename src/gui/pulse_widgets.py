@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider,
     QListWidget, QListWidgetItem, QFrame, QScrollArea, QSizePolicy,
-    QSpinBox, QDoubleSpinBox, QCheckBox, QGroupBox
+    QSpinBox, QDoubleSpinBox, QCheckBox, QGroupBox, QMenu, QInputDialog
 )
 from PySide6.QtCore import Qt, Signal, QTimer, QRect, QSize, QPoint, QEvent
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPaintEvent, QMouseEvent, QFont, QLinearGradient
@@ -234,8 +234,6 @@ class PulseBar(QWidget):
         
     def _show_frequency_edit_menu(self, position: QPoint) -> None:
         """显示频率编辑菜单"""
-        from PySide6.QtWidgets import QMenu, QInputDialog
-        
         menu = QMenu(self)
         
         # 精细编辑动作
@@ -270,8 +268,6 @@ class PulseBar(QWidget):
             
     def _edit_frequency_dialog(self) -> None:
         """显示频率编辑对话框"""
-        from PySide6.QtWidgets import QInputDialog
-        
         frequency, ok = QInputDialog.getInt(
             self, 
             "编辑步骤频率",

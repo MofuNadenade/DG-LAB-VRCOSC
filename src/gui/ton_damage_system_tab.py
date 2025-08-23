@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from typing import Any, Optional, Dict, Union, List
 
@@ -217,7 +218,6 @@ class TonDamageSystemTab(QWidget):
         parsed_message: Dict[str, Any]
         if isinstance(message, str):
             try:
-                import json
                 parsed_message = json.loads(message)
             except json.JSONDecodeError:
                 try:

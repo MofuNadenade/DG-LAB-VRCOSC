@@ -8,6 +8,11 @@ import logging
 from typing import Any, Optional, Callable, Awaitable, TYPE_CHECKING
 from pythonosc import dispatcher, osc_server, udp_client
 
+# 导入必要的类型和枚举
+from core.osc_common import OSCActionType
+from models import Channel
+from gui.ui_interface import ConnectionState
+
 if TYPE_CHECKING:
     from gui.ui_interface import UIInterface
     from services.dglab_service_interface import IDGLabService
@@ -106,7 +111,6 @@ class OSCService:
                 error_message = f"OSC端口 {osc_port} 已被占用，请尝试使用其他端口或关闭占用该端口的程序"
                 logger.error(error_message)
                 # 通过UI接口报告错误
-                from gui.ui_interface import ConnectionState
                 self._ui_interface.set_connection_state(ConnectionState.ERROR, "OSC端口被占用")
                 return False
             else:
@@ -160,9 +164,6 @@ class OSCService:
         if not self._dglab_service:
             logger.warning("DGLab服务未设置，无法注册OSC动作")
             return
-        
-        from core.osc_common import OSCActionType
-        from models import Channel
         
         # 清除现有动作（避免重复注册）
         self._ui_interface.action_registry.clear_all_actions()
