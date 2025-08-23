@@ -9,16 +9,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-VERSION = "v0.1.1-20250823-0302-fe91f6b"
+VERSION = "v0.1.1-20250824-0209-66b4a50"
 VERSION_SHORT = "v0.1.1"
 
 BUILD_INFO = {
-    "version": "v0.1.1-20250823-0302-fe91f6b",
-    "commit_hash": "fe91f6be618a6924487b30abb8abed064548f7c5",
-    "commit_short": "fe91f6b",
+    "version": "v0.1.1-20250824-0209-66b4a50",
+    "commit_hash": "66b4a50519e073b00f9c0e54dee32849af39d0eb",
+    "commit_short": "66b4a50",
     "branch": "master",
-    "commit_date": "2025-08-23 01:31:47 +0800",
-    "build_time": "2025-08-23T03:02:05.863966",
+    "commit_date": "2025-08-24 01:09:03 +0800",
+    "build_time": "2025-08-24T02:09:07.962682",
     "python_version": "3.11.4 (tags/v3.11.4:d2340ef, Jun  7 2023, 05:45:37) [MSC v.1934 64 bit (AMD64)]",
     "platform": "win32"
 }

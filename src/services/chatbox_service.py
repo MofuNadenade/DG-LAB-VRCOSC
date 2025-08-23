@@ -7,13 +7,13 @@ from gui.ui_interface import UIInterface, UIFeature
 
 if TYPE_CHECKING:
     from .osc_service import OSCService
-    from .dglab_service import DGLabService
+    from .device_service_interface import IDGLabService
 
 logger = logging.getLogger(__name__)
 
 
 class ChatboxService:
-    def __init__(self, dglab_service: 'DGLabService', osc_service: 'OSCService', ui_interface: 'UIInterface') -> None:
+    def __init__(self, dglab_service: 'IDGLabService', osc_service: 'OSCService', ui_interface: 'UIInterface') -> None:
         self._dglab_service = dglab_service
         self._osc_service = osc_service
         self._ui_interface = ui_interface

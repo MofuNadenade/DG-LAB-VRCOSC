@@ -9,8 +9,9 @@ from PySide6.QtGui import QPixmap
 from gui.ui_interface import UIInterface, ConnectionState
 from util import generate_qrcode
 
-# 导入新的服务类
-from services.dglab_service import DGLabService
+# 导入服务类
+from services.dglab_service_interface import IDGLabService
+from services.dglab_websocket_service import DGLabWebSocketService
 from services.osc_service import OSCService
 from services.chatbox_service import ChatboxService
 
@@ -30,7 +31,7 @@ class DGLabController:
     3. 维护应用状态（app_status_online）
     
     所有功能都通过服务访问：
-    - dglab_service: 完整的 DGLab 硬件控制
+    - dglab_service: 设备控制抽象接口（支持WebSocket/蓝牙等）
     - osc_service: OSC 消息处理  
     - chatbox_service: VRChat ChatBox 管理
     
@@ -58,7 +59,7 @@ class DGLabController:
         ui_interface.controller = self
         
         # 初始化服务
-        self.dglab_service: DGLabService = DGLabService(client, ui_interface)
+        self.dglab_service: IDGLabService = DGLabWebSocketService(client, ui_interface)
         self.osc_service: OSCService = OSCService(osc_client, ui_interface)
         self.chatbox_service: ChatboxService = ChatboxService(self.dglab_service, self.osc_service, ui_interface)
         
@@ -67,6 +68,43 @@ class DGLabController:
         
         # 启动定时任务
         self.chatbox_service.start_periodic_status_update()
+
+    # ============ 向后兼容属性 ============
+
+    @property
+    def last_strength(self) -> Optional[StrengthData]:
+        """获取最后的强度数据"""
+        return self.dglab_service.get_last_strength()
+    
+    @property
+    def current_select_channel(self) -> Channel:
+        """获取当前选中的通道"""
+        return self.dglab_service.get_current_channel()
+    
+    @property
+    def is_dynamic_bone_mode_a(self) -> bool:
+        """获取A通道动骨模式状态"""
+        return self.dglab_service.is_dynamic_bone_enabled(Channel.A)
+    
+    @property
+    def is_dynamic_bone_mode_b(self) -> bool:
+        """获取B通道动骨模式状态"""
+        return self.dglab_service.is_dynamic_bone_enabled(Channel.B)
+    
+    @property
+    def pulse_mode_a(self) -> int:
+        """获取A通道波形模式"""
+        return self.dglab_service.get_pulse_mode(Channel.A)
+    
+    @property
+    def pulse_mode_b(self) -> int:
+        """获取B通道波形模式"""
+        return self.dglab_service.get_pulse_mode(Channel.B)
+    
+    @property
+    def fire_mode_strength_step(self) -> int:
+        """获取开火模式强度步进"""
+        return self.dglab_service.fire_mode_strength_step
 
 
 def handle_osc_message_task(address: str, list_object: List[DGLabController], *args: Any) -> None:
