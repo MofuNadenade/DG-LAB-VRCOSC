@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 from models import PulseOperation
 
 logger = logging.getLogger(__name__)
@@ -12,19 +12,52 @@ class Pulse:
 
 class PulseRegistry:
     def __init__(self) -> None:
-        self.pulses: List[Pulse] = []
-        self.pulses_by_name: Dict[str, Pulse] = {}
+        self._pulses: List[Pulse] = []
+        self._pulses_by_name: Dict[str, Pulse] = {}
+
+    @property
+    def pulses(self) -> List[Pulse]:
+        """获取所有脉冲列表（只读）"""
+        return self._pulses.copy()
+    
+    @property
+    def pulses_by_name(self) -> Dict[str, Pulse]:
+        """获取按名称索引的脉冲字典（只读）"""
+        return self._pulses_by_name.copy()
+    
+    def get_pulse_by_name(self, name: str) -> Optional[Pulse]:
+        """根据名称获取脉冲"""
+        return self._pulses_by_name.get(name)
+    
+    def has_pulse_name(self, name: str) -> bool:
+        """检查是否存在指定名称的脉冲"""
+        return name in self._pulses_by_name
+    
+    def get_pulse_count(self) -> int:
+        """获取脉冲总数"""
+        return len(self._pulses)
+    
+    def unregister_pulse(self, pulse: Pulse) -> None:
+        """移除脉冲"""
+        if pulse in self._pulses:
+            self._pulses.remove(pulse)
+            if pulse.name in self._pulses_by_name:
+                del self._pulses_by_name[pulse.name]
+            
+            # 重新索引
+            for i, p in enumerate(self._pulses):
+                p.index = i
 
     def register_pulse(self, name: str, data: List[PulseOperation]) -> Pulse:
-        pulse = Pulse(len(self.pulses), name, data)
-        self.pulses.append(pulse)
-        self.pulses_by_name[pulse.name] = pulse
+        pulse = Pulse(len(self._pulses), name, data)
+        self._pulses.append(pulse)
+        self._pulses_by_name[pulse.name] = pulse
         return pulse
 
     def load_from_config(self, pulses_config: Dict[str, List[PulseOperation]]) -> None:
         """从配置加载脉冲"""
-        self.pulses.clear()
-        self.pulses_by_name.clear()
+        self._pulses.clear()
+        self._pulses_by_name.clear()
         
         for name, data in pulses_config.items():
             try:
@@ -33,8 +66,8 @@ class PulseRegistry:
             except Exception as e:
                 logger.error(f"Failed to load pulse {name}: {e}")
         
-        logger.info(f"Loaded {len(self.pulses)} pulses from config")
+        logger.info(f"Loaded {len(self._pulses)} pulses from config")
     
     def export_to_config(self) -> Dict[str, List[PulseOperation]]:
         """导出所有脉冲到配置格式"""
-        return {pulse.name: list(pulse.data) for pulse in self.pulses}
+        return {pulse.name: list(pulse.data) for pulse in self._pulses}

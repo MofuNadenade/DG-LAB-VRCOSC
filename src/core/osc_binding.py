@@ -52,40 +52,65 @@ class OSCBindingRegistry:
     """OSC绑定注册表"""
     
     def __init__(self) -> None:
-        self.bindings: Dict[OSCAddress, OSCAction] = {}
-        self.observers: List[OSCRegistryObserver] = []
+        self._bindings: Dict[OSCAddress, OSCAction] = {}
+        self._observers: List[OSCRegistryObserver] = []
+
+    @property
+    def bindings(self) -> Dict[OSCAddress, OSCAction]:
+        """获取所有绑定字典（只读）"""
+        return self._bindings.copy()
+    
+    def get_binding(self, address: OSCAddress) -> Optional[OSCAction]:
+        """获取指定地址的绑定动作"""
+        return self._bindings.get(address)
+    
+    def has_binding(self, address: OSCAddress) -> bool:
+        """检查是否存在指定地址的绑定"""
+        return address in self._bindings
+    
+    def get_binding_count(self) -> int:
+        """获取绑定总数"""
+        return len(self._bindings)
+    
+    def get_all_addresses(self) -> List[OSCAddress]:
+        """获取所有已绑定的地址"""
+        return list(self._bindings.keys())
+    
+    def get_all_actions(self) -> List[OSCAction]:
+        """获取所有已绑定的动作"""
+        return list(self._bindings.values())
 
     def add_observer(self, observer: OSCRegistryObserver) -> None:
         """添加观察者"""
-        if observer not in self.observers:
-            self.observers.append(observer)
+        if observer not in self._observers:
+            self._observers.append(observer)
     
     def remove_observer(self, observer: OSCRegistryObserver) -> None:
         """移除观察者"""
-        if observer in self.observers:
-            self.observers.remove(observer)
+        if observer in self._observers:
+            self._observers.remove(observer)
     
     def notify_binding_changed(self, address: OSCAddress, action: Optional[OSCAction]) -> None:
         """通知观察者绑定已变化"""
-        for observer in self.observers:
+        for observer in self._observers:
             observer.on_binding_changed(address, action)
 
     def register_binding(self, address: OSCAddress, action: OSCAction) -> None:
         """注册绑定"""
-        self.bindings[address] = action
+        self._bindings[address] = action
         # 通知观察者
         self.notify_binding_changed(address, action)
 
     def unregister_binding(self, address: OSCAddress) -> None:
         """取消注册绑定"""
-        if address in self.bindings:
-            del self.bindings[address]
+        if address in self._bindings:
+            del self._bindings[address]
             # 通知观察者
             self.notify_binding_changed(address, None)
 
     async def handle(self, address: OSCAddress, *args: Any) -> None:
         """处理OSC消息"""
-        action = self.bindings.get(address)
+        action = self._bindings.get(address)
         if action:
             await action.handle(*args)
     
@@ -94,7 +119,7 @@ class OSCBindingRegistry:
         return [{
             'address_name': address.name,
             'action_name': action.name
-        } for address, action in self.bindings.items()]
+        } for address, action in self._bindings.items()]
     
     def validate_binding_data(self, binding: Dict[str, Any]) -> bool:
         """验证绑定数据的完整性"""
@@ -148,15 +173,15 @@ class OSCBindingRegistry:
         
         # 如果提供了注册表，检查对象是否仍然在注册表中
         if address_registry:
-            if address.name not in address_registry.addresses_by_name:
+            if not address_registry.has_address_name(address.name):
                 return False, f"地址'{address.name}'不存在于注册表中"
             # 检查地址对象是否一致
-            registered_address = address_registry.addresses_by_name[address.name]
-            if registered_address.code != address.code:
+            registered_address = address_registry.get_address_by_name(address.name)
+            if registered_address and registered_address.code != address.code:
                 return False, f"地址'{address.name}'的OSC代码已变更"
                 
         if action_registry:
-            if action.name not in action_registry.actions_by_name:
+            if not action_registry.has_action_name(action.name):
                 return False, f"动作'{action.name}'不存在于注册表中"
         
         return True, ""
@@ -174,7 +199,7 @@ class OSCBindingRegistry:
         """
         invalid_bindings = []
         
-        for address, action in self.bindings.items():
+        for address, action in self._bindings.items():
             is_valid, error_msg = self.validate_binding(address, action, address_registry, action_registry)
             if not is_valid:
                 invalid_bindings.append((address, action, error_msg))

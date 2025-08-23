@@ -7,7 +7,7 @@ from gui.ui_interface import UIInterface, UIFeature
 
 if TYPE_CHECKING:
     from .osc_service import OSCService
-    from .device_service_interface import IDGLabService
+    from .dglab_service_interface import IDGLabService
 
 logger = logging.getLogger(__name__)
 

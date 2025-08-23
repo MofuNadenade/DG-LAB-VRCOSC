@@ -29,32 +29,46 @@ class OSCTemplateRegistry:
     """OSC代码模板注册表"""
     
     def __init__(self) -> None:
-        self.templates: List[OSCTemplate] = []
-        self.templates_by_name: Dict[str, OSCTemplate] = {}
+        self._templates: List[OSCTemplate] = []
+        self._templates_by_name: Dict[str, OSCTemplate] = {}
     
+    @property
+    def templates(self) -> List[OSCTemplate]:
+        """获取所有模板列表（只读）"""
+        return self._templates.copy()
+    
+    @property
+    def templates_by_name(self) -> Dict[str, OSCTemplate]:
+        """获取按名称索引的模板字典（只读）"""
+        return self._templates_by_name.copy()
+    
+    def get_template_count(self) -> int:
+        """获取模板总数"""
+        return len(self._templates)
+
     def register_template(self, name: str, code: str, description: str = "") -> OSCTemplate:
         """注册模板"""
         template = OSCTemplate(name, code, description)
-        self.templates.append(template)
-        self.templates_by_name[name] = template
+        self._templates.append(template)
+        self._templates_by_name[name] = template
         return template
     
     def get_template_options(self) -> List[str]:
         """获取所有模板选项"""
-        return [template.code for template in self.templates]
+        return [template.code for template in self._templates]
     
     def get_template_by_name(self, name: str) -> Optional[OSCTemplate]:
         """根据名称获取模板"""
-        return self.templates_by_name.get(name)
+        return self._templates_by_name.get(name)
     
     def get_templates_by_prefix(self, prefix: str) -> List[OSCTemplate]:
         """根据前缀获取模板"""
-        return [t for t in self.templates if t.code.startswith(prefix)]
+        return [t for t in self._templates if t.code.startswith(prefix)]
     
     def load_from_config(self, templates_config: List[Dict[str, str]]) -> None:
         """从配置加载模板"""
-        self.templates.clear()
-        self.templates_by_name.clear()
+        self._templates.clear()
+        self._templates_by_name.clear()
         
         for template_config in templates_config:
             try:
@@ -67,7 +81,7 @@ class OSCTemplateRegistry:
             except Exception as e:
                 logger.error(f"Failed to load template: {e}")
         
-        logger.info(f"Loaded {len(self.templates)} templates from config")
+        logger.info(f"Loaded {len(self._templates)} templates from config")
     
     def export_to_config(self) -> List[Dict[str, str]]:
         """导出所有模板到配置格式"""
@@ -75,7 +89,7 @@ class OSCTemplateRegistry:
             'name': template.name,
             'pattern': template.code,
             'description': template.description
-        } for template in self.templates]
+        } for template in self._templates]
 
 
 

@@ -427,12 +427,12 @@ class OSCAddressListTab(QWidget):
                 name, code = dialog.get_address_data()
                 
                 # 检查是否已存在
-                if name in self.address_registry.addresses_by_name:
+                if self.address_registry.has_address_name(name):
                     QMessageBox.warning(self, _("osc_address_tab.error"),
                                       _("osc_address_tab.address_exists"))
                     return
                 
-                if code in self.address_registry.addresses_by_code:
+                if self.address_registry.has_address_code(code):
                     QMessageBox.warning(self, _("osc_address_tab.error"),
                                       _("osc_address_tab.code_exists"))
                     return
@@ -466,7 +466,7 @@ class OSCAddressListTab(QWidget):
             return
         
         address_name = address_name_item.text()
-        addr = self.address_registry.addresses_by_name.get(address_name)
+        addr = self.address_registry.get_address_by_name(address_name)
         if not addr:
             return
         
@@ -892,8 +892,8 @@ class OSCAddressBindingTab(QWidget):
                 address_name, action_name = dialog.get_binding_data()
                 
                 # 获取地址和动作对象
-                address = self.address_registry.addresses_by_name.get(address_name)
-                action = self.action_registry.actions_by_name.get(action_name)
+                address = self.address_registry.get_address_by_name(address_name)
+                action = self.action_registry.get_action_by_name(action_name)
                 
                 if not address or not action:
                     QMessageBox.critical(self, _("osc_address_tab.error"),
@@ -901,7 +901,7 @@ class OSCAddressBindingTab(QWidget):
                     return
                 
                 # 检查是否已存在的绑定
-                if address in self.address_bindings.bindings:
+                if self.address_bindings.has_binding(address):
                     reply = QMessageBox.question(self, _("osc_address_tab.confirm_replace"),
                                                 _("osc_address_tab.replace_binding_msg").format(address_name),
                                                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)

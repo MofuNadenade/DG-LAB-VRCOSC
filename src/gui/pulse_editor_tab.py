@@ -551,7 +551,7 @@ class PulseEditorTab(QWidget):
                 
                 # 检查名称是否已存在
                 if self.ui_interface.pulse_registry:
-                    if name in self.ui_interface.pulse_registry.pulses_by_name:
+                    if self.ui_interface.pulse_registry.has_pulse_name(name):
                         QMessageBox.warning(self, _("pulse_editor.name_conflict"), _("pulse_editor.name_exists").format(name))
                         return
                         
@@ -591,7 +591,7 @@ class PulseEditorTab(QWidget):
             
             # 检查名称是否已存在
             if self.ui_interface.pulse_registry:
-                if new_name in self.ui_interface.pulse_registry.pulses_by_name:
+                if self.ui_interface.pulse_registry.has_pulse_name(new_name):
                     QMessageBox.warning(self, _("pulse_editor.name_conflict"), _("pulse_editor.name_exists").format(new_name))
                     return
                     
@@ -640,13 +640,7 @@ class PulseEditorTab(QWidget):
                     
                 # 从注册表中移除
                 if self.ui_interface.pulse_registry:
-                    self.ui_interface.pulse_registry.pulses.remove(pulse)
-                    if pulse.name in self.ui_interface.pulse_registry.pulses_by_name:
-                        del self.ui_interface.pulse_registry.pulses_by_name[pulse.name]
-                        
-                    # 重新索引
-                    for i, p in enumerate(self.ui_interface.pulse_registry.pulses):
-                        p.index = i
+                    self.ui_interface.pulse_registry.unregister_pulse(pulse)
                         
                 self.load_pulses()
                 self.pulse_deleted.emit(pulse.name)
@@ -786,7 +780,7 @@ class PulseEditorTab(QWidget):
                 
                 # 检查名称是否已存在
                 if self.ui_interface.pulse_registry:
-                    if name in self.ui_interface.pulse_registry.pulses_by_name:
+                    if self.ui_interface.pulse_registry.has_pulse_name(name):
                         skipped_count += 1
                         continue
                         

@@ -149,8 +149,8 @@ class OSCService:
         logger.debug(f"收到OSC消息: {address} 参数: {args}")
         
         # 通过UI接口的绑定注册表处理消息
-        if address in self._ui_interface.address_registry.addresses_by_code:
-            address_obj = self._ui_interface.address_registry.addresses_by_code[address]
+        address_obj = self._ui_interface.address_registry.get_address_by_code(address)
+        if address_obj:
             await self._ui_interface.binding_registry.handle(address_obj, *args)
         else:
             logger.debug(f"未找到OSC地址绑定: {address}")
@@ -165,13 +165,7 @@ class OSCService:
         from models import Channel
         
         # 清除现有动作（避免重复注册）
-        self._ui_interface.action_registry.actions.clear()
-        self._ui_interface.action_registry.actions_by_name.clear()
-        self._ui_interface.action_registry.actions_by_type.clear()
-        
-        # 重新初始化类型字典
-        for action_type in OSCActionType:
-            self._ui_interface.action_registry.actions_by_type[action_type] = []
+        self._ui_interface.action_registry.clear_all_actions()
         
         # 检查DGLab服务是否可用
         if not self._dglab_service:
