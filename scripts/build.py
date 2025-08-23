@@ -174,7 +174,7 @@ def clean_build_artifacts(project_root: Path) -> None:
                 pass  # Ignore errors during cleanup
 
 
-def main():
+def main() -> int:
     """Main build function"""
     # Set UTF-8 encoding for Windows console
     if sys.platform == 'win32':

@@ -9,6 +9,7 @@ import subprocess
 import datetime
 import argparse
 from pathlib import Path
+from typing import Dict
 
 
 def run_git_command(command: str) -> str:
@@ -58,7 +59,7 @@ def get_git_version() -> str:
     return version
 
 
-def get_build_info() -> dict:
+def get_build_info() -> Dict[str, str]:
     """Get additional build information"""
     commit_hash = run_git_command("git rev-parse HEAD")
     commit_short = run_git_command("git rev-parse --short HEAD")
@@ -77,7 +78,7 @@ def get_build_info() -> dict:
     }
 
 
-def generate_version_file(output_file: Path, version: str, build_info: dict) -> None:
+def generate_version_file(output_file: Path, version: str, build_info: Dict[str, str]) -> None:
     """Generate the version.py file"""
     content = f'''"""
 Version information for DG-LAB-VRCOSC
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     print(f"Generated version file: {output_file}")
 
 
-def main():
+def main() -> None:
     """Main function"""
     parser = argparse.ArgumentParser(description="Generate version.py for DG-LAB-VRCOSC")
     parser.add_argument(

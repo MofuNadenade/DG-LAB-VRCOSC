@@ -96,10 +96,10 @@ class OSCBindingRegistry:
             'action_name': action.name
         } for address, action in self.bindings.items()]
     
-    def validate_binding_data(self, binding: Dict[str, str]) -> bool:
+    def validate_binding_data(self, binding: Dict[str, Any]) -> bool:
         """验证绑定数据的完整性"""
         if not isinstance(binding, dict):
-            return False
+            return False  # type: ignore[unreachable]
         
         required_keys = ['address_name', 'action_name']
         for key in required_keys:

@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class TonDamageSystemTab(QWidget):
-    def __init__(self, ui_callback: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         self.settings: Dict[str, Any] = settings
         self.websocket_client: Optional[WebSocketClient] = None
         
@@ -48,7 +48,7 @@ class TonDamageSystemTab(QWidget):
     @property
     def controller(self) -> Optional[DGLabController]:
         """通过UIInterface获取当前控制器"""
-        return self.ui_callback.controller
+        return self.ui_interface.controller
 
     def init_ui(self) -> None:
         """初始化游戏联动选项卡UI"""
@@ -298,8 +298,8 @@ class TonDamageSystemTab(QWidget):
         
         logger.warning(f"Death penalty triggered: Strength={penalty_strength}, Time={penalty_time}s")
         
-        if self.controller and self.controller.last_strength:
-            last_strength_mod = self.controller.last_strength
+        last_strength_mod = self.controller.dglab_service.get_last_strength() if self.controller else None
+        if self.controller and last_strength_mod:
             
             logger.warning(f"Death penalty triggered: a {last_strength_mod.a} fire {penalty_strength}")
             

@@ -8,6 +8,7 @@ import sys
 import time
 import subprocess
 from pathlib import Path
+from typing import Any
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -20,7 +21,7 @@ class BuildHandler(FileSystemEventHandler):
         self.last_build = 0.0
         self.build_delay = 2.0  # seconds
         
-    def on_modified(self, event):
+    def on_modified(self, event: Any) -> None:
         if event.is_directory:
             return
         
@@ -37,7 +38,7 @@ class BuildHandler(FileSystemEventHandler):
         self.rebuild()
         self.last_build = current_time
     
-    def rebuild(self):
+    def rebuild(self) -> None:
         """Quick rebuild - version generation only"""
         print("Quick rebuild...")
         try:
@@ -55,7 +56,7 @@ class BuildHandler(FileSystemEventHandler):
             print(f"- Rebuild error: {e}")
 
 
-def run_development_server(project_root: Path):
+def run_development_server(project_root: Path) -> None:
     """Run the application in development mode"""
     print("Starting development mode...")
     
@@ -93,7 +94,7 @@ def run_development_server(project_root: Path):
             observer.join()
 
 
-def main():
+def main() -> int:
     """Main function"""
     project_root = Path(__file__).parent.parent
     

@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from ruamel.yaml import YAML
 import psutil
 import socket
@@ -77,19 +77,25 @@ def default_load_settings() -> Dict[str, Any]:
         logger.info("Created default settings.yml with all default configurations")
         return settings
     else:
-        settings = load_settings()
-        if settings is None:
+        loaded_settings = load_settings()
+        if loaded_settings is None:
             settings = get_default_settings()
             save_settings(settings)
             logger.info("Recreated corrupted settings.yml")
-        return settings
+            return settings
+        return loaded_settings
 
 # Load the configuration from a YAML file
-def load_settings() -> Any:
+def load_settings() -> Optional[Dict[str, Any]]:
     if os.path.exists('settings.yml'):
         with open('settings.yml', 'r', encoding='utf-8') as f:
             logger.info("settings.yml found")
-            return yaml.load(f)
+            data = yaml.load(f)
+            if isinstance(data, dict):
+                return data
+            else:
+                logger.warning("settings.yml does not contain a valid dictionary")
+                return None
     logger.info("No settings.yml found")
     return None
 

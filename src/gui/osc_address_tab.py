@@ -177,9 +177,9 @@ class AddAddressDialog(QDialog):
 class OSCAddressListTab(QWidget):
     """OSC地址列表标签页"""
     
-    def __init__(self, ui_callback: UIInterface) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         self.address_registry: Optional[OSCAddressRegistry] = None
         self.options_provider: Optional[OSCOptionsProvider] = None
         
@@ -501,10 +501,10 @@ class OSCAddressListTab(QWidget):
                 all_addresses = self.address_registry.export_to_config()
                 
                 # 更新settings
-                self.ui_callback.settings['addresses'] = all_addresses
+                self.ui_interface.settings['addresses'] = all_addresses
                 
                 # 保存到文件
-                self.ui_callback.save_settings()
+                self.ui_interface.save_settings()
                 logger.info(f"Saved {len(all_addresses)} addresses to config")
                 
                 # 显示成功消息
@@ -526,10 +526,10 @@ class OSCAddressListTab(QWidget):
                 all_addresses = self.address_registry.export_to_config()
                 
                 # 更新settings
-                self.ui_callback.settings['addresses'] = all_addresses
+                self.ui_interface.settings['addresses'] = all_addresses
                 
                 # 保存到文件
-                self.ui_callback.save_settings()
+                self.ui_interface.save_settings()
                 logger.info(f"Auto-saved {len(all_addresses)} addresses to config")
             except Exception as e:
                 logger.error(f"Failed to auto-save addresses: {e}")
@@ -574,9 +574,9 @@ class OSCAddressListTab(QWidget):
 class OSCAddressBindingTab(QWidget):
     """OSC地址绑定标签页"""
     
-    def __init__(self, ui_callback: UIInterface) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         self.address_registry: Optional[OSCAddressRegistry] = None
         self.action_registry: Optional[OSCActionRegistry] = None
         self.address_bindings: Optional[OSCBindingRegistry] = None
@@ -869,10 +869,10 @@ class OSCAddressBindingTab(QWidget):
             if self.address_bindings:
                 # 获取所有绑定
                 all_bindings = self.address_bindings.export_to_config()
-                self.ui_callback.settings['bindings'] = all_bindings
+                self.ui_interface.settings['bindings'] = all_bindings
                     
             # 调用UIInterface的保存方法
-            self.ui_callback.save_settings()
+            self.ui_interface.save_settings()
             QMessageBox.information(self, _("osc_address_tab.success"),
                                   _("osc_address_tab.config_saved"))
         except Exception as e:
@@ -998,9 +998,9 @@ class OSCAddressBindingTab(QWidget):
 class OSCAddressTab(QWidget):
     """OSC地址管理面板 - 包含地址列表和绑定管理的标签页"""
     
-    def __init__(self, ui_callback: UIInterface) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         
         # UI组件类型注解
         self.tab_widget: QTabWidget
@@ -1020,11 +1020,11 @@ class OSCAddressTab(QWidget):
         self.tab_widget = QTabWidget()
         
         # 地址列表标签页
-        self.address_list_tab = OSCAddressListTab(self.ui_callback)
+        self.address_list_tab = OSCAddressListTab(self.ui_interface)
         self.tab_widget.addTab(self.address_list_tab, _("osc_address_tab.address_list"))
         
         # 地址绑定标签页
-        self.address_binding_tab = OSCAddressBindingTab(self.ui_callback)
+        self.address_binding_tab = OSCAddressBindingTab(self.ui_interface)
         self.tab_widget.addTab(self.address_binding_tab, _("osc_address_tab.address_binding"))
         
         layout.addWidget(self.tab_widget)

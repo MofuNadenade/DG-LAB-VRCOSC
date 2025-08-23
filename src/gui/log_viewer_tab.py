@@ -4,6 +4,7 @@ from typing import Any, Optional, Dict
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QTextEdit, QLabel)
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QTextCursor
+from pydglab_ws import Channel
 
 from core.dglab_controller import DGLabController
 from .ui_interface import UIInterface
@@ -62,9 +63,9 @@ class QTextEditHandler(logging.Handler):
 
 
 class LogViewerTab(QWidget):
-    def __init__(self, ui_callback: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         self.settings: Dict[str, Any] = settings
         
         # 调试信息定时更新
@@ -88,7 +89,7 @@ class LogViewerTab(QWidget):
     @property
     def controller(self) -> Optional[DGLabController]:
         """通过UIInterface获取当前控制器"""
-        return self.ui_callback.controller
+        return self.ui_interface.controller
 
     def init_ui(self) -> None:
         """初始化调试选项卡UI"""
@@ -164,11 +165,11 @@ class LogViewerTab(QWidget):
                 f"Device online: app_status_online= {self.controller.app_status_online}\n "
                 f"Enable Panel Control: {self.controller.dglab_service.enable_panel_control}\n"
                 f"Fire Mode Disabled: {self.controller.dglab_service.fire_mode_disabled}\n"
-                f"Dynamic Bone Mode A: {self.controller.is_dynamic_bone_mode_a}\n"
-                f"Dynamic Bone Mode B: {self.controller.is_dynamic_bone_mode_b}\n"
-                f"Pulse Mode A: {self.controller.pulse_mode_a}\n"
-                f"Pulse Mode B: {self.controller.pulse_mode_b}\n"
-                f"Fire Mode Strength Step: {self.controller.fire_mode_strength_step}\n"
+                f"Dynamic Bone Mode A: {self.controller.dglab_service.is_dynamic_bone_enabled(Channel.A)}\n"
+                f"Dynamic Bone Mode B: {self.controller.dglab_service.is_dynamic_bone_enabled(Channel.B)}\n"
+                f"Pulse Mode A: {self.controller.dglab_service.get_pulse_mode(Channel.A)}\n"
+                f"Pulse Mode B: {self.controller.dglab_service.get_pulse_mode(Channel.B)}\n"
+                f"Fire Mode Strength Step: {self.controller.dglab_service.fire_mode_strength_step}\n"
                 f"Enable ChatBox Status: {self.controller.chatbox_service.enable_chatbox_status}\n"
                 f"GUI Parameters:\n"
                 f"A  strength allow update:{getattr(self, 'allow_a_channel_update', 'N/A')}\n"

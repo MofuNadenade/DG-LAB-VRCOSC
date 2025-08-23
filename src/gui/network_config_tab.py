@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class NetworkConfigTab(QWidget):
-    def __init__(self, ui_callback: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         self.settings: Dict[str, Any] = settings
         self.server_task: Optional[asyncio.Task[None]] = None
         
@@ -61,7 +61,7 @@ class NetworkConfigTab(QWidget):
     @property
     def controller(self) -> Optional[DGLabController]:
         """通过UIInterface获取当前控制器"""
-        return self.ui_callback.controller
+        return self.ui_interface.controller
 
     def init_ui(self) -> None:
         """初始化连接设置选项卡UI"""
@@ -276,7 +276,7 @@ class NetworkConfigTab(QWidget):
         """启动/断开按钮被点击后的处理逻辑"""
         if self.server_task is None or self.server_task.done():
             # 启动服务器 - 使用统一接口
-            self.ui_callback.set_connection_state(ConnectionState.CONNECTING)
+            self.ui_interface.set_connection_state(ConnectionState.CONNECTING)
             
             # 保存网络设置
             self.save_network_settings()
@@ -311,7 +311,7 @@ class NetworkConfigTab(QWidget):
             
             # 使用事件循环来启动服务器，并保存任务引用
             loop = asyncio.get_running_loop()
-            self.server_task = loop.create_task(self.run_server_with_cleanup(self.ui_callback, selected_ip, selected_port, osc_port, remote_address))
+            self.server_task = loop.create_task(self.run_server_with_cleanup(self.ui_interface, selected_ip, selected_port, osc_port, remote_address))
             logger.info("WebSocket 服务器已启动")
                 
         except Exception as e:
@@ -319,7 +319,7 @@ class NetworkConfigTab(QWidget):
             logger.error(error_message)
             
             # 恢复按钮状态 - 使用统一接口
-            self.ui_callback.set_connection_state(ConnectionState.FAILED, error_message)
+            self.ui_interface.set_connection_state(ConnectionState.FAILED, error_message)
 
     def stop_server(self) -> None:
         """停止 WebSocket 服务器"""
@@ -328,7 +328,7 @@ class NetworkConfigTab(QWidget):
             logger.info("WebSocket 服务器已停止")
         
         # 重置UI状态 - 使用统一接口
-        self.ui_callback.set_connection_state(ConnectionState.DISCONNECTED)
+        self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
         
         # 更新连接状态
         self.update_connection_status(False)
@@ -337,12 +337,12 @@ class NetworkConfigTab(QWidget):
         self.qrcode_label.clear()
         
         # 通过UI回调清空控制器引用
-        self.ui_callback.set_controller(None)
+        self.ui_interface.set_controller(None)
 
-    async def run_server_with_cleanup(self, ui_callback: UIInterface, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> None:
+    async def run_server_with_cleanup(self, ui_interface: UIInterface, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> None:
         """运行服务器并处理清理工作"""
         try:
-            await run_server(ui_callback, ip, port, osc_port, remote_address)
+            await run_server(ui_interface, ip, port, osc_port, remote_address)
         except asyncio.CancelledError:
             logger.info("服务器任务被取消")
             raise
@@ -350,7 +350,7 @@ class NetworkConfigTab(QWidget):
             error_msg = _("connection_tab.server_error").format(str(e))
             logger.error(error_msg)
             # 服务器异常后重置UI状态 - 使用统一接口
-            self.ui_callback.set_connection_state(ConnectionState.FAILED, error_msg)
+            self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
             self.update_connection_status(False)
             raise
         finally:
@@ -403,10 +403,10 @@ class NetworkConfigTab(QWidget):
                 self._set_button_disabled()
             else:
                 # 远程地址有效或为空，启用启动按钮 - 使用统一接口
-                self.ui_callback.set_connection_state(ConnectionState.DISCONNECTED)
+                self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
         else:
             # 未启用远程连接时恢复启动按钮状态 - 使用统一接口
-            self.ui_callback.set_connection_state(ConnectionState.DISCONNECTED)
+            self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
         
         # 保存设置
         self.save_network_settings()
@@ -432,13 +432,13 @@ class NetworkConfigTab(QWidget):
                 # IP地址格式有效时恢复正常边框
                 self.remote_address_edit.setStyleSheet("")
                 # 启用启动按钮 - 使用统一接口
-                self.ui_callback.set_connection_state(ConnectionState.DISCONNECTED)
+                self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
                 # 保存设置
                 self.save_network_settings()
         else:
             # 未启用远程连接或地址为空时恢复正常状态
             self.remote_address_edit.setStyleSheet("")
-            self.ui_callback.set_connection_state(ConnectionState.DISCONNECTED)
+            self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
 
 
     def on_language_changed(self) -> None:
@@ -464,7 +464,7 @@ class NetworkConfigTab(QWidget):
         self.language_label.setText(_("main.settings.language_label"))
         # start_button的文本现在通过统一接口管理，这里不需要直接设置
         # 保持当前连接状态的显示文本
-        current_state = self.ui_callback.get_connection_state()
+        current_state = self.ui_interface.get_connection_state()
         if current_state == ConnectionState.CONNECTED:
             self.start_button.setText(_("connection_tab.disconnect"))
         else:

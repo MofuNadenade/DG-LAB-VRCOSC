@@ -8,9 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class OSCService:
-    def __init__(self, osc_client: udp_client.SimpleUDPClient, ui_callback: 'UIInterface') -> None:
-        self.osc_client = osc_client
-        self.ui_callback = ui_callback
+    def __init__(self, osc_client: udp_client.SimpleUDPClient, ui_interface: 'UIInterface') -> None:
+        self._osc_client = osc_client
+        self._ui_interface = ui_interface
 
     async def handle_osc_message(self, address: str, *args: Any) -> None:
         """
@@ -22,18 +22,18 @@ class OSCService:
         logger.debug(f"Received OSC message on {address} with arguments {args}")
 
         # 支持所有OSC地址 - 直接使用完整地址匹配
-        if address in self.ui_callback.address_registry.addresses_by_code:
-            address_obj = self.ui_callback.address_registry.addresses_by_code[address]
-            await self.ui_callback.binding_registry.handle(address_obj, *args)
+        if address in self._ui_interface.address_registry.addresses_by_code:
+            address_obj = self._ui_interface.address_registry.addresses_by_code[address]
+            await self._ui_interface.binding_registry.handle(address_obj, *args)
 
     def send_message_to_vrchat_chatbox(self, message: str) -> None:
         """
         /chatbox/input s b n Input text into the chatbox.
         """
-        self.osc_client.send_message("/chatbox/input", [message, True, False])
+        self._osc_client.send_message("/chatbox/input", [message, True, False])
 
     def send_value_to_vrchat(self, path: str, value: Any) -> None:
         """
         发送值到 VRChat
         """
-        self.osc_client.send_message(path, value)
+        self._osc_client.send_message(path, value)

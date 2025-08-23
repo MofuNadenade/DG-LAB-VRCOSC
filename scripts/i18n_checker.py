@@ -15,12 +15,13 @@ yaml = YAML()
 import sys
 import os
 from pathlib import Path
+from typing import List, Dict, Any, Tuple
 
 # 确保能找到项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 LOCALES_DIR = PROJECT_ROOT / 'src' / 'locales'
 
-def get_ordered_keys(file_path):
+def get_ordered_keys(file_path: Path) -> List[str]:
     """获取YAML文件的键，保持原始顺序"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -29,8 +30,8 @@ def get_ordered_keys(file_path):
         print(f"❌ 无法读取文件 {file_path}: {e}")
         return []
     
-    def extract_keys_ordered(obj, prefix=''):
-        keys = []
+    def extract_keys_ordered(obj: Any, prefix: str = '') -> List[str]:
+        keys: List[str] = []
         if isinstance(obj, dict):
             for key in obj.keys():
                 full_key = f'{prefix}.{key}' if prefix else key
@@ -41,10 +42,10 @@ def get_ordered_keys(file_path):
     
     return extract_keys_ordered(data)
 
-def check_duplicates(keys, lang_name):
+def check_duplicates(keys: List[str], lang_name: str) -> bool:
     """检查重复键"""
-    duplicates = []
-    seen = set()
+    duplicates: List[str] = []
+    seen: set[str] = set()
     for key in keys:
         if key in seen:
             duplicates.append(key)
@@ -57,7 +58,7 @@ def check_duplicates(keys, lang_name):
         print(f'✅ {lang_name}文件无重复键')
         return True
 
-def check_missing_keys(zh_keys, en_keys, ja_keys):
+def check_missing_keys(zh_keys: List[str], en_keys: List[str], ja_keys: List[str]) -> bool:
     """检查缺失的键"""
     zh_set = set(zh_keys)
     en_set = set(en_keys)
@@ -88,7 +89,7 @@ def check_missing_keys(zh_keys, en_keys, ja_keys):
     
     return not has_missing
 
-def show_order_differences(zh_keys, en_keys, ja_keys, show_details=False):
+def show_order_differences(zh_keys: List[str], en_keys: List[str], ja_keys: List[str], show_details: bool = False) -> Tuple[int, List[Dict[str, Any]]]:
     """显示顺序差异"""
     print('\n=== 按顺序对比所有键 ===')
     
@@ -97,7 +98,7 @@ def show_order_differences(zh_keys, en_keys, ja_keys, show_details=False):
         print('-' * 100)
     
     inconsistent_count = 0
-    inconsistent_details = []
+    inconsistent_details: List[Dict[str, Any]] = []
     
     for i, (zh_key, en_key, ja_key) in enumerate(zip(zh_keys, en_keys, ja_keys), 1):
         if zh_key == en_key == ja_key:
@@ -132,7 +133,7 @@ def show_order_differences(zh_keys, en_keys, ja_keys, show_details=False):
     
     return inconsistent_count, inconsistent_details
 
-def main():
+def main() -> None:
     """主函数"""
     import argparse
     

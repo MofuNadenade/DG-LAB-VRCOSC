@@ -23,7 +23,7 @@ yaml_loader = YAML(typ='safe')
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-def flatten_dict(d: dict, parent_key: str = '', sep: str = '.') -> dict:
+def flatten_dict(d: Dict[str, Any], parent_key: str = '', sep: str = '.') -> Dict[str, Any]:
     """将嵌套字典扁平化为点分隔的键"""
     items: List[Tuple[str, Any]] = []
     for k, v in d.items():
@@ -137,7 +137,7 @@ def analyze_usage(src_dir: str, locale_files: List[str]) -> Dict[str, Any]:
         'total_missing': len(missing_keys)
     }
 
-def print_usage_report(analysis: Dict[str, Any]):
+def print_usage_report(analysis: Dict[str, Any]) -> None:
     """打印使用情况报告"""
     print("=== 本地化键使用情况分析 ===")
     print(f"定义的键总数: {analysis['total_defined']}")
@@ -159,7 +159,7 @@ def print_usage_report(analysis: Dict[str, Any]):
     else:
         print("\n✅ 所有使用的键都已定义！")
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description='本地化管理工具')
     parser.add_argument('--src-dir', default='src', help='源代码目录 (默认: src)')
     parser.add_argument('--locales', nargs='+', 

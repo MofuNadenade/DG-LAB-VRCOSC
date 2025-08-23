@@ -56,7 +56,7 @@ await controller.chatbox_service.send_strength_status(controller.dglab_service)
 # 通过控制器的只读属性
 last_strength = controller.last_strength
 current_channel = controller.current_select_channel
-pulse_mode_a = controller.pulse_mode_a
+pulse_mode_a = controller.dglab_service.get_pulse_mode(Channel.A)
 is_dynamic_mode_a = controller.is_dynamic_bone_mode_a
 ```
 

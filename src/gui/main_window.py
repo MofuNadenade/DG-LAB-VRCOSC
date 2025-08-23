@@ -181,7 +181,7 @@ class MainWindow(QMainWindow):
             def make_pulse_action(idx: int, ctrl: Optional['DGLabController']) -> Callable[..., Awaitable[None]]:
                 async def pulse_action(*args: Any) -> None:
                     if ctrl:
-                        await ctrl.dglab_service.set_pulse_data(args[0], ctrl.current_select_channel, idx)
+                        await ctrl.dglab_service.set_pulse_data(args[0], ctrl.dglab_service.get_current_channel(), idx)
                 return pulse_action
             
             self.action_registry.register_action(_("main.action.set_pulse").format(pulse.name), 
@@ -253,9 +253,9 @@ class MainWindow(QMainWindow):
             
             # 同步波形设置并更新设备
             if a_index >= 0:
-                self.controller.dglab_service.pulse_mode_a = a_index
+                self.controller.dglab_service.set_pulse_mode(Channel.A, a_index)
             if b_index >= 0:
-                self.controller.dglab_service.pulse_mode_b = b_index
+                self.controller.dglab_service.set_pulse_mode(Channel.B, b_index)
                 
             # 立即更新设备上的波形数据
             asyncio.create_task(self.controller.dglab_service.update_pulse_data())
@@ -279,7 +279,7 @@ class MainWindow(QMainWindow):
             lambda *args: self.controller.dglab_service.set_float_output(args[0], Channel.B),
             OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"})
         self.action_registry.register_action("当前通道触碰", 
-            lambda *args: self.controller.dglab_service.set_float_output(args[0], self.controller.current_select_channel),
+            lambda *args: self.controller.dglab_service.set_float_output(args[0], self.controller.dglab_service.get_current_channel()),
             OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"})
         
         # 面板控制操作
@@ -295,19 +295,19 @@ class MainWindow(QMainWindow):
         
         # 强度控制操作
         self.action_registry.register_action("设置模式", 
-            lambda *args: self.controller.dglab_service.set_mode(args[0], self.controller.current_select_channel),
+            lambda *args: self.controller.dglab_service.set_mode(args[0], self.controller.dglab_service.get_current_channel()),
             OSCActionType.STRENGTH_CONTROL, {"mode"})
         self.action_registry.register_action("重置强度", 
-            lambda *args: self.controller.dglab_service.reset_strength(args[0], self.controller.current_select_channel),
+            lambda *args: self.controller.dglab_service.reset_strength(args[0], self.controller.dglab_service.get_current_channel()),
             OSCActionType.STRENGTH_CONTROL, {"reset"})
         self.action_registry.register_action("降低强度", 
-            lambda *args: self.controller.dglab_service.decrease_strength(args[0], self.controller.current_select_channel),
+            lambda *args: self.controller.dglab_service.decrease_strength(args[0], self.controller.dglab_service.get_current_channel()),
             OSCActionType.STRENGTH_CONTROL, {"decrease"})
         self.action_registry.register_action("增加强度", 
-            lambda *args: self.controller.dglab_service.increase_strength(args[0], self.controller.current_select_channel),
+            lambda *args: self.controller.dglab_service.increase_strength(args[0], self.controller.dglab_service.get_current_channel()),
             OSCActionType.STRENGTH_CONTROL, {"increase"})
         self.action_registry.register_action("一键开火", 
-            lambda *args: self.controller.dglab_service.strength_fire_mode(args[0], self.controller.current_select_channel, self.controller.fire_mode_strength_step, self.controller.last_strength),
+            lambda *args: self.controller.dglab_service.strength_fire_mode(args[0], self.controller.dglab_service.get_current_channel(), self.controller.dglab_service.fire_mode_strength_step, self.controller.dglab_service.get_last_strength()),
             OSCActionType.STRENGTH_CONTROL, {"fire"})
         self.action_registry.register_action("ChatBox状态开关", 
             lambda *args: self.controller.chatbox_service.toggle_chatbox(args[0]),

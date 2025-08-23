@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 class AboutTab(QWidget):
-    def __init__(self, ui_callback: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         self.settings: Dict[str, Any] = settings
         
         # UI组件类型注解

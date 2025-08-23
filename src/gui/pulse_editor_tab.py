@@ -35,9 +35,9 @@ class PulseEditorTab(QWidget):
     pulse_saved = Signal(str)  # 波形保存信号
     pulse_deleted = Signal(str)  # 波形删除信号
     
-    def __init__(self, ui_callback: UIInterface):
+    def __init__(self, ui_interface: UIInterface):
         super().__init__()
-        self.ui_callback = ui_callback
+        self.ui_interface = ui_interface
         self.current_channel = Channel.A
         self.current_pulse: Optional[Pulse] = None
         self.is_modified = False
@@ -346,8 +346,8 @@ class PulseEditorTab(QWidget):
         """加载波形列表"""
         self.pulse_list.clear()
         
-        if self.ui_callback.pulse_registry:
-            for pulse in self.ui_callback.pulse_registry.pulses:
+        if self.ui_interface.pulse_registry:
+            for pulse in self.ui_interface.pulse_registry.pulses:
                 item = QListWidgetItem(pulse.name)
                 item.setData(Qt.ItemDataRole.UserRole, pulse)
                 
@@ -551,14 +551,14 @@ class PulseEditorTab(QWidget):
                 name, template_data, description = dialog.get_pulse_data()
                 
                 # 检查名称是否已存在
-                if self.ui_callback.pulse_registry:
-                    if name in self.ui_callback.pulse_registry.pulses_by_name:
+                if self.ui_interface.pulse_registry:
+                    if name in self.ui_interface.pulse_registry.pulses_by_name:
                         QMessageBox.warning(self, _("pulse_editor.name_conflict"), _("pulse_editor.name_exists").format(name))
                         return
                         
                 # 创建新波形
                 try:
-                    pulse = self.ui_callback.pulse_registry.register_pulse(name, template_data)
+                    pulse = self.ui_interface.pulse_registry.register_pulse(name, template_data)
                     self.load_pulses()
                     
                     # 选中新创建的波形
@@ -591,15 +591,15 @@ class PulseEditorTab(QWidget):
             new_name = new_name.strip()
             
             # 检查名称是否已存在
-            if self.ui_callback.pulse_registry:
-                if new_name in self.ui_callback.pulse_registry.pulses_by_name:
+            if self.ui_interface.pulse_registry:
+                if new_name in self.ui_interface.pulse_registry.pulses_by_name:
                     QMessageBox.warning(self, _("pulse_editor.name_conflict"), _("pulse_editor.name_exists").format(new_name))
                     return
                     
             try:
                 # 复制数据
                 copied_data = [step for step in source_pulse.data]
-                pulse = self.ui_callback.pulse_registry.register_pulse(new_name, copied_data)
+                pulse = self.ui_interface.pulse_registry.register_pulse(new_name, copied_data)
                 
                 self.load_pulses()
                 
@@ -640,13 +640,13 @@ class PulseEditorTab(QWidget):
                     self.clear_editor()
                     
                 # 从注册表中移除
-                if self.ui_callback.pulse_registry:
-                    self.ui_callback.pulse_registry.pulses.remove(pulse)
-                    if pulse.name in self.ui_callback.pulse_registry.pulses_by_name:
-                        del self.ui_callback.pulse_registry.pulses_by_name[pulse.name]
+                if self.ui_interface.pulse_registry:
+                    self.ui_interface.pulse_registry.pulses.remove(pulse)
+                    if pulse.name in self.ui_interface.pulse_registry.pulses_by_name:
+                        del self.ui_interface.pulse_registry.pulses_by_name[pulse.name]
                         
                     # 重新索引
-                    for i, p in enumerate(self.ui_callback.pulse_registry.pulses):
+                    for i, p in enumerate(self.ui_interface.pulse_registry.pulses):
                         p.index = i
                         
                 self.load_pulses()
@@ -685,16 +685,16 @@ class PulseEditorTab(QWidget):
             
     def save_pulses_to_config(self) -> None:
         """保存波形到配置文件"""
-        if self.ui_callback.pulse_registry and self.ui_callback.settings:
+        if self.ui_interface.pulse_registry and self.ui_interface.settings:
             try:
                 # 导出所有波形
-                all_pulses = self.ui_callback.pulse_registry.export_to_config()
+                all_pulses = self.ui_interface.pulse_registry.export_to_config()
                 
                 # 更新settings
-                self.ui_callback.settings['pulses'] = all_pulses
+                self.ui_interface.settings['pulses'] = all_pulses
                 
                 # 保存到文件
-                self.ui_callback.save_settings()
+                self.ui_interface.save_settings()
                 logger.info(f"Saved {len(all_pulses)} pulses to config")
                 
             except Exception as e:
@@ -740,16 +740,13 @@ class PulseEditorTab(QWidget):
             self.test_channel = self.current_channel  # 记录测试时的通道
             
             # 如果有控制器，在设备上播放
-            if self.ui_callback.controller:
+            if self.ui_interface.controller:
                 try:
                     # 创建临时脉冲对象
                     temp_pulse = Pulse(-1, _("pulse_editor.test_waveform"), current_data)
                     
                     # 在当前通道播放
-                    if self.current_channel == Channel.A:
-                        self.ui_callback.controller.dglab_service.channel_a_pulse_task.set_pulse(temp_pulse)
-                    else:
-                        self.ui_callback.controller.dglab_service.channel_b_pulse_task.set_pulse(temp_pulse)
+                    asyncio.create_task(self.ui_interface.controller.dglab_service.set_test_pulse(self.current_channel, temp_pulse))
                         
                     logger.info(f"Playing test pulse on channel {self.current_channel}")
                     
@@ -764,10 +761,10 @@ class PulseEditorTab(QWidget):
             self.is_playing = False
             
             # 恢复设备上的原始波形
-            if self.ui_callback.controller:
+            if self.ui_interface.controller:
                 try:
                     # 恢复当前通道的正常波形
-                    asyncio.create_task(self.ui_callback.controller.dglab_service.update_pulse_data())
+                    asyncio.create_task(self.ui_interface.controller.dglab_service.update_pulse_data())
                     logger.info(f"Restored normal pulse on channel {self.current_channel}")
                 except Exception as e:
                     logger.error(f"Failed to restore normal pulse: {e}")
@@ -789,13 +786,13 @@ class PulseEditorTab(QWidget):
                 data = pulse_data['data']
                 
                 # 检查名称是否已存在
-                if self.ui_callback.pulse_registry:
-                    if name in self.ui_callback.pulse_registry.pulses_by_name:
+                if self.ui_interface.pulse_registry:
+                    if name in self.ui_interface.pulse_registry.pulses_by_name:
                         skipped_count += 1
                         continue
                         
                 try:
-                    self.ui_callback.pulse_registry.register_pulse(name, data)
+                    self.ui_interface.pulse_registry.register_pulse(name, data)
                     imported_count += 1
                     
                 except Exception as e:
@@ -818,12 +815,12 @@ class PulseEditorTab(QWidget):
             
     def export_pulses(self) -> None:
         """导出波形"""
-        if not self.ui_callback.pulse_registry:
+        if not self.ui_interface.pulse_registry:
             QMessageBox.warning(self, _("pulse_editor.export_failed"), _("pulse_editor.registry_unavailable"))
             return
             
         # 获取自定义波形（索引>=15的波形）
-        custom_pulses = [pulse for pulse in self.ui_callback.pulse_registry.pulses if pulse.index >= 15]
+        custom_pulses = [pulse for pulse in self.ui_interface.pulse_registry.pulses if pulse.index >= 15]
         
         if not custom_pulses:
             QMessageBox.information(self, _("pulse_editor.no_custom_pulses"), _("pulse_editor.no_custom_pulses_msg"))

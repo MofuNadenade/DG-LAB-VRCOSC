@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class ControllerSettingsTab(QWidget):
-    def __init__(self, ui_callback: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
         super().__init__()
-        self.ui_callback: UIInterface = ui_callback
+        self.ui_interface: UIInterface = ui_interface
         self.settings: Dict[str, Any] = settings
         
         # 控制滑动条外部更新的状态标志
@@ -57,12 +57,12 @@ class ControllerSettingsTab(QWidget):
     @property
     def controller(self) -> Optional['DGLabController']:
         """通过UIInterface获取当前控制器"""
-        return self.ui_callback.controller
+        return self.ui_interface.controller
 
     @property
     def pulse_registry(self) -> 'PulseRegistry':
         """通过UIInterface获取脉冲注册表"""
-        return self.ui_callback.pulse_registry
+        return self.ui_interface.pulse_registry
 
     def init_ui(self) -> None:
         """初始化设备控制选项卡UI"""
@@ -238,7 +238,7 @@ class ControllerSettingsTab(QWidget):
     def on_pulse_mode_a_changed(self, index: int) -> None:
         """当波形A模式发生变化时"""
         if self.controller:
-            self.controller.dglab_service.pulse_mode_a = index
+            self.controller.dglab_service.set_pulse_mode(Channel.A, index)
             logger.info(f"Pulse mode A updated to {self.pulse_registry.pulses[index].name}")
             # 立即更新设备上的波形数据
             asyncio.create_task(self.controller.dglab_service.update_pulse_data())
@@ -246,7 +246,7 @@ class ControllerSettingsTab(QWidget):
     def on_pulse_mode_b_changed(self, index: int) -> None:
         """当波形B模式发生变化时"""
         if self.controller:
-            self.controller.dglab_service.pulse_mode_b = index
+            self.controller.dglab_service.set_pulse_mode(Channel.B, index)
             logger.info(f"Pulse mode B updated to {self.pulse_registry.pulses[index].name}")
             # 立即更新设备上的波形数据
             asyncio.create_task(self.controller.dglab_service.update_pulse_data())
@@ -277,7 +277,7 @@ class ControllerSettingsTab(QWidget):
             self.settings['pulse_mode_b'] = self.pulse_mode_b_combobox.currentText()
             
             # 调用UIInterface的保存方法
-            self.ui_callback.save_settings()
+            self.ui_interface.save_settings()
             
             # 显示成功消息
             QMessageBox.information(self, _("common.save_success"), 
@@ -293,8 +293,9 @@ class ControllerSettingsTab(QWidget):
         """根据滑动条的值设定 A 通道强度"""
         if self.controller and self.allow_a_channel_update:
             asyncio.create_task(self.controller.client.set_strength(Channel.A, StrengthOperationType.SET_TO, value))
-            if self.controller.last_strength:
-                self.controller.last_strength.a = value  # 同步更新 last_strength 的 A 通道值
+            last_strength = self.controller.dglab_service.get_last_strength()
+            if last_strength:
+                last_strength.a = value  # 同步更新 last_strength 的 A 通道值
             
         self.a_channel_slider.setToolTip(f"SET A {_('channel.strength_display')}: {value}")
 
@@ -302,8 +303,9 @@ class ControllerSettingsTab(QWidget):
         """根据滑动条的值设定 B 通道强度"""
         if self.controller and self.allow_b_channel_update:
             asyncio.create_task(self.controller.client.set_strength(Channel.B, StrengthOperationType.SET_TO, value))
-            if self.controller.last_strength:
-                self.controller.last_strength.b = value  # 同步更新 last_strength 的 B 通道值
+            last_strength = self.controller.dglab_service.get_last_strength()
+            if last_strength:
+                last_strength.b = value  # 同步更新 last_strength 的 B 通道值
             
         self.b_channel_slider.setToolTip(f"SET B {_('channel.strength_display')}: {value}")
 
@@ -339,22 +341,23 @@ class ControllerSettingsTab(QWidget):
         """更新通道强度和波形"""
         logger.info(f"通道状态已更新 - A通道强度: {strength_data.a}, B通道强度: {strength_data.b}")
         
-        if self.controller and self.controller.last_strength:
+        last_strength = self.controller.dglab_service.get_last_strength() if self.controller else None
+        if self.controller and last_strength:
             # 仅当允许外部更新时更新 A 通道滑动条
             if self.allow_a_channel_update:
                 self.a_channel_slider.blockSignals(True)
-                self.a_channel_slider.setRange(0, self.controller.last_strength.a_limit)  # 根据限制更新范围
-                self.a_channel_slider.setValue(self.controller.last_strength.a)
+                self.a_channel_slider.setRange(0, last_strength.a_limit)  # 根据限制更新范围
+                self.a_channel_slider.setValue(last_strength.a)
                 self.a_channel_slider.blockSignals(False)
-                self.a_channel_label.setText(f"A {_('channel.strength_display')}: {self.controller.last_strength.a} {_('channel.strength_limit')}: {self.controller.last_strength.a_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.pulse_mode_a].name}")
+                self.a_channel_label.setText(f"A {_('channel.strength_display')}: {last_strength.a} {_('channel.strength_limit')}: {last_strength.a_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.dglab_service.get_pulse_mode(Channel.A)].name}")
 
             # 仅当允许外部更新时更新 B 通道滑动条
             if self.allow_b_channel_update:
                 self.b_channel_slider.blockSignals(True)
-                self.b_channel_slider.setRange(0, self.controller.last_strength.b_limit)  # 根据限制更新范围
-                self.b_channel_slider.setValue(self.controller.last_strength.b)
+                self.b_channel_slider.setRange(0, last_strength.b_limit)  # 根据限制更新范围
+                self.b_channel_slider.setValue(last_strength.b)
                 self.b_channel_slider.blockSignals(False)
-                self.b_channel_label.setText(f"B {_('channel.strength_display')}: {self.controller.last_strength.b} {_('channel.strength_limit')}: {self.controller.last_strength.b_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.pulse_mode_b].name}")
+                self.b_channel_label.setText(f"B {_('channel.strength_display')}: {last_strength.b} {_('channel.strength_limit')}: {last_strength.b_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.dglab_service.get_pulse_mode(Channel.B)].name}")
 
     def update_current_channel_display(self, channel_name: str) -> None:
         """更新当前选择通道显示"""

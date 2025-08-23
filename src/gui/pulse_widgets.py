@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QListWidget, QListWidgetItem, QFrame, QScrollArea, QSizePolicy,
     QSpinBox, QDoubleSpinBox, QCheckBox, QGroupBox
 )
-from PySide6.QtCore import Qt, Signal, QTimer, QRect, QSize, QPoint
+from PySide6.QtCore import Qt, Signal, QTimer, QRect, QSize, QPoint, QEvent
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPaintEvent, QMouseEvent, QFont, QLinearGradient
 
 from pydglab_ws.typing import PulseOperation
@@ -454,7 +454,7 @@ class PulseBar(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self.is_dragging = False
             
-    def leaveEvent(self, event) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         """鼠标离开事件"""
         if self.delete_button_hovered:
             self.delete_button_hovered = False
