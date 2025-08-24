@@ -14,3 +14,4 @@ types-requests
 mypy>=1.17.0
 watchdog
 pyinstaller
+reactivex
