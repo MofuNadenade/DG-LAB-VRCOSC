@@ -5,17 +5,18 @@ OSC服务 - 完全封装OSC功能
 
 import asyncio
 import logging
-from typing import Any, Optional, Callable, Awaitable, TYPE_CHECKING
+from typing import Optional, Callable, Awaitable, TYPE_CHECKING
 from pythonosc import dispatcher, osc_server, udp_client
 
 # 导入必要的类型和枚举
 from core.osc_common import OSCActionType
-from models import Channel
+from models import Channel, OSCValue
 from gui.ui_interface import ConnectionState
 
 if TYPE_CHECKING:
     from gui.ui_interface import UIInterface
     from services.dglab_service_interface import IDGLabService
+    from services.chatbox_service import ChatboxService
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +47,9 @@ class OSCService:
         self._ui_interface: 'UIInterface' = ui_interface
         self._osc_client: Optional[udp_client.SimpleUDPClient] = None
         self._osc_server_instance: Optional[osc_server.AsyncIOOSCUDPServer] = None
-        self._osc_transport: Optional[Any] = None
+        self._osc_transport: Optional[asyncio.BaseTransport] = None
         self._dglab_service: Optional['IDGLabService'] = None
-        self._chatbox_service: Optional[Any] = None  # 避免循环导入
+        self._chatbox_service: Optional['ChatboxService'] = None
         self._is_running: bool = False
         
         # OSC服务器配置
@@ -62,7 +63,7 @@ class OSCService:
         if self._dglab_service:
             self._register_osc_actions()
     
-    def set_chatbox_service(self, chatbox_service: Any) -> None:
+    def set_chatbox_service(self, chatbox_service: 'ChatboxService') -> None:
         """设置ChatBox服务引用"""
         self._chatbox_service = chatbox_service
     
@@ -137,12 +138,12 @@ class OSCService:
         """检查OSC服务器运行状态"""
         return self._is_running
     
-    def _handle_osc_message_internal(self, address: str, *args: Any) -> None:
+    def _handle_osc_message_internal(self, address: str, *args: OSCValue) -> None:
         """OSC消息内部处理方法（同步）"""
         # 创建异步任务处理消息
         asyncio.create_task(self.handle_osc_message(address, *args))
     
-    async def handle_osc_message(self, address: str, *args: Any) -> None:
+    async def handle_osc_message(self, address: str, *args: OSCValue) -> None:
         """
         处理OSC消息
         
@@ -209,9 +210,13 @@ class OSCService:
             OSCActionType.PANEL_CONTROL, {"value_adjust"}
         )
         
+        async def set_channel_wrapper(*args: OSCValue) -> None:
+            if isinstance(args[0], (int, float)):
+                await dglab.set_channel(args[0])
+        
         self._ui_interface.action_registry.register_action(
             "通道调节",
-            self._create_async_wrapper(lambda *args: dglab.set_channel(args[0])),
+            set_channel_wrapper,
             OSCActionType.PANEL_CONTROL, {"channel_adjust"}
         )
         
@@ -270,9 +275,9 @@ class OSCService:
         
         logger.info("OSC动作注册完成")
     
-    def _create_async_wrapper(self, func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[None]]:
+    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
         """创建异步包装器"""
-        async def wrapper(*args: Any) -> None:
+        async def wrapper(*args: OSCValue) -> None:
             try:
                 await func(*args)
             except Exception as e:
@@ -298,7 +303,7 @@ class OSCService:
         except Exception as e:
             logger.error(f"发送ChatBox消息失败: {e}")
     
-    def send_value_to_vrchat(self, path: str, value: Any) -> None:
+    def send_value_to_vrchat(self, path: str, value: OSCValue) -> None:
         """
         发送值到VRChat
         
@@ -312,7 +317,7 @@ class OSCService:
         
         try:
             self._osc_client.send_message(path, value)
-            logger.debug(f"已发送OSC值: {path} = {value}")
+            logger.debug(f"已发送OSC值: {path} = {value!r}")
         except Exception as e:
             logger.error(f"发送OSC值失败: {e}")
     

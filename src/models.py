@@ -4,21 +4,8 @@
 重新创建pydglab_ws中的关键类型，以减少对外部依赖的耦合
 """
 from enum import IntEnum
-from typing import Tuple
+from typing import Any, Tuple, Union, Dict, List, TypedDict
 from pydantic import BaseModel
-
-__all__ = (
-    "Channel",
-    "StrengthData", 
-    "PulseOperation",
-    "WaveformFrequency",
-    "WaveformStrength", 
-    "WaveformFrequencyOperation",
-    "WaveformStrengthOperation",
-    "StrengthOperationType",
-    "FeedbackButton",
-    "RetCode"
-)
 
 # 基础类型定义
 WaveformFrequency = int
@@ -129,3 +116,73 @@ class StrengthData(BaseModel):
     b: int
     a_limit: int
     b_limit: int
+
+# OSC 相关类型
+OSCValue = Union[int, float, str, bool, bytes]
+"""OSC 消息参数类型"""
+
+# OSC相关的具体类型定义
+class OSCAddressDict(TypedDict):
+    """OSC地址配置项类型"""
+    name: str
+    code: str
+
+class OSCTemplateDict(TypedDict):
+    """OSC模板配置项类型"""
+    name: str
+    pattern: str
+    description: str
+
+class OSCBindingDict(TypedDict):
+    """OSC绑定配置项类型"""
+    address_name: str
+    action_name: str
+
+# 配置设置类型定义
+class SettingsDict(TypedDict, total=False):
+    """应用程序设置配置类型定义"""
+    # 网络设置
+    interface: str
+    ip: str
+    port: int
+    osc_port: int
+    language: str
+    enable_remote: bool
+    remote_address: str
+    
+    # 控制器设置
+    enable_chatbox_status: bool
+    strength_step: int
+    fire_mode_disabled: bool
+    enable_panel_control: bool
+    dynamic_bone_mode_a: bool
+    dynamic_bone_mode_b: bool
+    pulse_mode_a: str
+    pulse_mode_b: str
+    
+    # 配置数据 - 使用具体的TypedDict类型
+    addresses: List[OSCAddressDict]
+    pulses: Dict[str, List[PulseOperation]]
+    templates: List[OSCTemplateDict]
+    bindings: List[OSCBindingDict]
+
+# 脉冲相关类型
+class IntegrityReportStats(TypedDict):
+    """完整性报告统计信息"""
+    steps: int
+    max_frequency: int
+    max_intensity: int
+    duration_ms: int
+
+class IntegrityReport(TypedDict):
+    """数据完整性检查报告类型"""
+    valid: bool
+    issues: List[str]
+    warnings: List[str]
+    stats: IntegrityReportStats
+
+class PulseDict(TypedDict):
+    """导入脉冲项的数据结构"""
+    name: str
+    data: List[PulseOperation]
+    integrity: IntegrityReport

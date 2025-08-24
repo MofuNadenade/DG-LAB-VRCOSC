@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from typing import Any, Optional, Dict, Union, List
+from typing import Optional, Union, List
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
                                QCheckBox, QLabel, QProgressBar, QSlider, QSpinBox, QToolTip)
@@ -11,15 +11,16 @@ from core.dglab_controller import DGLabController
 from .ui_interface import UIInterface
 from i18n import translate as _, language_signals
 from websocket_client import WebSocketClient
+from models import SettingsDict
 
 logger = logging.getLogger(__name__)
 
 
 class TonDamageSystemTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: Dict[str, Any] = settings
+        self.settings: SettingsDict = settings
         self.websocket_client: Optional[WebSocketClient] = None
         
         # 累计伤害减免定时器
@@ -210,23 +211,19 @@ class TonDamageSystemTab(QWidget):
             
             logger.info(f"Damage reduced by {reduction_strength}%. Current damage: {new_value}%")
 
-    def handle_websocket_message(self, message: Union[str, Dict[str, Any]]) -> None:
+    def handle_websocket_message(self, message: str) -> None:
         """Handle incoming WebSocket messages and update status or damage accordingly."""
         logger.info(f"Received WebSocket message: {message}")
         
-        # Parse message as JSON if it's a string
-        parsed_message: Dict[str, Any]
-        if isinstance(message, str):
+        # Parse message as JSON
+        try:
+            parsed_message = json.loads(message)
+        except json.JSONDecodeError:
             try:
-                parsed_message = json.loads(message)
-            except json.JSONDecodeError:
-                try:
-                    parsed_message = eval(message)  # Fallback for dictionary-like strings
-                except:
-                    logger.error("Received message is not valid JSON format.")
-                    return
-        else:
-            parsed_message = message
+                parsed_message = eval(message)  # Fallback for dictionary-like strings
+            except:
+                logger.error("Received message is not valid JSON format.")
+                return
         
         # Handle different message types
         if parsed_message.get("Type") == "DAMAGED":

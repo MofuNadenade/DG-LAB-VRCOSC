@@ -1,15 +1,16 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Optional
 from ruamel.yaml import YAML
 import psutil
 import socket
 import ipaddress
 from core.defaults import DEFAULT_ADDRESSES, DEFAULT_PULSES, DEFAULT_TEMPLATES, DEFAULT_BINDINGS
+from models import SettingsDict
 
 import logging
 logger = logging.getLogger(__name__)
 
-def get_default_settings() -> Dict[str, Any]:
+def get_default_settings() -> SettingsDict:
     """获取默认设置，包含所有默认配置"""
     return {
         # 网络设置
@@ -32,10 +33,10 @@ def get_default_settings() -> Dict[str, Any]:
         'pulse_mode_b': "连击",
         
         # 默认配置数据
-        'addresses': DEFAULT_ADDRESSES,
+        'addresses': DEFAULT_ADDRESSES,  # type: ignore[typeddict-item]
         'pulses': {name: list(data) for name, data in DEFAULT_PULSES.items()},
-        'templates': DEFAULT_TEMPLATES,
-        'bindings': DEFAULT_BINDINGS
+        'templates': DEFAULT_TEMPLATES,  # type: ignore[typeddict-item]
+        'bindings': DEFAULT_BINDINGS  # type: ignore[typeddict-item]
     }
 
 yaml=YAML()
@@ -68,7 +69,7 @@ def validate_port(port: str | int) -> bool:
     except ValueError:
         return False
 
-def default_load_settings() -> Dict[str, Any]:
+def default_load_settings() -> SettingsDict:
     """加载设置，如果不存在则创建默认设置"""
     if not os.path.exists('settings.yml'):
         settings = get_default_settings()
@@ -85,13 +86,13 @@ def default_load_settings() -> Dict[str, Any]:
         return loaded_settings
 
 # Load the configuration from a YAML file
-def load_settings() -> Optional[Dict[str, Any]]:
+def load_settings() -> Optional[SettingsDict]:
     if os.path.exists('settings.yml'):
         with open('settings.yml', 'r', encoding='utf-8') as f:
             logger.info("settings.yml found")
             data = yaml.load(f)
             if isinstance(data, dict):
-                return data
+                return data  # type: ignore[return-value]
             else:
                 logger.warning("settings.yml does not contain a valid dictionary")
                 return None
@@ -99,7 +100,7 @@ def load_settings() -> Optional[Dict[str, Any]]:
     return None
 
 # Save the configuration to a YAML file
-def save_settings(settings: Any) -> None:
+def save_settings(settings: SettingsDict) -> None:
     with open('settings.yml', 'w', encoding='utf-8') as f:
         yaml.dump(settings, f)
         logger.info("settings.yml saved")

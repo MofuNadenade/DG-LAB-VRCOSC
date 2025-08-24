@@ -4,7 +4,7 @@ OSC通用模块
 包含OSC系统的通用类型、枚举、协议和验证器。
 """
 
-from typing import Any, Protocol, Set, Optional, TYPE_CHECKING
+from typing import Protocol, Optional, TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:

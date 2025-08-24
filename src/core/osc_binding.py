@@ -5,13 +5,16 @@ OSC绑定管理模块
 """
 
 import logging
-from typing import Any, Optional, List, Dict, TYPE_CHECKING
+from typing import Optional, List, Dict, TYPE_CHECKING, Union
 
 from .osc_common import OSCRegistryObserver
+from models import OSCValue
+
 from .osc_address import OSCAddress
 from .osc_action import OSCAction
 
 if TYPE_CHECKING:
+    from models import OSCBindingDict
     from .osc_address import OSCAddressRegistry
     from .osc_action import OSCActionRegistry
 
@@ -108,20 +111,20 @@ class OSCBindingRegistry:
             # 通知观察者
             self.notify_binding_changed(address, None)
 
-    async def handle(self, address: OSCAddress, *args: Any) -> None:
+    async def handle(self, address: OSCAddress, *args: OSCValue) -> None:
         """处理OSC消息"""
         action = self._bindings.get(address)
         if action:
             await action.handle(*args)
     
-    def export_to_config(self) -> List[Dict[str, str]]:
+    def export_to_config(self) -> List['OSCBindingDict']:
         """导出所有绑定到配置格式"""
         return [{
             'address_name': address.name,
             'action_name': action.name
         } for address, action in self._bindings.items()]
     
-    def validate_binding_data(self, binding: Dict[str, Any]) -> bool:
+    def validate_binding_data(self, binding: Dict[str, Union[str, int, bool]]) -> bool:
         """验证绑定数据的完整性"""
         if not isinstance(binding, dict):
             return False  # type: ignore[unreachable]
@@ -130,9 +133,10 @@ class OSCBindingRegistry:
         for key in required_keys:
             if key not in binding:
                 return False
-            if not isinstance(binding[key], str):
+            value = binding[key]
+            if not isinstance(value, str):
                 return False
-            if not binding[key].strip():
+            if not value.strip():
                 return False
         
         return True

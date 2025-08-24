@@ -6,7 +6,7 @@
 
 import json
 import os
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Tuple, Union
 from datetime import datetime
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from models import PulseOperation
+from models import PulseOperation, PulseDict, IntegrityReport
 from core.dglab_pulse import Pulse
 from i18n import translate as _
 import logging
@@ -174,7 +174,7 @@ class ImportPulseDialog(QDialog):
     
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self.imported_pulses: List[Dict[str, Any]] = []
+        self.imported_pulses: List[PulseDict] = []
         
         self.setWindowTitle(_("pulse_dialogs.import_pulse.title"))
         self.setModal(True)
@@ -251,7 +251,7 @@ class ImportPulseDialog(QDialog):
         # 连接信号
         self.pulse_list.itemSelectionChanged.connect(self.update_preview)
     
-    def validate_pulse_operation(self, data: Any) -> Tuple[bool, List[str]]:
+    def validate_pulse_operation(self, data: Union[List[PulseOperation], List[object], object]) -> Tuple[bool, List[str]]:
         """验证PulseOperation格式"""
         errors = []
         
@@ -288,7 +288,7 @@ class ImportPulseDialog(QDialog):
         
         return len(errors) == 0, errors
     
-    def check_pulse_data_integrity(self, pulse_data: List[PulseOperation]) -> Dict[str, Any]:
+    def check_pulse_data_integrity(self, pulse_data: List[PulseOperation]) -> IntegrityReport:
         """检查波形数据完整性"""
         issues: List[str] = []
         warnings: List[str] = []
@@ -418,7 +418,7 @@ class ImportPulseDialog(QDialog):
                 
             valid_count = 0
             error_count = 0
-            warnings = []
+            warnings: List[str] = []
             
             for name, pulse_data in pulses.items():
                 # 验证波形数据格式
@@ -438,9 +438,10 @@ class ImportPulseDialog(QDialog):
                     item.setData(Qt.ItemDataRole.UserRole, len(self.imported_pulses) - 1)
                     
                     # 根据完整性检查设置图标或提示
-                    if integrity['warnings']:
-                        item.setToolTip(f"{_('pulse_dialogs.import_pulse.preview.warnings')}: {'; '.join(integrity['warnings'])}")
-                        warnings.extend(integrity['warnings'])
+                    integrity_warnings = integrity.get('warnings', [])
+                    if integrity_warnings and isinstance(integrity_warnings, list):
+                        item.setToolTip(f"{_('pulse_dialogs.import_pulse.preview.warnings')}: {'; '.join(integrity_warnings)}")
+                        warnings.extend(integrity_warnings)
                     
                     self.pulse_list.addItem(item)
                     valid_count += 1
@@ -508,7 +509,7 @@ class ImportPulseDialog(QDialog):
         """清除选择"""
         self.pulse_list.clearSelection()
         
-    def get_selected_pulses(self) -> List[Dict[str, Any]]:
+    def get_selected_pulses(self) -> List[PulseDict]:
         """获取选中的波形"""
         selected_pulses = []
         for item in self.pulse_list.selectedItems():

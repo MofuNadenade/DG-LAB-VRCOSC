@@ -56,5 +56,4 @@ __all__ = [
     'Pulse',
     'PulseRegistry',
     'DGLabController',
-    'run_server',
 ]

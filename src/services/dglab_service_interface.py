@@ -10,9 +10,6 @@ from core.dglab_pulse import Pulse
 from gui.ui_interface import ConnectionState
 from PySide6.QtGui import QPixmap
 
-__all__ = ["IDGLabService"]
-
-
 class IDGLabService(Protocol):
     """DG-LAB设备服务抽象接口
     

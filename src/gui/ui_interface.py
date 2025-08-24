@@ -1,7 +1,7 @@
-from typing import Optional, TYPE_CHECKING, Dict, Any, Protocol
+from typing import Optional, TYPE_CHECKING, Protocol
 from enum import Enum
 from PySide6.QtGui import QPixmap
-from models import StrengthData, Channel
+from models import StrengthData, Channel, SettingsDict
 
 if TYPE_CHECKING:
     from core.dglab_controller import DGLabController
@@ -36,7 +36,7 @@ class UIInterface(Protocol):
     address_registry: 'OSCAddressRegistry'
     action_registry: 'OSCActionRegistry'
     binding_registry: 'OSCBindingRegistry'
-    settings: Dict[str, Any]
+    settings: SettingsDict
 
     # 连接状态管理
     def set_connection_state(self, state: ConnectionState, message: str = "") -> None: ...

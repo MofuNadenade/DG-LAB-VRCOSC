@@ -6,7 +6,7 @@ DG-LAB WebSocket 设备服务实现
 
 import asyncio
 import math
-from typing import Optional, List, Union, Dict, Any
+from typing import Optional, List, Union, Dict
 import pydglab_ws
 from pydglab_ws import DGLabLocalClient, DGLabWSServer, PulseDataTooLong
 from models import Channel, StrengthData, PulseOperation, StrengthOperationType, FeedbackButton, RetCode
@@ -17,6 +17,10 @@ import logging
 from gui.ui_interface import UIInterface, UIFeature, ConnectionState
 
 logger = logging.getLogger(__name__)
+
+# WebSocket 数据类型定义
+DGLabWebSocketData = Union[pydglab_ws.StrengthData, pydglab_ws.FeedbackButton, pydglab_ws.RetCode]
+"""DGLab WebSocket 服务可处理的数据类型"""
 
 
 def _convert_strength_data(pydglab_data: pydglab_ws.StrengthData) -> StrengthData:
@@ -605,7 +609,7 @@ class DGLabWebSocketService:
             self._is_connected = False
             self._ui_interface.on_client_disconnected()
     
-    async def _handle_data(self, data: Any) -> None:
+    async def _handle_data(self, data: DGLabWebSocketData) -> None:
         """统一数据处理入口"""
         try:
             if isinstance(data, pydglab_ws.StrengthData):

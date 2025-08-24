@@ -1,12 +1,12 @@
 import asyncio
 import logging
-from typing import Optional, Dict, Any, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
                                QComboBox, QSpinBox, QLabel, QCheckBox, QSlider, QToolTip, 
                                QPushButton, QMessageBox)
 from PySide6.QtCore import Qt, QPoint, QLocale
-from models import Channel, StrengthData, StrengthOperationType
+from models import Channel, StrengthData, StrengthOperationType, SettingsDict
 
 from .ui_interface import UIInterface
 from .widgets import EditableComboBox
@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class ControllerSettingsTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: Dict[str, Any] = settings
+        self.settings: SettingsDict = settings
         
         # 控制滑动条外部更新的状态标志
         self.allow_a_channel_update: bool = True

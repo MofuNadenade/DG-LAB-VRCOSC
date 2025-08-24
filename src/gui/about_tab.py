@@ -1,11 +1,12 @@
 import logging
-from typing import Any, Dict
+from typing import Dict
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit
 from PySide6.QtCore import QLocale, QUrl
 from PySide6.QtGui import QDesktopServices
 
 from .ui_interface import UIInterface
+from models import SettingsDict
 from i18n import translate as _, language_signals
 
 try:
@@ -21,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 class AboutTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: Dict[str, Any] = settings
+        self.settings: SettingsDict = settings
         
         # UI组件类型注解
         self.version_label: QLabel

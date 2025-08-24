@@ -5,7 +5,7 @@
 """
 
 import math
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider,
     QListWidget, QListWidgetItem, QFrame, QScrollArea, QSizePolicy,

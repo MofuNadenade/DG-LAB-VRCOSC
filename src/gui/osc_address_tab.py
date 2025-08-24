@@ -501,7 +501,7 @@ class OSCAddressListTab(QWidget):
                 all_addresses = self.address_registry.export_to_config()
                 
                 # 更新settings
-                self.ui_interface.settings['addresses'] = all_addresses
+                self.ui_interface.settings['addresses'] = all_addresses  # type: ignore[typeddict-item]
                 
                 # 保存到文件
                 self.ui_interface.save_settings()
@@ -526,7 +526,7 @@ class OSCAddressListTab(QWidget):
                 all_addresses = self.address_registry.export_to_config()
                 
                 # 更新settings
-                self.ui_interface.settings['addresses'] = all_addresses
+                self.ui_interface.settings['addresses'] = all_addresses  # type: ignore[typeddict-item]
                 
                 # 保存到文件
                 self.ui_interface.save_settings()

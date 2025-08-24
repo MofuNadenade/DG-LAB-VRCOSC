@@ -5,10 +5,13 @@ OSC地址管理模块
 """
 
 import logging
-from typing import Any, Optional, List, Dict
+from typing import Optional, List, Dict, TYPE_CHECKING
 
 from .osc_common import OSCAddressValidator, OSCRegistryObserver
 from .defaults import DEFAULT_ADDRESSES
+
+if TYPE_CHECKING:
+    from models import OSCAddressDict
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +140,7 @@ class OSCAddressRegistry:
             # 通知观察者
             self.notify_address_removed(address)
     
-    def load_from_config(self, addresses_config: List[Dict[str, str]]) -> None:
+    def load_from_config(self, addresses_config: List['OSCAddressDict']) -> None:
         """从配置加载地址"""
         self._addresses.clear()
         self._addresses_by_name.clear()

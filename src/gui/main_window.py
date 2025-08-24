@@ -1,10 +1,10 @@
 import asyncio
 import logging
-from typing import Optional, Dict, List, Any, TYPE_CHECKING, Callable, Awaitable
+from typing import Optional, List, TYPE_CHECKING, Callable, Awaitable
 
 from PySide6.QtWidgets import QMainWindow, QTabWidget
 from PySide6.QtGui import QIcon, QPixmap
-from models import StrengthData, Channel
+from models import StrengthData, Channel, SettingsDict, OSCValue, OSCBindingDict
 
 from config import default_load_settings, save_settings
 from i18n import translate as _, language_signals, set_language
@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         # 加载设置
-        self.settings: Dict[str, Any] = default_load_settings()
+        self.settings: SettingsDict = default_load_settings()
         
         # 设置语言
         language: str = self.settings.get('language', 'zh')
@@ -178,8 +178,8 @@ class MainWindow(QMainWindow):
             pulse_index = pulse.index
             
             def make_pulse_action(idx: int, ctrl: Optional['DGLabController']) -> Callable[..., Awaitable[None]]:
-                async def pulse_action(*args: Any) -> None:
-                    if ctrl:
+                async def pulse_action(*args: OSCValue) -> None:
+                    if ctrl and isinstance(args[0], bool):
                         await ctrl.dglab_service.set_pulse_data(args[0], ctrl.dglab_service.get_current_channel(), idx)
                 return pulse_action
             
@@ -269,7 +269,7 @@ class MainWindow(QMainWindow):
 
     def load_osc_address_bindings(self) -> None:
         """加载OSC地址绑定"""
-        bindings: List[Dict[str, str]] = self.settings.get('bindings', [])
+        bindings: List[OSCBindingDict] = self.settings.get('bindings', [])
         
         for binding in bindings:
             address_name: Optional[str] = binding.get('address_name')
@@ -502,9 +502,9 @@ class MainWindow(QMainWindow):
         self.set_connection_state(ConnectionState.WAITING)  # 等待重新连接
         self.update_connection_status(False)
     
-    async def _set_channel_async(self, *args: Any) -> None:
+    async def _set_channel_async(self, *args: OSCValue) -> None:
         """异步设置通道的辅助方法"""
-        if args and self.controller is not None:
+        if args and self.controller is not None and isinstance(args[0], (int, float)):
             await self.controller.dglab_service.set_channel(args[0])
     
     def on_client_reconnected(self) -> None:

@@ -5,7 +5,10 @@ OSC模板管理模块
 """
 
 import logging
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from models import OSCTemplateDict
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +68,7 @@ class OSCTemplateRegistry:
         """根据前缀获取模板"""
         return [t for t in self._templates if t.code.startswith(prefix)]
     
-    def load_from_config(self, templates_config: List[Dict[str, str]]) -> None:
+    def load_from_config(self, templates_config: List['OSCTemplateDict']) -> None:
         """从配置加载模板"""
         self._templates.clear()
         self._templates_by_name.clear()

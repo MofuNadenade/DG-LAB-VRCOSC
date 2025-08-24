@@ -4,14 +4,15 @@ OSC动作管理模块
 提供OSC动作的定义和注册管理功能。
 """
 
-from typing import Any, Set, Optional, List, Dict, Awaitable, Protocol
+from typing import Set, Optional, List, Dict, Awaitable, Protocol
 
 from .osc_common import OSCActionType, OSCAddressValidator, OSCRegistryObserver
+from models import OSCValue
 
 
 class OSCActionCallback(Protocol):
     """OSC动作回调协议"""
-    def __call__(self, *args: Any) -> Awaitable[None]:
+    def __call__(self, *args: OSCValue) -> Awaitable[None]:
         ...
 
 
@@ -32,7 +33,7 @@ class OSCAction:
         self.action_type: OSCActionType = action_type
         self.tags: Set[str] = tags or set()
     
-    async def handle(self, *args: Any) -> None:
+    async def handle(self, *args: OSCValue) -> None:
         await self.callback(*args)
     
     def __str__(self) -> str:

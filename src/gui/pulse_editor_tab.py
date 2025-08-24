@@ -6,7 +6,7 @@
 
 import asyncio
 import logging
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from typing import Optional, List, TYPE_CHECKING
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QListWidget, QListWidgetItem, QMessageBox, QInputDialog,

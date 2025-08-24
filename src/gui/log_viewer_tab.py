@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional, Dict
+from typing import Optional
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QTextEdit, QLabel)
 from PySide6.QtCore import QTimer
@@ -8,6 +8,7 @@ from models import Channel
 
 from core.dglab_controller import DGLabController
 from .ui_interface import UIInterface
+from models import SettingsDict
 from i18n import translate as _, language_signals
 
 logger = logging.getLogger(__name__)
@@ -63,10 +64,10 @@ class QTextEditHandler(logging.Handler):
 
 
 class LogViewerTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: Dict[str, Any] = settings
+        self.settings: SettingsDict = settings
         
         # 调试信息定时更新
         self.debug_timer: QTimer = QTimer()

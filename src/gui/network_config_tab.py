@@ -1,27 +1,28 @@
 import asyncio
 import logging
 import requests
-from typing import Any, Optional, Dict
+from typing import Optional
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
                                QComboBox, QSpinBox, QLabel, QPushButton, QLineEdit, QCheckBox, QMessageBox, QSizePolicy)
 from PySide6.QtCore import Qt, QLocale, QTimer
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QResizeEvent
 
 from config import get_active_ip_addresses, save_settings
 from .widgets import EditableComboBox
 from i18n import translate as _, language_signals, LANGUAGES, get_current_language, set_language
 from core.dglab_controller import DGLabController
 from .ui_interface import UIInterface, ConnectionState
+from models import SettingsDict
 
 logger = logging.getLogger(__name__)
 
 
 class NetworkConfigTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: Dict[str, Any]) -> None:
+    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: Dict[str, Any] = settings
+        self.settings: SettingsDict = settings
         self.server_task: Optional[asyncio.Task[None]] = None
         
         # UI组件类型注解
@@ -240,7 +241,7 @@ class NetworkConfigTab(QWidget):
             )
             self.qrcode_label.setPixmap(scaled_pixmap)
     
-    def resizeEvent(self, event: Any) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """优化窗口缩放处理"""
         # 先执行父类的resize事件处理
         super().resizeEvent(event)
