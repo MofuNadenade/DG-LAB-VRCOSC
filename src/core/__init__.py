@@ -24,7 +24,7 @@ from .osc_provider import OSCOptionsProvider
 
 # DGLab 相关
 from .dglab_pulse import Pulse, PulseRegistry
-from .dglab_controller import DGLabController, run_server
+from .dglab_controller import DGLabController
 
 __all__ = [
     # 通用

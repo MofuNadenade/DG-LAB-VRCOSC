@@ -11,7 +11,7 @@ from PySide6.QtGui import QPixmap
 from config import get_active_ip_addresses, save_settings
 from .widgets import EditableComboBox
 from i18n import translate as _, language_signals, LANGUAGES, get_current_language, set_language
-from core.dglab_controller import run_server, DGLabController
+from core.dglab_controller import DGLabController
 from .ui_interface import UIInterface, ConnectionState
 
 logger = logging.getLogger(__name__)
@@ -286,7 +286,7 @@ class NetworkConfigTab(QWidget):
             self.stop_server()
 
     def start_server(self) -> None:
-        """启动 WebSocket 服务器"""
+        """启动 WebSocket 服务器 - 通过服务层管理"""
         # 验证远程地址（如果启用）
         if self.enable_remote_checkbox.isChecked():
             remote_addr_text = self.remote_address_edit.text()
@@ -309,10 +309,17 @@ class NetworkConfigTab(QWidget):
                 remote_text = self.remote_address_edit.text()
                 remote_address = remote_text if remote_text else None
             
+            # 创建控制器（如果不存在）
+            if not self.controller:
+                controller = DGLabController(self.ui_interface)
+                self.ui_interface.set_controller(controller)
+                # 在 controller 初始化后调用绑定函数
+                self.ui_interface.bind_controller_settings()
+            
             # 使用事件循环来启动服务器，并保存任务引用
             loop = asyncio.get_running_loop()
-            self.server_task = loop.create_task(self.run_server_with_cleanup(self.ui_interface, selected_ip, selected_port, osc_port, remote_address))
-            logger.info("WebSocket 服务器已启动")
+            self.server_task = loop.create_task(self.run_server_with_cleanup(selected_ip, selected_port, osc_port, remote_address))
+            logger.info("WebSocket 服务器启动任务已创建")
                 
         except Exception as e:
             error_message = _("connection_tab.start_server_failed").format(str(e))
@@ -325,7 +332,11 @@ class NetworkConfigTab(QWidget):
         """停止 WebSocket 服务器"""
         if self.server_task and not self.server_task.done():
             self.server_task.cancel()
-            logger.info("WebSocket 服务器已停止")
+            logger.info("WebSocket 服务器任务已取消")
+        
+        # 通过控制器停止服务器
+        if self.controller:
+            asyncio.create_task(self._stop_services())
         
         # 重置UI状态 - 使用统一接口
         self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
@@ -338,11 +349,47 @@ class NetworkConfigTab(QWidget):
         
         # 通过UI回调清空控制器引用
         self.ui_interface.set_controller(None)
+    
+    async def _stop_services(self) -> None:
+        """停止所有服务"""
+        if self.controller:
+            try:
+                # 停止WebSocket服务器
+                await self.controller.dglab_service.stop_server()
+                # 停止OSC服务器
+                await self.controller.osc_service.stop_server()
+                logger.info("所有服务已停止")
+            except Exception as e:
+                logger.error(f"停止服务时发生异常: {e}")
 
-    async def run_server_with_cleanup(self, ui_interface: UIInterface, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> None:
-        """运行服务器并处理清理工作"""
+    async def run_server_with_cleanup(self, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> None:
+        """运行服务器并处理清理工作 - 重构版本"""
         try:
-            await run_server(ui_interface, ip, port, osc_port, remote_address)
+            if not self.controller:
+                logger.error("控制器未初始化")
+                return
+            
+            # 启动WebSocket服务器
+            success = await self.controller.dglab_service.start_server(ip, port, osc_port, remote_address)
+            if not success:
+                error_msg = _("connection_tab.start_server_failed").format("WebSocket服务器启动失败")
+                logger.error(error_msg)
+                self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
+                return
+            
+            # 启动OSC服务器
+            osc_started = await self.controller.osc_service.start_server(osc_port)
+            if not osc_started:
+                logger.error("OSC服务器启动失败")
+                await self.controller.dglab_service.stop_server()
+                self.ui_interface.set_connection_state(ConnectionState.FAILED, "OSC服务器启动失败")
+                return
+            
+            logger.info("所有服务启动成功")
+            
+            # 等待服务器停止事件（完全消除轮询）
+            await self.controller.dglab_service.wait_for_server_stop()
+                
         except asyncio.CancelledError:
             logger.info("服务器任务被取消")
             raise

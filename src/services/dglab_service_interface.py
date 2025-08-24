@@ -7,6 +7,8 @@
 from typing import Optional, Union, Protocol
 from models import Channel, StrengthData, StrengthOperationType
 from core.dglab_pulse import Pulse
+from gui.ui_interface import ConnectionState
+from PySide6.QtGui import QPixmap
 
 __all__ = ["IDGLabService"]
 
@@ -19,6 +21,48 @@ class IDGLabService(Protocol):
     """
     
     # ============ 连接管理 ============
+    
+    async def start_server(self, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> bool:
+        """启动WebSocket服务器
+        
+        Args:
+            ip: 监听IP地址
+            port: WebSocket端口
+            osc_port: OSC端口
+            remote_address: 远程地址（可选）
+            
+        Returns:
+            bool: 启动是否成功
+        """
+        ...
+    
+    async def stop_server(self) -> None:
+        """停止WebSocket服务器"""
+        ...
+    
+    def is_server_running(self) -> bool:
+        """检查服务器运行状态
+        
+        Returns:
+            bool: 服务器是否运行中
+        """
+        ...
+    
+    def get_qrcode_image(self) -> Optional[QPixmap]:
+        """获取二维码图像
+        
+        Returns:
+            Optional[QPixmap]: 二维码图像，如果未生成则为None
+        """
+        ...
+    
+    def get_connection_state(self) -> ConnectionState:
+        """获取当前连接状态
+        
+        Returns:
+            ConnectionState: 当前连接状态
+        """
+        ...
     
     async def connect(self) -> bool:
         """连接设备
@@ -46,6 +90,10 @@ class IDGLabService(Protocol):
         Returns:
             str: 连接类型 ("websocket", "bluetooth", 等)
         """
+        ...
+    
+    async def wait_for_server_stop(self) -> None:
+        """等待服务器停止事件（用于替代轮询）"""
         ...
     
     # ============ 属性访问 ============
