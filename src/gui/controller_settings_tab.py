@@ -29,6 +29,9 @@ class ControllerSettingsTab(QWidget):
         self.allow_a_channel_update: bool = True
         self.allow_b_channel_update: bool = True
         
+        # 防止重复绑定的标志
+        self._signals_connected: bool = False
+        
         # UI组件类型注解
         self.controller_group: QGroupBox
         self.a_channel_label: QLabel
@@ -186,10 +189,14 @@ class ControllerSettingsTab(QWidget):
             self.pulse_mode_a_combobox.addItem(pulse_name)
             self.pulse_mode_b_combobox.addItem(pulse_name)
 
-
     def bind_controller_settings(self) -> None:
         """将GUI设置与DGLabController变量绑定"""
         if self.controller:
+            # 防止重复绑定信号槽
+            if self._signals_connected:
+                logger.debug("信号槽已连接，跳过重复绑定")
+                return
+            
             self.fire_mode_disabled_checkbox.toggled.connect(self.on_fire_mode_disabled_changed)
             self.enable_panel_control_checkbox.toggled.connect(self.on_panel_control_enabled_changed)
             self.dynamic_bone_mode_a_checkbox.toggled.connect(self.on_dynamic_bone_mode_a_changed)
@@ -199,6 +206,8 @@ class ControllerSettingsTab(QWidget):
             self.enable_chatbox_status_checkbox.toggled.connect(self.on_chatbox_status_enabled_changed)
             self.strength_step_spinbox.valueChanged.connect(self.on_strength_step_changed)
             
+            # 标记信号槽已连接
+            self._signals_connected = True
             logger.info("DGLabController 参数已绑定")
         else:
             logger.warning("Controller is not initialized yet.")
@@ -237,19 +246,37 @@ class ControllerSettingsTab(QWidget):
 
     def on_pulse_mode_a_changed(self, index: int) -> None:
         """当波形A模式发生变化时"""
-        if self.controller:
-            self.controller.dglab_service.set_pulse_mode(Channel.A, index)
-            logger.info(f"Pulse mode A updated to {self.pulse_registry.pulses[index].name}")
-            # 立即更新设备上的波形数据
-            asyncio.create_task(self.controller.dglab_service.update_pulse_data())
+        if not self.controller:
+            return
+        
+        # 验证索引有效性
+        if not self.pulse_registry.is_valid_index(index):
+            logger.warning(f"A通道波形索引无效: {index}")
+            return
+        
+        self.controller.dglab_service.set_pulse_mode(Channel.A, index)
+        pulse_name = self.pulse_registry.get_pulse_name_by_index(index)
+        logger.info(f"A通道波形模式已更新为 {pulse_name}")
+        
+        # 立即更新设备上的波形数据
+        asyncio.create_task(self.controller.dglab_service.update_pulse_data())
 
     def on_pulse_mode_b_changed(self, index: int) -> None:
         """当波形B模式发生变化时"""
-        if self.controller:
-            self.controller.dglab_service.set_pulse_mode(Channel.B, index)
-            logger.info(f"Pulse mode B updated to {self.pulse_registry.pulses[index].name}")
-            # 立即更新设备上的波形数据
-            asyncio.create_task(self.controller.dglab_service.update_pulse_data())
+        if not self.controller:
+            return
+        
+        # 验证索引有效性
+        if not self.pulse_registry.is_valid_index(index):
+            logger.warning(f"B通道波形索引无效: {index}")
+            return
+        
+        self.controller.dglab_service.set_pulse_mode(Channel.B, index)
+        pulse_name = self.pulse_registry.get_pulse_name_by_index(index)
+        logger.info(f"B通道波形模式已更新为 {pulse_name}")
+        
+        # 立即更新设备上的波形数据
+        asyncio.create_task(self.controller.dglab_service.update_pulse_data())
 
     def on_chatbox_status_enabled_changed(self, state: bool) -> None:
         """当ChatBox状态启用复选框状态改变时"""
@@ -349,7 +376,8 @@ class ControllerSettingsTab(QWidget):
                 self.a_channel_slider.setRange(0, last_strength.a_limit)  # 根据限制更新范围
                 self.a_channel_slider.setValue(last_strength.a)
                 self.a_channel_slider.blockSignals(False)
-                self.a_channel_label.setText(f"A {_('channel.strength_display')}: {last_strength.a} {_('channel.strength_limit')}: {last_strength.a_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.dglab_service.get_pulse_mode(Channel.A)].name}")
+                pulse_a_name = self.pulse_registry.get_pulse_name_by_index(self.controller.dglab_service.get_pulse_mode(Channel.A))
+                self.a_channel_label.setText(f"A {_('channel.strength_display')}: {last_strength.a} {_('channel.strength_limit')}: {last_strength.a_limit}  {_('channel.pulse')}: {pulse_a_name}")
 
             # 仅当允许外部更新时更新 B 通道滑动条
             if self.allow_b_channel_update:
@@ -357,7 +385,8 @@ class ControllerSettingsTab(QWidget):
                 self.b_channel_slider.setRange(0, last_strength.b_limit)  # 根据限制更新范围
                 self.b_channel_slider.setValue(last_strength.b)
                 self.b_channel_slider.blockSignals(False)
-                self.b_channel_label.setText(f"B {_('channel.strength_display')}: {last_strength.b} {_('channel.strength_limit')}: {last_strength.b_limit}  {_('channel.pulse')}: {self.pulse_registry.pulses[self.controller.dglab_service.get_pulse_mode(Channel.B)].name}")
+                pulse_b_name = self.pulse_registry.get_pulse_name_by_index(self.controller.dglab_service.get_pulse_mode(Channel.B))
+                self.b_channel_label.setText(f"B {_('channel.strength_display')}: {last_strength.b} {_('channel.strength_limit')}: {last_strength.b_limit}  {_('channel.pulse')}: {pulse_b_name}")
 
     def update_current_channel_display(self, channel_name: str) -> None:
         """更新当前选择通道显示"""

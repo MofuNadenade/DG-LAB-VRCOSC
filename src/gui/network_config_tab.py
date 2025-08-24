@@ -335,10 +335,24 @@ class NetworkConfigTab(QWidget):
             self.server_task.cancel()
             logger.info("WebSocket 服务器任务已取消")
         
-        # 通过控制器停止服务器
+        # 通过控制器停止服务器 - 创建异步任务但不等待
         if self.controller:
-            asyncio.create_task(self._stop_services())
-        
+            asyncio.create_task(self._stop_services_and_cleanup())
+        else:
+            # 如果没有控制器，直接清理UI
+            self._cleanup_ui()
+
+    async def _stop_services_and_cleanup(self) -> None:
+        """停止服务并清理UI状态"""
+        try:
+            # 等待服务实际停止
+            await self._stop_services()
+        finally:
+            # 无论成功与否，都要清理UI状态
+            self._cleanup_ui()
+    
+    def _cleanup_ui(self) -> None:
+        """清理UI状态"""
         # 重置UI状态 - 使用统一接口
         self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
         
@@ -362,6 +376,8 @@ class NetworkConfigTab(QWidget):
                 logger.info("所有服务已停止")
             except Exception as e:
                 logger.error(f"停止服务时发生异常: {e}")
+    
+
 
     async def run_server_with_cleanup(self, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> None:
         """运行服务器并处理清理工作 - 重构版本"""

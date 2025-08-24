@@ -232,12 +232,23 @@ class MainWindow(QMainWindow):
         pulse_mode_b = self.settings.get('pulse_mode_b', '连击')
         
         a_index = self.controller_tab.pulse_mode_a_combobox.findText(pulse_mode_a)
+        b_index = self.controller_tab.pulse_mode_b_combobox.findText(pulse_mode_b)
+        
+        # 处理找不到的情况
+        if a_index < 0:
+            logger.warning(f"波形模式A '{pulse_mode_a}' 未找到，使用默认值")
+            a_index = 0 if self.controller_tab.pulse_mode_a_combobox.count() > 0 else -1
+        
+        if b_index < 0:
+            logger.warning(f"波形模式B '{pulse_mode_b}' 未找到，使用默认值")
+            b_index = 0 if self.controller_tab.pulse_mode_b_combobox.count() > 0 else -1
+        
+        # 安全设置索引
         if a_index >= 0:
             self.controller_tab.pulse_mode_a_combobox.blockSignals(True)
             self.controller_tab.pulse_mode_a_combobox.setCurrentIndex(a_index)
             self.controller_tab.pulse_mode_a_combobox.blockSignals(False)
         
-        b_index = self.controller_tab.pulse_mode_b_combobox.findText(pulse_mode_b)
         if b_index >= 0:
             self.controller_tab.pulse_mode_b_combobox.blockSignals(True)
             self.controller_tab.pulse_mode_b_combobox.setCurrentIndex(b_index)
@@ -393,10 +404,8 @@ class MainWindow(QMainWindow):
 
     def set_pulse_mode(self, channel: Channel, mode_name: str, silent: bool = False) -> None:
         """统一管理脉冲模式设置"""
-        if channel == Channel.A:
-            combo = self.controller_tab.pulse_mode_a_combobox
-        else:
-            combo = self.controller_tab.pulse_mode_b_combobox
+        combo = (self.controller_tab.pulse_mode_a_combobox if channel == Channel.A 
+                else self.controller_tab.pulse_mode_b_combobox)
         
         if silent:
             combo.blockSignals(True)
@@ -405,6 +414,12 @@ class MainWindow(QMainWindow):
         index = combo.findText(mode_name)
         if index >= 0:
             combo.setCurrentIndex(index)
+        elif combo.count() > 0:
+            # 如果找不到，设置为第一项
+            logger.warning(f"波形模式 '{mode_name}' 未找到，使用第一个可用选项")
+            combo.setCurrentIndex(0)
+        else:
+            logger.error("组合框中没有可用的波形模式")
         
         if silent:
             combo.blockSignals(False)

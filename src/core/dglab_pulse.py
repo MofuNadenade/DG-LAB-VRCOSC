@@ -37,6 +37,27 @@ class PulseRegistry:
         """获取脉冲总数"""
         return len(self._pulses)
     
+    def get_pulse_by_index(self, index: int) -> Optional[Pulse]:
+        """安全获取指定索引的脉冲"""
+        if 0 <= index < len(self._pulses):
+            return self._pulses[index]
+        return None
+    
+    def get_pulse_name_by_index(self, index: int) -> str:
+        """安全获取指定索引的脉冲名称"""
+        pulse = self.get_pulse_by_index(index)
+        return pulse.name if pulse else "未知波形"
+    
+    def get_valid_index(self, index: int) -> int:
+        """获取有效的索引，无效时返回0"""
+        if 0 <= index < len(self._pulses):
+            return index
+        return 0 if self._pulses else -1
+    
+    def is_valid_index(self, index: int) -> bool:
+        """检查索引是否有效"""
+        return 0 <= index < len(self._pulses)
+    
     def unregister_pulse(self, pulse: Pulse) -> None:
         """移除脉冲"""
         if pulse in self._pulses:

@@ -59,13 +59,16 @@ class OSCService:
     def set_dglab_service(self, dglab_service: 'IDGLabService') -> None:
         """设置DGLab服务引用（用于OSC动作回调）"""
         self._dglab_service = dglab_service
-        # 重新注册OSC动作
-        if self._dglab_service:
+        # 注册OSC动作（如果所有服务都已设置）
+        if self._dglab_service and self._chatbox_service:
             self._register_osc_actions()
     
     def set_chatbox_service(self, chatbox_service: 'ChatboxService') -> None:
         """设置ChatBox服务引用"""
         self._chatbox_service = chatbox_service
+        # 注册OSC动作（如果所有服务都已设置）
+        if self._dglab_service and self._chatbox_service:
+            self._register_osc_actions()
     
     async def start_server(self, osc_port: int) -> bool:
         """
@@ -151,14 +154,12 @@ class OSCService:
             address: OSC地址
             *args: OSC参数
         """
-        logger.debug(f"收到OSC消息: {address} 参数: {args}")
         
         # 通过UI接口的绑定注册表处理消息
         address_obj = self._ui_interface.address_registry.get_address_by_code(address)
         if address_obj:
+            logger.debug(f"收到OSC消息: {address} 参数: {args}")
             await self._ui_interface.binding_registry.handle(address_obj, *args)
-        else:
-            logger.debug(f"未找到OSC地址绑定: {address}")
     
     def _register_osc_actions(self) -> None:
         """注册OSC动作（内部方法）"""
@@ -294,7 +295,7 @@ class OSCService:
             message: 要发送的消息
         """
         if not self._osc_client:
-            logger.warning("OSC客户端未初始化，无法发送消息")
+            logger.debug("OSC客户端未初始化，跳过消息发送")
             return
         
         try:
@@ -312,7 +313,7 @@ class OSCService:
             value: 要发送的值
         """
         if not self._osc_client:
-            logger.warning("OSC客户端未初始化，无法发送值")
+            logger.debug("OSC客户端未初始化，跳过值发送")
             return
         
         try:

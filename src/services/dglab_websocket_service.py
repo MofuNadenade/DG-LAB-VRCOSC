@@ -77,9 +77,9 @@ class ChannelPulseTask:
                     await self.client.add_pulses(self.channel, *pulse_data)
                     await asyncio.sleep(data_duration)
             except PulseDataTooLong:
-                logger.warning(f"发送失败，波形数据过长")
+                logger.warning("发送失败，波形数据过长")
         except Exception as e:
-            logger.error(f"send_pulse_task 任务中发生错误: {e}")
+            logger.error(f"波形发送任务中发生错误: {e}")
 
 
 class DGLabWebSocketService:
@@ -157,6 +157,13 @@ class DGLabWebSocketService:
             except asyncio.CancelledError:
                 logger.info("服务器任务被取消")
                 raise
+            except OSError as e:
+                if e.errno == 10048:  # 端口被占用
+                    logger.error(f"服务器端口被占用: {e}")
+                    raise
+                else:
+                    logger.error(f"服务器运行异常: {e}")
+                    raise
             except Exception as e:
                 logger.error(f"服务器运行异常: {e}")
                 raise
@@ -369,7 +376,7 @@ class DGLabWebSocketService:
     def get_current_pulse_name(self, channel: Channel) -> str:
         """获取指定通道当前波形的名称"""
         pulse_index = self.get_pulse_mode(channel)
-        return self._ui_interface.pulse_registry.pulses[pulse_index].name
+        return self._ui_interface.pulse_registry.get_pulse_name_by_index(pulse_index)
 
     # ============ 通道控制 ============
     
@@ -377,7 +384,7 @@ class DGLabWebSocketService:
         """设置当前活动通道"""
         if value >= 0:
             self._current_select_channel = Channel.A if value <= 1 else Channel.B
-            logger.info(f"set activate channel to: {self._current_select_channel}")
+            logger.info(f"设置活动通道为: {self._current_select_channel}")
             # 更新 UI 显示
             if self._ui_interface:
                 channel_name = "A" if self._current_select_channel == Channel.A else "B"
@@ -424,14 +431,40 @@ class DGLabWebSocketService:
     
     async def update_pulse_data(self) -> None:
         """更新设备上的波形数据"""
-        pulse_a = self._ui_interface.pulse_registry.pulses[self._pulse_modes[Channel.A]]
-        pulse_b = self._ui_interface.pulse_registry.pulses[self._pulse_modes[Channel.B]]
+        # 检查客户端和通道任务是否已初始化
+        if not self._client or not self._channel_pulse_tasks:
+            logger.warning("客户端或通道任务未初始化，跳过波形更新")
+            return
+        
+        # 检查具体通道任务是否存在
+        if Channel.A not in self._channel_pulse_tasks or Channel.B not in self._channel_pulse_tasks:
+            logger.warning("通道任务不完整，跳过波形更新")
+            return
+        
+        pulse_registry = self._ui_interface.pulse_registry
+        
+        # 安全获取脉冲索引
+        index_a = pulse_registry.get_valid_index(self._pulse_modes[Channel.A])
+        index_b = pulse_registry.get_valid_index(self._pulse_modes[Channel.B])
+        
+        if index_a == -1 or index_b == -1:
+            logger.warning("脉冲注册表为空，跳过波形更新")
+            return
+        
+        pulse_a = pulse_registry.pulses[index_a]
+        pulse_b = pulse_registry.pulses[index_b]
+        
         logger.info(f"更新波形 A {pulse_a.name} B {pulse_b.name}")
         self._channel_pulse_tasks[Channel.A].set_pulse(pulse_a)
         self._channel_pulse_tasks[Channel.B].set_pulse(pulse_b)
     
     async def set_pulse_data(self, _: bool, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
         """设置指定通道的波形数据"""
+        # 验证索引有效性
+        if not self._ui_interface.pulse_registry.is_valid_index(pulse_index):
+            logger.warning(f"无效的波形索引 {pulse_index}，操作已取消")
+            return
+        
         self._update_pulse_mode(channel, pulse_index)
         if update_ui:
             self._update_pulse_ui(channel, pulse_index)
@@ -439,10 +472,21 @@ class DGLabWebSocketService:
     
     async def set_test_pulse(self, channel: Channel, pulse: Pulse) -> None:
         """在指定通道播放测试波形"""
+        if channel not in self._channel_pulse_tasks:
+            logger.warning(f"通道 {channel} 任务未初始化，跳过测试波形")
+            return
         self._channel_pulse_tasks[channel].set_pulse(pulse)
     
     def set_pulse_mode(self, channel: Channel, value: int) -> None:
         """设置指定通道的波形模式"""
+        # 添加边界检查
+        if not self._ui_interface.pulse_registry.is_valid_index(value):
+            logger.warning(f"通道 {channel} 的波形索引 {value} 无效，使用默认值")
+            value = self._ui_interface.pulse_registry.get_valid_index(value)
+            if value == -1:
+                logger.error("没有可用的波形")
+                return
+        
         self._update_pulse_mode(channel, value)
         self._update_pulse_ui(channel, value)
 
@@ -467,14 +511,14 @@ class DGLabWebSocketService:
         """设置面板控制功能开关"""
         self._enable_panel_control = value > 0
         mode_name = "开启面板控制" if self._enable_panel_control else "已禁用面板控制"
-        logger.info(f": {mode_name}")
+        logger.info(f"面板控制状态: {mode_name}")
         # 更新 UI 组件
         self._ui_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control, silent=True)
     
     async def set_strength_step(self, value: float) -> None:
         """设置开火模式步进值"""
         self._fire_mode_strength_step = math.floor(self._map_value(value, 0, 100))
-        logger.info(f"current strength step: {self._fire_mode_strength_step}")
+        logger.info(f"当前强度步进值: {self._fire_mode_strength_step}")
         # 更新 UI 组件
         self._ui_interface.set_strength_step(self._fire_mode_strength_step, silent=True)
 
@@ -485,7 +529,7 @@ class DGLabWebSocketService:
         if self._fire_mode_disabled:
             return
 
-        logger.info(f"Trigger FireMode: {value}")
+        logger.info(f"触发开火模式: {value}")
 
         # 防止重复触发
         if value and self._fire_mode_active:
@@ -499,7 +543,7 @@ class DGLabWebSocketService:
             if value:
                 # 开始 fire mode
                 self._fire_mode_active = True
-                logger.debug(f"FIRE START {last_strength}")
+                logger.debug(f"开火模式开始 {last_strength}")
                 if last_strength and self._client:
                     if channel == Channel.A:
                         self._fire_mode_origin_strengths[Channel.A] = last_strength.a
@@ -527,7 +571,7 @@ class DGLabWebSocketService:
                 self._data_updated_event.clear()
                 await self._data_updated_event.wait()
                 # 结束 fire mode
-                logger.debug(f"FIRE END {last_strength}")
+                logger.debug(f"开火模式结束 {last_strength}")
                 self._fire_mode_active = False
 
     # ============ 数据更新 ============
@@ -545,7 +589,7 @@ class DGLabWebSocketService:
     
     def _update_pulse_ui(self, channel: Channel, pulse_index: int) -> None:
         """更新波形UI显示"""
-        pulse_name = self._ui_interface.pulse_registry.pulses[pulse_index].name
+        pulse_name = self._ui_interface.pulse_registry.get_pulse_name_by_index(pulse_index)
         self._ui_interface.set_pulse_mode(channel, pulse_name, silent=True)
     
     async def _set_mode_timer_handle(self, channel: Channel) -> None:
@@ -562,7 +606,7 @@ class DGLabWebSocketService:
             ui_feature = self._get_dynamic_bone_ui_feature(channel)
             self._ui_interface.set_feature_state(ui_feature, new_mode, silent=True)
         except asyncio.CancelledError:
-            logger.debug(f"通道 {self._get_channel_name(channel)} 模式切换计时器被取消")
+            logger.debug(f"通道 {self._get_channel_name(channel)} 模式切换计时器已取消")
             raise
     
     def _get_channel_name(self, channel: Channel) -> str:
@@ -685,5 +729,7 @@ class DGLabWebSocketService:
                 Channel.A: ChannelPulseTask(self._client, Channel.A),
                 Channel.B: ChannelPulseTask(self._client, Channel.B)
             }
+            logger.debug("通道波形任务已初始化")
         else:
             self._channel_pulse_tasks.clear()
+            logger.debug("通道波形任务已清空")
