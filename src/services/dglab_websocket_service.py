@@ -487,8 +487,12 @@ class DGLabWebSocketService:
             logger.warning("脉冲注册表为空，跳过波形更新")
             return
 
-        pulse_a = self._core_interface.registries.pulse_registry.pulses[index_a]
-        pulse_b = self._core_interface.registries.pulse_registry.pulses[index_b]
+        pulse_a = self._core_interface.registries.pulse_registry.get_pulse_by_index(index_a)
+        pulse_b = self._core_interface.registries.pulse_registry.get_pulse_by_index(index_b)
+
+        if pulse_a is None or pulse_b is None:
+            logger.warning("无法获取脉冲数据，跳过波形更新")
+            return
 
         logger.info(f"更新波形 A {pulse_a.name} B {pulse_b.name}")
         self._channel_pulse_tasks[Channel.A].set_pulse(pulse_a)

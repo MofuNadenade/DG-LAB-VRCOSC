@@ -404,9 +404,10 @@ class MainWindow(QMainWindow):
                     logger.warning(f"未找到OSC操作：{action_name}")
                     continue
 
-                address = self.registries.address_registry.addresses_by_name[address_name]
-                action = self.registries.action_registry.actions_by_name[action_name]
-                self.registries.binding_registry.register_binding(address, action)
+                address = self.registries.address_registry.get_address_by_name(address_name)
+                action = self.registries.action_registry.get_action_by_name(action_name)
+                if address is not None and action is not None:
+                    self.registries.binding_registry.register_binding(address, action)
 
         self.osc_address_tab.refresh_binding_table()
 

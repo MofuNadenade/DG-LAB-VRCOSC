@@ -232,6 +232,10 @@ connection_tab:
   invalid_remote_address: "远程地址格式无效"
   server_error: "服务器运行异常: {0}"
   start_server_failed: "启动服务器失败: {0}"
+  websocket_server_failed: "WebSocket服务器启动失败"
+  osc_server_failed: "OSC服务器启动失败"
+  osc_port_in_use: "OSC端口被占用"
+  osc_port_in_use_detail: "OSC端口 {0} 已被占用，请尝试使用其他端口或关闭占用该端口的程序"
 
 controller_tab:
   title: "DGLabController 设置"

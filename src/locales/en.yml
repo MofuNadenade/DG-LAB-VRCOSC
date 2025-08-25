@@ -232,6 +232,10 @@ connection_tab:
   invalid_remote_address: "Invalid remote address format"
   server_error: "Server error: {0}"
   start_server_failed: "Failed to start server: {0}"
+  websocket_server_failed: "WebSocket server failed to start"
+  osc_server_failed: "OSC server failed to start"
+  osc_port_in_use: "OSC port is in use"
+  osc_port_in_use_detail: "OSC port {0} is already in use, please try another port or close the program using this port"
 
 controller_tab:
   title: "DGLabController Settings"

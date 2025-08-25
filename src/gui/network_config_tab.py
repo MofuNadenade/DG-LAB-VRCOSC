@@ -399,7 +399,7 @@ class NetworkConfigTab(QWidget):
             # 启动WebSocket服务器
             dglab_started = await self.controller.dglab_service.start_service(ip, port, remote_address)
             if not dglab_started:
-                error_msg = translate("connection_tab.start_server_failed").format("WebSocket服务器启动失败")
+                error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.websocket_server_failed"))
                 logger.error(error_msg)
                 self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
                 return
@@ -407,9 +407,10 @@ class NetworkConfigTab(QWidget):
             # 启动OSC服务器
             osc_started = await self.controller.osc_service.start_service(osc_port)
             if not osc_started:
-                logger.error("OSC服务器启动失败")
+                error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.osc_server_failed"))
+                logger.error(error_msg)
                 await self.controller.dglab_service.stop_service()
-                self.ui_interface.set_connection_state(ConnectionState.FAILED, "OSC服务器启动失败")
+                self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
                 return
 
             # 启动ChatBox状态更新任务

@@ -232,6 +232,10 @@ connection_tab:
   invalid_remote_address: "無効なリモートアドレス"
   server_error: "サーバーエラー: {0}"
   start_server_failed: "サーバー起動に失敗しました: {0}"
+  websocket_server_failed: "WebSocketサーバーの起動に失敗しました"
+  osc_server_failed: "OSCサーバーの起動に失敗しました"
+  osc_port_in_use: "OSCポートが使用中です"
+  osc_port_in_use_detail: "OSCポート {0} は既に使用中です。別のポートを試すか、このポートを使用しているプログラムを閉じてください"
 
 controller_tab:
   title: "DGLabController設定"

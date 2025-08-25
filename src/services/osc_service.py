@@ -11,6 +11,7 @@ from pythonosc import dispatcher, osc_server, udp_client
 
 from core.core_interface import CoreInterface
 from models import ConnectionState, OSCValue
+from i18n import translate
 
 logger = logging.getLogger(__name__)
 
@@ -89,10 +90,10 @@ class OSCService:
 
         except OSError as e:
             if e.errno == 10048:  # Port already in use
-                error_message = f"OSC端口 {osc_port} 已被占用，请尝试使用其他端口或关闭占用该端口的程序"
+                error_message = translate("connection_tab.osc_port_in_use_detail").format(osc_port)
                 logger.error(error_message)
                 # 通过UI接口报告错误
-                self._core_interface.set_connection_state(ConnectionState.ERROR, "OSC端口被占用")
+                self._core_interface.set_connection_state(ConnectionState.ERROR, translate("connection_tab.osc_port_in_use"))
                 return False
             else:
                 logger.error(f"OSC服务器启动失败: {e}")
