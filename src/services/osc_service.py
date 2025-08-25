@@ -132,6 +132,10 @@ class OSCService:
             *args: OSC参数
         """
 
+        # 注册到地址代码注册表
+        if not self._core_interface.registries.code_registry.has_code(address):
+            self._core_interface.registries.code_registry.register_code(address)
+
         # 通过UI接口的绑定注册表处理消息
         address_obj = self._core_interface.registries.address_registry.get_address_by_code(address)
         if address_obj:

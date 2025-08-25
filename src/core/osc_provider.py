@@ -38,8 +38,11 @@ class OSCOptionsProvider:
         # 从已注册的地址获取选项
         registered_options = [addr.code for addr in self.registries.address_registry.addresses]
 
+        # 从已注册的代码获取选项
+        code_options = [code for code in self.registries.code_registry.codes]
+
         # 合并并去重
-        all_options = list(set(template_options + registered_options))
+        all_options = list(set(template_options + registered_options + code_options))
         all_options.sort()
         return all_options
 

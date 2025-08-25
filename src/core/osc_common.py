@@ -66,7 +66,7 @@ class OSCAction:
 class OSCAddress:
     """OSC地址"""
 
-    def __init__(self, name: str, index: int, code: str) -> None:
+    def __init__(self, index: int, name: str, code: str) -> None:
         super().__init__()
         # 验证输入
         name_valid, name_error = OSCAddressValidator.validate_address_name(name)
@@ -77,8 +77,8 @@ class OSCAddress:
         if not code_valid:
             raise ValueError(f"无效的OSC代码: {code_error}")
 
-        self.name: str = name.strip()
         self.index: int = index
+        self.name: str = name.strip()
         self.code: str = code.strip()
 
     def __str__(self) -> str:

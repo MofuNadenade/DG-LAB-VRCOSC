@@ -2,6 +2,7 @@ from core.dglab_pulse import PulseRegistry
 from core.osc_action import OSCActionRegistry
 from core.osc_address import OSCAddressRegistry
 from core.osc_binding import OSCBindingRegistry
+from core.osc_code import OSCCodeRegistry
 from core.osc_template import OSCTemplateRegistry
 
 
@@ -17,3 +18,4 @@ class Registries:
         self.action_registry: OSCActionRegistry = OSCActionRegistry()
         self.binding_registry: OSCBindingRegistry = OSCBindingRegistry()
         self.template_registry: OSCTemplateRegistry = OSCTemplateRegistry()
+        self.code_registry: OSCCodeRegistry = OSCCodeRegistry()

@@ -80,7 +80,7 @@ class OSCAddressRegistry:
 
     def register_address(self, name: str, code: str) -> OSCAddress:
         """注册地址"""
-        address = OSCAddress(name, len(self._addresses), code)
+        address = OSCAddress(len(self._addresses), name, code)
         self._addresses.append(address)
         self._addresses_by_name[name] = address
         self._addresses_by_code[code] = address
