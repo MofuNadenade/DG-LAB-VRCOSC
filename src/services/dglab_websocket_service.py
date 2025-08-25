@@ -498,7 +498,7 @@ class DGLabWebSocketService:
         self._channel_pulse_tasks[Channel.A].set_pulse(pulse_a)
         self._channel_pulse_tasks[Channel.B].set_pulse(pulse_b)
 
-    async def set_pulse_data(self, _: bool, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
+    async def set_pulse_data(self, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
         """设置指定通道的波形数据"""
         # 验证索引有效性
         if not self._core_interface.registries.pulse_registry.is_valid_index(pulse_index):

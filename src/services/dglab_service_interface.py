@@ -179,7 +179,7 @@ class IDGLabService(Protocol):
         """更新设备上的波形数据"""
         ...
 
-    async def set_pulse_data(self, _: bool, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
+    async def set_pulse_data(self, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
         """设置指定通道的波形数据"""
         ...
 

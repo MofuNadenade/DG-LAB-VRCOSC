@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QMainWindow, QTabWidget
 from config import default_load_settings, save_settings
 from core import OSCActionType, OSCOptionsProvider
 from core.dglab_controller import DGLabController
+from core.osc_common import OSCActionCallback
 from core.registries import Registries
 from gui.about_tab import AboutTab
 from gui.controller_settings_tab import ControllerSettingsTab
@@ -352,7 +353,7 @@ class MainWindow(QMainWindow):
 
         logger.info("基础OSC动作注册完成")
 
-    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
+    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> OSCActionCallback:
         """创建异步包装器"""
         async def wrapper(*args: OSCValue) -> None:
             try:
@@ -370,19 +371,16 @@ class MainWindow(QMainWindow):
 
         # 为所有脉冲注册OSC操作
         for pulse in self.registries.pulse_registry.pulses:
-            controller = self.controller
+            dglab_service = self.controller.dglab_service
             pulse_index = pulse.index
 
-            def make_pulse_action(idx: int, ctrl: Optional['DGLabController']) -> Callable[..., Awaitable[None]]:
-                async def pulse_action(*args: OSCValue) -> None:
-                    if ctrl and isinstance(args[0], bool):
-                        await ctrl.dglab_service.set_pulse_data(args[0], ctrl.dglab_service.get_current_channel(), idx)
-
-                return pulse_action
-
-            self.registries.action_registry.register_action(translate("main.action.set_pulse").format(pulse.name),
-                                                            make_pulse_action(pulse_index, controller),
-                                                            OSCActionType.PULSE_CONTROL, {"pulse"})
+            self.registries.action_registry.register_action(
+                translate("main.action.set_pulse").format(pulse.name),
+                self._create_async_wrapper(lambda *args: dglab_service.set_pulse_data(
+                    dglab_service.get_current_channel(),
+                    pulse_index
+                )),
+                OSCActionType.PULSE_CONTROL, {"pulse"})
 
         # 更新波形下拉框
         self.controller_tab.update_pulse_comboboxes()

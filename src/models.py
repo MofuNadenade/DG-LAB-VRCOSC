@@ -3,8 +3,9 @@
 
 重新创建pydglab_ws中的关键类型，以减少对外部依赖的耦合
 """
+from datetime import datetime
 from enum import Enum, IntEnum
-from typing import Tuple, Union, Dict, List, TypedDict
+from typing import Literal, Tuple, Union, Dict, List, TypedDict
 
 from pydantic import BaseModel
 
@@ -140,8 +141,12 @@ class StrengthData(BaseModel):
 
 
 # OSC 相关类型
-OSCValue = Union[int, float, str, bool, bytes]
-"""OSC 消息参数类型"""
+
+MidiPacket = Tuple[int, int, int, int]
+"""MIDI消息包类型 - (port_id, status_byte, data1, data2)"""
+
+OSCValue = Union[int, float, str, bool, bytes, None, Literal[True], Literal[False], MidiPacket, Tuple[datetime, int], List['OSCValue']]
+"""OSC 消息参数类型 - 支持所有OSC协议类型："""
 
 
 # OSC相关的具体类型定义
