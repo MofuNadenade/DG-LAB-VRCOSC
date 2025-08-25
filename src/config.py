@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Any, Dict
 from ruamel.yaml import YAML
 import psutil
 import socket
@@ -33,19 +33,19 @@ def get_default_settings() -> SettingsDict:
         'pulse_mode_b': "连击",
         
         # 默认配置数据
-        'addresses': DEFAULT_ADDRESSES,  # type: ignore[typeddict-item]
+        'addresses': DEFAULT_ADDRESSES,
         'pulses': {name: list(data) for name, data in DEFAULT_PULSES.items()},
-        'templates': DEFAULT_TEMPLATES,  # type: ignore[typeddict-item]
-        'bindings': DEFAULT_BINDINGS  # type: ignore[typeddict-item]
+        'templates': DEFAULT_TEMPLATES,
+        'bindings': DEFAULT_BINDINGS
     }
 
-yaml=YAML()
+yaml: YAML = YAML()
 # 禁用YAML引用以提高可读性
-yaml.representer.ignore_aliases = lambda *args: True
+yaml.representer.ignore_aliases = lambda *args: True  # type: ignore
 
 # Get active IP addresses (unchanged)
-def get_active_ip_addresses() -> dict[str, str]:
-    ip_addresses = {}
+def get_active_ip_addresses() -> Dict[str, str]:
+    ip_addresses: Dict[str, str] = {}
     for interface, addrs in psutil.net_if_addrs().items():
         if psutil.net_if_stats()[interface].isup:
             for addr in addrs:
@@ -90,7 +90,7 @@ def load_settings() -> Optional[SettingsDict]:
     if os.path.exists('settings.yml'):
         with open('settings.yml', 'r', encoding='utf-8') as f:
             logger.info("settings.yml found")
-            data = yaml.load(f)
+            data: Any = yaml.load(f)  # type: ignore
             if isinstance(data, dict):
                 return data  # type: ignore[return-value]
             else:
@@ -102,5 +102,5 @@ def load_settings() -> Optional[SettingsDict]:
 # Save the configuration to a YAML file
 def save_settings(settings: SettingsDict) -> None:
     with open('settings.yml', 'w', encoding='utf-8') as f:
-        yaml.dump(settings, f)
+        yaml.dump(settings, f)  # type: ignore
         logger.info("settings.yml saved")

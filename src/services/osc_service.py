@@ -5,18 +5,11 @@ OSC服务 - 完全封装OSC功能
 
 import asyncio
 import logging
-from typing import Optional, Callable, Awaitable, TYPE_CHECKING
+from typing import Optional
 from pythonosc import dispatcher, osc_server, udp_client
 
-# 导入必要的类型和枚举
-from core.osc_common import OSCActionType
-from models import Channel, OSCValue
-from gui.ui_interface import ConnectionState
-
-if TYPE_CHECKING:
-    from gui.ui_interface import UIInterface
-    from services.dglab_service_interface import IDGLabService
-    from services.chatbox_service import ChatboxService
+from core.core_interface import CoreInterface
+from models import ConnectionState, OSCValue
 
 logger = logging.getLogger(__name__)
 
@@ -37,38 +30,24 @@ class OSCService:
     - 自管理服务器生命周期
     """
     
-    def __init__(self, ui_interface: 'UIInterface') -> None:
+    def __init__(self, core_interface: CoreInterface) -> None:
         """
         初始化OSC服务
         
         Args:
             ui_interface: UI接口，用于访问地址和绑定注册表
         """
-        self._ui_interface: 'UIInterface' = ui_interface
+        super().__init__()
+
+        self._core_interface = core_interface
         self._osc_client: Optional[udp_client.SimpleUDPClient] = None
         self._osc_server_instance: Optional[osc_server.AsyncIOOSCUDPServer] = None
         self._osc_transport: Optional[asyncio.BaseTransport] = None
-        self._dglab_service: Optional['IDGLabService'] = None
-        self._chatbox_service: Optional['ChatboxService'] = None
         self._is_running: bool = False
         
         # OSC服务器配置
         self._osc_port: int = 9001
         self._vrchat_port: int = 9000
-    
-    def set_dglab_service(self, dglab_service: 'IDGLabService') -> None:
-        """设置DGLab服务引用（用于OSC动作回调）"""
-        self._dglab_service = dglab_service
-        # 注册OSC动作（如果所有服务都已设置）
-        if self._dglab_service and self._chatbox_service:
-            self._register_osc_actions()
-    
-    def set_chatbox_service(self, chatbox_service: 'ChatboxService') -> None:
-        """设置ChatBox服务引用"""
-        self._chatbox_service = chatbox_service
-        # 注册OSC动作（如果所有服务都已设置）
-        if self._dglab_service and self._chatbox_service:
-            self._register_osc_actions()
     
     async def start_server(self, osc_port: int) -> bool:
         """
@@ -94,7 +73,7 @@ class OSCService:
             # 设置OSC服务器
             disp = dispatcher.Dispatcher()
             # 所有OSC消息都路由到内部处理方法
-            disp.map("*", self._handle_osc_message_internal)
+            disp.map("*", self._handle_osc_message_internal)  # type: ignore
             
             event_loop = asyncio.get_event_loop()
             if not isinstance(event_loop, asyncio.BaseEventLoop):
@@ -115,7 +94,7 @@ class OSCService:
                 error_message = f"OSC端口 {osc_port} 已被占用，请尝试使用其他端口或关闭占用该端口的程序"
                 logger.error(error_message)
                 # 通过UI接口报告错误
-                self._ui_interface.set_connection_state(ConnectionState.ERROR, "OSC端口被占用")
+                self._core_interface.set_connection_state(ConnectionState.ERROR, "OSC端口被占用")
                 return False
             else:
                 logger.error(f"OSC服务器启动失败: {e}")
@@ -156,134 +135,10 @@ class OSCService:
         """
         
         # 通过UI接口的绑定注册表处理消息
-        address_obj = self._ui_interface.address_registry.get_address_by_code(address)
+        address_obj = self._core_interface.registries.address_registry.get_address_by_code(address)
         if address_obj:
             logger.debug(f"收到OSC消息: {address} 参数: {args}")
-            await self._ui_interface.binding_registry.handle(address_obj, *args)
-    
-    def _register_osc_actions(self) -> None:
-        """注册OSC动作（内部方法）"""
-        if not self._dglab_service:
-            logger.warning("DGLab服务未设置，无法注册OSC动作")
-            return
-        
-        # 清除现有动作（避免重复注册）
-        self._ui_interface.action_registry.clear_all_actions()
-        
-        # 检查DGLab服务是否可用
-        if not self._dglab_service:
-            logger.error("DGLab服务未设置，无法注册OSC动作")
-            return
-        
-        dglab = self._dglab_service  # 简化引用
-        
-        # 注册通道控制操作
-        self._ui_interface.action_registry.register_action(
-            "A通道触碰",
-            self._create_async_wrapper(lambda *args: dglab.set_float_output(args[0], Channel.A)),
-            OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"}
-        )
-        
-        self._ui_interface.action_registry.register_action(
-            "B通道触碰", 
-            self._create_async_wrapper(lambda *args: dglab.set_float_output(args[0], Channel.B)),
-            OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"}
-        )
-        
-        self._ui_interface.action_registry.register_action(
-            "当前通道触碰",
-            self._create_async_wrapper(lambda *args: dglab.set_float_output(
-                args[0], dglab.get_current_channel()
-            )),
-            OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"}
-        )
-        
-        # 注册面板控制操作
-        self._ui_interface.action_registry.register_action(
-            "面板控制",
-            self._create_async_wrapper(lambda *args: dglab.set_panel_control(args[0])),
-            OSCActionType.PANEL_CONTROL, {"panel"}
-        )
-        
-        self._ui_interface.action_registry.register_action(
-            "数值调节",
-            self._create_async_wrapper(lambda *args: dglab.set_strength_step(args[0])),
-            OSCActionType.PANEL_CONTROL, {"value_adjust"}
-        )
-        
-        async def set_channel_wrapper(*args: OSCValue) -> None:
-            if isinstance(args[0], (int, float)):
-                await dglab.set_channel(args[0])
-        
-        self._ui_interface.action_registry.register_action(
-            "通道调节",
-            set_channel_wrapper,
-            OSCActionType.PANEL_CONTROL, {"channel_adjust"}
-        )
-        
-        # 注册强度控制操作
-        self._ui_interface.action_registry.register_action(
-            "设置模式",
-            self._create_async_wrapper(lambda *args: dglab.set_mode(
-                args[0], dglab.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"mode"}
-        )
-        
-        self._ui_interface.action_registry.register_action(
-            "重置强度",
-            self._create_async_wrapper(lambda *args: dglab.reset_strength(
-                args[0], dglab.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"reset"}
-        )
-        
-        self._ui_interface.action_registry.register_action(
-            "降低强度",
-            self._create_async_wrapper(lambda *args: dglab.decrease_strength(
-                args[0], dglab.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"decrease"}
-        )
-        
-        self._ui_interface.action_registry.register_action(
-            "增加强度",
-            self._create_async_wrapper(lambda *args: dglab.increase_strength(
-                args[0], dglab.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"increase"}
-        )
-        
-        self._ui_interface.action_registry.register_action(
-            "一键开火",
-            self._create_async_wrapper(lambda *args: dglab.strength_fire_mode(
-                args[0], 
-                dglab.get_current_channel(), 
-                dglab.fire_mode_strength_step, 
-                dglab.get_last_strength()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"fire"}
-        )
-        
-        # 注册ChatBox控制操作
-        if self._chatbox_service:
-            chatbox = self._chatbox_service  # 简化引用
-            self._ui_interface.action_registry.register_action(
-                "ChatBox状态开关",
-                self._create_async_wrapper(lambda *args: chatbox.toggle_chatbox(args[0])),
-                OSCActionType.CHATBOX_CONTROL, {"toggle"}
-            )
-        
-        logger.info("OSC动作注册完成")
-    
-    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
-        """创建异步包装器"""
-        async def wrapper(*args: OSCValue) -> None:
-            try:
-                await func(*args)
-            except Exception as e:
-                logger.error(f"OSC动作执行失败: {e}")
-        return wrapper
+            await self._core_interface.registries.binding_registry.handle(address_obj, *args)
     
     # ============ VRChat通信方法 ============
     
@@ -299,7 +154,7 @@ class OSCService:
             return
         
         try:
-            self._osc_client.send_message("/chatbox/input", [message, True, False])
+            self._osc_client.send_message("/chatbox/input", [message, True, False])  # type: ignore
             logger.debug(f"已发送ChatBox消息: {message}")
         except Exception as e:
             logger.error(f"发送ChatBox消息失败: {e}")
@@ -317,7 +172,7 @@ class OSCService:
             return
         
         try:
-            self._osc_client.send_message(path, value)
+            self._osc_client.send_message(path, value)  # type: ignore
             logger.debug(f"已发送OSC值: {path} = {value!r}")
         except Exception as e:
             logger.error(f"发送OSC值失败: {e}")
@@ -327,7 +182,5 @@ class OSCService:
     async def cleanup(self) -> None:
         """清理资源"""
         await self.stop_server()
-        self._dglab_service = None
-        self._chatbox_service = None
         self._osc_client = None
         logger.info("OSC服务已清理")

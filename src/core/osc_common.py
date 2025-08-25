@@ -4,12 +4,10 @@ OSC通用模块
 包含OSC系统的通用类型、枚举、协议和验证器。
 """
 
-from typing import Protocol, Optional, TYPE_CHECKING
+from typing import Awaitable, Protocol, Optional, Set
 from enum import Enum
 
-if TYPE_CHECKING:
-    from .osc_address import OSCAddress
-    from .osc_action import OSCAction
+from models import OSCValue
 
 
 class OSCActionType(Enum):
@@ -22,13 +20,79 @@ class OSCActionType(Enum):
     CUSTOM = "custom"
 
 
-class OSCRegistryObserver(Protocol):
-    """注册表观察者接口"""
-    def on_address_added(self, address: 'OSCAddress') -> None: ...
-    def on_address_removed(self, address: 'OSCAddress') -> None: ...
-    def on_action_added(self, action: 'OSCAction') -> None: ...
-    def on_action_removed(self, action: 'OSCAction') -> None: ...
-    def on_binding_changed(self, address: 'OSCAddress', action: Optional['OSCAction']) -> None: ...
+class OSCActionCallback(Protocol):
+    """OSC动作回调协议"""
+    def __call__(self, *args: OSCValue) -> Awaitable[None]:
+        ...
+
+
+class OSCAction:
+    """OSC动作"""
+    
+    def __init__(self, index: int, name: str, callback: OSCActionCallback, 
+                 action_type: OSCActionType = OSCActionType.CUSTOM,
+                 tags: Optional[Set[str]] = None) -> None:
+        super().__init__()
+        # 验证输入
+        name_valid, name_error = OSCAddressValidator.validate_action_name(name)
+        if not name_valid:
+            raise ValueError(f"无效的动作名称: {name_error}")
+            
+        self.index: int = index
+        self.name: str = name.strip()
+        self.callback: OSCActionCallback = callback
+        self.action_type: OSCActionType = action_type
+        self.tags: Set[str] = tags or set()
+    
+    async def handle(self, *args: OSCValue) -> None:
+        await self.callback(*args)
+    
+    def __str__(self) -> str:
+        return f"OSCAction(name='{self.name}', type='{self.action_type.value}')"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, OSCAction):
+            return False
+        return self.name == other.name and self.action_type == other.action_type
+    
+    def __hash__(self) -> int:
+        return hash((self.name, self.action_type))
+
+
+class OSCAddress:
+    """OSC地址"""
+    
+    def __init__(self, name: str, index: int, code: str) -> None:
+        super().__init__()
+        # 验证输入
+        name_valid, name_error = OSCAddressValidator.validate_address_name(name)
+        if not name_valid:
+            raise ValueError(f"无效的地址名称: {name_error}")
+            
+        code_valid, code_error = OSCAddressValidator.validate_osc_code(code)
+        if not code_valid:
+            raise ValueError(f"无效的OSC代码: {code_error}")
+            
+        self.name: str = name.strip()
+        self.index: int = index
+        self.code: str = code.strip()
+    
+    def __str__(self) -> str:
+        return f"OSCAddress(name='{self.name}', code='{self.code}')"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, OSCAddress):
+            return False
+        return self.name == other.name and self.code == other.code
+    
+    def __hash__(self) -> int:
+        return hash((self.name, self.code))
 
 
 class OSCAddressValidator:
@@ -83,3 +147,12 @@ class OSCAddressValidator:
 
         # 自定义动作
         return True, ""
+
+
+class OSCRegistryObserver(Protocol):
+    """注册表观察者接口"""
+    def on_address_added(self, address: OSCAddress) -> None: ...
+    def on_address_removed(self, address: OSCAddress) -> None: ...
+    def on_action_added(self, action: OSCAction) -> None: ...
+    def on_action_removed(self, action: OSCAction) -> None: ...
+    def on_binding_changed(self, address: OSCAddress, action: Optional[OSCAction]) -> None: ...

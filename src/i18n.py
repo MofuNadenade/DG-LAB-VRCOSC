@@ -2,7 +2,7 @@ import os
 import sys
 from ruamel.yaml import YAML
 import logging
-from typing import Dict, Any, Optional, cast
+from typing import Dict, Any, Optional
 from PySide6.QtCore import QObject, Signal
 
 logger = logging.getLogger(__name__)
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def resource_path(relative_path: str) -> str:
     """获取资源的绝对路径，确保开发和打包后都能正常使用"""
     if hasattr(sys, '_MEIPASS'):  # PyInstaller 打包后的路径
-        return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(sys._MEIPASS, relative_path)  # type: ignore
     # 开发环境下的路径
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
 
@@ -62,7 +62,8 @@ def load_translations() -> None:
             with open(translation_file, 'r', encoding='utf-8') as f:
                 logger.info(f"文件内容前100个字符: {f.read(100)}")
                 f.seek(0)  # 重置文件指针
-                _translations[lang_code] = yaml.load(f) or {}
+                loaded_data: Any = yaml.load(f)  # type: ignore
+                _translations[lang_code] = loaded_data or {}
                 logger.info(f"Loaded {len(_translations[lang_code])} translations for {lang_code}")
                 # 输出加载的所有键
                 if _translations[lang_code]:
@@ -109,11 +110,9 @@ def translate(text_id: str, lang: Optional[str] = None) -> str:
     parts = text_id.split('.')
     
     # 遍历翻译字典，尝试获取嵌套值
-    def get_nested_value(d: Any, keys: list[str]) -> Any:
+    def get_nested_value(d: dict[str, Any], keys: list[str]) -> Any:
         if not keys:
             return d
-        if not isinstance(d, dict):
-            return None
         key = keys[0]
         if key not in d:
             return None
@@ -125,13 +124,13 @@ def translate(text_id: str, lang: Optional[str] = None) -> str:
     if lang in _translations:
         value = get_nested_value(_translations[lang], parts)
         if value is not None and isinstance(value, str):
-            return cast(str, value)
+            return value
     
     # 如果没有找到翻译，尝试使用默认语言
     if lang != DEFAULT_LANGUAGE and DEFAULT_LANGUAGE in _translations:
         value = get_nested_value(_translations[DEFAULT_LANGUAGE], parts)
         if value is not None and isinstance(value, str):
-            return cast(str, value)
+            return value
     
     # 如果都找不到，返回文本ID本身
     logger.debug(f"未找到翻译: {text_id}")

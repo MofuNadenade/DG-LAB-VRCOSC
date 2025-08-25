@@ -5,53 +5,19 @@ OSC地址管理模块
 """
 
 import logging
-from typing import Optional, List, Dict, TYPE_CHECKING
+from typing import Optional, List, Dict
 
-from .osc_common import OSCAddressValidator, OSCRegistryObserver
-from .defaults import DEFAULT_ADDRESSES
-
-if TYPE_CHECKING:
-    from models import OSCAddressDict
+from .osc_common import OSCAddress, OSCRegistryObserver
+from models import OSCAddressDict
 
 logger = logging.getLogger(__name__)
-
-
-class OSCAddress:
-    """OSC地址"""
-    
-    def __init__(self, name: str, index: int, code: str) -> None:
-        # 验证输入
-        name_valid, name_error = OSCAddressValidator.validate_address_name(name)
-        if not name_valid:
-            raise ValueError(f"无效的地址名称: {name_error}")
-            
-        code_valid, code_error = OSCAddressValidator.validate_osc_code(code)
-        if not code_valid:
-            raise ValueError(f"无效的OSC代码: {code_error}")
-            
-        self.name: str = name.strip()
-        self.index: int = index
-        self.code: str = code.strip()
-    
-    def __str__(self) -> str:
-        return f"OSCAddress(name='{self.name}', code='{self.code}')"
-    
-    def __repr__(self) -> str:
-        return self.__str__()
-    
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, OSCAddress):
-            return False
-        return self.name == other.name and self.code == other.code
-    
-    def __hash__(self) -> int:
-        return hash((self.name, self.code))
 
 
 class OSCAddressRegistry:
     """OSC地址注册表"""
     
     def __init__(self) -> None:
+        super().__init__()
         self._addresses: List[OSCAddress] = []
         self._addresses_by_name: Dict[str, OSCAddress] = {}
         self._addresses_by_code: Dict[str, OSCAddress] = {}
@@ -158,7 +124,7 @@ class OSCAddressRegistry:
         
         logger.info(f"Loaded {len(self._addresses)} addresses from config")
     
-    def export_to_config(self) -> List[Dict[str, str]]:
+    def export_to_config(self) -> List[OSCAddressDict]:
         """导出所有地址到配置格式"""
         return [{'name': addr.name, 'code': addr.code} for addr in self._addresses]
     

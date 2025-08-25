@@ -1,20 +1,17 @@
 import asyncio
 import logging
-from typing import Optional, List, TYPE_CHECKING, Callable, Awaitable
+from typing import Optional, List, Callable, Awaitable
 
 from PySide6.QtWidgets import QMainWindow, QTabWidget
 from PySide6.QtGui import QIcon, QPixmap
-from models import StrengthData, Channel, SettingsDict, OSCValue, OSCBindingDict
+from core.registries import Registries
+from models import ConnectionState, StrengthData, Channel, SettingsDict, OSCValue, OSCBindingDict, UIFeature
 
 from config import default_load_settings, save_settings
-from i18n import translate as _, language_signals, set_language
+from i18n import translate, language_signals, set_language
 from util import resource_path
-from .ui_interface import ConnectionState, UIFeature
-from core import OSCActionRegistry, OSCBindingRegistry, OSCAddressRegistry, OSCTemplateRegistry, OSCActionType, OSCOptionsProvider
-from core.dglab_pulse import PulseRegistry
-
-if TYPE_CHECKING:
-    from core.dglab_controller import DGLabController
+from core import OSCActionType, OSCOptionsProvider
+from core.dglab_controller import DGLabController
 
 # Import GUI tabs
 from gui.network_config_tab import NetworkConfigTab
@@ -41,13 +38,8 @@ class MainWindow(QMainWindow):
         
         # 初始化控制器相关组件
         self.controller: Optional['DGLabController'] = None
-        self.pulse_registry: PulseRegistry = PulseRegistry()
-        self.address_registry: OSCAddressRegistry = OSCAddressRegistry()
-        self.action_registry: OSCActionRegistry = OSCActionRegistry()
-        self.binding_registry: OSCBindingRegistry = OSCBindingRegistry()
-        self.template_registry: OSCTemplateRegistry = OSCTemplateRegistry()
-        self.options_provider: OSCOptionsProvider = OSCOptionsProvider(
-            self.address_registry, self.action_registry, self.template_registry)
+        self.registries: Registries = Registries()
+        self.options_provider: OSCOptionsProvider = OSCOptionsProvider(self.registries)
         
         # 从配置加载所有数据
         self.load_all_configs()
@@ -72,7 +64,7 @@ class MainWindow(QMainWindow):
 
     def init_ui(self) -> None:
         """初始化用户界面"""
-        self.setWindowTitle(_("main.title"))
+        self.setWindowTitle(translate("main.title"))
         self.setWindowIcon(QIcon(resource_path("docs/images/fish-cake.ico")))
         self.resize(800, 600)
         
@@ -87,31 +79,31 @@ class MainWindow(QMainWindow):
         """初始化所有选项卡"""
         # 连接设置选项卡
         self.network_tab = NetworkConfigTab(self, self.settings)
-        self.tab_widget.addTab(self.network_tab, _("main.tabs.connection"))
+        self.tab_widget.addTab(self.network_tab, translate("main.tabs.connection"))
         
         # 设备控制选项卡
         self.controller_tab = ControllerSettingsTab(self, self.settings)
-        self.tab_widget.addTab(self.controller_tab, _("main.tabs.controller"))
+        self.tab_widget.addTab(self.controller_tab, translate("main.tabs.controller"))
         
         # 游戏联动选项卡
         self.ton_tab = TonDamageSystemTab(self, self.settings)
-        self.tab_widget.addTab(self.ton_tab, _("main.tabs.game"))
+        self.tab_widget.addTab(self.ton_tab, translate("main.tabs.game"))
         
         # OSC地址管理选项卡
         self.osc_address_tab = OSCAddressTab(self)
-        self.tab_widget.addTab(self.osc_address_tab, _("main.tabs.osc_address"))
+        self.tab_widget.addTab(self.osc_address_tab, translate("main.tabs.osc_address"))
         
         # 波形编辑器选项卡
         self.pulse_editor_tab = PulseEditorTab(self)
-        self.tab_widget.addTab(self.pulse_editor_tab, _("main.tabs.pulse_editor"))
+        self.tab_widget.addTab(self.pulse_editor_tab, translate("main.tabs.pulse_editor"))
         
         # 调试选项卡
         self.log_tab = LogViewerTab(self, self.settings)
-        self.tab_widget.addTab(self.log_tab, _("main.tabs.debug"))
+        self.tab_widget.addTab(self.log_tab, translate("main.tabs.debug"))
         
         # 关于选项卡
         self.about_tab = AboutTab(self, self.settings)
-        self.tab_widget.addTab(self.about_tab, _("main.tabs.about"))
+        self.tab_widget.addTab(self.about_tab, translate("main.tabs.about"))
 
     def set_controller(self, controller: Optional['DGLabController']) -> None:
         """设置控制器实例（当服务器启动后调用）"""
@@ -130,11 +122,7 @@ class MainWindow(QMainWindow):
             self.load_osc_address_bindings()
             
             # 初始化OSC地址管理面板
-            self.osc_address_tab.set_registries(
-                self.address_registry, 
-                self.action_registry, 
-                self.binding_registry
-            )
+            self.osc_address_tab.set_registries(self.registries)
             # 设置下拉列表数据提供者
             self.osc_address_tab.set_options_provider(self.options_provider)
             
@@ -154,15 +142,15 @@ class MainWindow(QMainWindow):
         """从配置加载所有数据"""
         # 加载地址
         addresses = self.settings.get('addresses', [])
-        self.address_registry.load_from_config(addresses)
+        self.registries.address_registry.load_from_config(addresses)
         
         # 加载脉冲
         pulses = self.settings.get('pulses', {})
-        self.pulse_registry.load_from_config(pulses)
+        self.registries.pulse_registry.load_from_config(pulses)
         
         # 加载模板
         templates = self.settings.get('templates', [])
-        self.template_registry.load_from_config(templates)
+        self.registries.template_registry.load_from_config(templates)
         
         logger.info("All configurations loaded from settings")
     
@@ -173,7 +161,7 @@ class MainWindow(QMainWindow):
             return
         
         # 为所有脉冲注册OSC操作
-        for pulse in self.pulse_registry.pulses:
+        for pulse in self.registries.pulse_registry.pulses:
             controller = self.controller
             pulse_index = pulse.index
             
@@ -183,7 +171,7 @@ class MainWindow(QMainWindow):
                         await ctrl.dglab_service.set_pulse_data(args[0], ctrl.dglab_service.get_current_channel(), idx)
                 return pulse_action
             
-            self.action_registry.register_action(_("main.action.set_pulse").format(pulse.name), 
+            self.registries.action_registry.register_action(translate("main.action.set_pulse").format(pulse.name), 
                 make_pulse_action(pulse_index, controller),
                 OSCActionType.PULSE_CONTROL, {"pulse"})
         
@@ -287,19 +275,19 @@ class MainWindow(QMainWindow):
             action_name: Optional[str] = binding.get('action_name')
             
             if address_name and action_name:
-                if address_name not in self.address_registry.addresses_by_name:
+                if address_name not in self.registries.address_registry.addresses_by_name:
                     logger.warning(f"未找到OSC地址：{address_name}")
                     continue
                     
-                if action_name not in self.action_registry.actions_by_name:
+                if action_name not in self.registries.action_registry.actions_by_name:
                     logger.warning(f"未找到OSC操作：{action_name}")
                     continue
                 
-                address = self.address_registry.addresses_by_name[address_name]
-                action = self.action_registry.actions_by_name[action_name]
-                self.binding_registry.register_binding(address, action)
+                address = self.registries.address_registry.addresses_by_name[address_name]
+                action = self.registries.action_registry.actions_by_name[action_name]
+                self.registries.binding_registry.register_binding(address, action)
         
-        logger.info(f"Loaded {len(self.binding_registry.bindings)} OSC bindings")
+        logger.info(f"Loaded {len(self.registries.binding_registry.bindings)} OSC bindings")
 
     # UIInterface interface implementation
     def update_current_channel_display(self, channel_name: str) -> None:
@@ -325,16 +313,16 @@ class MainWindow(QMainWindow):
 
     def update_ui_texts(self) -> None:
         """更新UI上的所有文本为当前语言"""
-        self.setWindowTitle(_("main.title"))
+        self.setWindowTitle(translate("main.title"))
         
         # 更新标签页标题
-        self.tab_widget.setTabText(0, _("main.tabs.connection"))
-        self.tab_widget.setTabText(1, _("main.tabs.controller"))
-        self.tab_widget.setTabText(2, _("main.tabs.game"))
-        self.tab_widget.setTabText(3, _("main.tabs.osc_address"))
-        self.tab_widget.setTabText(4, _("main.tabs.pulse_editor"))
-        self.tab_widget.setTabText(5, _("main.tabs.debug"))
-        self.tab_widget.setTabText(6, _("main.tabs.about"))
+        self.tab_widget.setTabText(0, translate("main.tabs.connection"))
+        self.tab_widget.setTabText(1, translate("main.tabs.controller"))
+        self.tab_widget.setTabText(2, translate("main.tabs.game"))
+        self.tab_widget.setTabText(3, translate("main.tabs.osc_address"))
+        self.tab_widget.setTabText(4, translate("main.tabs.pulse_editor"))
+        self.tab_widget.setTabText(5, translate("main.tabs.debug"))
+        self.tab_widget.setTabText(6, translate("main.tabs.about"))
         
         # 更新各个选项卡的文本
         self.network_tab.update_ui_texts()
@@ -358,32 +346,32 @@ class MainWindow(QMainWindow):
         
         state_config = {
             ConnectionState.DISCONNECTED: {
-                'text': _('connection_tab.connect'),
+                'text': translate('connection_tab.connect'),
                 'style': 'background-color: green; color: white;',
                 'enabled': True
             },
             ConnectionState.CONNECTING: {
-                'text': _('connection_tab.cancel'),
+                'text': translate('connection_tab.cancel'),
                 'style': 'background-color: orange; color: white;',
                 'enabled': True
             },
             ConnectionState.WAITING: {
-                'text': _('connection_tab.disconnect'),
+                'text': translate('connection_tab.disconnect'),
                 'style': 'background-color: blue; color: white;',
                 'enabled': True
             },
             ConnectionState.CONNECTED: {
-                'text': _('connection_tab.disconnect'),
+                'text': translate('connection_tab.disconnect'),
                 'style': 'background-color: red; color: white;',
                 'enabled': True
             },
             ConnectionState.FAILED: {
-                'text': message or _('connection_tab.failed'),
+                'text': message or translate('connection_tab.failed'),
                 'style': 'background-color: red; color: white;',
                 'enabled': True
             },
             ConnectionState.ERROR: {
-                'text': message or _('connection_tab.error'),
+                'text': message or translate('connection_tab.error'),
                 'style': 'background-color: darkred; color: white;',
                 'enabled': True
             }

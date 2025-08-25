@@ -4,57 +4,16 @@ OSC动作管理模块
 提供OSC动作的定义和注册管理功能。
 """
 
-from typing import Set, Optional, List, Dict, Awaitable, Protocol
+from typing import Set, Optional, List, Dict
 
-from .osc_common import OSCActionType, OSCAddressValidator, OSCRegistryObserver
-from models import OSCValue
-
-
-class OSCActionCallback(Protocol):
-    """OSC动作回调协议"""
-    def __call__(self, *args: OSCValue) -> Awaitable[None]:
-        ...
-
-
-class OSCAction:
-    """OSC动作"""
-    
-    def __init__(self, index: int, name: str, callback: OSCActionCallback, 
-                 action_type: OSCActionType = OSCActionType.CUSTOM,
-                 tags: Optional[Set[str]] = None) -> None:
-        # 验证输入
-        name_valid, name_error = OSCAddressValidator.validate_action_name(name)
-        if not name_valid:
-            raise ValueError(f"无效的动作名称: {name_error}")
-            
-        self.index: int = index
-        self.name: str = name.strip()
-        self.callback: OSCActionCallback = callback
-        self.action_type: OSCActionType = action_type
-        self.tags: Set[str] = tags or set()
-    
-    async def handle(self, *args: OSCValue) -> None:
-        await self.callback(*args)
-    
-    def __str__(self) -> str:
-        return f"OSCAction(name='{self.name}', type='{self.action_type.value}')"
-    
-    def __repr__(self) -> str:
-        return self.__str__()
-    
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, OSCAction):
-            return False
-        return self.name == other.name and self.action_type == other.action_type
-    
-    def __hash__(self) -> int:
-        return hash((self.name, self.action_type))
+from .osc_common import OSCAction, OSCActionCallback, OSCActionType, OSCRegistryObserver
 
 
 class OSCActionRegistry:
     """OSC动作注册表"""
     
     def __init__(self) -> None:
+        super().__init__()
         self._actions: List[OSCAction] = []
         self._actions_by_name: Dict[str, OSCAction] = {}
         self._actions_by_type: Dict[OSCActionType, List[OSCAction]] = {}
@@ -160,7 +119,7 @@ class OSCActionRegistry:
     
     def get_actions_by_tags(self, tags: Set[str]) -> List[OSCAction]:
         """根据标签获取动作"""
-        matching_actions = []
+        matching_actions: List[OSCAction] = []
         for action in self._actions:
             if action.tags.intersection(tags):
                 matching_actions.append(action)

@@ -5,10 +5,9 @@ OSC模板管理模块
 """
 
 import logging
-from typing import Optional, List, Dict, TYPE_CHECKING
+from typing import Optional, List, Dict
 
-if TYPE_CHECKING:
-    from models import OSCTemplateDict
+from models import OSCTemplateDict
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +16,7 @@ class OSCTemplate:
     """OSC代码模板"""
     
     def __init__(self, name: str, code: str, description: str = "") -> None:
+        super().__init__()
         self.name: str = name
         self.code: str = code
         self.description: str = description
@@ -32,6 +32,7 @@ class OSCTemplateRegistry:
     """OSC代码模板注册表"""
     
     def __init__(self) -> None:
+        super().__init__()
         self._templates: List[OSCTemplate] = []
         self._templates_by_name: Dict[str, OSCTemplate] = {}
     

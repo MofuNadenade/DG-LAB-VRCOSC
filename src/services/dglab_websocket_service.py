@@ -9,14 +9,35 @@ import math
 from typing import Optional, List, Union, Dict
 import pydglab_ws
 from pydglab_ws import DGLabLocalClient, DGLabWSServer, PulseDataTooLong
-from models import Channel, StrengthData, PulseOperation, StrengthOperationType, FeedbackButton, RetCode
+from core.core_interface import CoreInterface
+from models import Channel, ConnectionState, StrengthData, PulseOperation, StrengthOperationType, UIFeature
 from core.dglab_pulse import Pulse
 from PySide6.QtGui import QPixmap
 from util import generate_qrcode
 import logging
-from gui.ui_interface import UIInterface, UIFeature, ConnectionState
 
 logger = logging.getLogger(__name__)
+
+# 类型转换函数
+def _convert_channel_to_pydglab(channel: Channel) -> pydglab_ws.Channel:
+    """将models.Channel转换为pydglab_ws.Channel"""
+    if channel == Channel.A:
+        return pydglab_ws.Channel.A
+    elif channel == Channel.B:
+        return pydglab_ws.Channel.B
+    else:
+        raise ValueError(f"未知的通道类型: {channel}")
+
+def _convert_strength_operation_to_pydglab(op: StrengthOperationType) -> pydglab_ws.StrengthOperationType:
+    """将models.StrengthOperationType转换为pydglab_ws.StrengthOperationType"""
+    if op == StrengthOperationType.DECREASE:
+        return pydglab_ws.StrengthOperationType.DECREASE
+    elif op == StrengthOperationType.INCREASE:
+        return pydglab_ws.StrengthOperationType.INCREASE
+    elif op == StrengthOperationType.SET_TO:
+        return pydglab_ws.StrengthOperationType.SET_TO
+    else:
+        raise ValueError(f"未知的强度操作类型: {op}")
 
 # WebSocket 数据类型定义
 DGLabWebSocketData = Union[pydglab_ws.StrengthData, pydglab_ws.FeedbackButton, pydglab_ws.RetCode]
@@ -37,6 +58,7 @@ class ChannelPulseTask:
     """通道波形任务管理"""
     
     def __init__(self, client: DGLabLocalClient, channel: Channel) -> None:
+        super().__init__()
         self.client: DGLabLocalClient = client
         self.channel: Channel = channel
         self.pulse: Optional[Pulse] = None
@@ -59,7 +81,7 @@ class ChannelPulseTask:
 
     async def _internal_task(self, data: List[PulseOperation], send_duration: float = 5, send_interval: float = 1) -> None:
         try:
-            await self.client.clear_pulses(self.channel)
+            await self.client.clear_pulses(_convert_channel_to_pydglab(self.channel))
 
             data_duration = len(data) * 0.1
             repeat_num = int(send_duration // data_duration)
@@ -69,12 +91,12 @@ class ChannelPulseTask:
 
             try:
                 for _ in range(pulse_num):
-                    await self.client.add_pulses(self.channel, *pulse_data)
+                    await self.client.add_pulses(_convert_channel_to_pydglab(self.channel), *pulse_data)
                     await asyncio.sleep(send_interval)
 
                 await asyncio.sleep(abs(data_duration - send_interval))
                 while True:
-                    await self.client.add_pulses(self.channel, *pulse_data)
+                    await self.client.add_pulses(_convert_channel_to_pydglab(self.channel), *pulse_data)
                     await asyncio.sleep(data_duration)
             except PulseDataTooLong:
                 logger.warning("发送失败，波形数据过长")
@@ -92,6 +114,7 @@ class DGLabWebSocketService:
         """内部服务器管理器 - 封装服务器生命周期"""
         
         def __init__(self, service: 'DGLabWebSocketService'):
+            super().__init__()
             self._service = service
             self._server: Optional[DGLabWSServer] = None
             self._client: Optional[DGLabLocalClient] = None
@@ -124,7 +147,7 @@ class DGLabWebSocketService:
                     raise RuntimeError("无法生成二维码")
                 
                 qrcode_image: QPixmap = generate_qrcode(url)
-                self._service._ui_interface.update_qrcode(qrcode_image)
+                self._service._core_interface.update_qrcode(qrcode_image)
                 
                 # 更新服务引用
                 self._service._client = self._client
@@ -200,9 +223,12 @@ class DGLabWebSocketService:
         def client(self) -> Optional[DGLabLocalClient]:
             return self._client
     
-    def __init__(self, ui_interface: UIInterface) -> None:
-        # 移除client参数，改为内部管理
-        self._ui_interface: UIInterface = ui_interface
+    def __init__(self, core_interface: CoreInterface) -> None:
+        super().__init__()
+
+        self._core_interface = core_interface
+
+        # 本地客户端
         self._client: Optional[DGLabLocalClient] = None
         
         # 服务器管理器
@@ -376,7 +402,7 @@ class DGLabWebSocketService:
     def get_current_pulse_name(self, channel: Channel) -> str:
         """获取指定通道当前波形的名称"""
         pulse_index = self.get_pulse_mode(channel)
-        return self._ui_interface.pulse_registry.get_pulse_name_by_index(pulse_index)
+        return self._core_interface.registries.pulse_registry.get_pulse_name_by_index(pulse_index)
 
     # ============ 通道控制 ============
     
@@ -386,9 +412,9 @@ class DGLabWebSocketService:
             self._current_select_channel = Channel.A if value <= 1 else Channel.B
             logger.info(f"设置活动通道为: {self._current_select_channel}")
             # 更新 UI 显示
-            if self._ui_interface:
+            if self._core_interface:
                 channel_name = "A" if self._current_select_channel == Channel.A else "B"
-                self._ui_interface.update_current_channel_display(channel_name)
+                self._core_interface.update_current_channel_display(channel_name)
             return self._current_select_channel
         return None
 
@@ -402,30 +428,30 @@ class DGLabWebSocketService:
         if value >= 0.0 and self._last_strength:
             if channel == Channel.A and self._dynamic_bone_modes[Channel.A]:
                 final_output_a = math.ceil(self._map_value(value, self._last_strength.a_limit * 0.2, self._last_strength.a_limit))
-                await self._client.set_strength(channel, StrengthOperationType.SET_TO, final_output_a)
+                await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO), final_output_a)
             elif channel == Channel.B and self._dynamic_bone_modes[Channel.B]:
                 final_output_b = math.ceil(self._map_value(value, self._last_strength.b_limit * 0.2, self._last_strength.b_limit))
-                await self._client.set_strength(channel, StrengthOperationType.SET_TO, final_output_b)
+                await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO), final_output_b)
     
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度"""
         if self._client:
-            await self._client.set_strength(channel, operation_type, value)
+            await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(operation_type), value)
     
     async def reset_strength(self, value: bool, channel: Channel) -> None:
         """重置通道强度为0"""
         if value and self._client:
-            await self._client.set_strength(channel, StrengthOperationType.SET_TO, 0)
+            await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO), 0)
     
     async def increase_strength(self, value: bool, channel: Channel) -> None:
         """增加通道强度"""
         if value and self._client:
-            await self._client.set_strength(channel, StrengthOperationType.INCREASE, 1)
+            await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(StrengthOperationType.INCREASE), 1)
     
     async def decrease_strength(self, value: bool, channel: Channel) -> None:
         """减少通道强度"""
         if value and self._client:
-            await self._client.set_strength(channel, StrengthOperationType.DECREASE, 1)
+            await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(StrengthOperationType.DECREASE), 1)
 
     # ============ 波形控制 ============
     
@@ -440,19 +466,17 @@ class DGLabWebSocketService:
         if Channel.A not in self._channel_pulse_tasks or Channel.B not in self._channel_pulse_tasks:
             logger.warning("通道任务不完整，跳过波形更新")
             return
-        
-        pulse_registry = self._ui_interface.pulse_registry
-        
+                
         # 安全获取脉冲索引
-        index_a = pulse_registry.get_valid_index(self._pulse_modes[Channel.A])
-        index_b = pulse_registry.get_valid_index(self._pulse_modes[Channel.B])
+        index_a = self._core_interface.registries.pulse_registry.get_valid_index(self._pulse_modes[Channel.A])
+        index_b = self._core_interface.registries.pulse_registry.get_valid_index(self._pulse_modes[Channel.B])
         
         if index_a == -1 or index_b == -1:
             logger.warning("脉冲注册表为空，跳过波形更新")
             return
         
-        pulse_a = pulse_registry.pulses[index_a]
-        pulse_b = pulse_registry.pulses[index_b]
+        pulse_a = self._core_interface.registries.pulse_registry.pulses[index_a]
+        pulse_b = self._core_interface.registries.pulse_registry.pulses[index_b]
         
         logger.info(f"更新波形 A {pulse_a.name} B {pulse_b.name}")
         self._channel_pulse_tasks[Channel.A].set_pulse(pulse_a)
@@ -461,7 +485,7 @@ class DGLabWebSocketService:
     async def set_pulse_data(self, _: bool, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
         """设置指定通道的波形数据"""
         # 验证索引有效性
-        if not self._ui_interface.pulse_registry.is_valid_index(pulse_index):
+        if not self._core_interface.registries.pulse_registry.is_valid_index(pulse_index):
             logger.warning(f"无效的波形索引 {pulse_index}，操作已取消")
             return
         
@@ -480,9 +504,9 @@ class DGLabWebSocketService:
     def set_pulse_mode(self, channel: Channel, value: int) -> None:
         """设置指定通道的波形模式"""
         # 添加边界检查
-        if not self._ui_interface.pulse_registry.is_valid_index(value):
+        if not self._core_interface.registries.pulse_registry.is_valid_index(value):
             logger.warning(f"通道 {channel} 的波形索引 {value} 无效，使用默认值")
-            value = self._ui_interface.pulse_registry.get_valid_index(value)
+            value = self._core_interface.registries.pulse_registry.get_valid_index(value)
             if value == -1:
                 logger.error("没有可用的波形")
                 return
@@ -513,14 +537,14 @@ class DGLabWebSocketService:
         mode_name = "开启面板控制" if self._enable_panel_control else "已禁用面板控制"
         logger.info(f"面板控制状态: {mode_name}")
         # 更新 UI 组件
-        self._ui_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control, silent=True)
+        self._core_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control, silent=True)
     
     async def set_strength_step(self, value: float) -> None:
         """设置开火模式步进值"""
         self._fire_mode_strength_step = math.floor(self._map_value(value, 0, 100))
         logger.info(f"当前强度步进值: {self._fire_mode_strength_step}")
         # 更新 UI 组件
-        self._ui_interface.set_strength_step(self._fire_mode_strength_step, silent=True)
+        self._core_interface.set_strength_step(self._fire_mode_strength_step, silent=True)
 
     # ============ 开火模式 ============
     
@@ -548,15 +572,15 @@ class DGLabWebSocketService:
                     if channel == Channel.A:
                         self._fire_mode_origin_strengths[Channel.A] = last_strength.a
                         await self._client.set_strength(
-                            channel,
-                            StrengthOperationType.SET_TO,
+                            _convert_channel_to_pydglab(channel),
+                            _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
                             min(self._fire_mode_origin_strengths[Channel.A] + fire_strength, last_strength.a_limit)
                         )
                     elif channel == Channel.B:
                         self._fire_mode_origin_strengths[Channel.B] = last_strength.b
                         await self._client.set_strength(
-                            channel,
-                            StrengthOperationType.SET_TO,
+                            _convert_channel_to_pydglab(channel),
+                            _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
                             min(self._fire_mode_origin_strengths[Channel.B] + fire_strength, last_strength.b_limit)
                         )
                 self._data_updated_event.clear()
@@ -564,9 +588,9 @@ class DGLabWebSocketService:
             else:
                 if self._client:
                     if channel == Channel.A:
-                        await self._client.set_strength(channel, StrengthOperationType.SET_TO, self._fire_mode_origin_strengths[Channel.A])
+                        await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO), self._fire_mode_origin_strengths[Channel.A])
                     elif channel == Channel.B:
-                        await self._client.set_strength(channel, StrengthOperationType.SET_TO, self._fire_mode_origin_strengths[Channel.B])
+                        await self._client.set_strength(_convert_channel_to_pydglab(channel), _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO), self._fire_mode_origin_strengths[Channel.B])
                 # 等待数据更新
                 self._data_updated_event.clear()
                 await self._data_updated_event.wait()
@@ -589,8 +613,8 @@ class DGLabWebSocketService:
     
     def _update_pulse_ui(self, channel: Channel, pulse_index: int) -> None:
         """更新波形UI显示"""
-        pulse_name = self._ui_interface.pulse_registry.get_pulse_name_by_index(pulse_index)
-        self._ui_interface.set_pulse_mode(channel, pulse_name, silent=True)
+        pulse_name = self._core_interface.registries.pulse_registry.get_pulse_name_by_index(pulse_index)
+        self._core_interface.set_pulse_mode(channel, pulse_name, silent=True)
     
     async def _set_mode_timer_handle(self, channel: Channel) -> None:
         """模式切换计时器处理"""
@@ -604,7 +628,7 @@ class DGLabWebSocketService:
             logger.info(f"通道 {self._get_channel_name(channel)} 切换为{mode_name}")
             # 更新UI
             ui_feature = self._get_dynamic_bone_ui_feature(channel)
-            self._ui_interface.set_feature_state(ui_feature, new_mode, silent=True)
+            self._core_interface.set_feature_state(ui_feature, new_mode, silent=True)
         except asyncio.CancelledError:
             logger.debug(f"通道 {self._get_channel_name(channel)} 模式切换计时器已取消")
             raise
@@ -632,18 +656,18 @@ class DGLabWebSocketService:
         
         try:
             # 设置等待连接状态
-            self._ui_interface.set_connection_state(ConnectionState.WAITING)
+            self._core_interface.set_connection_state(ConnectionState.WAITING)
             
             # 等待绑定
             logger.info("等待 DG-Lab App 扫码绑定...")
             await client.bind()
             self._is_connected = True
-            self._ui_interface.on_client_connected()
+            self._core_interface.on_client_connected()
             logger.info(f"已与 App {client.target_id} 成功绑定")
             
             # 处理数据流
-            async for data in client.data_generator():
-                await self._handle_data(data)
+            async for data in client.data_generator():  # type: ignore
+                await self._handle_data(data)  # type: ignore
                 
         except asyncio.CancelledError:
             logger.info("连接处理任务被取消")
@@ -651,7 +675,7 @@ class DGLabWebSocketService:
         except Exception as e:
             logger.error(f"连接处理异常: {e}")
             self._is_connected = False
-            self._ui_interface.on_client_disconnected()
+            self._core_interface.on_client_disconnected()
     
     async def _handle_data(self, data: DGLabWebSocketData) -> None:
         """统一数据处理入口"""
@@ -660,7 +684,7 @@ class DGLabWebSocketService:
                 await self._handle_strength_data(data)
             elif isinstance(data, pydglab_ws.FeedbackButton):
                 await self._handle_feedback_button(data)
-            elif isinstance(data, pydglab_ws.RetCode):
+            elif data.__class__.__name__ == 'RetCode':
                 await self._handle_ret_code(data)
             else:
                 logger.warning(f"收到未知数据类型: {type(data)}, 值: {data}")
@@ -683,7 +707,7 @@ class DGLabWebSocketService:
         logger.info(f"接收到数据包 - A通道: {data.a}, B通道: {data.b}")
         
         # 更新应用状态和UI
-        self._ui_interface.update_status(models_strength_data)
+        self._core_interface.update_status(models_strength_data)
     
     async def _handle_feedback_button(self, data: pydglab_ws.FeedbackButton) -> None:
         """处理反馈按钮"""
@@ -705,7 +729,7 @@ class DGLabWebSocketService:
         
         # 更新连接状态
         self._is_connected = False
-        self._ui_interface.on_client_disconnected()
+        self._core_interface.on_client_disconnected()
         
         # 尝试重新绑定
         await self._attempt_reconnection()
@@ -718,7 +742,7 @@ class DGLabWebSocketService:
                 await client.rebind()
                 logger.info("重新绑定成功")
                 self._is_connected = True
-                self._ui_interface.on_client_reconnected()
+                self._core_interface.on_client_reconnected()
             except Exception as e:
                 logger.error(f"重新绑定失败: {e}")
     

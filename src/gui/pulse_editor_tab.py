@@ -6,25 +6,22 @@
 
 import asyncio
 import logging
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QListWidget, QListWidgetItem, QMessageBox, QInputDialog,
     QSplitter, QGroupBox, QButtonGroup, QFrame, QDialog
 )
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QCloseEvent
 
 from models import PulseOperation, Channel
-from core.dglab_pulse import Pulse, PulseRegistry
-from i18n import translate as _, language_signals
+from core.dglab_pulse import Pulse
+from i18n import translate, language_signals
 from .ui_interface import UIInterface
 from .pulse_widgets import PulsePreviewWidget, PulseStepEditor, ParameterControlPanel
 from .pulse_dialogs import NewPulseDialog, ImportPulseDialog, ExportPulseDialog, PulseInfoDialog
 from .pulse_detailed_editor import DetailedPulseStepDialog
-
-if TYPE_CHECKING:
-    from core.dglab_controller import DGLabController
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +49,21 @@ class PulseEditorTab(QWidget):
         self.channel_a_btn: QPushButton
         self.channel_b_btn: QPushButton
         self.save_btn: QPushButton
+        
+        # 预声明在setup_ui中初始化的组件
+        self.pulse_list_title: QLabel
+        self.operations_group: QGroupBox
+        self.new_btn: QPushButton
+        self.copy_btn: QPushButton
+        self.delete_btn: QPushButton
+        self.import_btn: QPushButton
+        self.export_btn: QPushButton
+        self.info_btn: QPushButton
+        self.preview_group: QGroupBox
+        self.channel_button_group: QButtonGroup
+        self.editor_group: QGroupBox
+        self.add_step_btn: QPushButton
+        self.clear_btn: QPushButton
         self.test_btn: QPushButton
         
         self.setup_ui()
@@ -92,7 +104,7 @@ class PulseEditorTab(QWidget):
         layout = QVBoxLayout(panel)
         
         # 标题
-        self.pulse_list_title = QLabel(_("pulse_editor.pulse_list"))
+        self.pulse_list_title = QLabel(translate("pulse_editor.pulse_list"))
         self.pulse_list_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont()
         font.setPointSize(14)
@@ -106,23 +118,23 @@ class PulseEditorTab(QWidget):
         layout.addWidget(self.pulse_list)
         
         # 操作按钮组
-        self.operations_group = QGroupBox(_("pulse_editor.operations"))
+        self.operations_group = QGroupBox(translate("pulse_editor.operations"))
         btn_group = self.operations_group
         btn_layout = QVBoxLayout(btn_group)
         
         # 新建按钮
-        self.new_btn = QPushButton(_("pulse_editor.new_pulse"))
+        self.new_btn = QPushButton(translate("pulse_editor.new_pulse"))
         self.new_btn.clicked.connect(self.new_pulse)
         btn_layout.addWidget(self.new_btn)
         
         # 复制按钮
-        self.copy_btn = QPushButton(_("pulse_editor.copy_pulse"))
+        self.copy_btn = QPushButton(translate("pulse_editor.copy_pulse"))
         self.copy_btn.clicked.connect(self.copy_pulse)
         self.copy_btn.setEnabled(False)
         btn_layout.addWidget(self.copy_btn)
         
         # 删除按钮
-        self.delete_btn = QPushButton(_("pulse_editor.delete_pulse"))
+        self.delete_btn = QPushButton(translate("pulse_editor.delete_pulse"))
         self.delete_btn.clicked.connect(self.delete_pulse)
         self.delete_btn.setEnabled(False)
         btn_layout.addWidget(self.delete_btn)
@@ -133,17 +145,17 @@ class PulseEditorTab(QWidget):
         btn_layout.addWidget(line)
         
         # 导入按钮
-        self.import_btn = QPushButton(_("pulse_editor.import_pulse"))
+        self.import_btn = QPushButton(translate("pulse_editor.import_pulse"))
         self.import_btn.clicked.connect(self.import_pulses)
         btn_layout.addWidget(self.import_btn)
         
         # 导出按钮
-        self.export_btn = QPushButton(_("pulse_editor.export_pulse"))
+        self.export_btn = QPushButton(translate("pulse_editor.export_pulse"))
         self.export_btn.clicked.connect(self.export_pulses)
         btn_layout.addWidget(self.export_btn)
         
         # 信息按钮
-        self.info_btn = QPushButton(_("pulse_editor.pulse_info"))
+        self.info_btn = QPushButton(translate("pulse_editor.pulse_info"))
         self.info_btn.clicked.connect(self.show_pulse_info)
         self.info_btn.setEnabled(False)
         btn_layout.addWidget(self.info_btn)
@@ -158,7 +170,7 @@ class PulseEditorTab(QWidget):
         layout = QVBoxLayout(panel)
         
         # 波形预览区域
-        self.preview_group = QGroupBox(_("pulse_editor.pulse_preview"))
+        self.preview_group = QGroupBox(translate("pulse_editor.pulse_preview"))
         preview_group = self.preview_group
         preview_layout = QVBoxLayout(preview_group)
         
@@ -175,8 +187,8 @@ class PulseEditorTab(QWidget):
         channel_layout = QHBoxLayout(channel_group)
         channel_layout.setContentsMargins(0, 0, 0, 0)
         
-        self.channel_a_btn = QPushButton(_("pulse_editor.channel_a"))
-        self.channel_b_btn = QPushButton(_("pulse_editor.channel_b"))
+        self.channel_a_btn = QPushButton(translate("pulse_editor.channel_a"))
+        self.channel_b_btn = QPushButton(translate("pulse_editor.channel_b"))
         
         # 设置按钮组
         self.channel_button_group = QButtonGroup()
@@ -194,11 +206,11 @@ class PulseEditorTab(QWidget):
         control_layout.addStretch()
         
         # 控制按钮
-        self.test_btn = QPushButton(_("pulse_editor.test_play"))
+        self.test_btn = QPushButton(translate("pulse_editor.test_play"))
         self.test_btn.clicked.connect(self.toggle_test_play)
         control_layout.addWidget(self.test_btn)
         
-        self.save_btn = QPushButton(_("pulse_editor.save_pulse"))
+        self.save_btn = QPushButton(translate("pulse_editor.save_pulse"))
         self.save_btn.clicked.connect(self.save_current_pulse)
         self.save_btn.setEnabled(False)
         control_layout.addWidget(self.save_btn)
@@ -206,7 +218,7 @@ class PulseEditorTab(QWidget):
         layout.addLayout(control_layout)
         
         # 脉冲编辑器
-        self.editor_group = QGroupBox(_("pulse_editor.pulse_editor"))
+        self.editor_group = QGroupBox(translate("pulse_editor.pulse_editor"))
         editor_group = self.editor_group
         editor_layout = QVBoxLayout(editor_group)
         
@@ -216,11 +228,11 @@ class PulseEditorTab(QWidget):
         # 编辑器控制按钮
         editor_control_layout = QHBoxLayout()
         
-        self.add_step_btn = QPushButton(_("pulse_editor.add_step"))
+        self.add_step_btn = QPushButton(translate("pulse_editor.add_step"))
         self.add_step_btn.clicked.connect(self.add_pulse_step)
         editor_control_layout.addWidget(self.add_step_btn)
         
-        self.clear_btn = QPushButton(_("pulse_editor.clear_all"))
+        self.clear_btn = QPushButton(translate("pulse_editor.clear_all"))
         self.clear_btn.clicked.connect(self.clear_all_steps)
         editor_control_layout.addWidget(self.clear_btn)
         
@@ -346,13 +358,13 @@ class PulseEditorTab(QWidget):
         """加载波形列表"""
         self.pulse_list.clear()
         
-        if self.ui_interface.pulse_registry:
-            for pulse in self.ui_interface.pulse_registry.pulses:
+        if self.ui_interface.registries.pulse_registry:
+            for pulse in self.ui_interface.registries.pulse_registry.pulses:
                 item = QListWidgetItem(pulse.name)
                 item.setData(Qt.ItemDataRole.UserRole, pulse)
                 
                 # 设置统一的工具提示
-                item.setToolTip(f"{pulse.name} ({len(pulse.data)} {_('pulse_editor.steps_count')})")
+                item.setToolTip(f"{pulse.name} ({len(pulse.data)} {translate('pulse_editor.steps_count')})")
                 
                 self.pulse_list.addItem(item)
             
@@ -388,8 +400,8 @@ class PulseEditorTab(QWidget):
     def load_pulse_for_editing(self, pulse: Pulse) -> None:
         """加载波形到编辑器"""
         if self.is_modified:
-            reply = QMessageBox.question(self, _("pulse_editor.unsaved_changes"), 
-                                       _("pulse_editor.unsaved_changes_msg"),
+            reply = QMessageBox.question(self, translate("pulse_editor.unsaved_changes"), 
+                                       translate("pulse_editor.unsaved_changes_msg"),
                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply != QMessageBox.StandardButton.Yes:
                 return
@@ -546,17 +558,17 @@ class PulseEditorTab(QWidget):
         dialog = NewPulseDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             if dialog.validate_input():
-                name, template_data, description = dialog.get_pulse_data()
+                name, template_data, _ = dialog.get_pulse_data()
                 
                 # 检查名称是否已存在
-                if self.ui_interface.pulse_registry:
-                    if self.ui_interface.pulse_registry.has_pulse_name(name):
-                        QMessageBox.warning(self, _("pulse_editor.name_conflict"), _("pulse_editor.name_exists").format(name))
+                if self.ui_interface.registries.pulse_registry:
+                    if self.ui_interface.registries.pulse_registry.has_pulse_name(name):
+                        QMessageBox.warning(self, translate("pulse_editor.name_conflict"), translate("pulse_editor.name_exists").format(name))
                         return
                         
                 # 创建新波形
                 try:
-                    pulse = self.ui_interface.pulse_registry.register_pulse(name, template_data)
+                    pulse = self.ui_interface.registries.pulse_registry.register_pulse(name, template_data)
                     self.load_pulses()
                     
                     # 选中新创建的波形
@@ -567,10 +579,10 @@ class PulseEditorTab(QWidget):
                             break
                             
                     logger.info(f"Created new pulse: {name}")
-                    QMessageBox.information(self, _("pulse_editor.create_success"), _("pulse_editor.create_success_msg").format(name))
+                    QMessageBox.information(self, translate("pulse_editor.create_success"), translate("pulse_editor.create_success_msg").format(name))
                     
                 except Exception as e:
-                    QMessageBox.critical(self, _("pulse_editor.create_failed"), _("pulse_editor.create_failed_msg").format(str(e)))
+                    QMessageBox.critical(self, translate("pulse_editor.create_failed"), translate("pulse_editor.create_failed_msg").format(str(e)))
                     
     def copy_pulse(self) -> None:
         """复制波形"""
@@ -581,23 +593,23 @@ class PulseEditorTab(QWidget):
         source_pulse = selected_items[0].data(Qt.ItemDataRole.UserRole)
         
         # 获取新名称
-        new_name, ok = QInputDialog.getText(self, _("pulse_editor.copy_pulse_title"), 
-                                          _("pulse_editor.copy_name_prompt"), 
-                                          text=_("pulse_editor.copy_default_name").format(source_pulse.name))
+        new_name, ok = QInputDialog.getText(self, translate("pulse_editor.copy_pulse_title"), 
+                                          translate("pulse_editor.copy_name_prompt"), 
+                                          text=translate("pulse_editor.copy_default_name").format(source_pulse.name))
         
         if ok and new_name.strip():
             new_name = new_name.strip()
             
             # 检查名称是否已存在
-            if self.ui_interface.pulse_registry:
-                if self.ui_interface.pulse_registry.has_pulse_name(new_name):
-                    QMessageBox.warning(self, _("pulse_editor.name_conflict"), _("pulse_editor.name_exists").format(new_name))
+            if self.ui_interface.registries.pulse_registry:
+                if self.ui_interface.registries.pulse_registry.has_pulse_name(new_name):
+                    QMessageBox.warning(self, translate("pulse_editor.name_conflict"), translate("pulse_editor.name_exists").format(new_name))
                     return
                     
             try:
                 # 复制数据
                 copied_data = [step for step in source_pulse.data]
-                pulse = self.ui_interface.pulse_registry.register_pulse(new_name, copied_data)
+                pulse = self.ui_interface.registries.pulse_registry.register_pulse(new_name, copied_data)
                 
                 self.load_pulses()
                 
@@ -609,10 +621,10 @@ class PulseEditorTab(QWidget):
                         break
                         
                 logger.info(f"Copied pulse: {source_pulse.name} -> {new_name}")
-                QMessageBox.information(self, _("pulse_editor.copy_success"), _("pulse_editor.copy_success_msg").format(new_name))
+                QMessageBox.information(self, translate("pulse_editor.copy_success"), translate("pulse_editor.copy_success_msg").format(new_name))
                 
             except Exception as e:
-                QMessageBox.critical(self, _("pulse_editor.copy_failed"), _("pulse_editor.copy_failed_msg").format(str(e)))
+                QMessageBox.critical(self, translate("pulse_editor.copy_failed"), translate("pulse_editor.copy_failed_msg").format(str(e)))
                 
     def delete_pulse(self) -> None:
         """删除波形"""
@@ -624,11 +636,11 @@ class PulseEditorTab(QWidget):
         
         # 只能删除自定义波形
         if pulse.index < 15:
-            QMessageBox.warning(self, _("pulse_editor.delete_failed"), _("pulse_editor.cannot_delete_preset"))
+            QMessageBox.warning(self, translate("pulse_editor.delete_failed"), translate("pulse_editor.cannot_delete_preset"))
             return
             
-        reply = QMessageBox.question(self, _("pulse_editor.confirm_delete"), 
-                                   _("pulse_editor.confirm_delete_msg").format(pulse.name),
+        reply = QMessageBox.question(self, translate("pulse_editor.confirm_delete"), 
+                                   translate("pulse_editor.confirm_delete_msg").format(pulse.name),
                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         
         if reply == QMessageBox.StandardButton.Yes:
@@ -638,17 +650,17 @@ class PulseEditorTab(QWidget):
                     self.clear_editor()
                     
                 # 从注册表中移除
-                if self.ui_interface.pulse_registry:
-                    self.ui_interface.pulse_registry.unregister_pulse(pulse)
+                if self.ui_interface.registries.pulse_registry:
+                    self.ui_interface.registries.pulse_registry.unregister_pulse(pulse)
                         
                 self.load_pulses()
                 self.pulse_deleted.emit(pulse.name)
                 
                 logger.info(f"Deleted pulse: {pulse.name}")
-                QMessageBox.information(self, _("pulse_editor.delete_success"), _("pulse_editor.delete_success_msg").format(pulse.name))
+                QMessageBox.information(self, translate("pulse_editor.delete_success"), translate("pulse_editor.delete_success_msg").format(pulse.name))
                 
             except Exception as e:
-                QMessageBox.critical(self, _("pulse_editor.delete_failed"), _("pulse_editor.delete_failed_msg").format(str(e)))
+                QMessageBox.critical(self, translate("pulse_editor.delete_failed"), translate("pulse_editor.delete_failed_msg").format(str(e)))
                 
     def save_current_pulse(self) -> None:
         """保存当前波形"""
@@ -670,17 +682,17 @@ class PulseEditorTab(QWidget):
             self.pulse_saved.emit(self.current_pulse.name)
             
             logger.info(f"Saved pulse: {self.current_pulse.name}")
-            QMessageBox.information(self, _("pulse_editor.save_success"), _("pulse_editor.save_success_msg").format(self.current_pulse.name))
+            QMessageBox.information(self, translate("pulse_editor.save_success"), translate("pulse_editor.save_success_msg").format(self.current_pulse.name))
             
         except Exception as e:
-            QMessageBox.critical(self, _("pulse_editor.save_failed"), _("pulse_editor.save_failed_msg").format(str(e)))
+            QMessageBox.critical(self, translate("pulse_editor.save_failed"), translate("pulse_editor.save_failed_msg").format(str(e)))
             
     def save_pulses_to_config(self) -> None:
         """保存波形到配置文件"""
-        if self.ui_interface.pulse_registry and self.ui_interface.settings:
+        if self.ui_interface.registries.pulse_registry and self.ui_interface.settings:
             try:
                 # 导出所有波形
-                all_pulses = self.ui_interface.pulse_registry.export_to_config()
+                all_pulses = self.ui_interface.registries.pulse_registry.export_to_config()
                 
                 # 更新settings
                 self.ui_interface.settings['pulses'] = all_pulses
@@ -702,8 +714,8 @@ class PulseEditorTab(QWidget):
         if not self.current_pulse:
             return
             
-        reply = QMessageBox.question(self, _("pulse_editor.confirm_clear"), 
-                                   _("pulse_editor.confirm_clear_msg"),
+        reply = QMessageBox.question(self, translate("pulse_editor.confirm_clear"), 
+                                   translate("pulse_editor.confirm_clear_msg"),
                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         
         if reply == QMessageBox.StandardButton.Yes:
@@ -715,19 +727,19 @@ class PulseEditorTab(QWidget):
     def toggle_test_play(self) -> None:
         """切换测试播放"""
         if not self.current_pulse:
-            QMessageBox.warning(self, _("pulse_editor.cannot_test"), _("pulse_editor.select_pulse_first"))
+            QMessageBox.warning(self, translate("pulse_editor.cannot_test"), translate("pulse_editor.select_pulse_first"))
             return
             
         if not self.is_playing:
             # 开始播放
             current_data = self.pulse_editor.get_pulse_data()
             if not current_data:
-                QMessageBox.warning(self, _("pulse_editor.cannot_test"), _("pulse_editor.empty_waveform"))
+                QMessageBox.warning(self, translate("pulse_editor.cannot_test"), translate("pulse_editor.empty_waveform"))
                 return
                 
             self.preview_widget.set_pulse_data(current_data)
             self.preview_widget.start_animation()
-            self.test_btn.setText(_("pulse_editor.stop_play"))
+            self.test_btn.setText(translate("pulse_editor.stop_play"))
             self.is_playing = True
             self.test_channel = self.current_channel  # 记录测试时的通道
             
@@ -735,7 +747,7 @@ class PulseEditorTab(QWidget):
             if self.ui_interface.controller:
                 try:
                     # 创建临时脉冲对象
-                    temp_pulse = Pulse(-1, _("pulse_editor.test_waveform"), current_data)
+                    temp_pulse = Pulse(-1, translate("pulse_editor.test_waveform"), current_data)
                     
                     # 在当前通道播放
                     asyncio.create_task(self.ui_interface.controller.dglab_service.set_test_pulse(self.current_channel, temp_pulse))
@@ -749,7 +761,7 @@ class PulseEditorTab(QWidget):
         else:
             # 停止播放
             self.preview_widget.stop_animation()
-            self.test_btn.setText(_("pulse_editor.test_play"))
+            self.test_btn.setText(translate("pulse_editor.test_play"))
             self.is_playing = False
             
             # 恢复设备上的原始波形
@@ -778,13 +790,13 @@ class PulseEditorTab(QWidget):
                 data = pulse_data['data']
                 
                 # 检查名称是否已存在
-                if self.ui_interface.pulse_registry:
-                    if self.ui_interface.pulse_registry.has_pulse_name(name):
+                if self.ui_interface.registries.pulse_registry:
+                    if self.ui_interface.registries.pulse_registry.has_pulse_name(name):
                         skipped_count += 1
                         continue
                         
                 try:
-                    self.ui_interface.pulse_registry.register_pulse(name, data)
+                    self.ui_interface.registries.pulse_registry.register_pulse(name, data)
                     imported_count += 1
                     
                 except Exception as e:
@@ -802,20 +814,20 @@ class PulseEditorTab(QWidget):
                     logger.error(f"Failed to save imported pulses: {e}")
                     
             # 显示结果
-            message = _("pulse_editor.import_complete").format(imported_count, skipped_count)
-            QMessageBox.information(self, _("pulse_editor.import_result"), message)
+            message = translate("pulse_editor.import_complete").format(imported_count, skipped_count)
+            QMessageBox.information(self, translate("pulse_editor.import_result"), message)
             
     def export_pulses(self) -> None:
         """导出波形"""
-        if not self.ui_interface.pulse_registry:
-            QMessageBox.warning(self, _("pulse_editor.export_failed"), _("pulse_editor.registry_unavailable"))
+        if not self.ui_interface.registries.pulse_registry:
+            QMessageBox.warning(self, translate("pulse_editor.export_failed"), translate("pulse_editor.registry_unavailable"))
             return
             
         # 获取自定义波形（索引>=15的波形）
-        custom_pulses = [pulse for pulse in self.ui_interface.pulse_registry.pulses if pulse.index >= 15]
+        custom_pulses = [pulse for pulse in self.ui_interface.registries.pulse_registry.pulses if pulse.index >= 15]
         
         if not custom_pulses:
-            QMessageBox.information(self, _("pulse_editor.no_custom_pulses"), _("pulse_editor.no_custom_pulses_msg"))
+            QMessageBox.information(self, translate("pulse_editor.no_custom_pulses"), translate("pulse_editor.no_custom_pulses_msg"))
             return
             
         dialog = ExportPulseDialog(custom_pulses, self)
@@ -834,28 +846,28 @@ class PulseEditorTab(QWidget):
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新脉冲列表标题
-        self.pulse_list_title.setText(_("pulse_editor.pulse_list"))
+        self.pulse_list_title.setText(translate("pulse_editor.pulse_list"))
         
         # 更新组框标题
-        self.operations_group.setTitle(_("pulse_editor.operations"))
-        self.preview_group.setTitle(_("pulse_editor.pulse_preview"))
-        self.editor_group.setTitle(_("pulse_editor.pulse_editor"))
+        self.operations_group.setTitle(translate("pulse_editor.operations"))
+        self.preview_group.setTitle(translate("pulse_editor.pulse_preview"))
+        self.editor_group.setTitle(translate("pulse_editor.pulse_editor"))
         
         # 更新左侧面板按钮
-        self.new_btn.setText(_("pulse_editor.new_pulse"))
-        self.copy_btn.setText(_("pulse_editor.copy_pulse"))
-        self.delete_btn.setText(_("pulse_editor.delete_pulse"))
-        self.import_btn.setText(_("pulse_editor.import_pulse"))
-        self.export_btn.setText(_("pulse_editor.export_pulse"))
-        self.info_btn.setText(_("pulse_editor.pulse_info"))
+        self.new_btn.setText(translate("pulse_editor.new_pulse"))
+        self.copy_btn.setText(translate("pulse_editor.copy_pulse"))
+        self.delete_btn.setText(translate("pulse_editor.delete_pulse"))
+        self.import_btn.setText(translate("pulse_editor.import_pulse"))
+        self.export_btn.setText(translate("pulse_editor.export_pulse"))
+        self.info_btn.setText(translate("pulse_editor.pulse_info"))
         
         # 更新右侧面板按钮
-        self.channel_a_btn.setText(_("pulse_editor.channel_a"))
-        self.channel_b_btn.setText(_("pulse_editor.channel_b"))
-        self.test_btn.setText(_("pulse_editor.test_play") if not self.is_playing else _("pulse_editor.stop_play"))
-        self.save_btn.setText(_("pulse_editor.save_pulse"))
-        self.add_step_btn.setText(_("pulse_editor.add_step"))
-        self.clear_btn.setText(_("pulse_editor.clear_all"))
+        self.channel_a_btn.setText(translate("pulse_editor.channel_a"))
+        self.channel_b_btn.setText(translate("pulse_editor.channel_b"))
+        self.test_btn.setText(translate("pulse_editor.test_play") if not self.is_playing else translate("pulse_editor.stop_play"))
+        self.save_btn.setText(translate("pulse_editor.save_pulse"))
+        self.add_step_btn.setText(translate("pulse_editor.add_step"))
+        self.clear_btn.setText(translate("pulse_editor.clear_all"))
         
         # 更新参数控制面板
         self.param_panel.update_ui_texts()
@@ -871,13 +883,13 @@ class PulseEditorTab(QWidget):
                 pulse = item.data(Qt.ItemDataRole.UserRole)
                 if pulse:
                     # 设置统一的工具提示
-                    item.setToolTip(f"{pulse.name} ({len(pulse.data)} {_('pulse_editor.steps_count')})")
+                    item.setToolTip(f"{pulse.name} ({len(pulse.data)} {translate('pulse_editor.steps_count')})")
         
     def closeEvent(self, event: QCloseEvent) -> None:
         """关闭事件"""
         if self.is_modified:
-            reply = QMessageBox.question(self, _("pulse_editor.unsaved_changes"), 
-                                       _("pulse_editor.unsaved_changes_save"),
+            reply = QMessageBox.question(self, translate("pulse_editor.unsaved_changes"), 
+                                       translate("pulse_editor.unsaved_changes_save"),
                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
             if reply == QMessageBox.StandardButton.Yes:
                 self.save_current_pulse()

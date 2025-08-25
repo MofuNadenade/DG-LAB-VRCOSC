@@ -1,22 +1,21 @@
 import asyncio
-from typing import Optional, TYPE_CHECKING
-from models import Channel
+from typing import Optional
+from core.core_interface import CoreInterface
+from models import Channel, UIFeature
 import logging
 
-from gui.ui_interface import UIInterface, UIFeature
-
-if TYPE_CHECKING:
-    from .osc_service import OSCService
-    from .dglab_service_interface import IDGLabService
+from .osc_service import OSCService
+from .dglab_service_interface import IDGLabService
 
 logger = logging.getLogger(__name__)
 
 
 class ChatboxService:
-    def __init__(self, dglab_service: 'IDGLabService', osc_service: 'OSCService', ui_interface: 'UIInterface') -> None:
+    def __init__(self, core_interface: CoreInterface, dglab_service: IDGLabService, osc_service: OSCService) -> None:
+        super().__init__()
+        self._core_interface = core_interface
         self._dglab_service = dglab_service
         self._osc_service = osc_service
-        self._ui_interface = ui_interface
         self._enable_chatbox_status: bool = True
         self._previous_chatbox_status: bool = True
         self._chatbox_toggle_timer: Optional[asyncio.Task[None]] = None
@@ -34,7 +33,7 @@ class ChatboxService:
             mode_name = "开启" if enabled else "关闭"
             logger.info(f"ChatBox显示状态设置为: {mode_name}")
             # 更新UI
-            self._ui_interface.set_feature_state(UIFeature.CHATBOX_STATUS, enabled, silent=True)
+            self._core_interface.set_feature_state(UIFeature.CHATBOX_STATUS, enabled, silent=True)
             # 如果禁用，立即清空chatbox
             if not enabled:
                 self._osc_service.send_message_to_vrchat_chatbox("")
@@ -92,10 +91,10 @@ class ChatboxService:
             pulse_name_b = self._dglab_service.get_current_pulse_name(Channel.B)
             
             self._osc_service.send_message_to_vrchat_chatbox(
-                f"MAX A: {last_strength.a_limit} B: {last_strength.b_limit}\n"
-                f"Mode A: {mode_name_a} B: {mode_name_b} \n"
-                f"Pulse A: {pulse_name_a} B: {pulse_name_b} \n"
-                f"Fire Step: {self._dglab_service.fire_mode_strength_step}\n"
+                f"MAX A: {last_strength.a_limit} B: {last_strength.b_limit}\n" +
+                f"Mode A: {mode_name_a} B: {mode_name_b} \n" +
+                f"Pulse A: {pulse_name_a} B: {pulse_name_b} \n" +
+                f"Fire Step: {self._dglab_service.fire_mode_strength_step}\n" +
                 f"Current: {channel_strength} \n"
             )
         else:

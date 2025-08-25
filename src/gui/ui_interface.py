@@ -1,79 +1,13 @@
-from typing import Optional, TYPE_CHECKING, Protocol
-from enum import Enum
-from PySide6.QtGui import QPixmap
-from models import StrengthData, Channel, SettingsDict
-
-if TYPE_CHECKING:
-    from core.dglab_controller import DGLabController
-    from core import OSCActionRegistry, OSCBindingRegistry, OSCAddressRegistry
-    from core.dglab_pulse import PulseRegistry
+from typing import Optional, Protocol
+from core.core_interface import CoreInterface
+from core.dglab_controller import DGLabController
+from models import SettingsDict
 
 
-class ConnectionState(Enum):
-    """连接状态枚举"""
-    DISCONNECTED = "disconnected"
-    CONNECTING = "connecting"
-    WAITING = "waiting"
-    CONNECTED = "connected"
-    FAILED = "failed"
-    ERROR = "error"
-
-
-class UIFeature(Enum):
-    """UI功能开关枚举"""
-    PANEL_CONTROL = "panel_control"
-    CHATBOX_STATUS = "chatbox_status"
-    DYNAMIC_BONE_A = "dynamic_bone_a"
-    DYNAMIC_BONE_B = "dynamic_bone_b"
-    FIRE_MODE = "fire_mode"
-
-
-class UIInterface(Protocol):
+class UIInterface(CoreInterface, Protocol):
     """统一的UI操作接口协议"""
     # 数据访问属性
     controller: Optional['DGLabController']
-    pulse_registry: 'PulseRegistry'
-    address_registry: 'OSCAddressRegistry'
-    action_registry: 'OSCActionRegistry'
-    binding_registry: 'OSCBindingRegistry'
     settings: SettingsDict
 
-    # 连接状态管理
-    def set_connection_state(self, state: ConnectionState, message: str = "") -> None: ...
-    def get_connection_state(self) -> ConnectionState: ...
-    
-    # 脉冲模式管理
-    def set_pulse_mode(self, channel: Channel, mode_name: str, silent: bool = False) -> None: ...
-    def get_pulse_mode(self, channel: Channel) -> str: ...
-    def update_pulse_modes_list(self, pulse_names: list[str]) -> None: ...
-    
-    # 功能开关管理
-    def set_feature_state(self, feature: UIFeature, enabled: bool, silent: bool = False) -> None: ...
-    def get_feature_state(self, feature: UIFeature) -> bool: ...
-    
-    # 数值控制管理
-    def set_strength_step(self, value: int, silent: bool = False) -> None: ...
-    def get_strength_step(self) -> int: ...
-    
-    # 日志管理
-    def log_info(self, message: str) -> None: ...
-    def log_warning(self, message: str) -> None: ...
-    def log_error(self, message: str) -> None: ...
-    def clear_logs(self) -> None: ...
-    
-    # 控制器管理
-    def set_controller_available(self, available: bool) -> None: ...
-    
-    # 连接状态通知回调
-    def on_client_connected(self) -> None: ...
-    def on_client_disconnected(self) -> None: ...
-    def on_client_reconnected(self) -> None: ...
-
-    # 现有方法保持不变
-    def update_current_channel_display(self, channel_name: str) -> None: ...
-    def update_qrcode(self, qrcode_pixmap: QPixmap) -> None: ...
-    def bind_controller_settings(self) -> None: ...
     def set_controller(self, controller: Optional['DGLabController']) -> None: ...
-    def update_connection_status(self, is_online: bool) -> None: ...
-    def update_status(self, strength_data: StrengthData) -> None: ...
-    def save_settings(self) -> None: ...

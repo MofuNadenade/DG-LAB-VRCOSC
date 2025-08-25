@@ -6,12 +6,14 @@ logger = logging.getLogger(__name__)
 
 class Pulse:
     def __init__(self, index: int, name: str, data: List[PulseOperation]) -> None:
+        super().__init__()
         self.index: int = index
         self.name: str = name
         self.data: List[PulseOperation] = data
 
 class PulseRegistry:
     def __init__(self) -> None:
+        super().__init__()
         self._pulses: List[Pulse] = []
         self._pulses_by_name: Dict[str, Pulse] = {}
 

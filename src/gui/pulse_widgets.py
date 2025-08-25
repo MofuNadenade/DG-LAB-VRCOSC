@@ -4,19 +4,16 @@
 基于DG-LAB官方APP界面设计的波形编辑组件
 """
 
-import math
-from typing import List, Optional, Tuple
+from typing import List, Optional
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider,
-    QListWidget, QListWidgetItem, QFrame, QScrollArea, QSizePolicy,
-    QSpinBox, QDoubleSpinBox, QCheckBox, QGroupBox, QMenu, QInputDialog
+    QScrollArea, QGroupBox, QMenu, QInputDialog
 )
-from PySide6.QtCore import Qt, Signal, QTimer, QRect, QSize, QPoint, QEvent
+from PySide6.QtCore import Qt, Signal, QTimer, QRect, QPoint, QEvent
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPaintEvent, QMouseEvent, QFont, QLinearGradient
 
-from models import PulseOperation, Channel
-from i18n import translate as _, language_signals
-from core.dglab_pulse import Pulse
+from models import PulseOperation
+from i18n import translate, language_signals
 import logging
 
 logger = logging.getLogger(__name__)
@@ -104,7 +101,7 @@ class PulsePreviewWidget(QWidget):
         if not self.pulse_data:
             # 绘制空状态
             painter.setPen(QPen(QColor("#666666"), 1))
-            painter.drawText(draw_rect, Qt.AlignmentFlag.AlignCenter, _("pulse_editor.no_waveform_data"))
+            painter.drawText(draw_rect, Qt.AlignmentFlag.AlignCenter, translate("pulse_editor.no_waveform_data"))
             return
             
         # 绘制波形曲线
@@ -119,7 +116,7 @@ class PulsePreviewWidget(QWidget):
             return
             
         # 计算点位置
-        points = []
+        points: List[QPoint] = []
         step_width = draw_rect.width() / max(len(self.pulse_data) - 1, 1)
         
         for i, pulse in enumerate(self.pulse_data):
@@ -177,6 +174,10 @@ class PulseBar(QWidget):
         super().__init__(parent)
         self.position = position
         self.height_percent = max(0.0, min(100.0, height_percent))
+
+        self.pulse_operation: PulseOperation
+        self.frequency: int
+        self.intensity: int
         
         # 存储完整的脉冲操作数据，避免精度丢失
         if pulse_operation:
@@ -581,7 +582,7 @@ class PulseStepEditor(QWidget):
         
         # 移除弹性空间
         if self.container_layout.count() > 0:
-            last_item = self.container_layout.takeAt(self.container_layout.count() - 1)
+            _ = self.container_layout.takeAt(self.container_layout.count() - 1)
             
         self.pulse_bars.append(bar)
         self.container_layout.addWidget(bar)
@@ -617,7 +618,7 @@ class PulseStepEditor(QWidget):
         
     def get_pulse_data(self) -> List[PulseOperation]:
         """获取当前的脉冲数据（保持完整精度）"""
-        data = []
+        data: List[PulseOperation] = []
         for bar in self.pulse_bars:
             # 直接使用条形存储的完整脉冲操作数据，避免精度丢失
             data.append(bar.get_pulse_operation())
@@ -662,6 +663,13 @@ class ParameterControlPanel(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.frequency_mode = "fixed"  # 默认固定频率模式
+        
+        # 预声明实例变量（在setup_ui中初始化）
+        self.freq_group: QGroupBox
+        self.freq_label: QLabel
+        self.mode_btn: QPushButton
+        self.freq_slider: QSlider
+        
         self.setup_ui()
         
         # 连接语言变更信号
@@ -679,7 +687,7 @@ class ParameterControlPanel(QWidget):
 
     def _create_frequency_group(self) -> QWidget:
         """创建频率控制组"""
-        self.freq_group = QGroupBox(_("pulse_editor.pulse_frequency"))
+        self.freq_group = QGroupBox(translate("pulse_editor.pulse_frequency"))
         group = self.freq_group
         group.setStyleSheet("""
             QGroupBox {
@@ -783,7 +791,7 @@ class ParameterControlPanel(QWidget):
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新频率组标题
-        self.freq_group.setTitle(_("pulse_editor.pulse_frequency"))
+        self.freq_group.setTitle(translate("pulse_editor.pulse_frequency"))
         
         # 更新模式按钮文本
         if self.frequency_mode == "fixed":

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import requests
-from typing import Optional
+from typing import Awaitable, Callable, Optional
 
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
                                QComboBox, QSpinBox, QLabel, QPushButton, QLineEdit, QCheckBox, QMessageBox, QSizePolicy)
@@ -9,11 +9,16 @@ from PySide6.QtCore import Qt, QLocale, QTimer
 from PySide6.QtGui import QPixmap, QResizeEvent
 
 from config import get_active_ip_addresses, save_settings
+from core.osc_common import OSCActionType
+from services.chatbox_service import ChatboxService
+from services.dglab_service_interface import IDGLabService
+from services.dglab_websocket_service import DGLabWebSocketService
+from services.osc_service import OSCService
 from .widgets import EditableComboBox
-from i18n import translate as _, language_signals, LANGUAGES, get_current_language, set_language
+from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
 from core.dglab_controller import DGLabController
-from .ui_interface import UIInterface, ConnectionState
-from models import SettingsDict
+from .ui_interface import UIInterface
+from models import Channel, ConnectionState, OSCValue, SettingsDict
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +77,7 @@ class NetworkConfigTab(QWidget):
         network_layout = QHBoxLayout()
         
         # 创建网络配置组
-        self.network_config_group = QGroupBox(_("connection_tab.title"))
+        self.network_config_group = QGroupBox(translate("connection_tab.title"))
         self.form_layout = QFormLayout()
         
         # 网卡选择
@@ -82,7 +87,7 @@ class NetworkConfigTab(QWidget):
         self.ip_combobox = EditableComboBox(ip_options)
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.ip_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.interface_label = QLabel(_("connection_tab.interface_label"))
+        self.interface_label = QLabel(translate("connection_tab.interface_label"))
         self.form_layout.addRow(self.interface_label, self.ip_combobox)
         
         # 端口选择
@@ -90,8 +95,8 @@ class NetworkConfigTab(QWidget):
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.port_spinbox.setRange(1024, 65535)
-        self.port_spinbox.setValue(self.settings['port'])
-        self.websocket_port_label = QLabel(_("connection_tab.websocket_port_label"))
+        self.port_spinbox.setValue(self.settings.get('port', 8080))
+        self.websocket_port_label = QLabel(translate("connection_tab.websocket_port_label"))
         self.form_layout.addRow(self.websocket_port_label, self.port_spinbox)
         
         # OSC端口选择
@@ -99,15 +104,15 @@ class NetworkConfigTab(QWidget):
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.osc_port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.osc_port_spinbox.setRange(1024, 65535)
-        self.osc_port_spinbox.setValue(self.settings['osc_port'])
-        self.osc_port_label = QLabel(_("connection_tab.osc_port_label"))
+        self.osc_port_spinbox.setValue(self.settings.get('osc_port', 9000))
+        self.osc_port_label = QLabel(translate("connection_tab.osc_port_label"))
         self.form_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
         
         # 创建远程地址控制布局
         self.remote_address_layout = QHBoxLayout()
         
         # 创建开启异地复选框
-        self.enable_remote_checkbox = QCheckBox(_("connection_tab.enable_remote"))
+        self.enable_remote_checkbox = QCheckBox(translate("connection_tab.enable_remote"))
         self.enable_remote_checkbox.setChecked(self.settings.get('enable_remote', False))
         self.enable_remote_checkbox.stateChanged.connect(self.on_remote_enabled_changed)
         
@@ -118,10 +123,10 @@ class NetworkConfigTab(QWidget):
         self.remote_address_edit.setText(self.settings.get('remote_address', ''))
         self.remote_address_edit.setEnabled(self.enable_remote_checkbox.isChecked())
         self.remote_address_edit.textChanged.connect(self.on_remote_address_changed)
-        self.remote_address_edit.setPlaceholderText(_("connection_tab.please_enter_valid_ip"))
+        self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))
         
         # 获取公网地址按钮
-        self.get_public_ip_button = QPushButton(_("connection_tab.get_public_ip"))
+        self.get_public_ip_button = QPushButton(translate("connection_tab.get_public_ip"))
         self.get_public_ip_button.clicked.connect(self.get_public_ip)
         self.get_public_ip_button.setEnabled(self.enable_remote_checkbox.isChecked())
         
@@ -130,11 +135,11 @@ class NetworkConfigTab(QWidget):
         self.remote_address_layout.addWidget(self.remote_address_edit)
         self.remote_address_layout.addWidget(self.get_public_ip_button)
         
-        self.remote_address_label = QLabel(_("connection_tab.remote_address_label"))
+        self.remote_address_label = QLabel(translate("connection_tab.remote_address_label"))
         self.form_layout.addRow(self.remote_address_label, self.remote_address_layout)
         
         # 添加客户端连接状态标签
-        self.connection_status_label = QLabel(_("connection_tab.offline"))
+        self.connection_status_label = QLabel(translate("connection_tab.offline"))
         self.connection_status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.connection_status_label.setStyleSheet("""
             QLabel {
@@ -145,24 +150,24 @@ class NetworkConfigTab(QWidget):
             }
         """)
         self.connection_status_label.adjustSize()
-        self.status_label = QLabel(_("connection_tab.status_label"))
+        self.status_label = QLabel(translate("connection_tab.status_label"))
         self.form_layout.addRow(self.status_label, self.connection_status_label)
         
         # 启动按钮
-        self.start_button = QPushButton(_("connection_tab.connect"))
+        self.start_button = QPushButton(translate("connection_tab.connect"))
         self.start_button.setStyleSheet("background-color: green; color: white;")
         self.start_button.clicked.connect(self.start_server_button_clicked)
         self.form_layout.addRow(self.start_button)
         
         # 语言选择
         self.language_layout = QHBoxLayout()
-        self.language_label = QLabel(_("main.settings.language_label"))
+        self.language_label = QLabel(translate("main.settings.language_label"))
         
         language_options = list(LANGUAGES.values())
         self.language_combo = EditableComboBox(language_options)
         
         # 设置语言数据
-        for i, (lang_code, lang_name) in enumerate(LANGUAGES.items()):
+        for i, (lang_code, _) in enumerate(LANGUAGES.items()):
             self.language_combo.setItemData(i, lang_code)
 
         # 设置当前语言
@@ -251,7 +256,7 @@ class NetworkConfigTab(QWidget):
     def update_connection_status(self, is_online: bool) -> None:
         """根据设备连接状态更新标签的文本和颜色"""
         if is_online:
-            self.connection_status_label.setText(_('connection_tab.online'))
+            self.connection_status_label.setText(translate('connection_tab.online'))
             self.connection_status_label.setStyleSheet("""
                 QLabel {
                     background-color: green;
@@ -261,7 +266,7 @@ class NetworkConfigTab(QWidget):
                 }
             """)
         else:
-            self.connection_status_label.setText(_('connection_tab.offline'))
+            self.connection_status_label.setText(translate('connection_tab.offline'))
             self.connection_status_label.setStyleSheet("""
                 QLabel {
                     background-color: red;
@@ -292,9 +297,9 @@ class NetworkConfigTab(QWidget):
         if self.enable_remote_checkbox.isChecked():
             remote_addr_text = self.remote_address_edit.text()
             if remote_addr_text and not self.validate_ip_address(remote_addr_text):
-                error_msg = _("connection_tab.invalid_remote_address")
+                error_msg = translate("connection_tab.invalid_remote_address")
                 logger.error(error_msg)
-                QMessageBox.warning(self, _("common.error"), error_msg)
+                QMessageBox.warning(self, translate("common.error"), error_msg)
                 return
         
         selected_ip = self.ip_combobox.currentText().split(": ")[-1]
@@ -312,7 +317,18 @@ class NetworkConfigTab(QWidget):
             
             # 创建控制器（如果不存在）
             if not self.controller:
-                controller = DGLabController(self.ui_interface)
+                # 初始化服务（不再需要client参数）
+                dglab_service: IDGLabService = DGLabWebSocketService(self.ui_interface)
+                osc_service: OSCService = OSCService(self.ui_interface)
+                chatbox_service: ChatboxService = ChatboxService(self.ui_interface, dglab_service, osc_service)
+                
+                # 注册OSC动作
+                self._register_osc_actions(dglab_service, chatbox_service)
+                
+                # 启动定时任务
+                chatbox_service.start_periodic_status_update()
+
+                controller = DGLabController(dglab_service, osc_service, chatbox_service)
                 self.ui_interface.set_controller(controller)
                 # 在 controller 初始化后调用绑定函数
                 self.ui_interface.bind_controller_settings()
@@ -323,11 +339,126 @@ class NetworkConfigTab(QWidget):
             logger.info("WebSocket 服务器启动任务已创建")
                 
         except Exception as e:
-            error_message = _("connection_tab.start_server_failed").format(str(e))
+            error_message = translate("connection_tab.start_server_failed").format(str(e))
             logger.error(error_message)
             
             # 恢复按钮状态 - 使用统一接口
             self.ui_interface.set_connection_state(ConnectionState.FAILED, error_message)
+
+
+    def _register_osc_actions(self, dglab_service: IDGLabService, chatbox_service: ChatboxService) -> None:
+        """注册OSC动作（内部方法）"""
+        
+        # 清除现有动作（避免重复注册）
+        self.ui_interface.registries.action_registry.clear_all_actions()
+        
+        # 检查DGLab服务是否可用
+        
+        # 注册通道控制操作
+        self.ui_interface.registries.action_registry.register_action(
+            "A通道触碰",
+            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.A)),
+            OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"}
+        )
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "B通道触碰", 
+            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.B)),
+            OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"}
+        )
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "当前通道触碰",
+            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"}
+        )
+        
+        # 注册面板控制操作
+        self.ui_interface.registries.action_registry.register_action(
+            "面板控制",
+            self._create_async_wrapper(lambda *args: dglab_service.set_panel_control(args[0])),
+            OSCActionType.PANEL_CONTROL, {"panel"}
+        )
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "数值调节",
+            self._create_async_wrapper(lambda *args: dglab_service.set_strength_step(args[0])),
+            OSCActionType.PANEL_CONTROL, {"value_adjust"}
+        )
+        
+        async def set_channel_wrapper(*args: OSCValue) -> None:
+            if isinstance(args[0], (int, float)):
+                await dglab_service.set_channel(args[0])
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "通道调节",
+            set_channel_wrapper,
+            OSCActionType.PANEL_CONTROL, {"channel_adjust"}
+        )
+        
+        # 注册强度控制操作
+        self.ui_interface.registries.action_registry.register_action(
+            "设置模式",
+            self._create_async_wrapper(lambda *args: dglab_service.set_mode(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"mode"}
+        )
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "重置强度",
+            self._create_async_wrapper(lambda *args: dglab_service.reset_strength(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"reset"}
+        )
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "降低强度",
+            self._create_async_wrapper(lambda *args: dglab_service.decrease_strength(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"decrease"}
+        )
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "增加强度",
+            self._create_async_wrapper(lambda *args: dglab_service.increase_strength(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"increase"}
+        )
+        
+        self.ui_interface.registries.action_registry.register_action(
+            "一键开火",
+            self._create_async_wrapper(lambda *args: dglab_service.strength_fire_mode(
+                args[0], 
+                dglab_service.get_current_channel(), 
+                dglab_service.fire_mode_strength_step, 
+                dglab_service.get_last_strength()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"fire"}
+        )
+        
+        # 注册ChatBox控制操作
+        self.ui_interface.registries.action_registry.register_action(
+            "ChatBox状态开关",
+            self._create_async_wrapper(lambda *args: chatbox_service.toggle_chatbox(args[0])),
+            OSCActionType.CHATBOX_CONTROL, {"toggle"}
+        )
+    
+        logger.info("OSC动作注册完成")
+    
+    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
+        """创建异步包装器"""
+        async def wrapper(*args: OSCValue) -> None:
+            try:
+                await func(*args)
+            except Exception as e:
+                logger.error(f"OSC动作执行失败: {e}")
+        return wrapper
 
     def stop_server(self) -> None:
         """停止 WebSocket 服务器"""
@@ -389,7 +520,7 @@ class NetworkConfigTab(QWidget):
             # 启动WebSocket服务器
             success = await self.controller.dglab_service.start_server(ip, port, osc_port, remote_address)
             if not success:
-                error_msg = _("connection_tab.start_server_failed").format("WebSocket服务器启动失败")
+                error_msg = translate("connection_tab.start_server_failed").format("WebSocket服务器启动失败")
                 logger.error(error_msg)
                 self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
                 return
@@ -411,7 +542,7 @@ class NetworkConfigTab(QWidget):
             logger.info("服务器任务被取消")
             raise
         except Exception as e:
-            error_msg = _("connection_tab.server_error").format(str(e))
+            error_msg = translate("connection_tab.server_error").format(str(e))
             logger.error(error_msg)
             # 服务器异常后重置UI状态 - 使用统一接口
             self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
@@ -432,10 +563,10 @@ class NetworkConfigTab(QWidget):
             # 保存设置
             self.save_network_settings()
         except Exception as e:
-            error_msg = _("connection_tab.get_public_ip_failed").format(str(e))
+            error_msg = translate("connection_tab.get_public_ip_failed").format(str(e))
             logger.error(error_msg)
             # 显示错误提示框
-            QMessageBox.warning(self, _("common.error"), error_msg)
+            QMessageBox.warning(self, translate("common.error"), error_msg)
 
     def validate_ip_address(self, ip: str) -> bool:
         """验证IP地址格式是否正确"""
@@ -524,33 +655,33 @@ class NetworkConfigTab(QWidget):
 
     def update_ui_texts(self) -> None:
         """更新UI上的文本为当前语言"""
-        self.network_config_group.setTitle(_("connection_tab.title"))
-        self.language_label.setText(_("main.settings.language_label"))
+        self.network_config_group.setTitle(translate("connection_tab.title"))
+        self.language_label.setText(translate("main.settings.language_label"))
         # start_button的文本现在通过统一接口管理，这里不需要直接设置
         # 保持当前连接状态的显示文本
         current_state = self.ui_interface.get_connection_state()
         if current_state == ConnectionState.CONNECTED:
-            self.start_button.setText(_("connection_tab.disconnect"))
+            self.start_button.setText(translate("connection_tab.disconnect"))
         else:
-            self.start_button.setText(_("connection_tab.connect"))
+            self.start_button.setText(translate("connection_tab.connect"))
         
         # 更新表单标签 - 使用直接引用而不是文本匹配
-        self.interface_label.setText(_("connection_tab.interface_label"))
-        self.websocket_port_label.setText(_("connection_tab.websocket_port_label"))
-        self.osc_port_label.setText(_("connection_tab.osc_port_label"))
-        self.status_label.setText(_("connection_tab.status_label"))
-        self.remote_address_label.setText(_("connection_tab.remote_address_label"))
+        self.interface_label.setText(translate("connection_tab.interface_label"))
+        self.websocket_port_label.setText(translate("connection_tab.websocket_port_label"))
+        self.osc_port_label.setText(translate("connection_tab.osc_port_label"))
+        self.status_label.setText(translate("connection_tab.status_label"))
+        self.remote_address_label.setText(translate("connection_tab.remote_address_label"))
         
         # 更新连接状态标签 - 保持当前状态但更新语言
         if self.controller:
             if self.controller.app_status_online:
-                self.connection_status_label.setText(_("connection_tab.online"))
+                self.connection_status_label.setText(translate("connection_tab.online"))
             else:
-                self.connection_status_label.setText(_("connection_tab.offline"))
+                self.connection_status_label.setText(translate("connection_tab.offline"))
         else:
             # 没有控制器时，显示默认离线状态
-            self.connection_status_label.setText(_("connection_tab.offline"))
+            self.connection_status_label.setText(translate("connection_tab.offline"))
         # 更新其他UI文本
-        self.enable_remote_checkbox.setText(_("connection_tab.enable_remote"))
-        self.remote_address_edit.setPlaceholderText(_("connection_tab.please_enter_valid_ip"))
-        self.get_public_ip_button.setText(_("connection_tab.get_public_ip"))
+        self.enable_remote_checkbox.setText(translate("connection_tab.enable_remote"))
+        self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))
+        self.get_public_ip_button.setText(translate("connection_tab.get_public_ip"))

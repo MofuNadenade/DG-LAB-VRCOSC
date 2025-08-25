@@ -1,3 +1,4 @@
+pyright
 pydglab
 pydglab-ws
 qrcode
@@ -11,7 +12,6 @@ qasync
 websockets
 requests
 types-requests
-mypy>=1.17.0
 watchdog
 pyinstaller
 reactivex

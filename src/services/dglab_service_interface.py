@@ -5,9 +5,8 @@
 """
 
 from typing import Optional, Union, Protocol
-from models import Channel, StrengthData, StrengthOperationType
+from models import Channel, ConnectionState, StrengthData, StrengthOperationType
 from core.dglab_pulse import Pulse
-from gui.ui_interface import ConnectionState
 from PySide6.QtGui import QPixmap
 
 class IDGLabService(Protocol):

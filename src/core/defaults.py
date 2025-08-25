@@ -5,10 +5,10 @@
 """
 
 from typing import Dict, List
-from models import PulseOperation
+from models import OSCAddressDict, OSCBindingDict, OSCTemplateDict, PulseOperation
 
 # 默认OSC地址配置
-DEFAULT_ADDRESSES = [
+DEFAULT_ADDRESSES: List[OSCAddressDict] = [
     # VRChat Avatar地址（完整OSC路径）
     {"name": "碰左小腿", "code": "/avatar/parameters/DG-LAB/UpperLeg_L"},
     {"name": "碰右小腿", "code": "/avatar/parameters/DG-LAB/UpperLeg_R"},
@@ -153,7 +153,7 @@ DEFAULT_PULSES: Dict[str, List[PulseOperation]] = {
 }
 
 # 默认OSC模板配置
-DEFAULT_TEMPLATES = [
+DEFAULT_TEMPLATES: List[OSCTemplateDict] = [
     {"name": "Avatar参数地址", "pattern": "/avatar/parameters/", "description": "VRChat Avatar参数地址路径"},
     {"name": "输入地址", "pattern": "/input/", "description": "输入控制地址路径"},
     {"name": "Chatbox地址", "pattern": "/chatbox/", "description": "聊天框地址路径"},
@@ -170,7 +170,7 @@ DEFAULT_TEMPLATES = [
 ]
 
 # 默认OSC绑定配置
-DEFAULT_BINDINGS = [
+DEFAULT_BINDINGS: List[OSCBindingDict] = [
     # VRChat触碰相关
     {"address_name": "碰左小腿", "action_name": "A通道触碰"},
     {"address_name": "碰右小腿", "action_name": "B通道触碰"},

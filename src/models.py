@@ -3,9 +3,29 @@
 
 重新创建pydglab_ws中的关键类型，以减少对外部依赖的耦合
 """
-from enum import IntEnum
-from typing import Any, Tuple, Union, Dict, List, TypedDict
+from enum import Enum, IntEnum
+from typing import Tuple, Union, Dict, List, TypedDict
 from pydantic import BaseModel
+
+
+class ConnectionState(Enum):
+    """连接状态枚举"""
+    DISCONNECTED = "disconnected"
+    CONNECTING = "connecting"
+    WAITING = "waiting"
+    CONNECTED = "connected"
+    FAILED = "failed"
+    ERROR = "error"
+
+
+class UIFeature(Enum):
+    """UI功能开关枚举"""
+    PANEL_CONTROL = "panel_control"
+    CHATBOX_STATUS = "chatbox_status"
+    DYNAMIC_BONE_A = "dynamic_bone_a"
+    DYNAMIC_BONE_B = "dynamic_bone_b"
+    FIRE_MODE = "fire_mode"
+
 
 # 基础类型定义
 WaveformFrequency = int
