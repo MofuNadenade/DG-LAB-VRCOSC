@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Awaitable, Callable, Optional
+from typing import Optional
 
 import requests
 from PySide6.QtCore import Qt, QLocale, QTimer
@@ -10,9 +10,8 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFo
 
 from config import get_active_ip_addresses, save_settings
 from core.dglab_controller import DGLabController
-from core.osc_common import OSCActionType
 from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
-from models import Channel, ConnectionState, OSCValue, SettingsDict
+from models import ConnectionState, SettingsDict
 from services.chatbox_service import ChatboxService
 from services.dglab_service_interface import IDGLabService
 from services.dglab_websocket_service import DGLabWebSocketService
@@ -156,7 +155,7 @@ class NetworkConfigTab(QWidget):
         # 启动按钮
         self.start_button = QPushButton(translate("connection_tab.connect"))
         self.start_button.setStyleSheet("background-color: green; color: white;")
-        self.start_button.clicked.connect(self.start_server_button_clicked)
+        self.start_button.clicked.connect(self.start_button_clicked)
         self.form_layout.addRow(self.start_button)
 
         # 语言选择
@@ -278,7 +277,7 @@ class NetworkConfigTab(QWidget):
 
         self.connection_status_label.adjustSize()
 
-    def start_server_button_clicked(self) -> None:
+    def start_button_clicked(self) -> None:
         """启动/断开按钮被点击后的处理逻辑"""
         if self.server_task is None or self.server_task.done():
             # 启动服务器 - 使用统一接口
@@ -318,26 +317,18 @@ class NetworkConfigTab(QWidget):
 
             # 创建控制器（如果不存在）
             if not self.controller:
-                # 初始化服务（不再需要client参数）
+                # 初始化服务
                 dglab_service: IDGLabService = DGLabWebSocketService(self.ui_interface)
                 osc_service: OSCService = OSCService(self.ui_interface)
                 chatbox_service: ChatboxService = ChatboxService(self.ui_interface, dglab_service, osc_service)
 
-                # 注册OSC动作
-                self._register_osc_actions(dglab_service, chatbox_service)
-
-                # 启动定时任务
-                chatbox_service.start_periodic_status_update()
-
                 controller = DGLabController(dglab_service, osc_service, chatbox_service)
-                self.ui_interface.set_controller(controller)
-                # 在 controller 初始化后调用绑定函数
-                self.ui_interface.bind_controller_settings()
 
-            # 使用事件循环来启动服务器，并保存任务引用
-            loop = asyncio.get_running_loop()
-            self.server_task = loop.create_task(
-                self.run_server_with_cleanup(selected_ip, selected_port, osc_port, remote_address))
+                self.ui_interface.set_controller(controller)
+
+            # 启动服务器任务，并保存任务引用
+            self.server_task = asyncio.create_task(
+                self._run_server_with_cleanup(selected_ip, selected_port, osc_port, remote_address))
             logger.info("WebSocket 服务器启动任务已创建")
 
         except Exception as e:
@@ -346,122 +337,6 @@ class NetworkConfigTab(QWidget):
 
             # 恢复按钮状态 - 使用统一接口
             self.ui_interface.set_connection_state(ConnectionState.FAILED, error_message)
-
-    def _register_osc_actions(self, dglab_service: IDGLabService, chatbox_service: ChatboxService) -> None:
-        """注册OSC动作（内部方法）"""
-
-        # 清除现有动作（避免重复注册）
-        self.ui_interface.registries.action_registry.clear_all_actions()
-
-        # 检查DGLab服务是否可用
-
-        # 注册通道控制操作
-        self.ui_interface.registries.action_registry.register_action(
-            "A通道触碰",
-            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.A)),
-            OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"}
-        )
-
-        self.ui_interface.registries.action_registry.register_action(
-            "B通道触碰",
-            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.B)),
-            OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"}
-        )
-
-        self.ui_interface.registries.action_registry.register_action(
-            "当前通道触碰",
-            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(
-                args[0], dglab_service.get_current_channel()
-            )),
-            OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"}
-        )
-
-        # 注册面板控制操作
-        self.ui_interface.registries.action_registry.register_action(
-            "面板控制",
-            self._create_async_wrapper(lambda *args: dglab_service.set_panel_control(args[0])),
-            OSCActionType.PANEL_CONTROL, {"panel"}
-        )
-
-        self.ui_interface.registries.action_registry.register_action(
-            "数值调节",
-            self._create_async_wrapper(lambda *args: dglab_service.set_strength_step(args[0])),
-            OSCActionType.PANEL_CONTROL, {"value_adjust"}
-        )
-
-        async def set_channel_wrapper(*args: OSCValue) -> None:
-            if isinstance(args[0], (int, float)):
-                await dglab_service.set_channel(args[0])
-
-        self.ui_interface.registries.action_registry.register_action(
-            "通道调节",
-            set_channel_wrapper,
-            OSCActionType.PANEL_CONTROL, {"channel_adjust"}
-        )
-
-        # 注册强度控制操作
-        self.ui_interface.registries.action_registry.register_action(
-            "设置模式",
-            self._create_async_wrapper(lambda *args: dglab_service.set_mode(
-                args[0], dglab_service.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"mode"}
-        )
-
-        self.ui_interface.registries.action_registry.register_action(
-            "重置强度",
-            self._create_async_wrapper(lambda *args: dglab_service.reset_strength(
-                args[0], dglab_service.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"reset"}
-        )
-
-        self.ui_interface.registries.action_registry.register_action(
-            "降低强度",
-            self._create_async_wrapper(lambda *args: dglab_service.decrease_strength(
-                args[0], dglab_service.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"decrease"}
-        )
-
-        self.ui_interface.registries.action_registry.register_action(
-            "增加强度",
-            self._create_async_wrapper(lambda *args: dglab_service.increase_strength(
-                args[0], dglab_service.get_current_channel()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"increase"}
-        )
-
-        self.ui_interface.registries.action_registry.register_action(
-            "一键开火",
-            self._create_async_wrapper(lambda *args: dglab_service.strength_fire_mode(
-                args[0],
-                dglab_service.get_current_channel(),
-                dglab_service.fire_mode_strength_step,
-                dglab_service.get_last_strength()
-            )),
-            OSCActionType.STRENGTH_CONTROL, {"fire"}
-        )
-
-        # 注册ChatBox控制操作
-        self.ui_interface.registries.action_registry.register_action(
-            "ChatBox状态开关",
-            self._create_async_wrapper(lambda *args: chatbox_service.toggle_chatbox(args[0])),
-            OSCActionType.CHATBOX_CONTROL, {"toggle"}
-        )
-
-        logger.info("OSC动作注册完成")
-
-    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
-        """创建异步包装器"""
-
-        async def wrapper(*args: OSCValue) -> None:
-            try:
-                await func(*args)
-            except Exception as e:
-                logger.error(f"OSC动作执行失败: {e}")
-
-        return wrapper
 
     def stop_server(self) -> None:
         """停止 WebSocket 服务器"""
@@ -503,15 +378,17 @@ class NetworkConfigTab(QWidget):
         """停止所有服务"""
         if self.controller:
             try:
+                # 停止ChatBox状态更新任务
+                self.controller.chatbox_service.stop_service()
                 # 停止WebSocket服务器
-                await self.controller.dglab_service.stop_server()
+                await self.controller.dglab_service.stop_service()
                 # 停止OSC服务器
-                await self.controller.osc_service.stop_server()
+                await self.controller.osc_service.stop_service()
                 logger.info("所有服务已停止")
             except Exception as e:
                 logger.error(f"停止服务时发生异常: {e}")
 
-    async def run_server_with_cleanup(self, ip: str, port: int, osc_port: int,
+    async def _run_server_with_cleanup(self, ip: str, port: int, osc_port: int,
                                       remote_address: Optional[str] = None) -> None:
         """运行服务器并处理清理工作 - 重构版本"""
         try:
@@ -520,20 +397,23 @@ class NetworkConfigTab(QWidget):
                 return
 
             # 启动WebSocket服务器
-            success = await self.controller.dglab_service.start_server(ip, port, remote_address)
-            if not success:
+            dglab_started = await self.controller.dglab_service.start_service(ip, port, remote_address)
+            if not dglab_started:
                 error_msg = translate("connection_tab.start_server_failed").format("WebSocket服务器启动失败")
                 logger.error(error_msg)
                 self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
                 return
 
             # 启动OSC服务器
-            osc_started = await self.controller.osc_service.start_server(osc_port)
+            osc_started = await self.controller.osc_service.start_service(osc_port)
             if not osc_started:
                 logger.error("OSC服务器启动失败")
-                await self.controller.dglab_service.stop_server()
+                await self.controller.dglab_service.stop_service()
                 self.ui_interface.set_connection_state(ConnectionState.FAILED, "OSC服务器启动失败")
                 return
+
+            # 启动ChatBox状态更新任务
+            self.controller.chatbox_service.start_service()
 
             logger.info("所有服务启动成功")
 

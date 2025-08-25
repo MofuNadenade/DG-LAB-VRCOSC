@@ -19,76 +19,6 @@ from .widgets import OSCTableDelegate, OSCBindingTableDelegate, EditableComboBox
 logger = logging.getLogger(__name__)
 
 
-class AddBindingDialog(QDialog):
-    """添加OSC地址绑定的对话框"""
-
-    def __init__(self, parent: Optional[QWidget], registries: Registries) -> None:
-        super().__init__(parent)
-        self.registries = registries
-
-        # UI组件类型注解
-        self.address_combo: QComboBox
-        self.action_combo: QComboBox
-
-        self.setWindowTitle(translate("osc_address_tab.add_binding"))
-        self.setModal(True)
-        self.resize(450, 200)
-
-        # 设置对话框样式
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #f5f5f5;
-            }
-            QLabel {
-                font-weight: bold;
-                color: #333;
-            }
-        """)
-
-        layout = QVBoxLayout(self)
-
-        # 表单布局
-        form_layout = QFormLayout()
-
-        # 地址选择
-        address_options = [addr.name for addr in self.registries.address_registry.addresses]
-        self.address_combo = EditableComboBox(address_options, allow_manual_input=False)
-        form_layout.addRow(translate("osc_address_tab.address_name_label"), self.address_combo)
-
-        # 动作选择
-        action_options = [action.name for action in self.registries.action_registry.actions]
-        self.action_combo = EditableComboBox(action_options, allow_manual_input=False)
-        form_layout.addRow(translate("osc_address_tab.action_name_label"), self.action_combo)
-
-        layout.addLayout(form_layout)
-
-        # 按钮
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-
-        # 连接语言切换信号
-        language_signals.language_changed.connect(self.update_ui_texts)
-
-    def update_ui_texts(self) -> None:
-        """更新UI文本"""
-        self.setWindowTitle(translate("osc_address_tab.add_binding"))
-
-    def get_binding_data(self) -> tuple[str, str]:
-        """获取选中的绑定数据"""
-        return self.address_combo.currentText(), self.action_combo.currentText()
-
-    def validate_input(self) -> bool:
-        """验证输入"""
-        address_name, action_name = self.get_binding_data()
-        if not address_name or not action_name:
-            QMessageBox.warning(self, translate("osc_address_tab.input_error"),
-                                translate("osc_address_tab.select_address_action"))
-            return False
-        return True
-
-
 class AddAddressDialog(QDialog):
     """添加OSC地址的对话框"""
 
@@ -173,14 +103,84 @@ class AddAddressDialog(QDialog):
         return True
 
 
-class OSCAddressListTab(QWidget):
+class AddBindingDialog(QDialog):
+    """添加OSC地址绑定的对话框"""
+
+    def __init__(self, parent: Optional[QWidget], registries: Registries) -> None:
+        super().__init__(parent)
+        self.registries = registries
+
+        # UI组件类型注解
+        self.address_combo: QComboBox
+        self.action_combo: QComboBox
+
+        self.setWindowTitle(translate("osc_address_tab.add_binding"))
+        self.setModal(True)
+        self.resize(450, 200)
+
+        # 设置对话框样式
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #f5f5f5;
+            }
+            QLabel {
+                font-weight: bold;
+                color: #333;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+
+        # 表单布局
+        form_layout = QFormLayout()
+
+        # 地址选择
+        address_options = [addr.name for addr in self.registries.address_registry.addresses]
+        self.address_combo = EditableComboBox(address_options, allow_manual_input=False)
+        form_layout.addRow(translate("osc_address_tab.address_name_label"), self.address_combo)
+
+        # 动作选择
+        action_options = [action.name for action in self.registries.action_registry.actions]
+        self.action_combo = EditableComboBox(action_options, allow_manual_input=False)
+        form_layout.addRow(translate("osc_address_tab.action_name_label"), self.action_combo)
+
+        layout.addLayout(form_layout)
+
+        # 按钮
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+        # 连接语言切换信号
+        language_signals.language_changed.connect(self.update_ui_texts)
+
+    def update_ui_texts(self) -> None:
+        """更新UI文本"""
+        self.setWindowTitle(translate("osc_address_tab.add_binding"))
+
+    def get_binding_data(self) -> tuple[str, str]:
+        """获取选中的绑定数据"""
+        return self.address_combo.currentText(), self.action_combo.currentText()
+
+    def validate_input(self) -> bool:
+        """验证输入"""
+        address_name, action_name = self.get_binding_data()
+        if not address_name or not action_name:
+            QMessageBox.warning(self, translate("osc_address_tab.input_error"),
+                                translate("osc_address_tab.select_address_action"))
+            return False
+        return True
+
+
+class OSCAddressTableTab(QWidget):
     """OSC地址列表标签页"""
 
-    def __init__(self, ui_interface: UIInterface) -> None:
+    def __init__(self, ui_interface: UIInterface, registries: Registries, options_provider: OSCOptionsProvider) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.registries: Optional[Registries] = None
-        self.options_provider: Optional[OSCOptionsProvider] = None
+        self.registries: Registries = registries
+        self.options_provider: OSCOptionsProvider = options_provider
 
         # UI组件类型注解
         self.address_table: QTableWidget
@@ -192,6 +192,13 @@ class OSCAddressListTab(QWidget):
         self.address_list_group: QGroupBox
 
         self.init_ui()
+
+        # 设置表格代理以启用下拉列表编辑
+        delegate = OSCTableDelegate(self.options_provider)
+        self.address_table.setItemDelegate(delegate)
+
+        # 初始化表格数据
+        self.refresh_address_table()
 
         # 连接语言切换信号
         language_signals.language_changed.connect(self.update_ui_texts)
@@ -362,25 +369,10 @@ class OSCAddressListTab(QWidget):
         # 连接表格选择变化信号
         self.address_table.itemSelectionChanged.connect(self.on_address_selection_changed)
 
-    def set_registries(self, registries: Registries) -> None:
-        """设置地址注册表引用"""
-        self.registries = registries
-        self.refresh_address_table()
 
-    def set_options_provider(self, options_provider: OSCOptionsProvider) -> None:
-        """设置下拉列表数据提供者并启用表格编辑器"""
-        self.options_provider = options_provider
-
-        # 设置表格代理以启用下拉列表编辑
-        if self.options_provider:
-            delegate = OSCTableDelegate(self.options_provider)
-            self.address_table.setItemDelegate(delegate)
 
     def refresh_address_table(self) -> None:
         """刷新地址表格"""
-        if not self.registries:
-            return
-
         addresses = self.registries.address_registry.addresses
         self.address_table.setRowCount(len(addresses))
 
@@ -410,15 +402,6 @@ class OSCAddressListTab(QWidget):
 
     def add_address(self) -> None:
         """添加新地址"""
-        if not self.registries:
-            QMessageBox.warning(self, translate("osc_address_tab.error"),
-                                translate("osc_address_tab.registry_not_available"))
-            return
-
-        if not self.options_provider:
-            QMessageBox.warning(self, translate("osc_address_tab.error"),
-                                translate("osc_address_tab.provider_not_initialized"))
-            return
 
         dialog = AddAddressDialog(self.options_provider, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -456,9 +439,6 @@ class OSCAddressListTab(QWidget):
         if current_row < 0:
             return
 
-        if not self.registries:
-            return
-
         # 获取选中的地址
         address_name_item = self.address_table.item(current_row, 0)
         if not address_name_item:
@@ -494,44 +474,39 @@ class OSCAddressListTab(QWidget):
 
     def save_addresses(self) -> None:
         """保存地址到配置文件"""
-        if self.registries:
-            try:
-                # 导出所有地址
-                all_addresses = self.registries.address_registry.export_to_config()
+        try:
+            # 导出所有地址
+            all_addresses = self.registries.address_registry.export_to_config()
 
-                # 更新settings
-                self.ui_interface.settings['addresses'] = all_addresses
+            # 更新settings
+            self.ui_interface.settings['addresses'] = all_addresses
 
-                # 保存到文件
-                self.ui_interface.save_settings()
-                logger.info(f"Saved {len(all_addresses)} addresses to config")
+            # 保存到文件
+            self.ui_interface.save_settings()
+            logger.info(f"Saved {len(all_addresses)} addresses to config")
 
-                # 显示成功消息
-                QMessageBox.information(self, translate("osc_address_tab.success"),
-                                        translate("osc_address_tab.addresses_saved").format(len(all_addresses)))
-            except Exception as e:
-                logger.error(f"Failed to save addresses: {e}")
-                QMessageBox.critical(self, translate("osc_address_tab.error"),
-                                     translate("osc_address_tab.save_addresses_failed").format(str(e)))
-        else:
-            QMessageBox.warning(self, translate("osc_address_tab.error"),
-                                translate("osc_address_tab.registry_not_available"))
+            # 显示成功消息
+            QMessageBox.information(self, translate("osc_address_tab.success"),
+                                    translate("osc_address_tab.addresses_saved").format(len(all_addresses)))
+        except Exception as e:
+            logger.error(f"Failed to save addresses: {e}")
+            QMessageBox.critical(self, translate("osc_address_tab.error"),
+                                 translate("osc_address_tab.save_addresses_failed").format(str(e)))
 
     def save_addresses_silent(self) -> None:
         """静默保存地址到配置文件（用于自动保存，不显示消息框）"""
-        if self.registries:
-            try:
-                # 导出所有地址
-                all_addresses = self.registries.address_registry.export_to_config()
+        try:
+            # 导出所有地址
+            all_addresses = self.registries.address_registry.export_to_config()
 
-                # 更新settings
-                self.ui_interface.settings['addresses'] = all_addresses
+            # 更新settings
+            self.ui_interface.settings['addresses'] = all_addresses
 
-                # 保存到文件
-                self.ui_interface.save_settings()
-                logger.info(f"Auto-saved {len(all_addresses)} addresses to config")
-            except Exception as e:
-                logger.error(f"Failed to auto-save addresses: {e}")
+            # 保存到文件
+            self.ui_interface.save_settings()
+            logger.info(f"Auto-saved {len(all_addresses)} addresses to config")
+        except Exception as e:
+            logger.error(f"Failed to auto-save addresses: {e}")
 
     def on_address_selection_changed(self) -> None:
         """地址选择变化时的处理"""
@@ -565,19 +540,15 @@ class OSCAddressListTab(QWidget):
         # 刷新表格内容以更新状态列
         self.refresh_address_table()
 
-        # 如果没有注册表，至少更新状态标签的文本格式
-        if not self.registries:
-            self.status_label.setText(translate("osc_address_tab.total_addresses").format(0))
 
-
-class OSCAddressBindingTab(QWidget):
+class OSCBindingTableTab(QWidget):
     """OSC地址绑定标签页"""
 
-    def __init__(self, ui_interface: UIInterface) -> None:
+    def __init__(self, ui_interface: UIInterface, registries: Registries, options_provider: OSCOptionsProvider) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.registries: Optional[Registries] = None
-        self.options_provider: Optional[OSCOptionsProvider] = None
+        self.registries: Registries = registries
+        self.options_provider: OSCOptionsProvider = options_provider
 
         # UI组件类型注解
         self.binding_table: QTableWidget
@@ -589,6 +560,12 @@ class OSCAddressBindingTab(QWidget):
         self.address_binding_group: QGroupBox
 
         self.init_ui()
+
+        # 设置表格代理以启用下拉列表编辑
+        self.binding_table.setItemDelegate(OSCBindingTableDelegate(self.options_provider))
+
+        # 初始化表格数据
+        self.refresh_binding_table()
 
         # 连接语言切换信号
         language_signals.language_changed.connect(self.update_ui_texts)
@@ -759,25 +736,9 @@ class OSCAddressBindingTab(QWidget):
         # 连接表格选择变化信号
         self.binding_table.itemSelectionChanged.connect(self.on_binding_selection_changed)
 
-    def set_registries(self, registries: Registries) -> None:
-        """设置注册表引用"""
-        self.registries = registries
-        self.refresh_binding_table()
-
-    def set_options_provider(self, options_provider: OSCOptionsProvider) -> None:
-        """设置下拉列表数据提供者并启用表格编辑器"""
-        self.options_provider = options_provider
-
-        # 设置表格代理以启用下拉列表编辑
-        if self.options_provider:
-            delegate = OSCBindingTableDelegate(self.options_provider)
-            self.binding_table.setItemDelegate(delegate)
 
     def refresh_binding_table(self) -> None:
         """刷新绑定表格"""
-        if not self.registries:
-            return
-
         bindings = list(self.registries.binding_registry.bindings.items())
         self.binding_table.setRowCount(len(bindings))
 
@@ -884,17 +845,16 @@ class OSCAddressBindingTab(QWidget):
         except AttributeError:
             return False, "动作对象缺少必要属性"
 
-        # 如果提供了注册表，检查对象是否仍然在注册表中
-        if self.registries:
-            if not self.registries.address_registry.has_address_name(address.name):
-                return False, f"地址'{address.name}'不存在于注册表中"
-            # 检查地址对象是否一致
-            registered_address = self.registries.address_registry.get_address_by_name(address.name)
-            if registered_address and registered_address.code != address.code:
-                return False, f"地址'{address.name}'的OSC代码已变更"
+        # 检查对象是否仍然在注册表中
+        if not self.registries.address_registry.has_address_name(address.name):
+            return False, f"地址'{address.name}'不存在于注册表中"
+        # 检查地址对象是否一致
+        registered_address = self.registries.address_registry.get_address_by_name(address.name)
+        if registered_address and registered_address.code != address.code:
+            return False, f"地址'{address.name}'的OSC代码已变更"
 
-            if not self.registries.action_registry.has_action_name(action.name):
-                return False, f"动作'{action.name}'不存在于注册表中"
+        if not self.registries.action_registry.has_action_name(action.name):
+            return False, f"动作'{action.name}'不存在于注册表中"
 
         return True, ""
 
@@ -902,10 +862,9 @@ class OSCAddressBindingTab(QWidget):
         """保存配置到文件"""
         try:
             # 保存所有绑定
-            if self.registries:
-                # 获取所有绑定
-                all_bindings = self.registries.binding_registry.export_to_config()
-                self.ui_interface.settings['bindings'] = all_bindings
+            # 获取所有绑定
+            all_bindings = self.registries.binding_registry.export_to_config()
+            self.ui_interface.settings['bindings'] = all_bindings
 
             # 调用UIInterface的保存方法
             self.ui_interface.save_settings()
@@ -917,10 +876,6 @@ class OSCAddressBindingTab(QWidget):
 
     def add_binding(self) -> None:
         """添加新的地址绑定"""
-        if not self.registries:
-            QMessageBox.warning(self, translate("osc_address_tab.error"),
-                                translate("osc_address_tab.registry_not_ready"))
-            return
 
         dialog = AddBindingDialog(self, self.registries)
         if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -963,9 +918,6 @@ class OSCAddressBindingTab(QWidget):
         """删除选中的地址绑定"""
         current_row = self.binding_table.currentRow()
         if current_row < 0:
-            return
-
-        if not self.registries:
             return
 
         # 获取选中的绑定
@@ -1028,22 +980,20 @@ class OSCAddressBindingTab(QWidget):
         # 刷新表格内容以更新状态列
         self.refresh_binding_table()
 
-        # 如果没有绑定注册表，至少更新状态标签的文本格式
-        if not self.registries:
-            self.binding_status_label.setText(translate("osc_address_tab.binding_status_all_valid").format(0))
-
 
 class OSCAddressTab(QWidget):
     """OSC地址管理面板 - 包含地址列表和绑定管理的标签页"""
 
-    def __init__(self, ui_interface: UIInterface) -> None:
+    def __init__(self, ui_interface: UIInterface, registries: Registries, options_provider: OSCOptionsProvider) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
+        self.registries: Registries = registries
+        self.options_provider: OSCOptionsProvider = options_provider
 
         # UI组件类型注解
         self.tab_widget: QTabWidget
-        self.address_list_tab: OSCAddressListTab
-        self.address_binding_tab: OSCAddressBindingTab
+        self.address_table_tab: OSCAddressTableTab
+        self.binding_table_tab: OSCBindingTableTab
 
         self.init_ui()
 
@@ -1058,24 +1008,22 @@ class OSCAddressTab(QWidget):
         self.tab_widget = QTabWidget()
 
         # 地址列表标签页
-        self.address_list_tab = OSCAddressListTab(self.ui_interface)
-        self.tab_widget.addTab(self.address_list_tab, translate("osc_address_tab.address_list"))
+        self.address_table_tab = OSCAddressTableTab(self.ui_interface, self.registries, self.options_provider)
+        self.tab_widget.addTab(self.address_table_tab, translate("osc_address_tab.address_list"))
 
         # 地址绑定标签页
-        self.address_binding_tab = OSCAddressBindingTab(self.ui_interface)
-        self.tab_widget.addTab(self.address_binding_tab, translate("osc_address_tab.address_binding"))
+        self.binding_table_tab = OSCBindingTableTab(self.ui_interface, self.registries, self.options_provider)
+        self.tab_widget.addTab(self.binding_table_tab, translate("osc_address_tab.address_binding"))
 
         layout.addWidget(self.tab_widget)
 
-    def set_registries(self, registries: Registries) -> None:
-        """设置注册表引用"""
-        self.address_list_tab.set_registries(registries)
-        self.address_binding_tab.set_registries(registries)
+    def refresh_address_table(self) -> None:
+        """刷新地址表格"""
+        self.address_table_tab.refresh_address_table()
 
-    def set_options_provider(self, options_provider: OSCOptionsProvider) -> None:
-        """设置下拉列表数据提供者"""
-        self.address_list_tab.set_options_provider(options_provider)
-        self.address_binding_tab.set_options_provider(options_provider)
+    def refresh_binding_table(self) -> None:
+        """刷新绑定表格"""
+        self.binding_table_tab.refresh_binding_table()
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
@@ -1084,5 +1032,5 @@ class OSCAddressTab(QWidget):
         self.tab_widget.setTabText(1, translate("osc_address_tab.address_binding"))
 
         # 更新子标签页的文本
-        self.address_list_tab.update_ui_texts()
-        self.address_binding_tab.update_ui_texts()
+        self.address_table_tab.update_ui_texts()
+        self.binding_table_tab.update_ui_texts()

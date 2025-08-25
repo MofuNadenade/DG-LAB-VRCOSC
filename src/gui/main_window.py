@@ -12,7 +12,6 @@ from core.registries import Registries
 from gui.about_tab import AboutTab
 from gui.controller_settings_tab import ControllerSettingsTab
 from gui.log_viewer_tab import LogViewerTab
-# Import GUI tabs
 from gui.network_config_tab import NetworkConfigTab
 from gui.osc_address_tab import OSCAddressTab
 from gui.pulse_editor_tab import PulseEditorTab
@@ -41,7 +40,7 @@ class MainWindow(QMainWindow):
         self.options_provider: OSCOptionsProvider = OSCOptionsProvider(self.registries)
 
         # 从配置加载所有数据
-        self.load_all_configs()
+        self._load_all_settings()
 
         # GUI组件类型注解
         self.tab_widget: QTabWidget
@@ -53,7 +52,7 @@ class MainWindow(QMainWindow):
         self.log_tab: 'LogViewerTab'
         self.about_tab: 'AboutTab'
 
-        self.init_ui()
+        self._init_ui()
 
         # 连接状态跟踪
         self._current_connection_state: ConnectionState = ConnectionState.DISCONNECTED
@@ -61,7 +60,9 @@ class MainWindow(QMainWindow):
         # 连接语言变更信号
         language_signals.language_changed.connect(self.update_ui_texts)
 
-    def init_ui(self) -> None:
+    # === 用户界面初始化方法 ===
+
+    def _init_ui(self) -> None:
         """初始化用户界面"""
         self.setWindowTitle(translate("main.title"))
         self.setWindowIcon(QIcon(resource_path("docs/images/fish-cake.ico")))
@@ -72,9 +73,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tab_widget)
 
         # 初始化各个选项卡
-        self.init_tabs()
+        self._init_tabs()
 
-    def init_tabs(self) -> None:
+    def _init_tabs(self) -> None:
         """初始化所有选项卡"""
         # 连接设置选项卡
         self.network_tab = NetworkConfigTab(self, self.settings)
@@ -89,7 +90,7 @@ class MainWindow(QMainWindow):
         self.tab_widget.addTab(self.ton_tab, translate("main.tabs.game"))
 
         # OSC地址管理选项卡
-        self.osc_address_tab = OSCAddressTab(self)
+        self.osc_address_tab = OSCAddressTab(self, self.registries, self.options_provider)
         self.tab_widget.addTab(self.osc_address_tab, translate("main.tabs.osc_address"))
 
         # 波形编辑器选项卡
@@ -104,40 +105,9 @@ class MainWindow(QMainWindow):
         self.about_tab = AboutTab(self, self.settings)
         self.tab_widget.addTab(self.about_tab, translate("main.tabs.about"))
 
-    def set_controller(self, controller: Optional['DGLabController']) -> None:
-        """设置控制器实例（当服务器启动后调用）"""
-        self.controller = controller
+    # === 配置和设置管理方法 ===
 
-        if controller is not None:
-            # 绑定控制器设置
-            self.controller_tab.bind_controller_settings()
-
-            # 为控制器注册脉冲OSC操作
-            self.register_pulse_actions()
-
-            # OSC操作现在由OSCService自动注册，无需手动调用
-
-            # 加载OSC地址绑定（在操作注册后）
-            self.load_osc_address_bindings()
-
-            # 初始化OSC地址管理面板
-            self.osc_address_tab.set_registries(self.registries)
-            # 设置下拉列表数据提供者
-            self.osc_address_tab.set_options_provider(self.options_provider)
-
-            # 启用控制器相关UI
-            self.controller_tab.controller_group.setEnabled(True)
-
-            # 从设置中加载设备控制器设置
-            self.load_controller_settings()
-
-            # 注意：不自动启用ton_tab的damage_group，让用户手动控制
-        else:
-            # 禁用控制器相关UI
-            self.controller_tab.controller_group.setEnabled(False)
-            # 注意：不自动禁用ton_tab的damage_group，保持用户的选择状态
-
-    def load_all_configs(self) -> None:
+    def _load_all_settings(self) -> None:
         """从配置加载所有数据"""
         # 加载地址
         addresses = self.settings.get('addresses', [])
@@ -153,32 +123,7 @@ class MainWindow(QMainWindow):
 
         logger.info("All configurations loaded from settings")
 
-    def register_pulse_actions(self) -> None:
-        """为控制器注册脉冲OSC操作"""
-        if self.controller is None:
-            logger.warning("Controller not available, cannot register pulse actions")
-            return
-
-        # 为所有脉冲注册OSC操作
-        for pulse in self.registries.pulse_registry.pulses:
-            controller = self.controller
-            pulse_index = pulse.index
-
-            def make_pulse_action(idx: int, ctrl: Optional['DGLabController']) -> Callable[..., Awaitable[None]]:
-                async def pulse_action(*args: OSCValue) -> None:
-                    if ctrl and isinstance(args[0], bool):
-                        await ctrl.dglab_service.set_pulse_data(args[0], ctrl.dglab_service.get_current_channel(), idx)
-
-                return pulse_action
-
-            self.registries.action_registry.register_action(translate("main.action.set_pulse").format(pulse.name),
-                                                            make_pulse_action(pulse_index, controller),
-                                                            OSCActionType.PULSE_CONTROL, {"pulse"})
-
-        # 更新波形下拉框
-        self.update_pulse_comboboxes()
-
-    def load_controller_settings(self) -> None:
+    def _load_controller_settings(self) -> None:
         """从配置文件加载设备控制器设置"""
         # ChatBox状态
         enable_chatbox = self.settings.get('enable_chatbox_status', False)
@@ -260,13 +205,189 @@ class MainWindow(QMainWindow):
 
         logger.info("Controller settings loaded from configuration")
 
-    def update_pulse_comboboxes(self) -> None:
-        """更新控制器选项卡中的波形下拉框"""
+    def save_settings(self) -> None:
+        """保存设置到文件"""
+        save_settings(self.settings)
+
+    # === 控制器管理方法 ===
+
+    def set_controller(self, controller: Optional['DGLabController']) -> None:
+        """设置控制器实例（当服务器启动后调用）"""
+        self.controller = controller
+
+        if controller is not None:
+            # 绑定控制器设置
+            self.controller_tab.bind_controller_settings()
+
+            # 注册基础OSC动作（通道控制、面板控制、强度控制、ChatBox控制等）
+            self._register_basic_actions()
+
+            # 为控制器注册脉冲OSC操作
+            self._register_pulse_actions()
+
+            # 加载OSC地址绑定
+            self._register_osc_bindings()
+
+            # 从设置中加载设备控制器设置
+            self._load_controller_settings()
+
+            # 启用控制器相关UI
+            self.set_controller_available(True)
+        else:
+            # 禁用控制器相关UI
+            self.set_controller_available(False)
+
+    def set_controller_available(self, available: bool) -> None:
+        """设置控制器可用状态"""
+        self.controller_tab.controller_group.setEnabled(available)
+
+    # === OSC注册和绑定管理方法 ===
+
+    def _register_basic_actions(self) -> None:
+        """注册基础OSC动作（通道控制、面板控制、强度控制、ChatBox控制等）"""
+        if self.controller is None:
+            logger.warning("Controller not available, cannot register basic OSC actions")
+            return
+
+        # 清除现有动作（避免重复注册）
+        self.registries.action_registry.clear_all_actions()
+
+        dglab_service = self.controller.dglab_service
+        chatbox_service = self.controller.chatbox_service
+
+        # 注册通道控制操作
+        self.registries.action_registry.register_action(
+            "A通道触碰",
+            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.A)),
+            OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"}
+        )
+
+        self.registries.action_registry.register_action(
+            "B通道触碰",
+            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.B)),
+            OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"}
+        )
+
+        self.registries.action_registry.register_action(
+            "当前通道触碰",
+            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"}
+        )
+
+        # 注册面板控制操作
+        self.registries.action_registry.register_action(
+            "面板控制",
+            self._create_async_wrapper(lambda *args: dglab_service.set_panel_control(args[0])),
+            OSCActionType.PANEL_CONTROL, {"panel"}
+        )
+
+        self.registries.action_registry.register_action(
+            "数值调节",
+            self._create_async_wrapper(lambda *args: dglab_service.set_strength_step(args[0])),
+            OSCActionType.PANEL_CONTROL, {"value_adjust"}
+        )
+
+        async def set_channel_wrapper(*args: OSCValue) -> None:
+            if isinstance(args[0], (int, float)):
+                await dglab_service.set_channel(args[0])
+
+        self.registries.action_registry.register_action(
+            "通道调节",
+            set_channel_wrapper,
+            OSCActionType.PANEL_CONTROL, {"channel_adjust"}
+        )
+
+        # 注册强度控制操作
+        self.registries.action_registry.register_action(
+            "设置模式",
+            self._create_async_wrapper(lambda *args: dglab_service.set_mode(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"mode"}
+        )
+
+        self.registries.action_registry.register_action(
+            "重置强度",
+            self._create_async_wrapper(lambda *args: dglab_service.reset_strength(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"reset"}
+        )
+
+        self.registries.action_registry.register_action(
+            "降低强度",
+            self._create_async_wrapper(lambda *args: dglab_service.decrease_strength(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"decrease"}
+        )
+
+        self.registries.action_registry.register_action(
+            "增加强度",
+            self._create_async_wrapper(lambda *args: dglab_service.increase_strength(
+                args[0], dglab_service.get_current_channel()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"increase"}
+        )
+
+        self.registries.action_registry.register_action(
+            "一键开火",
+            self._create_async_wrapper(lambda *args: dglab_service.strength_fire_mode(
+                args[0],
+                dglab_service.get_current_channel(),
+                dglab_service.fire_mode_strength_step,
+                dglab_service.get_last_strength()
+            )),
+            OSCActionType.STRENGTH_CONTROL, {"fire"}
+        )
+
+        # 注册ChatBox控制操作
+        self.registries.action_registry.register_action(
+            "ChatBox状态开关",
+            self._create_async_wrapper(lambda *args: chatbox_service.toggle_chatbox(args[0])),
+            OSCActionType.CHATBOX_CONTROL, {"toggle"}
+        )
+
+        logger.info("基础OSC动作注册完成")
+
+    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
+        """创建异步包装器"""
+        async def wrapper(*args: OSCValue) -> None:
+            try:
+                await func(*args)
+            except Exception as e:
+                logger.error(f"OSC动作执行失败: {e}")
+
+        return wrapper
+
+    def _register_pulse_actions(self) -> None:
+        """为控制器注册脉冲OSC操作"""
+        if self.controller is None:
+            logger.warning("Controller not available, cannot register pulse actions")
+            return
+
+        # 为所有脉冲注册OSC操作
+        for pulse in self.registries.pulse_registry.pulses:
+            controller = self.controller
+            pulse_index = pulse.index
+
+            def make_pulse_action(idx: int, ctrl: Optional['DGLabController']) -> Callable[..., Awaitable[None]]:
+                async def pulse_action(*args: OSCValue) -> None:
+                    if ctrl and isinstance(args[0], bool):
+                        await ctrl.dglab_service.set_pulse_data(args[0], ctrl.dglab_service.get_current_channel(), idx)
+
+                return pulse_action
+
+            self.registries.action_registry.register_action(translate("main.action.set_pulse").format(pulse.name),
+                                                            make_pulse_action(pulse_index, controller),
+                                                            OSCActionType.PULSE_CONTROL, {"pulse"})
+
+        # 更新波形下拉框
         self.controller_tab.update_pulse_comboboxes()
 
-    # 注意：OSC动作注册现在由OSCService自动处理，此方法已废弃
-
-    def load_osc_address_bindings(self) -> None:
+    def _register_osc_bindings(self) -> None:
         """加载OSC地址绑定"""
         bindings: List[OSCBindingDict] = self.settings.get('bindings', [])
 
@@ -287,9 +408,12 @@ class MainWindow(QMainWindow):
                 action = self.registries.action_registry.actions_by_name[action_name]
                 self.registries.binding_registry.register_binding(address, action)
 
+        self.osc_address_tab.refresh_binding_table()
+
         logger.info(f"Loaded {len(self.registries.binding_registry.bindings)} OSC bindings")
 
-    # UIInterface interface implementation
+    # === 状态更新方法 ===
+
     def update_current_channel_display(self, channel_name: str) -> None:
         """更新当前选择通道显示"""
         self.controller_tab.update_current_channel_display(channel_name)
@@ -297,11 +421,6 @@ class MainWindow(QMainWindow):
     def update_qrcode(self, qrcode_pixmap: QPixmap) -> None:
         """更新二维码并调整QLabel的大小"""
         self.network_tab.update_qrcode(qrcode_pixmap)
-
-    def bind_controller_settings(self) -> None:
-        """将GUI设置与DGLabController变量绑定 - 这个方法在服务器启动时被调用"""
-        # 这个方法现在什么都不做，因为控制器设置会在set_controller中处理
-        pass
 
     def update_connection_status(self, is_online: bool) -> None:
         """根据设备连接状态更新标签的文本和颜色"""
@@ -333,11 +452,7 @@ class MainWindow(QMainWindow):
         self.log_tab.update_ui_texts()
         self.about_tab.update_ui_texts()
 
-    def save_settings(self) -> None:
-        """保存设置到文件"""
-        save_settings(self.settings)
-
-    # === 统一UI管理方法实现 ===
+    # === 连接状态管理方法 ===
 
     def set_connection_state(self, state: ConnectionState, message: str = "") -> None:
         """统一管理连接状态"""
@@ -390,6 +505,8 @@ class MainWindow(QMainWindow):
         """获取当前连接状态"""
         return self._current_connection_state
 
+    # === 脉冲模式管理方法 ===
+
     def set_pulse_mode(self, channel: Channel, mode_name: str, silent: bool = False) -> None:
         """统一管理脉冲模式设置"""
         combo = (self.controller_tab.pulse_mode_a_combobox if channel == Channel.A
@@ -428,6 +545,8 @@ class MainWindow(QMainWindow):
             self.controller_tab.pulse_mode_a_combobox.addItem(pulse_name)
             self.controller_tab.pulse_mode_b_combobox.addItem(pulse_name)
 
+    # === 功能开关管理方法 ===
+
     def set_feature_state(self, feature: UIFeature, enabled: bool, silent: bool = False) -> None:
         """统一管理功能开关"""
         feature_mapping = {
@@ -457,6 +576,8 @@ class MainWindow(QMainWindow):
         checkbox = feature_mapping.get(feature)
         return checkbox.isChecked() if checkbox else False
 
+    # === 强度步进管理方法 ===
+
     def set_strength_step(self, value: int, silent: bool = False) -> None:
         """统一管理强度步进设置"""
         spinbox = self.controller_tab.strength_step_spinbox
@@ -470,6 +591,8 @@ class MainWindow(QMainWindow):
     def get_strength_step(self) -> int:
         """获取强度步进值"""
         return self.controller_tab.strength_step_spinbox.value()
+
+    # === 日志管理方法 ===
 
     def log_info(self, message: str) -> None:
         """记录信息日志"""
@@ -487,11 +610,7 @@ class MainWindow(QMainWindow):
         """清空日志"""
         self.log_tab.log_text_edit.clear()
 
-    def set_controller_available(self, available: bool) -> None:
-        """设置控制器可用状态"""
-        self.controller_tab.controller_group.setEnabled(available)
-
-    # === 连接状态通知回调实现 ===
+    # === 连接状态回调方法 ===
 
     def on_client_connected(self) -> None:
         """客户端连接时的回调"""
@@ -504,11 +623,6 @@ class MainWindow(QMainWindow):
         logger.info("客户端已断开连接")
         self.set_connection_state(ConnectionState.WAITING)  # 等待重新连接
         self.update_connection_status(False)
-
-    async def _set_channel_async(self, *args: OSCValue) -> None:
-        """异步设置通道的辅助方法"""
-        if args and self.controller is not None and isinstance(args[0], (int, float)):
-            await self.controller.dglab_service.set_channel(args[0])
 
     def on_client_reconnected(self) -> None:
         """客户端重新连接时的回调"""

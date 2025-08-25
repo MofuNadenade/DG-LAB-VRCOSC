@@ -17,6 +17,7 @@ class BuildHandler(FileSystemEventHandler):
     """Handle file system events for auto-rebuild"""
     
     def __init__(self, project_root: Path):
+        super().__init__()
         self.project_root = project_root
         self.last_build = 0.0
         self.build_delay = 2.0  # seconds
@@ -75,6 +76,7 @@ def run_development_server(project_root: Path) -> None:
     print("Auto-rebuild on .py file changes")
     print("Press Ctrl+C to stop")
     
+    app_process = None
     try:
         # Run the application
         app_process = subprocess.Popen([
@@ -86,7 +88,7 @@ def run_development_server(project_root: Path) -> None:
         
     except KeyboardInterrupt:
         print("\nStopping development server...")
-        if 'app_process' in locals():
+        if app_process:
             app_process.terminate()
     finally:
         if observer:

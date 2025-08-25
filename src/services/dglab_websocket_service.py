@@ -270,7 +270,7 @@ class DGLabWebSocketService:
 
     # ============ 连接管理 ============
 
-    async def start_server(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
+    async def start_service(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
         """启动WebSocket服务器"""
         if self._server_manager.is_running:
             logger.warning("服务器已在运行")
@@ -286,7 +286,7 @@ class DGLabWebSocketService:
 
         return success
 
-    async def stop_server(self) -> None:
+    async def stop_service(self) -> None:
         """停止WebSocket服务器"""
         # 停止连接处理任务
         if self._connection_task:

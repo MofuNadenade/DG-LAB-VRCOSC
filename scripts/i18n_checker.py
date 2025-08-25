@@ -24,7 +24,7 @@ def get_ordered_keys(file_path: Path) -> List[str]:
     """获取YAML文件的键，保持原始顺序"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            data = yaml.load(f)
+            data = yaml.load(f)  # type: ignore
     except Exception as e:
         print(f"❌ 无法读取文件 {file_path}: {e}")
         return []
@@ -32,11 +32,11 @@ def get_ordered_keys(file_path: Path) -> List[str]:
     def extract_keys_ordered(obj: Any, prefix: str = '') -> List[str]:
         keys: List[str] = []
         if isinstance(obj, dict):
-            for key in obj.keys():
-                full_key = f'{prefix}.{key}' if prefix else key
-                keys.append(full_key)
+            for key in obj.keys():  # type: ignore
+                full_key = f'{prefix}.{key}' if prefix else key  # type: ignore
+                keys.append(full_key)  # type: ignore
                 if isinstance(obj[key], dict):
-                    keys.extend(extract_keys_ordered(obj[key], full_key))
+                    keys.extend(extract_keys_ordered(obj[key], full_key))  # type: ignore
         return keys
     
     return extract_keys_ordered(data)
@@ -185,6 +185,10 @@ def main() -> None:
     print('\n=== 缺失键检查 ===')
     no_missing = check_missing_keys(zh_keys, en_keys, ja_keys)
     
+    # 初始化变量
+    inconsistent_count = 0
+    inconsistent_details = []
+    
     # 只有在键数量一致时才检查顺序
     if len(zh_keys) == len(en_keys) == len(ja_keys):
         inconsistent_count, inconsistent_details = show_order_differences(
@@ -210,7 +214,7 @@ def main() -> None:
     print('\n=== YAML格式验证 ===')
     try:
         for file_path, lang in [(zh_file, '中文'), (en_file, '英文'), (ja_file, '日文')]:
-            yaml.load(open(file_path, 'r', encoding='utf-8'))
+            yaml.load(open(file_path, 'r', encoding='utf-8'))  # type: ignore
             print(f'✅ {lang}文件格式正确')
         print('所有语言文件格式验证完成')
     except Exception as e:
@@ -222,7 +226,7 @@ def main() -> None:
         len(zh_keys) == len(en_keys) == len(ja_keys) and
         zh_no_dup and en_no_dup and ja_no_dup and
         no_missing and
-        (len(zh_keys) != len(en_keys) or inconsistent_count == 0)
+        (inconsistent_count == 0)
     )
     
     if all_good:

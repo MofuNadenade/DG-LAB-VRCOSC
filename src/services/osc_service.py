@@ -47,7 +47,7 @@ class OSCService:
         self._osc_port: int = 9001
         self._vrchat_port: int = 9000
 
-    async def start_server(self, osc_port: int) -> bool:
+    async def start_service(self, osc_port: int) -> bool:
         """
         启动OSC服务器
         
@@ -101,7 +101,7 @@ class OSCService:
             logger.error(f"OSC服务器启动异常: {e}")
             return False
 
-    async def stop_server(self) -> None:
+    async def stop_service(self) -> None:
         """停止OSC服务器"""
         if not self._is_running:
             return
@@ -183,6 +183,6 @@ class OSCService:
 
     async def cleanup(self) -> None:
         """清理资源"""
-        await self.stop_server()
+        await self.stop_service()
         self._osc_client = None
         logger.info("OSC服务已清理")

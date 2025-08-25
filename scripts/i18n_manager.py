@@ -29,7 +29,7 @@ def flatten_dict(d: Dict[str, Any], parent_key: str = '', sep: str = '.') -> Dic
     for k, v in d.items():
         new_key = f"{parent_key}{sep}{k}" if parent_key else k
         if isinstance(v, dict):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
+            items.extend(flatten_dict(v, new_key, sep=sep).items())  # type: ignore
         else:
             items.append((new_key, v))
     return dict(items)
@@ -38,9 +38,9 @@ def extract_keys_from_yaml(file_path: str) -> Set[str]:
     """从YAML文件中提取所有键"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            data = yaml_loader.load(f)
+            data = yaml_loader.load(f)  # type: ignore
             if data:
-                flat_data = flatten_dict(data)
+                flat_data = flatten_dict(data)  # type: ignore
                 return set(flat_data.keys())
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
@@ -48,7 +48,7 @@ def extract_keys_from_yaml(file_path: str) -> Set[str]:
 
 def extract_keys_from_file(file_path: str) -> Set[str]:
     """从单个Python文件中提取本地化键"""
-    keys = set()
+    keys: Set[str] = set()
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -62,9 +62,9 @@ def extract_keys_from_file(file_path: str) -> Set[str]:
 
 def extract_used_keys(src_dir: str) -> Set[str]:
     """提取src目录下所有Python文件中使用的本地化键"""
-    all_keys = set()
+    all_keys: Set[str] = set()
     
-    for root, dirs, files in os.walk(src_dir):
+    for root, _, files in os.walk(src_dir):
         for file in files:
             if file.endswith('.py'):
                 file_path = os.path.join(root, file)
@@ -75,7 +75,7 @@ def extract_used_keys(src_dir: str) -> Set[str]:
 
 def extract_defined_keys(locale_files: List[str]) -> Set[str]:
     """提取所有语言文件中定义的键"""
-    all_defined_keys = set()
+    all_defined_keys: Set[str] = set()
     
     for file_path in locale_files:
         if Path(file_path).exists():
@@ -173,16 +173,16 @@ def main() -> None:
     analyze_parser.add_argument('--verbose', '-v', action='store_true', help='显示详细信息')
     
     # 检查一致性命令
-    check_parser = subparsers.add_parser('check', help='检查语言文件一致性')
+    subparsers.add_parser('check', help='检查语言文件一致性')
     
     # 列出使用的键命令
-    list_used_parser = subparsers.add_parser('list-used', help='列出代码中使用的所有键')
+    subparsers.add_parser('list-used', help='列出代码中使用的所有键')
     
     # 列出定义的键命令
-    list_defined_parser = subparsers.add_parser('list-defined', help='列出语言文件中定义的所有键')
+    subparsers.add_parser('list-defined', help='列出语言文件中定义的所有键')
     
     # 查找未使用的键命令
-    find_unused_parser = subparsers.add_parser('find-unused', help='查找未使用的键')
+    subparsers.add_parser('find-unused', help='查找未使用的键')
     
     args = parser.parse_args()
     
