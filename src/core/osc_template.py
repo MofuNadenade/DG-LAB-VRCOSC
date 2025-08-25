@@ -69,7 +69,7 @@ class OSCTemplateRegistry:
         """根据前缀获取模板"""
         return [t for t in self._templates if t.code.startswith(prefix)]
     
-    def load_from_config(self, templates_config: List['OSCTemplateDict']) -> None:
+    def load_from_config(self, templates_config: List[OSCTemplateDict]) -> None:
         """从配置加载模板"""
         self._templates.clear()
         self._templates_by_name.clear()

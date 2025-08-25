@@ -1,6 +1,6 @@
+from services.chatbox_service import ChatboxService
 from services.dglab_service_interface import IDGLabService
 from services.osc_service import OSCService
-from services.chatbox_service import ChatboxService
 
 
 class DGLabController:
@@ -20,9 +20,6 @@ class DGLabController:
     def __init__(self, dglab_service: IDGLabService, osc_service: OSCService, chatbox_service: ChatboxService) -> None:
         """
         初始化 DGLabController 实例
-        
-        Args:
-            ui_interface: UI 回调接口
         """
         super().__init__()
 

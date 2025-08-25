@@ -1,10 +1,9 @@
-import websockets
 import json
 import logging
-from typing import Optional, Union
+from typing import Optional
+
+import websockets
 from PySide6.QtCore import Signal, QObject
-import websockets.client
-import websockets.server
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,8 +15,8 @@ class WebSocketClient(QObject):
 
     def __init__(self, url: str) -> None:
         super().__init__()
-        self.url = url
-        self.websocket: Optional[Union[websockets.client.WebSocketClientProtocol, websockets.server.WebSocketServerProtocol]] = None
+        self.url: str = url
+        self.websocket: Optional[websockets.WebSocketClientProtocol] = None
 
     async def start_connection(self) -> None:
         """Starts the WebSocket connection and listens for messages."""

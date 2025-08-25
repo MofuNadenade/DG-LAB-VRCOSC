@@ -5,22 +5,23 @@
 """
 
 import json
+import logging
 import os
-from typing import Dict, Optional, List, Tuple, Any
 from datetime import datetime
+from typing import Dict, Optional, List, Tuple, Any
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QTextEdit, QFileDialog, QMessageBox, QFormLayout,
     QDialogButtonBox, QComboBox, QSpinBox, QListWidget, QListWidgetItem,
     QWidget
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 
-from models import PulseOperation, PulseDict, IntegrityReport
 from core.dglab_pulse import Pulse
 from i18n import translate
-import logging
+from models import PulseOperation, PulseDict, IntegrityReport
 
 logger = logging.getLogger(__name__)
 

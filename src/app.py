@@ -1,13 +1,13 @@
-import sys
 import asyncio
+import sys
 
 from PySide6.QtWidgets import (QApplication)
 from qasync import QEventLoop
 
 from gui.main_window import MainWindow
-
 # 配置日志记录器
 from logger_config import setup_logging
+
 setup_logging()
 
 if __name__ == "__main__":

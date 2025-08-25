@@ -7,7 +7,6 @@ OSC选项提供模块
 from typing import List
 
 from core.registries import Registries
-
 from .osc_common import OSCActionType
 
 

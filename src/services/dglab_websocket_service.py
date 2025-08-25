@@ -5,16 +5,18 @@ DG-LAB WebSocket 设备服务实现
 """
 
 import asyncio
+import logging
 import math
 from typing import Optional, List, Union, Dict
+
 import pydglab_ws
-from pydglab_ws import DGLabLocalClient, DGLabWSServer, PulseDataTooLong
-from core.core_interface import CoreInterface
-from models import Channel, ConnectionState, StrengthData, PulseOperation, StrengthOperationType, UIFeature
-from core.dglab_pulse import Pulse
 from PySide6.QtGui import QPixmap
+from pydglab_ws import DGLabLocalClient, DGLabWSServer, PulseDataTooLong
+
+from core.core_interface import CoreInterface
+from core.dglab_pulse import Pulse
+from models import Channel, ConnectionState, StrengthData, PulseOperation, StrengthOperationType, UIFeature
 from util import generate_qrcode
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +27,6 @@ def _convert_channel_to_pydglab(channel: Channel) -> pydglab_ws.Channel:
         return pydglab_ws.Channel.A
     elif channel == Channel.B:
         return pydglab_ws.Channel.B
-    else:
-        raise ValueError(f"未知的通道类型: {channel}")
 
 def _convert_strength_operation_to_pydglab(op: StrengthOperationType) -> pydglab_ws.StrengthOperationType:
     """将models.StrengthOperationType转换为pydglab_ws.StrengthOperationType"""
@@ -36,8 +36,6 @@ def _convert_strength_operation_to_pydglab(op: StrengthOperationType) -> pydglab
         return pydglab_ws.StrengthOperationType.INCREASE
     elif op == StrengthOperationType.SET_TO:
         return pydglab_ws.StrengthOperationType.SET_TO
-    else:
-        raise ValueError(f"未知的强度操作类型: {op}")
 
 # WebSocket 数据类型定义
 DGLabWebSocketData = Union[pydglab_ws.StrengthData, pydglab_ws.FeedbackButton, pydglab_ws.RetCode]
@@ -268,7 +266,7 @@ class DGLabWebSocketService:
 
     # ============ 连接管理 ============
     
-    async def start_server(self, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> bool:
+    async def start_server(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
         """启动WebSocket服务器"""
         if self._server_manager.is_running:
             logger.warning("服务器已在运行")

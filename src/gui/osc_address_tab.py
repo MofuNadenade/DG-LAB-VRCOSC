@@ -1,17 +1,18 @@
+import logging
 from typing import Optional
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QPushButton, QGroupBox, QFormLayout, QLabel,
     QHeaderView, QMessageBox, QDialog, QDialogButtonBox, QTabWidget, QComboBox
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
-import logging
 
+from core import OSCOptionsProvider
 from core.osc_common import OSCAction, OSCAddress
 from core.registries import Registries
 from i18n import translate, language_signals
-from core import OSCOptionsProvider
 from .ui_interface import UIInterface
 from .widgets import OSCTableDelegate, OSCBindingTableDelegate, EditableComboBox
 
@@ -857,9 +858,7 @@ class OSCAddressBindingTab(QWidget):
         
         Args:
             address: OSC地址对象
-            action: OSC动作对象  
-            address_registry: 地址注册表（可选，用于检查地址是否仍然存在）
-            action_registry: 动作注册表（可选，用于检查动作是否仍然存在）
+            action: OSC动作对象
             
         Returns:
             tuple[bool, str]: (是否有效, 错误信息)

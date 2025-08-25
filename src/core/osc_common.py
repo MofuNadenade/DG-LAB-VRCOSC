@@ -4,8 +4,8 @@ OSC通用模块
 包含OSC系统的通用类型、枚举、协议和验证器。
 """
 
-from typing import Awaitable, Protocol, Optional, Set
 from enum import Enum
+from typing import Awaitable, Protocol, Optional, Set
 
 from models import OSCValue
 

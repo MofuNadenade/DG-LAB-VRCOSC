@@ -4,17 +4,18 @@
 基于DG-LAB官方APP界面设计的波形编辑组件
 """
 
+import logging
 from typing import List, Optional
+
+from PySide6.QtCore import Qt, Signal, QTimer, QRect, QPoint, QEvent
+from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPaintEvent, QMouseEvent, QFont, QLinearGradient
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider,
     QScrollArea, QGroupBox, QMenu, QInputDialog
 )
-from PySide6.QtCore import Qt, Signal, QTimer, QRect, QPoint, QEvent
-from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QPaintEvent, QMouseEvent, QFont, QLinearGradient
 
-from models import PulseOperation
 from i18n import translate, language_signals
-import logging
+from models import PulseOperation
 
 logger = logging.getLogger(__name__)
 

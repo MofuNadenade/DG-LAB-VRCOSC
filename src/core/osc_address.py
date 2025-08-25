@@ -7,8 +7,8 @@ OSC地址管理模块
 import logging
 from typing import Optional, List, Dict
 
-from .osc_common import OSCAddress, OSCRegistryObserver
 from models import OSCAddressDict
+from .osc_common import OSCAddress, OSCRegistryObserver
 
 logger = logging.getLogger(__name__)
 

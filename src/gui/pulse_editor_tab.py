@@ -7,21 +7,22 @@
 import asyncio
 import logging
 from typing import Optional
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFont, QCloseEvent
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QMessageBox, QInputDialog,
     QSplitter, QGroupBox, QButtonGroup, QFrame, QDialog
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont, QCloseEvent
 
-from models import PulseOperation, Channel
 from core.dglab_pulse import Pulse
 from i18n import translate, language_signals
-from .ui_interface import UIInterface
-from .pulse_widgets import PulsePreviewWidget, PulseStepEditor, ParameterControlPanel
-from .pulse_dialogs import NewPulseDialog, ImportPulseDialog, ExportPulseDialog, PulseInfoDialog
+from models import PulseOperation, Channel
 from .pulse_detailed_editor import DetailedPulseStepDialog
+from .pulse_dialogs import NewPulseDialog, ImportPulseDialog, ExportPulseDialog, PulseInfoDialog
+from .pulse_widgets import PulsePreviewWidget, PulseStepEditor, ParameterControlPanel
+from .ui_interface import UIInterface
 
 logger = logging.getLogger(__name__)
 
@@ -481,7 +482,7 @@ class PulseEditorTab(QWidget):
         current_data = self.pulse_editor.get_pulse_data()
         self.preview_widget.set_pulse_data(current_data)
         
-    def on_pulse_step_removed(self, position: int) -> None:
+    def on_pulse_step_removed(self) -> None:
         """脉冲步骤移除"""
         self.is_modified = True
         self.save_btn.setEnabled(True)

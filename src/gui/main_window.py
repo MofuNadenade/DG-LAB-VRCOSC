@@ -2,25 +2,24 @@ import asyncio
 import logging
 from typing import Optional, List, Callable, Awaitable
 
-from PySide6.QtWidgets import QMainWindow, QTabWidget
 from PySide6.QtGui import QIcon, QPixmap
-from core.registries import Registries
-from models import ConnectionState, StrengthData, Channel, SettingsDict, OSCValue, OSCBindingDict, UIFeature
+from PySide6.QtWidgets import QMainWindow, QTabWidget
 
 from config import default_load_settings, save_settings
-from i18n import translate, language_signals, set_language
-from util import resource_path
 from core import OSCActionType, OSCOptionsProvider
 from core.dglab_controller import DGLabController
-
+from core.registries import Registries
+from gui.about_tab import AboutTab
+from gui.controller_settings_tab import ControllerSettingsTab
+from gui.log_viewer_tab import LogViewerTab
 # Import GUI tabs
 from gui.network_config_tab import NetworkConfigTab
-from gui.controller_settings_tab import ControllerSettingsTab
-from gui.ton_damage_system_tab import TonDamageSystemTab
-from gui.log_viewer_tab import LogViewerTab
-from gui.about_tab import AboutTab
 from gui.osc_address_tab import OSCAddressTab
 from gui.pulse_editor_tab import PulseEditorTab
+from gui.ton_damage_system_tab import TonDamageSystemTab
+from i18n import translate, language_signals, set_language
+from models import ConnectionState, StrengthData, Channel, SettingsDict, OSCValue, OSCBindingDict, UIFeature
+from util import resource_path
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,7 @@ class MainWindow(QMainWindow):
         set_language(language)
         
         # 初始化控制器相关组件
-        self.controller: Optional['DGLabController'] = None
+        self.controller: Optional[DGLabController] = None
         self.registries: Registries = Registries()
         self.options_provider: OSCOptionsProvider = OSCOptionsProvider(self.registries)
         

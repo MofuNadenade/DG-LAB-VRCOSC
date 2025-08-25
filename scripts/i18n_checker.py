@@ -13,7 +13,6 @@
 from ruamel.yaml import YAML
 yaml = YAML()
 import sys
-import os
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
 

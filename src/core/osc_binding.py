@@ -7,10 +7,10 @@ OSC绑定管理模块
 import logging
 from typing import Optional, List, Dict, Union
 
-from .osc_common import OSCRegistryObserver
-from models import OSCValue, OSCBindingDict
-from .osc_address import OSCAddress
+from models import OSCBindingDict, OSCValue
 from .osc_action import OSCAction
+from .osc_address import OSCAddress
+from .osc_common import OSCRegistryObserver
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class OSCBindingRegistry:
         if action:
             await action.handle(*args)
     
-    def export_to_config(self) -> List['OSCBindingDict']:
+    def export_to_config(self) -> List[OSCBindingDict]:
         """导出所有绑定到配置格式"""
         return [{
             'address_name': address.name,

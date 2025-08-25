@@ -1,15 +1,15 @@
 import logging
 from typing import Optional
 
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QTextEdit, QLabel)
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QTextCursor
-from models import Channel
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QTextEdit, QLabel)
 
 from core.dglab_controller import DGLabController
-from .ui_interface import UIInterface
-from models import SettingsDict
 from i18n import translate, language_signals
+from models import Channel
+from models import SettingsDict
+from .ui_interface import UIInterface
 
 logger = logging.getLogger(__name__)
 

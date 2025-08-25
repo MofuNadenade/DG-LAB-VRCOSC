@@ -3,15 +3,15 @@ import json
 import logging
 from typing import Optional, List
 
+from PySide6.QtCore import Qt, QTimer, QPoint
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
                                QCheckBox, QLabel, QProgressBar, QSlider, QSpinBox, QToolTip)
-from PySide6.QtCore import Qt, QTimer, QPoint
 
 from core.dglab_controller import DGLabController
-from .ui_interface import UIInterface
 from i18n import translate, language_signals
-from websocket_client import WebSocketClient
 from models import SettingsDict
+from websocket_client import WebSocketClient
+from .ui_interface import UIInterface
 
 logger = logging.getLogger(__name__)
 

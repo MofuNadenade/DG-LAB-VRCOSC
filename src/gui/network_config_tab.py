@@ -1,24 +1,24 @@
 import asyncio
 import logging
-import requests
 from typing import Awaitable, Callable, Optional
 
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
-                               QComboBox, QSpinBox, QLabel, QPushButton, QLineEdit, QCheckBox, QMessageBox, QSizePolicy)
+import requests
 from PySide6.QtCore import Qt, QLocale, QTimer
 from PySide6.QtGui import QPixmap, QResizeEvent
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
+                               QComboBox, QSpinBox, QLabel, QPushButton, QLineEdit, QCheckBox, QMessageBox, QSizePolicy)
 
 from config import get_active_ip_addresses, save_settings
+from core.dglab_controller import DGLabController
 from core.osc_common import OSCActionType
+from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
+from models import Channel, ConnectionState, OSCValue, SettingsDict
 from services.chatbox_service import ChatboxService
 from services.dglab_service_interface import IDGLabService
 from services.dglab_websocket_service import DGLabWebSocketService
 from services.osc_service import OSCService
-from .widgets import EditableComboBox
-from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
-from core.dglab_controller import DGLabController
 from .ui_interface import UIInterface
-from models import Channel, ConnectionState, OSCValue, SettingsDict
+from .widgets import EditableComboBox
 
 logger = logging.getLogger(__name__)
 
@@ -518,7 +518,7 @@ class NetworkConfigTab(QWidget):
                 return
             
             # 启动WebSocket服务器
-            success = await self.controller.dglab_service.start_server(ip, port, osc_port, remote_address)
+            success = await self.controller.dglab_service.start_server(ip, port, remote_address)
             if not success:
                 error_msg = translate("connection_tab.start_server_failed").format("WebSocket服务器启动失败")
                 logger.error(error_msg)

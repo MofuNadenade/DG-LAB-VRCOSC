@@ -5,9 +5,12 @@
 """
 
 from typing import Optional, Union, Protocol
-from models import Channel, ConnectionState, StrengthData, StrengthOperationType
-from core.dglab_pulse import Pulse
+
 from PySide6.QtGui import QPixmap
+
+from core.dglab_pulse import Pulse
+from models import Channel, ConnectionState, StrengthData, StrengthOperationType
+
 
 class IDGLabService(Protocol):
     """DG-LAB设备服务抽象接口
@@ -18,13 +21,12 @@ class IDGLabService(Protocol):
     
     # ============ 连接管理 ============
     
-    async def start_server(self, ip: str, port: int, osc_port: int, remote_address: Optional[str] = None) -> bool:
+    async def start_server(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
         """启动WebSocket服务器
         
         Args:
             ip: 监听IP地址
             port: WebSocket端口
-            osc_port: OSC端口
             remote_address: 远程地址（可选）
             
         Returns:

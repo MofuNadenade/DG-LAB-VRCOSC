@@ -1,6 +1,7 @@
 from typing import Any, List, Optional, Union
-from PySide6.QtWidgets import QComboBox, QWidget, QStyledItemDelegate
+
 from PySide6.QtCore import Qt, QModelIndex, QPersistentModelIndex
+from PySide6.QtWidgets import QComboBox, QWidget, QStyledItemDelegate
 
 from core import OSCOptionsProvider
 
@@ -76,9 +77,9 @@ class EditableComboBox(StyledComboBox):
             self.currentTextChanged.connect(self._on_text_changed)
         
         # 添加选项
-        self.setOptions(options)
+        self.set_options(options)
     
-    def setOptions(self, options: List[str]) -> None:
+    def set_options(self, options: List[str]) -> None:
         """设置下拉选项"""
         self.clear()
         self.addItems(options)

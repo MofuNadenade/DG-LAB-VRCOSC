@@ -5,6 +5,7 @@
 """
 
 from typing import Dict, List
+
 from models import OSCAddressDict, OSCBindingDict, OSCTemplateDict, PulseOperation
 
 # 默认OSC地址配置

@@ -1,11 +1,11 @@
 import asyncio
+import logging
 from typing import Optional
+
 from core.core_interface import CoreInterface
 from models import Channel, UIFeature
-import logging
-
-from .osc_service import OSCService
 from .dglab_service_interface import IDGLabService
+from .osc_service import OSCService
 
 logger = logging.getLogger(__name__)
 

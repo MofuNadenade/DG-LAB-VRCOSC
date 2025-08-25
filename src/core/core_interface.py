@@ -1,5 +1,7 @@
 from typing import Protocol
+
 from PySide6.QtGui import QPixmap
+
 from core.registries import Registries
 from models import ConnectionState, StrengthData, Channel, UIFeature
 

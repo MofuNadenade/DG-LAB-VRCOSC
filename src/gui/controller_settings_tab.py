@@ -2,17 +2,17 @@ import asyncio
 import logging
 from typing import Optional
 
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
-                               QComboBox, QSpinBox, QLabel, QCheckBox, QSlider, QToolTip, 
-                               QPushButton, QMessageBox)
 from PySide6.QtCore import Qt, QPoint, QLocale
-from models import Channel, StrengthData, StrengthOperationType, SettingsDict
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
+                               QComboBox, QSpinBox, QLabel, QCheckBox, QSlider, QToolTip,
+                               QPushButton, QMessageBox)
 
-from .ui_interface import UIInterface
-from .widgets import EditableComboBox
-from i18n import translate, language_signals
 from core.dglab_controller import DGLabController
 from core.dglab_pulse import PulseRegistry
+from i18n import translate, language_signals
+from models import Channel, StrengthData, StrengthOperationType, SettingsDict
+from .ui_interface import UIInterface
+from .widgets import EditableComboBox
 
 logger = logging.getLogger(__name__)
 
@@ -56,12 +56,12 @@ class ControllerSettingsTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional['DGLabController']:
+    def controller(self) -> Optional[DGLabController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.controller
 
     @property
-    def pulse_registry(self) -> 'PulseRegistry':
+    def pulse_registry(self) -> PulseRegistry:
         """通过UIInterface获取脉冲注册表"""
         return self.ui_interface.registries.pulse_registry
 

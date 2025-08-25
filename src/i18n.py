@@ -1,9 +1,10 @@
+import logging
 import os
 import sys
-from ruamel.yaml import YAML
-import logging
 from typing import Dict, Any, Optional
+
 from PySide6.QtCore import QObject, Signal
+from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
 

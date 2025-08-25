@@ -1,13 +1,13 @@
 import logging
 from typing import Dict
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit
 from PySide6.QtCore import QLocale, QUrl
 from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit
 
-from .ui_interface import UIInterface
-from models import SettingsDict
 from i18n import translate, language_signals
+from models import SettingsDict
+from .ui_interface import UIInterface
 
 try:
     from version import get_version, get_build_info

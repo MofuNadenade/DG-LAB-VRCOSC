@@ -6,6 +6,7 @@ OSC服务 - 完全封装OSC功能
 import asyncio
 import logging
 from typing import Optional
+
 from pythonosc import dispatcher, osc_server, udp_client
 
 from core.core_interface import CoreInterface
@@ -33,9 +34,6 @@ class OSCService:
     def __init__(self, core_interface: CoreInterface) -> None:
         """
         初始化OSC服务
-        
-        Args:
-            ui_interface: UI接口，用于访问地址和绑定注册表
         """
         super().__init__()
 

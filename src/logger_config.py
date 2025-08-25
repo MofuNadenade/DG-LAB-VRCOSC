@@ -1,7 +1,9 @@
 import logging
-import colorlog
-from datetime import datetime
 import os
+from datetime import datetime
+
+import colorlog
+
 
 def setup_logging() -> None:
     # 获取当前时间，用于生成日志文件名

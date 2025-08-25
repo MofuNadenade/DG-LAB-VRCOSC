@@ -1,13 +1,15 @@
-import os
-from typing import Optional, Any, Dict
-from ruamel.yaml import YAML
-import psutil
-import socket
 import ipaddress
+import logging
+import os
+import socket
+from typing import Optional, Any, Dict
+
+import psutil
+from ruamel.yaml import YAML
+
 from core.defaults import DEFAULT_ADDRESSES, DEFAULT_PULSES, DEFAULT_TEMPLATES, DEFAULT_BINDINGS
 from models import SettingsDict
 
-import logging
 logger = logging.getLogger(__name__)
 
 def get_default_settings() -> SettingsDict:

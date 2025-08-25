@@ -6,16 +6,17 @@
 import logging
 from functools import partial
 from typing import Optional, List
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QDialog, QDialogButtonBox, QGridLayout,
     QTabWidget, QScrollArea, QSlider
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 
-from models import PulseOperation
 from i18n import translate, language_signals
+from models import PulseOperation
 
 logger = logging.getLogger(__name__)
 
@@ -352,7 +353,7 @@ class DetailedPulseStepDialog(QDialog):
             self.strength_sliders[2].value(),
             self.strength_sliders[3].value()
         )
-        return (frequency_values, strength_values)
+        return frequency_values, strength_values
         
     def set_uniform_frequency(self) -> None:
         """设置统一频率"""

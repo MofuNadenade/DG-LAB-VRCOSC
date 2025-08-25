@@ -1,10 +1,11 @@
-import sys
 import io
 import os
+import sys
+
 import qrcode
 import qrcode.constants
-
 from PySide6.QtGui import QPixmap
+
 
 def resource_path(relative_path: str) -> str:
     """ 获取资源的绝对路径，确保开发和打包后都能正常使用。 """
