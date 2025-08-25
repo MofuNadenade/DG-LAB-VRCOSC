@@ -8,11 +8,11 @@ from core import OSCOptionsProvider
 
 class StyledComboBox(QComboBox):
     """统一样式的下拉框基类"""
-    
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self._apply_style()
-    
+
     def _apply_style(self) -> None:
         """应用统一样式"""
         self.setStyleSheet("""
@@ -61,35 +61,35 @@ class StyledComboBox(QComboBox):
 
 class EditableComboBox(StyledComboBox):
     """可编辑的下拉框，支持快速选择和手动输入"""
-    
+
     MANUAL_INPUT_TEXT = "[手动输入...]"
-    
-    def __init__(self, options: List[str], parent: Optional[QWidget] = None, 
+
+    def __init__(self, options: List[str], parent: Optional[QWidget] = None,
                  allow_manual_input: bool = True) -> None:
         super().__init__(parent)
         self.allow_manual_input = allow_manual_input
-        
+
         # 设置可编辑性
         self.setEditable(allow_manual_input)
         if allow_manual_input:
             self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
             # 连接信号处理手动输入
             self.currentTextChanged.connect(self._on_text_changed)
-        
+
         # 添加选项
         self.set_options(options)
-    
+
     def set_options(self, options: List[str]) -> None:
         """设置下拉选项"""
         self.clear()
         self.addItems(options)
-        
+
         # 如果允许手动输入且选项中没有手动输入提示，则添加
-        if (self.allow_manual_input and 
-            EditableComboBox.MANUAL_INPUT_TEXT not in options and 
-            options):  # 只有当有其他选项时才添加
+        if (self.allow_manual_input and
+                EditableComboBox.MANUAL_INPUT_TEXT not in options and
+                options):  # 只有当有其他选项时才添加
             self.addItem(EditableComboBox.MANUAL_INPUT_TEXT)
-    
+
     def _on_text_changed(self, text: str) -> None:
         """处理文本改变事件"""
         if text == EditableComboBox.MANUAL_INPUT_TEXT:
@@ -99,17 +99,18 @@ class EditableComboBox(StyledComboBox):
             if line_edit:
                 line_edit.setFocus()
 
+
 class OSCTableDelegate(QStyledItemDelegate):
     """OSC地址表格的自定义代理"""
-    
+
     def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.options_provider = options_provider
-    
+
     def createEditor(self, parent: QWidget, option: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> QWidget:
         """创建编辑器"""
         column = index.column()
-        
+
         if column == 0:  # 地址名称列
             options = self.options_provider.get_address_name_options()
             return EditableComboBox(options, parent, allow_manual_input=True)
@@ -118,7 +119,7 @@ class OSCTableDelegate(QStyledItemDelegate):
             return EditableComboBox(options, parent, allow_manual_input=True)
         else:
             return super().createEditor(parent, option, index)
-    
+
     def setEditorData(self, editor: QWidget, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
         """设置编辑器数据"""
         if isinstance(editor, EditableComboBox):
@@ -133,7 +134,7 @@ class OSCTableDelegate(QStyledItemDelegate):
                     editor.setCurrentText(text)
         else:
             super().setEditorData(editor, index)
-    
+
     def setModelData(self, editor: QWidget, model: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
         """将编辑器数据设置到模型"""
         if isinstance(editor, EditableComboBox):
@@ -142,17 +143,18 @@ class OSCTableDelegate(QStyledItemDelegate):
         else:
             super().setModelData(editor, model, index)
 
+
 class OSCBindingTableDelegate(QStyledItemDelegate):
     """OSC地址绑定表格的自定义代理 - 只允许选择预定义选项"""
-    
+
     def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.options_provider = options_provider
-    
+
     def createEditor(self, parent: QWidget, option: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> QWidget:
         """创建编辑器"""
         column = index.column()
-        
+
         if column == 0:  # 地址名称列 - 只能选择预定义地址
             options = self.options_provider.get_address_name_options()
             return EditableComboBox(options, parent, allow_manual_input=False)
@@ -161,7 +163,7 @@ class OSCBindingTableDelegate(QStyledItemDelegate):
             return EditableComboBox(options, parent, allow_manual_input=False)
         else:
             return super().createEditor(parent, option, index)
-    
+
     def setEditorData(self, editor: QWidget, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
         """设置编辑器数据"""
         if isinstance(editor, EditableComboBox):
@@ -176,7 +178,7 @@ class OSCBindingTableDelegate(QStyledItemDelegate):
                     editor.setCurrentIndex(0)
         else:
             super().setEditorData(editor, index)
-    
+
     def setModelData(self, editor: QWidget, model: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
         """将编辑器数据设置到模型"""
         if isinstance(editor, EditableComboBox):

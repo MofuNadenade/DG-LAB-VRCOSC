@@ -12,6 +12,7 @@ from models import SettingsDict
 
 logger = logging.getLogger(__name__)
 
+
 def get_default_settings() -> SettingsDict:
     """获取默认设置，包含所有默认配置"""
     return {
@@ -23,7 +24,7 @@ def get_default_settings() -> SettingsDict:
         'language': "zh",
         'enable_remote': False,
         'remote_address': "",
-        
+
         # 控制器设置
         'enable_chatbox_status': False,
         'strength_step': 30,
@@ -33,7 +34,7 @@ def get_default_settings() -> SettingsDict:
         'dynamic_bone_mode_b': False,
         'pulse_mode_a': "连击",
         'pulse_mode_b': "连击",
-        
+
         # 默认配置数据
         'addresses': DEFAULT_ADDRESSES,
         'pulses': {name: list(data) for name, data in DEFAULT_PULSES.items()},
@@ -41,9 +42,11 @@ def get_default_settings() -> SettingsDict:
         'bindings': DEFAULT_BINDINGS
     }
 
+
 yaml: YAML = YAML()
 # 禁用YAML引用以提高可读性
 yaml.representer.ignore_aliases = lambda *args: True  # type: ignore
+
 
 # Get active IP addresses (unchanged)
 def get_active_ip_addresses() -> Dict[str, str]:
@@ -55,6 +58,7 @@ def get_active_ip_addresses() -> Dict[str, str]:
                     ip_addresses[interface] = addr.address
     return ip_addresses
 
+
 # Validate IP address (unchanged)
 def validate_ip(ip: str) -> bool:
     try:
@@ -63,6 +67,7 @@ def validate_ip(ip: str) -> bool:
     except ValueError:
         return False
 
+
 # Validate port (unchanged)
 def validate_port(port: str | int) -> bool:
     try:
@@ -70,6 +75,7 @@ def validate_port(port: str | int) -> bool:
         return 0 < port < 65536
     except ValueError:
         return False
+
 
 def default_load_settings() -> SettingsDict:
     """加载设置，如果不存在则创建默认设置"""
@@ -87,6 +93,7 @@ def default_load_settings() -> SettingsDict:
             return settings
         return loaded_settings
 
+
 # Load the configuration from a YAML file
 def load_settings() -> Optional[SettingsDict]:
     if os.path.exists('settings.yml'):
@@ -100,6 +107,7 @@ def load_settings() -> Optional[SettingsDict]:
                 return None
     logger.info("No settings.yml found")
     return None
+
 
 # Save the configuration to a YAML file
 def save_settings(settings: SettingsDict) -> None:

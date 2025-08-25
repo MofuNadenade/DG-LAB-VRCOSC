@@ -16,7 +16,7 @@ class DGLabController:
     - osc_service: OSC 消息处理  
     - chatbox_service: VRChat ChatBox 管理
     """
-    
+
     def __init__(self, dglab_service: IDGLabService, osc_service: OSCService, chatbox_service: ChatboxService) -> None:
         """
         初始化 DGLabController 实例

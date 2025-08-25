@@ -25,27 +25,27 @@ __all__ = [
     'OSCActionType',
     'OSCRegistryObserver',
     'OSCAddressValidator',
-    
+
     # 地址
     'OSCAddress',
     'OSCAddressRegistry',
-    
+
     # 动作
     'OSCAction',
     'OSCActionRegistry',
     'OSCActionCallback',
-    
+
     # 模板
     'OSCTemplate',
     'OSCTemplateRegistry',
-    
+
     # 绑定
     'OSCBindingRegistry',
     'OSCBindingTemplate',
-    
+
     # 提供者
     'OSCOptionsProvider',
-    
+
     # DGLab
     'Pulse',
     'PulseRegistry',

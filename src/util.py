@@ -14,6 +14,7 @@ def resource_path(relative_path: str) -> str:
     # 对于开发环境下，从 src 跳到项目根目录，再进入 docs/images
     return os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), relative_path)
 
+
 def generate_qrcode(data: str) -> QPixmap:
     """生成二维码并转换为PySide6可显示的QPixmap"""
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=6, border=2)
@@ -29,4 +30,3 @@ def generate_qrcode(data: str) -> QPixmap:
     qimage.loadFromData(buffer.read())
 
     return qimage
-    

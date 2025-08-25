@@ -14,37 +14,37 @@ from .osc_common import OSCRegistryObserver
 
 logger = logging.getLogger(__name__)
 
- 
+
 class OSCBindingTemplate:
     """OSC绑定模板"""
-    
+
     def __init__(self, address_name: str, action_name: str) -> None:
         super().__init__()
         self.address_name: str = address_name
         self.action_name: str = action_name
-    
+
     def to_dict(self) -> Dict[str, str]:
         """转换为字典格式"""
         return {
             'address_name': self.address_name,
             'action_name': self.action_name
         }
-    
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, OSCBindingTemplate):
             return False
         return self.address_name == other.address_name and self.action_name == other.action_name
-    
+
     def __hash__(self) -> int:
         return hash((self.address_name, self.action_name))
-    
+
     def __str__(self) -> str:
         return f"OSCBindingTemplate({self.address_name} -> {self.action_name})"
 
 
 class OSCBindingRegistry:
     """OSC绑定注册表"""
-    
+
     def __init__(self) -> None:
         super().__init__()
         self._bindings: Dict[OSCAddress, OSCAction] = {}
@@ -54,23 +54,23 @@ class OSCBindingRegistry:
     def bindings(self) -> Dict[OSCAddress, OSCAction]:
         """获取所有绑定字典（只读）"""
         return self._bindings.copy()
-    
+
     def get_binding(self, address: OSCAddress) -> Optional[OSCAction]:
         """获取指定地址的绑定动作"""
         return self._bindings.get(address)
-    
+
     def has_binding(self, address: OSCAddress) -> bool:
         """检查是否存在指定地址的绑定"""
         return address in self._bindings
-    
+
     def get_binding_count(self) -> int:
         """获取绑定总数"""
         return len(self._bindings)
-    
+
     def get_all_addresses(self) -> List[OSCAddress]:
         """获取所有已绑定的地址"""
         return list(self._bindings.keys())
-    
+
     def get_all_actions(self) -> List[OSCAction]:
         """获取所有已绑定的动作"""
         return list(self._bindings.values())
@@ -79,12 +79,12 @@ class OSCBindingRegistry:
         """添加观察者"""
         if observer not in self._observers:
             self._observers.append(observer)
-    
+
     def remove_observer(self, observer: OSCRegistryObserver) -> None:
         """移除观察者"""
         if observer in self._observers:
             self._observers.remove(observer)
-    
+
     def notify_binding_changed(self, address: OSCAddress, action: Optional[OSCAction]) -> None:
         """通知观察者绑定已变化"""
         for observer in self._observers:
@@ -108,14 +108,14 @@ class OSCBindingRegistry:
         action = self._bindings.get(address)
         if action:
             await action.handle(*args)
-    
+
     def export_to_config(self) -> List[OSCBindingDict]:
         """导出所有绑定到配置格式"""
         return [{
             'address_name': address.name,
             'action_name': action.name
         } for address, action in self._bindings.items()]
-    
+
     def validate_binding_data(self, binding: Dict[str, Union[str, int, bool]]) -> bool:
         """验证绑定数据的完整性"""
         required_keys = ['address_name', 'action_name']
@@ -127,5 +127,5 @@ class OSCBindingRegistry:
                 return False
             if not value.strip():
                 return False
-        
+
         return True

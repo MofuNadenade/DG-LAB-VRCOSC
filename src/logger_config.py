@@ -49,4 +49,3 @@ def setup_logging() -> None:
     logging.getLogger("websockets.server").setLevel(logging.WARNING)
     logging.getLogger("websockets.protocol").setLevel(logging.WARNING)
     logging.getLogger('qasync').setLevel(logging.WARNING)
-

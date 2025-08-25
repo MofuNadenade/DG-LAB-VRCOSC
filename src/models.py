@@ -138,9 +138,11 @@ class StrengthData(BaseModel):
     a_limit: int
     b_limit: int
 
+
 # OSC 相关类型
 OSCValue = Union[int, float, str, bool, bytes]
 """OSC 消息参数类型"""
+
 
 # OSC相关的具体类型定义
 class OSCAddressDict(TypedDict):
@@ -148,16 +150,19 @@ class OSCAddressDict(TypedDict):
     name: str
     code: str
 
+
 class OSCTemplateDict(TypedDict):
     """OSC模板配置项类型"""
     name: str
     pattern: str
     description: str
 
+
 class OSCBindingDict(TypedDict):
     """OSC绑定配置项类型"""
     address_name: str
     action_name: str
+
 
 # 配置设置类型定义
 class SettingsDict(TypedDict, total=False):
@@ -170,7 +175,7 @@ class SettingsDict(TypedDict, total=False):
     language: str
     enable_remote: bool
     remote_address: str
-    
+
     # 控制器设置
     enable_chatbox_status: bool
     strength_step: int
@@ -180,12 +185,13 @@ class SettingsDict(TypedDict, total=False):
     dynamic_bone_mode_b: bool
     pulse_mode_a: str
     pulse_mode_b: str
-    
+
     # 配置数据 - 使用具体的TypedDict类型
     addresses: List[OSCAddressDict]
     pulses: Dict[str, List[PulseOperation]]
     templates: List[OSCTemplateDict]
     bindings: List[OSCBindingDict]
+
 
 # 脉冲相关类型
 class IntegrityReportStats(TypedDict):
@@ -195,12 +201,14 @@ class IntegrityReportStats(TypedDict):
     max_intensity: int
     duration_ms: int
 
+
 class IntegrityReport(TypedDict):
     """数据完整性检查报告类型"""
     valid: bool
     issues: List[str]
     warnings: List[str]
     stats: IntegrityReportStats
+
 
 class PulseDict(TypedDict):
     """导入脉冲项的数据结构"""

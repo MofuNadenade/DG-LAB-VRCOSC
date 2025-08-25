@@ -25,7 +25,7 @@ class ChatboxService:
     def is_enabled(self) -> bool:
         """获取ChatBox状态是否启用"""
         return self._enable_chatbox_status
-    
+
     def set_enabled(self, enabled: bool) -> None:
         """设置ChatBox状态启用/禁用"""
         if self._enable_chatbox_status != enabled:
@@ -89,7 +89,7 @@ class ChatboxService:
             channel_strength = f"[A]: {last_strength.a} B: {last_strength.b}" if current_channel == Channel.A else f"A: {last_strength.a} [B]: {last_strength.b}"
             pulse_name_a = self._dglab_service.get_current_pulse_name(Channel.A)
             pulse_name_b = self._dglab_service.get_current_pulse_name(Channel.B)
-            
+
             self._osc_service.send_message_to_vrchat_chatbox(
                 f"MAX A: {last_strength.a_limit} B: {last_strength.b_limit}\n" +
                 f"Mode A: {mode_name_a} B: {mode_name_b} \n" +

@@ -23,17 +23,21 @@ BUILD_INFO = {
     "platform": "win32"
 }
 
+
 def get_version() -> str:
     """Get the application version"""
     return VERSION
+
 
 def get_version_short() -> str:
     """Get the short version (tag only)"""
     return VERSION_SHORT
 
+
 def get_build_info() -> Dict[str, str]:
     """Get detailed build information"""
     return BUILD_INFO.copy()
+
 
 def _format_version_lines() -> tuple[str, str, str]:
     """Format version information lines"""
@@ -43,15 +47,18 @@ def _format_version_lines() -> tuple[str, str, str]:
         f"Built: {BUILD_INFO['build_time']}"
     )
 
+
 def print_version_info() -> None:
     """Print version information for debugging"""
     for line in _format_version_lines():
         print(line)
 
+
 def log_version_info() -> None:
     """Log version information using logger"""
     for line in _format_version_lines():
         logger.info(line)
+
 
 if __name__ == "__main__":
     # For command line usage, still use print for direct output

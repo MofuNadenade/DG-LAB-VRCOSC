@@ -8,6 +8,7 @@ from PySide6.QtCore import Signal, QObject
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class WebSocketClient(QObject):
     status_update_signal = Signal(str)
     message_received = Signal(str)

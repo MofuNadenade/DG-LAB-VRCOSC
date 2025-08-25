@@ -24,7 +24,7 @@ DEFAULT_ADDRESSES: List[OSCAddressDict] = [
 # SoundPad按钮1-15（完整OSC路径）
 for i in range(1, 16):
     DEFAULT_ADDRESSES.append({
-        "name": f"按钮{i}", 
+        "name": f"按钮{i}",
         "code": f"/avatar/parameters/SoundPad/Button/{i}"
     })
 
@@ -159,11 +159,11 @@ DEFAULT_TEMPLATES: List[OSCTemplateDict] = [
     {"name": "输入地址", "pattern": "/input/", "description": "输入控制地址路径"},
     {"name": "Chatbox地址", "pattern": "/chatbox/", "description": "聊天框地址路径"},
     {"name": "追踪地址", "pattern": "/tracking/", "description": "追踪数据地址路径"},
-    
+
     # 常用完整路径示例
     {"name": "DG-LAB触碰", "pattern": "/avatar/parameters/DG-LAB/", "description": "DG-LAB触碰地址前缀"},
     {"name": "SoundPad按钮", "pattern": "/avatar/parameters/SoundPad/Button/", "description": "SoundPad按钮地址前缀"},
-    
+
     # 游戏集成模板
     {"name": "游戏伤害事件", "pattern": "/game/damage", "description": "游戏伤害事件地址"},
     {"name": "游戏状态变化", "pattern": "/game/state", "description": "游戏状态变化地址"},
@@ -176,12 +176,12 @@ DEFAULT_BINDINGS: List[OSCBindingDict] = [
     {"address_name": "碰左小腿", "action_name": "A通道触碰"},
     {"address_name": "碰右小腿", "action_name": "B通道触碰"},
     {"address_name": "拉尾巴", "action_name": "当前通道触碰"},
-    
+
     # SoundPad控制相关
     {"address_name": "按钮面板控制", "action_name": "面板控制"},
     {"address_name": "按钮数值调节", "action_name": "数值调节"},
     {"address_name": "按钮通道调节", "action_name": "通道调节"},
-    
+
     # SoundPad按钮1-15
     {"address_name": "按钮1", "action_name": "设置模式"},
     {"address_name": "按钮2", "action_name": "重置强度"},

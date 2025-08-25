@@ -15,6 +15,8 @@ except ImportError:
     # Fallback if version.py doesn't exist
     def get_version() -> str:
         return "v0.0.0-dev"
+
+
     def get_build_info() -> Dict[str, str]:
         return {"commit_short": "unknown", "build_time": "unknown"}
 
@@ -26,46 +28,47 @@ class AboutTab(QWidget):
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
         self.settings: SettingsDict = settings
-        
+
         # UI组件类型注解
         self.version_label: QLabel
         self.feedback_btn: QPushButton
         self.contributors_text: QTextEdit
-        
+
         self.init_ui()
-        
+
         # 连接语言变更信号
         language_signals.language_changed.connect(self.update_ui_texts)
 
     def init_ui(self) -> None:
         """初始化关于选项卡UI"""
         layout = QVBoxLayout()
-        
+
         # 版本信息
         version_layout = QVBoxLayout()
         current_version = get_version()
         build_info = get_build_info()
         self.version_label = QLabel(translate("about_tab.current_version_label").format(current_version))
-        
+
         # 添加构建信息
         if build_info.get('commit_short') != 'unknown':
-            build_label = QLabel(f"Build: {build_info['commit_short']} ({build_info.get('build_time', 'unknown')[:10]})")
+            build_label = QLabel(
+                f"Build: {build_info['commit_short']} ({build_info.get('build_time', 'unknown')[:10]})")
             build_label.setStyleSheet("color: gray; font-size: 10px;")
             version_layout.addWidget(build_label)
-        
+
         version_layout.addWidget(self.version_label)
-        
+
         # 按钮布局
         buttons_layout = QHBoxLayout()
-        
+
         # 问题反馈按钮
         self.feedback_btn = QPushButton(translate('about_tab.feedback'))
         self.feedback_btn.clicked.connect(self.open_feedback)
         buttons_layout.addWidget(self.feedback_btn)
-        
+
         version_layout.addLayout(buttons_layout)
         layout.addLayout(version_layout)
-        
+
         # 贡献信息
         self.contributors_text = QTextEdit()
         # 强制使用英文区域设置，避免数字显示为繁体中文
