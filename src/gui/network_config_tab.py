@@ -557,7 +557,7 @@ class NetworkConfigTab(QWidget):
 
         # 更新连接状态标签 - 保持当前状态但更新语言
         if self.controller:
-            if self.controller.app_status_online:
+            if self.controller.dglab_service.get_connection_state() == ConnectionState.CONNECTED:
                 self.connection_status_label.setText(translate("connection_tab.online"))
             else:
                 self.connection_status_label.setText(translate("connection_tab.offline"))

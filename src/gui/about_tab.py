@@ -74,37 +74,37 @@ class AboutTab(QWidget):
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.contributors_text.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.contributors_text.setReadOnly(True)
-        # 采用三引号多行字符串，避免隐式拼接，且便于维护和美观
+        # 直接拼接字符串，不使用数组
         self.contributors_text.setText(
-            """开发组织: ccvrc
-
-贡献者:
-- icrazt
-- 光水
-- icelly_QAQ
-- yuxuanchiadm（架构重构）
-
-特别感谢:
-- ChrisFeline (ToNSaveManager)
-- VRChat OSC 社区
-- VRSuya SoundPad
-- WastingMisaka（鱼板）
-- Wanlin
-- 所有参与测试、使用本项目及贡献问题反馈的用户
-
-项目地址: https://github.com/ccvrc/DG-LAB-VRCOSC
-
-使用的开源项目:
-- PySide6 (LGPL)
-- websockets (BSD)
-- qasync (MIT)
-- pydglab-ws (BSD)
-- qrcode (LGPL)
-- python-osc (MIT)
-- colorlog (MIT)
-- pillow (HPND)
-- ruamel.yaml (MIT)
-- psutil (BSD)"""
+            "开发组织: ccvrc\n" +
+            "\n" +
+            "贡献者:\n" +
+            "- MofuNadenade（架构重构，波形编辑器，OSC地址绑定）\n" +
+            "- icrazt\n" +
+            "- 光水\n" +
+            "- icelly_QAQ\n" +
+            "\n" +
+            "特别感谢:\n" +
+            "- ChrisFeline (ToNSaveManager)\n" +
+            "- VRChat OSC 社区\n" +
+            "- VRSuya SoundPad\n" +
+            "- WastingMisaka（鱼板）\n" +
+            "- Wanlin\n" +
+            "- 所有参与测试、使用本项目及贡献问题反馈的用户\n" +
+            "\n" +
+            "项目地址: https://github.com/ccvrc/DG-LAB-VRCOSC\n" +
+            "\n" +
+            "使用的开源项目:\n" +
+            "- PySide6 (LGPL)\n" +
+            "- websockets (BSD)\n" +
+            "- qasync (MIT)\n" +
+            "- pydglab-ws (BSD)\n" +
+            "- qrcode (LGPL)\n" +
+            "- python-osc (MIT)\n" +
+            "- colorlog (MIT)\n" +
+            "- pillow (HPND)\n" +
+            "- ruamel.yaml (MIT)\n" +
+            "- psutil (BSD)"
         )
 
         layout.addWidget(self.contributors_text)

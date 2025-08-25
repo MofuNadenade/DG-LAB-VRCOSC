@@ -26,5 +26,3 @@ class DGLabController:
         self.dglab_service: IDGLabService = dglab_service
         self.osc_service: OSCService = osc_service
         self.chatbox_service: ChatboxService = chatbox_service
-
-        self.app_status_online: bool = False
