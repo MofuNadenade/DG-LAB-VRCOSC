@@ -121,39 +121,44 @@ class DGLabWebSocketService:
             self._server: Optional[DGLabWSServer] = None
             self._client: Optional[DGLabLocalClient] = None
             self._server_task: Optional[asyncio.Task[None]] = None
-            self._server_ready_event: asyncio.Event = asyncio.Event()
             self._stop_event: asyncio.Event = asyncio.Event()
+            self._client_event: asyncio.Event = asyncio.Event()
+            self._is_running: bool = False
 
         async def start(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
             """启动服务器"""
-            if self.is_running:
+            if self._is_running:
                 logger.warning("服务器已在运行")
                 return True
 
             try:
-                # 创建服务器实例
-                self._server = DGLabWSServer(ip, port, 60)
+                # 启动服务器任务
+                self._server_task = asyncio.create_task(self._run_server(ip, port))
 
-                # 启动服务器任务，在任务中使用 async with
-                self._server_task = asyncio.create_task(self._run_server())
+                # 等待客户端就绪事件
+                await self._client_event.wait()
 
-                # 等待服务器启动完成
-                await asyncio.wait_for(self._server_ready_event.wait(), timeout=5.0)
-
-                # 创建本地客户端
-                self._client = self._server.new_local_client()
+                # 检查客户端是否成功创建
+                if not self._client:
+                    logger.error("本地客户端创建失败")
+                    await self.stop()
+                    return False
 
                 # 生成二维码
                 url = self._client.get_qrcode(f"ws://{remote_address or ip}:{port}")
                 if not url:
-                    raise RuntimeError("无法生成二维码")
+                    logger.error("无法生成二维码")
+                    await self.stop()
+                    return False
 
                 qrcode_image: QPixmap = generate_qrcode(url)
                 self._service._core_interface.update_qrcode(qrcode_image)
 
                 # 更新服务引用
-                self._service._client = self._client
                 self._service._update_channel_pulse_tasks()
+
+                # 设置运行状态
+                self._is_running = True
 
                 logger.info(f"WebSocket服务器已启动，监听地址: {ip}:{port}")
                 return True
@@ -163,25 +168,40 @@ class DGLabWebSocketService:
                 await self.stop()
                 return False
 
-        async def _run_server(self) -> None:
+        async def _run_server(self, ip: str, port: int) -> None:
             """运行服务器的异步任务"""
-            if not self._server:
-                logger.error("服务器实例未创建")
-                return
-
             try:
+                # 创建服务器实例
+                self._server = DGLabWSServer(ip, port, 60)
+
                 async with self._server:
-                    logger.debug("服务器上下文已进入")
-                    self._server_ready_event.set()
+                    logger.debug("服务器已连接")
+
                     try:
-                        # 等待停止事件，而不是无意义的轮询
+                        self._client = self._server.new_local_client()
+                        logger.debug("本地客户端已创建")
+                        self._client_event.set()
+                    except Exception as e:
+                        logger.error(f"创建本地客户端失败: {e}")
+                        self._client = None
+                        self._client_event.set()
+                        return
+
+                    try:
                         await self._stop_event.wait()
                     except asyncio.CancelledError:
                         logger.info("服务器任务被取消")
                         raise
-            except asyncio.CancelledError:
-                logger.info("服务器任务被取消")
-                raise
+
+                    try:
+                        logger.debug("正在断开本地客户端连接")
+                        client_id = self._client.client_id
+                        if client_id:
+                            await self._server.remove_local_client(client_id)
+                        logger.debug("本地客户端已断开连接")
+                    except Exception as e:
+                        logger.error(f"断开本地客户端连接失败: {e}")
+                        raise
             except OSError as e:
                 if e.errno == 10048:  # 端口被占用
                     logger.error(f"服务器端口被占用: {e}")
@@ -193,7 +213,7 @@ class DGLabWebSocketService:
                 logger.error(f"服务器运行异常: {e}")
                 raise
             finally:
-                logger.debug("服务器上下文已退出")
+                logger.debug("服务器已退出")
 
         async def stop(self) -> None:
             """停止服务器"""
@@ -211,15 +231,13 @@ class DGLabWebSocketService:
             self._server_task = None
             self._server = None
             self._client = None
-            self._service._client = None
-            self._server_ready_event.clear()
             self._stop_event.clear()
+            self._client_event.clear()
+            self._is_running = False
 
         @property
         def is_running(self) -> bool:
-            return (self._server_task is not None and
-                    not self._server_task.done() and
-                    self._server_ready_event.is_set())
+            return self._is_running
 
         @property
         def client(self) -> Optional[DGLabLocalClient]:
@@ -230,15 +248,11 @@ class DGLabWebSocketService:
 
         self._core_interface = core_interface
 
-        # 本地客户端
-        self._client: Optional[DGLabLocalClient] = None
-
         # 服务器管理器
         self._server_manager = self._ServerManager(self)
 
         # 连接状态管理
         self._connection_task: Optional[asyncio.Task[None]] = None
-        self._is_connected: bool = False
 
         # 服务器停止通知事件（用于替代轮询）
         self._server_stopped_event: asyncio.Event = asyncio.Event()
@@ -268,6 +282,11 @@ class DGLabWebSocketService:
         # 面板控制
         self._enable_panel_control: bool = True
 
+    @property
+    def client(self) -> Optional[DGLabLocalClient]:
+        """获取当前客户端实例"""
+        return self._server_manager.client
+
     # ============ 连接管理 ============
 
     async def start_service(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
@@ -288,6 +307,9 @@ class DGLabWebSocketService:
 
     async def stop_service(self) -> None:
         """停止WebSocket服务器"""
+        # 停止服务器
+        await self._server_manager.stop()
+
         # 停止连接处理任务
         if self._connection_task:
             self._connection_task.cancel()
@@ -297,41 +319,6 @@ class DGLabWebSocketService:
                 pass
             self._connection_task = None
 
-        # 断开设备连接
-        await self.disconnect()
-
-        # 停止服务器
-        await self._server_manager.stop()
-
-        # 通知服务器已停止（用于替代轮询）
-        self._server_stopped_event.set()
-
-    def is_server_running(self) -> bool:
-        """检查服务器运行状态"""
-        return self._server_manager.is_running
-
-    def get_qrcode_image(self) -> Optional[QPixmap]:
-        """获取二维码图像（由服务器管理器生成）"""
-        # 二维码已在服务器启动时生成并更新到UI
-        return None
-
-    def get_connection_state(self) -> ConnectionState:
-        """获取当前连接状态"""
-        if not self._server_manager.is_running:
-            return ConnectionState.DISCONNECTED
-        elif not self._is_connected:
-            return ConnectionState.WAITING
-        else:
-            return ConnectionState.CONNECTED
-
-    async def connect(self) -> bool:
-        """连接设备（WebSocket连接由服务器管理器管理）"""
-        self._is_connected = True
-        return True
-
-    async def disconnect(self) -> None:
-        """断开设备连接"""
-        self._is_connected = False
         # 取消所有波形任务
         for task_manager in self._channel_pulse_tasks.values():
             if task_manager.task and not task_manager.task.done():
@@ -342,9 +329,12 @@ class DGLabWebSocketService:
             self._set_mode_timer.cancel()
             self._set_mode_timer = None
 
-    def is_connected(self) -> bool:
-        """检查设备连接状态"""
-        return self._is_connected
+        # 通知服务器已停止（用于替代轮询）
+        self._server_stopped_event.set()
+
+    def is_server_running(self) -> bool:
+        """检查服务器运行状态"""
+        return self._server_manager.is_running
 
     def get_connection_type(self) -> str:
         """获取连接类型标识"""
@@ -424,45 +414,45 @@ class DGLabWebSocketService:
 
     async def set_float_output(self, value: float, channel: Channel) -> None:
         """设置浮点输出强度（用于动骨模式）"""
-        if not self._enable_panel_control or not self._client:
+        if not self._enable_panel_control or not self.client:
             return
 
         if value >= 0.0 and self._last_strength:
             if channel == Channel.A and self._dynamic_bone_modes[Channel.A]:
                 final_output_a = math.ceil(
                     self._map_value(value, self._last_strength.a_limit * 0.2, self._last_strength.a_limit))
-                await self._client.set_strength(_convert_channel_to_pydglab(channel),
+                await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                                 _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
                                                 final_output_a)
             elif channel == Channel.B and self._dynamic_bone_modes[Channel.B]:
                 final_output_b = math.ceil(
                     self._map_value(value, self._last_strength.b_limit * 0.2, self._last_strength.b_limit))
-                await self._client.set_strength(_convert_channel_to_pydglab(channel),
+                await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                                 _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
                                                 final_output_b)
 
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度"""
-        if self._client:
-            await self._client.set_strength(_convert_channel_to_pydglab(channel),
+        if self.client:
+            await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                             _convert_strength_operation_to_pydglab(operation_type), value)
 
     async def reset_strength(self, value: bool, channel: Channel) -> None:
         """重置通道强度为0"""
-        if value and self._client:
-            await self._client.set_strength(_convert_channel_to_pydglab(channel),
+        if value and self.client:
+            await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                             _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO), 0)
 
     async def increase_strength(self, value: bool, channel: Channel) -> None:
         """增加通道强度"""
-        if value and self._client:
-            await self._client.set_strength(_convert_channel_to_pydglab(channel),
+        if value and self.client:
+            await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                             _convert_strength_operation_to_pydglab(StrengthOperationType.INCREASE), 1)
 
     async def decrease_strength(self, value: bool, channel: Channel) -> None:
         """减少通道强度"""
-        if value and self._client:
-            await self._client.set_strength(_convert_channel_to_pydglab(channel),
+        if value and self.client:
+            await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                             _convert_strength_operation_to_pydglab(StrengthOperationType.DECREASE), 1)
 
     # ============ 波形控制 ============
@@ -470,7 +460,7 @@ class DGLabWebSocketService:
     async def update_pulse_data(self) -> None:
         """更新设备上的波形数据"""
         # 检查客户端和通道任务是否已初始化
-        if not self._client or not self._channel_pulse_tasks:
+        if not self.client or not self._channel_pulse_tasks:
             logger.warning("客户端或通道任务未初始化，跳过波形更新")
             return
 
@@ -585,17 +575,17 @@ class DGLabWebSocketService:
                 # 开始 fire mode
                 self._fire_mode_active = True
                 logger.debug(f"开火模式开始 {last_strength}")
-                if last_strength and self._client:
+                if last_strength and self.client:
                     if channel == Channel.A:
                         self._fire_mode_origin_strengths[Channel.A] = last_strength.a
-                        await self._client.set_strength(
+                        await self.client.set_strength(
                             _convert_channel_to_pydglab(channel),
                             _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
                             min(self._fire_mode_origin_strengths[Channel.A] + fire_strength, last_strength.a_limit)
                         )
                     elif channel == Channel.B:
                         self._fire_mode_origin_strengths[Channel.B] = last_strength.b
-                        await self._client.set_strength(
+                        await self.client.set_strength(
                             _convert_channel_to_pydglab(channel),
                             _convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
                             min(self._fire_mode_origin_strengths[Channel.B] + fire_strength, last_strength.b_limit)
@@ -603,14 +593,14 @@ class DGLabWebSocketService:
                 self._data_updated_event.clear()
                 await self._data_updated_event.wait()
             else:
-                if self._client:
+                if self.client:
                     if channel == Channel.A:
-                        await self._client.set_strength(_convert_channel_to_pydglab(channel),
+                        await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                                         _convert_strength_operation_to_pydglab(
                                                             StrengthOperationType.SET_TO),
                                                         self._fire_mode_origin_strengths[Channel.A])
                     elif channel == Channel.B:
-                        await self._client.set_strength(_convert_channel_to_pydglab(channel),
+                        await self.client.set_strength(_convert_channel_to_pydglab(channel),
                                                         _convert_strength_operation_to_pydglab(
                                                             StrengthOperationType.SET_TO),
                                                         self._fire_mode_origin_strengths[Channel.B])
@@ -684,7 +674,6 @@ class DGLabWebSocketService:
             # 等待绑定
             logger.info("等待 DG-Lab App 扫码绑定...")
             await client.bind()
-            self._is_connected = True
             self._core_interface.on_client_connected()
             logger.info(f"已与 App {client.target_id} 成功绑定")
 
@@ -697,7 +686,6 @@ class DGLabWebSocketService:
             raise
         except Exception as e:
             logger.error(f"连接处理异常: {e}")
-            self._is_connected = False
             self._core_interface.on_client_disconnected()
 
     async def _handle_data(self, data: DGLabWebSocketData) -> None:
@@ -751,7 +739,6 @@ class DGLabWebSocketService:
         logger.info("App 已断开连接，你可以尝试重新扫码进行连接绑定")
 
         # 更新连接状态
-        self._is_connected = False
         self._core_interface.on_client_disconnected()
 
         # 尝试重新绑定
@@ -764,17 +751,16 @@ class DGLabWebSocketService:
             try:
                 await client.rebind()
                 logger.info("重新绑定成功")
-                self._is_connected = True
                 self._core_interface.on_client_reconnected()
             except Exception as e:
                 logger.error(f"重新绑定失败: {e}")
 
     def _update_channel_pulse_tasks(self) -> None:
         """更新通道波形任务（当客户端变化时）"""
-        if self._client:
+        if self.client:
             self._channel_pulse_tasks = {
-                Channel.A: ChannelPulseTask(self._client, Channel.A),
-                Channel.B: ChannelPulseTask(self._client, Channel.B)
+                Channel.A: ChannelPulseTask(self.client, Channel.A),
+                Channel.B: ChannelPulseTask(self.client, Channel.B)
             }
             logger.debug("通道波形任务已初始化")
         else:

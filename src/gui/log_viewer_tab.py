@@ -164,7 +164,7 @@ class LogViewerTab(QWidget):
         if self.controller:
             debug_text = (
                 # 连接状态
-                f"Device connection state: {self.controller.dglab_service.get_connection_state()}\n" +
+                f"Device connection state: {self.ui_interface.get_connection_state()}\n" +
                 # 功能开关
                 f"Enable Panel Control: {self.controller.dglab_service.enable_panel_control}\n" +
                 f"Fire Mode Disabled: {self.controller.dglab_service.fire_mode_disabled}\n" +

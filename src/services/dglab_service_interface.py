@@ -6,10 +6,8 @@
 
 from typing import Optional, Union, Protocol
 
-from PySide6.QtGui import QPixmap
-
 from core.dglab_pulse import Pulse
-from models import Channel, ConnectionState, StrengthData, StrengthOperationType
+from models import Channel, StrengthData, StrengthOperationType
 
 
 class IDGLabService(Protocol):
@@ -43,42 +41,6 @@ class IDGLabService(Protocol):
         
         Returns:
             bool: 服务器是否运行中
-        """
-        ...
-
-    def get_qrcode_image(self) -> Optional[QPixmap]:
-        """获取二维码图像
-        
-        Returns:
-            Optional[QPixmap]: 二维码图像，如果未生成则为None
-        """
-        ...
-
-    def get_connection_state(self) -> ConnectionState:
-        """获取当前连接状态
-        
-        Returns:
-            ConnectionState: 当前连接状态
-        """
-        ...
-
-    async def connect(self) -> bool:
-        """连接设备
-        
-        Returns:
-            bool: 连接是否成功
-        """
-        ...
-
-    async def disconnect(self) -> None:
-        """断开设备连接"""
-        ...
-
-    def is_connected(self) -> bool:
-        """检查设备连接状态
-        
-        Returns:
-            bool: 是否已连接
         """
         ...
 

@@ -538,32 +538,32 @@ class NetworkConfigTab(QWidget):
 
     def update_ui_texts(self) -> None:
         """更新UI上的文本为当前语言"""
+        # 获取当前连接状态（只获取一次）
+        current_state = self.ui_interface.get_connection_state()
+        
+        # 更新组标题和标签
         self.network_config_group.setTitle(translate("connection_tab.title"))
         self.language_label.setText(translate("main.settings.language_label"))
-        # start_button的文本现在通过统一接口管理，这里不需要直接设置
-        # 保持当前连接状态的显示文本
-        current_state = self.ui_interface.get_connection_state()
-        if current_state == ConnectionState.CONNECTED:
-            self.start_button.setText(translate("connection_tab.disconnect"))
-        else:
-            self.start_button.setText(translate("connection_tab.connect"))
-
-        # 更新表单标签 - 使用直接引用而不是文本匹配
+        
+        # 更新按钮文本
+        self.start_button.setText(
+            translate("connection_tab.disconnect") if current_state == ConnectionState.CONNECTED 
+            else translate("connection_tab.connect")
+        )
+        
+        # 更新表单标签
         self.interface_label.setText(translate("connection_tab.interface_label"))
         self.websocket_port_label.setText(translate("connection_tab.websocket_port_label"))
         self.osc_port_label.setText(translate("connection_tab.osc_port_label"))
         self.status_label.setText(translate("connection_tab.status_label"))
         self.remote_address_label.setText(translate("connection_tab.remote_address_label"))
-
-        # 更新连接状态标签 - 保持当前状态但更新语言
-        if self.controller:
-            if self.controller.dglab_service.get_connection_state() == ConnectionState.CONNECTED:
-                self.connection_status_label.setText(translate("connection_tab.online"))
-            else:
-                self.connection_status_label.setText(translate("connection_tab.offline"))
-        else:
-            # 没有控制器时，显示默认离线状态
-            self.connection_status_label.setText(translate("connection_tab.offline"))
+        
+        # 更新连接状态标签
+        self.connection_status_label.setText(
+            translate("connection_tab.online") if current_state == ConnectionState.CONNECTED 
+            else translate("connection_tab.offline")
+        )
+        
         # 更新其他UI文本
         self.enable_remote_checkbox.setText(translate("connection_tab.enable_remote"))
         self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))

@@ -535,15 +535,6 @@ class MainWindow(QMainWindow):
         else:
             return self.controller_tab.pulse_mode_b_combobox.currentText()
 
-    def update_pulse_modes_list(self, pulse_names: list[str]) -> None:
-        """更新脉冲模式列表"""
-        self.controller_tab.pulse_mode_a_combobox.clear()
-        self.controller_tab.pulse_mode_b_combobox.clear()
-
-        for pulse_name in pulse_names:
-            self.controller_tab.pulse_mode_a_combobox.addItem(pulse_name)
-            self.controller_tab.pulse_mode_b_combobox.addItem(pulse_name)
-
     # === 功能开关管理方法 ===
 
     def set_feature_state(self, feature: UIFeature, enabled: bool, silent: bool = False) -> None:
@@ -620,7 +611,7 @@ class MainWindow(QMainWindow):
     def on_client_disconnected(self) -> None:
         """客户端断开连接时的回调"""
         logger.info("客户端已断开连接")
-        self.set_connection_state(ConnectionState.WAITING)  # 等待重新连接
+        self.set_connection_state(ConnectionState.WAITING)
         self.update_connection_status(False)
 
     def on_client_reconnected(self) -> None:
