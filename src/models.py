@@ -10,6 +10,14 @@ from typing import Literal, Tuple, Union, Dict, List, TypedDict
 from pydantic import BaseModel
 
 
+class FrequencyMode(Enum):
+    """
+    频率模式枚举
+    """
+    FIXED = "fixed"
+    INDIVIDUAL = "individual"
+
+
 class ConnectionState(Enum):
     """连接状态枚举"""
     DISCONNECTED = "disconnected"

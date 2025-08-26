@@ -6,7 +6,7 @@
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QCloseEvent
@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 
 from core.dglab_pulse import Pulse
 from i18n import translate, language_signals
-from models import PulseOperation, Channel
+from models import PulseOperation, Channel, FrequencyMode
 from .pulse_detailed_editor import DetailedPulseStepDialog
 from .pulse_dialogs import NewPulseDialog, ImportPulseDialog, ExportPulseDialog, PulseInfoDialog
 from .pulse_widgets import PulsePreviewWidget, PulseStepEditor, ParameterControlPanel
@@ -417,22 +417,25 @@ class PulseEditorTab(QWidget):
         self.pulse_editor.set_pulse_data(pulse.data)
 
         # 分析波形的频率模式
-        frequencies = [step[0][0] for step in pulse.data] if pulse.data else [10]
-        is_uniform_frequency = len(set(frequencies)) <= 1
+        all_frequencies: List[int] = [freq for step in pulse.data for freq in step[0]]
+        
+        # 检查是否所有频率值都相同
+        is_uniform_frequency = len(set(all_frequencies)) <= 1
+        
+        # 获取主频率值（用于显示）
+        main_frequency = all_frequencies[0] if all_frequencies else 10
 
-        if is_uniform_frequency and frequencies:
+        if is_uniform_frequency and all_frequencies:
             # 如果是统一频率，设置为固定模式并更新面板显示
-            self.param_panel.set_frequency_mode("fixed")
-            self.param_panel.freq_slider.setValue(frequencies[0])
-            self.pulse_editor.set_frequency(frequencies[0])
-            logger.debug(f"PulseEditorTab: 检测到统一频率: {frequencies[0]}ms，设置为固定模式")
+            self.param_panel.set_frequency_mode(FrequencyMode.FIXED)
+            self.param_panel.freq_slider.setValue(main_frequency)
+            self.pulse_editor.set_frequency(main_frequency)
+            logger.debug(f"PulseEditorTab: 检测到统一频率: {main_frequency}ms，设置为固定模式")
         else:
             # 如果是混合频率，设置为独立模式
-            self.param_panel.set_frequency_mode("individual")
-            # 使用第一个步骤的频率作为面板显示值
-            if frequencies:
-                self.param_panel.freq_slider.setValue(frequencies[0])
-            self.pulse_editor.set_frequency(self.param_panel.get_frequency())
+            self.param_panel.set_frequency_mode(FrequencyMode.INDIVIDUAL)
+            self.param_panel.freq_slider.setValue(main_frequency)
+            self.pulse_editor.set_frequency(main_frequency)
             logger.debug(f"PulseEditorTab: 检测到混合频率，设置为独立模式")
 
         # 更新预览（使用编辑器的实际数据确保一致性）
@@ -498,7 +501,7 @@ class PulseEditorTab(QWidget):
         self.pulse_editor.set_frequency(frequency)
 
         # 在固定频率模式下，更新所有现有条形的频率
-        if self.param_panel.get_frequency_mode() == "fixed":
+        if self.param_panel.get_frequency_mode() == FrequencyMode.FIXED:
             self.pulse_editor.update_all_frequencies(frequency)
 
         self.is_modified = True
@@ -508,11 +511,11 @@ class PulseEditorTab(QWidget):
         current_data = self.pulse_editor.get_pulse_data()
         self.preview_widget.set_pulse_data(current_data)
 
-    def on_frequency_mode_changed(self, mode: str) -> None:
+    def on_frequency_mode_changed(self, mode: FrequencyMode) -> None:
         """频率模式改变"""
         logger.info(f"Frequency mode changed to: {mode}")
 
-        if mode == "fixed":
+        if mode == FrequencyMode.FIXED:
             # 切换到固定模式时，将所有条形的频率统一为当前滑块值
             current_frequency = self.param_panel.get_frequency()
             self.pulse_editor.update_all_frequencies(current_frequency)

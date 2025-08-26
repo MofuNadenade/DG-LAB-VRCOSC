@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 )
 
 from i18n import translate, language_signals
-from models import PulseOperation
+from models import PulseOperation, FrequencyMode
 
 logger = logging.getLogger(__name__)
 
@@ -659,11 +659,11 @@ class ParameterControlPanel(QWidget):
     """参数控制面板"""
 
     frequency_changed = Signal(int)
-    frequency_mode_changed = Signal(str)  # 频率模式改变信号
+    frequency_mode_changed = Signal(FrequencyMode)  # 频率模式改变信号
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self.frequency_mode = "fixed"  # 默认固定频率模式
+        self.frequency_mode = FrequencyMode.FIXED  # 默认固定频率模式
 
         # 预声明实例变量（在setup_ui中初始化）
         self.freq_group: QGroupBox
@@ -761,24 +761,24 @@ class ParameterControlPanel(QWidget):
 
     def _on_frequency_changed(self, value: int) -> None:
         """频率改变处理"""
-        mode_text = "固定" if self.frequency_mode == "fixed" else "独立"
+        mode_text = "固定" if self.frequency_mode == FrequencyMode.FIXED else "独立"
         self.freq_label.setText(f"{value} ({mode_text})")
         self.frequency_changed.emit(value)
 
     def _toggle_frequency_mode(self) -> None:
         """切换频率模式"""
-        if self.frequency_mode == "fixed":
-            self.frequency_mode = "individual"
+        if self.frequency_mode == FrequencyMode.FIXED:
+            self.frequency_mode = FrequencyMode.INDIVIDUAL
             self.mode_btn.setText("独立频率")
             self.mode_btn.setChecked(False)
         else:
-            self.frequency_mode = "fixed"
+            self.frequency_mode = FrequencyMode.FIXED
             self.mode_btn.setText("固定频率")
             self.mode_btn.setChecked(True)
 
         # 更新频率标签
         current_freq = self.freq_slider.value()
-        mode_text = "固定" if self.frequency_mode == "fixed" else "独立"
+        mode_text = "固定" if self.frequency_mode == FrequencyMode.FIXED else "独立"
         self.freq_label.setText(f"{current_freq} ({mode_text})")
 
         # 发射模式改变信号
@@ -794,27 +794,26 @@ class ParameterControlPanel(QWidget):
         self.freq_group.setTitle(translate("pulse_editor.pulse_frequency"))
 
         # 更新模式按钮文本
-        if self.frequency_mode == "fixed":
+        if self.frequency_mode == FrequencyMode.FIXED:
             self.mode_btn.setText("固定频率")
         else:
             self.mode_btn.setText("独立频率")
 
-    def get_frequency_mode(self) -> str:
+    def get_frequency_mode(self) -> FrequencyMode:
         """获取当前频率模式"""
         return self.frequency_mode
 
-    def set_frequency_mode(self, mode: str) -> None:
+    def set_frequency_mode(self, mode: FrequencyMode) -> None:
         """设置频率模式"""
-        if mode in ["fixed", "individual"]:
-            self.frequency_mode = mode
-            if mode == "fixed":
-                self.mode_btn.setText("固定频率")
-                self.mode_btn.setChecked(True)
-            else:
-                self.mode_btn.setText("独立频率")
-                self.mode_btn.setChecked(False)
+        self.frequency_mode = mode
+        if mode == FrequencyMode.FIXED:
+            self.mode_btn.setText("固定频率")
+            self.mode_btn.setChecked(True)
+        else:
+            self.mode_btn.setText("独立频率")
+            self.mode_btn.setChecked(False)
 
-            # 更新频率标签
-            current_freq = self.freq_slider.value()
-            mode_text = "固定" if mode == "fixed" else "独立"
-            self.freq_label.setText(f"{current_freq} ({mode_text})")
+        # 更新频率标签
+        current_freq = self.freq_slider.value()
+        mode_text = "固定" if mode == FrequencyMode.FIXED else "独立"
+        self.freq_label.setText(f"{current_freq} ({mode_text})")
