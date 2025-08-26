@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Dict
 
 from PySide6.QtCore import Qt, QPoint, QLocale
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
@@ -24,8 +24,7 @@ class ControllerSettingsTab(QWidget):
         self.settings: SettingsDict = settings
 
         # 控制滑动条外部更新的状态标志
-        self.allow_a_channel_update: bool = True
-        self.allow_b_channel_update: bool = True
+        self.allow_channel_updates: Dict[Channel, bool] = {Channel.A: True, Channel.B: True}
 
         # 防止重复绑定的标志
         self._signals_connected: bool = False
@@ -79,9 +78,9 @@ class ControllerSettingsTab(QWidget):
         self.a_channel_label = QLabel(f"A {translate('controller_tab.channel_intensity')}: 0 / 100")
         self.a_channel_slider = QSlider(Qt.Orientation.Horizontal)
         self.a_channel_slider.setRange(0, 100)
+        self.a_channel_slider.sliderPressed.connect(lambda: self.set_channel_update_state(Channel.A, False))
+        self.a_channel_slider.sliderReleased.connect(lambda: self.set_channel_update_state(Channel.A, True))
         self.a_channel_slider.valueChanged.connect(self.set_a_channel_strength)
-        self.a_channel_slider.sliderPressed.connect(self.disable_a_channel_updates)
-        self.a_channel_slider.sliderReleased.connect(self.enable_a_channel_updates)
         self.a_channel_slider.valueChanged.connect(lambda: self.show_tooltip(self.a_channel_slider))
         controller_form.addRow(self.a_channel_label)
         controller_form.addRow(self.a_channel_slider)
@@ -90,9 +89,9 @@ class ControllerSettingsTab(QWidget):
         self.b_channel_label = QLabel(f"B {translate('controller_tab.channel_intensity')}: 0 / 100")
         self.b_channel_slider = QSlider(Qt.Orientation.Horizontal)
         self.b_channel_slider.setRange(0, 100)
+        self.b_channel_slider.sliderPressed.connect(lambda: self.set_channel_update_state(Channel.B, False))
+        self.b_channel_slider.sliderReleased.connect(lambda: self.set_channel_update_state(Channel.B, True))
         self.b_channel_slider.valueChanged.connect(self.set_b_channel_strength)
-        self.b_channel_slider.sliderPressed.connect(self.disable_b_channel_updates)
-        self.b_channel_slider.sliderReleased.connect(self.enable_b_channel_updates)
         self.b_channel_slider.valueChanged.connect(lambda: self.show_tooltip(self.b_channel_slider))
         controller_form.addRow(self.b_channel_label)
         controller_form.addRow(self.b_channel_slider)
@@ -317,7 +316,7 @@ class ControllerSettingsTab(QWidget):
 
     def set_a_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 A 通道强度"""
-        if self.controller and self.allow_a_channel_update:
+        if self.controller:
             asyncio.create_task(
                 self.controller.dglab_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.A))
             last_strength = self.controller.dglab_service.get_last_strength()
@@ -328,7 +327,7 @@ class ControllerSettingsTab(QWidget):
 
     def set_b_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 B 通道强度"""
-        if self.controller and self.allow_b_channel_update:
+        if self.controller:
             asyncio.create_task(
                 self.controller.dglab_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.B))
             last_strength = self.controller.dglab_service.get_last_strength()
@@ -349,21 +348,14 @@ class ControllerSettingsTab(QWidget):
 
             QToolTip.showText(tooltip_pos, f"{value}", slider)
 
-    def disable_a_channel_updates(self) -> None:
-        """禁用 A 通道的外部更新"""
-        self.allow_a_channel_update = False
-
-    def enable_a_channel_updates(self) -> None:
-        """启用 A 通道的外部更新"""
-        self.allow_a_channel_update = True
-
-    def disable_b_channel_updates(self) -> None:
-        """禁用 B 通道的外部更新"""
-        self.allow_b_channel_update = False
-
-    def enable_b_channel_updates(self) -> None:
-        """启用 B 通道的外部更新"""
-        self.allow_b_channel_update = True
+    def set_channel_update_state(self, channel: Channel, enabled: bool) -> None:
+        """设置指定通道的外部更新状态
+        
+        Args:
+            channel: 要设置的通道 (Channel.A 或 Channel.B)
+            enabled: 是否启用外部更新 (True 启用, False 禁用)
+        """
+        self.allow_channel_updates[channel] = enabled
 
     def update_status(self, strength_data: StrengthData) -> None:
         """更新通道强度和波形"""
@@ -372,7 +364,7 @@ class ControllerSettingsTab(QWidget):
         last_strength = self.controller.dglab_service.get_last_strength() if self.controller else None
         if self.controller and last_strength:
             # 仅当允许外部更新时更新 A 通道滑动条
-            if self.allow_a_channel_update:
+            if self.allow_channel_updates[Channel.A]:
                 self.a_channel_slider.blockSignals(True)
                 self.a_channel_slider.setRange(0, last_strength.a_limit)  # 根据限制更新范围
                 self.a_channel_slider.setValue(last_strength.a)
@@ -383,7 +375,7 @@ class ControllerSettingsTab(QWidget):
                     f"A {translate('channel.strength_display')}: {last_strength.a} {translate('channel.strength_limit')}: {last_strength.a_limit}  {translate('channel.pulse')}: {pulse_a_name}")
 
             # 仅当允许外部更新时更新 B 通道滑动条
-            if self.allow_b_channel_update:
+            if self.allow_channel_updates[Channel.B]:
                 self.b_channel_slider.blockSignals(True)
                 self.b_channel_slider.setRange(0, last_strength.b_limit)  # 根据限制更新范围
                 self.b_channel_slider.setValue(last_strength.b)

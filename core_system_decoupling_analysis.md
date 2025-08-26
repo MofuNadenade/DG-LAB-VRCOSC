@@ -204,7 +204,7 @@ class CoreSystem(CoreInterface):
         # 或者可以用于内部状态管理
         pass
     
-    def update_connection_status(self, is_online: bool) -> None:
+    def update_client_state(self, is_online: bool) -> None:
         """根据设备连接状态更新状态"""
         self._connection_status = is_online
         if is_online:

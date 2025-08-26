@@ -421,10 +421,6 @@ class MainWindow(QMainWindow):
         """更新二维码并调整QLabel的大小"""
         self.network_tab.update_qrcode(qrcode_pixmap)
 
-    def update_connection_status(self, is_online: bool) -> None:
-        """根据设备连接状态更新标签的文本和颜色"""
-        self.network_tab.update_connection_status(is_online)
-
     def update_status(self, strength_data: StrengthData) -> None:
         """更新通道强度和波形"""
         self.controller_tab.update_status(strength_data)
@@ -456,49 +452,7 @@ class MainWindow(QMainWindow):
     def set_connection_state(self, state: ConnectionState, message: str = "") -> None:
         """统一管理连接状态"""
         self._current_connection_state = state
-        button = self.network_tab.start_button
-
-        state_config = {
-            ConnectionState.DISCONNECTED: {
-                'text': translate('connection_tab.connect'),
-                'style': 'background-color: green; color: white;',
-                'enabled': True
-            },
-            ConnectionState.CONNECTING: {
-                'text': translate('connection_tab.cancel'),
-                'style': 'background-color: orange; color: white;',
-                'enabled': True
-            },
-            ConnectionState.WAITING: {
-                'text': translate('connection_tab.disconnect'),
-                'style': 'background-color: blue; color: white;',
-                'enabled': True
-            },
-            ConnectionState.CONNECTED: {
-                'text': translate('connection_tab.disconnect'),
-                'style': 'background-color: red; color: white;',
-                'enabled': True
-            },
-            ConnectionState.FAILED: {
-                'text': message or translate('connection_tab.failed'),
-                'style': 'background-color: red; color: white;',
-                'enabled': True
-            },
-            ConnectionState.ERROR: {
-                'text': message or translate('connection_tab.error'),
-                'style': 'background-color: darkred; color: white;',
-                'enabled': True
-            }
-        }
-
-        config = state_config[state]
-        button.setText(str(config['text']))
-        button.setStyleSheet(str(config['style']))
-        button.setEnabled(bool(config['enabled']))
-
-        # 记录错误日志
-        if state in [ConnectionState.FAILED, ConnectionState.ERROR] and message:
-            self.log_error(message)
+        self.network_tab.update_connection_state(state, message)
 
     def get_connection_state(self) -> ConnectionState:
         """获取当前连接状态"""
@@ -606,16 +560,13 @@ class MainWindow(QMainWindow):
         """客户端连接时的回调"""
         logger.info("客户端已连接")
         self.set_connection_state(ConnectionState.CONNECTED)
-        self.update_connection_status(True)
 
     def on_client_disconnected(self) -> None:
         """客户端断开连接时的回调"""
         logger.info("客户端已断开连接")
         self.set_connection_state(ConnectionState.WAITING)
-        self.update_connection_status(False)
 
     def on_client_reconnected(self) -> None:
         """客户端重新连接时的回调"""
         logger.info("客户端已重新连接")
         self.set_connection_state(ConnectionState.CONNECTED)
-        self.update_connection_status(True)

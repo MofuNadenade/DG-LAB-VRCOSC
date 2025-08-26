@@ -214,7 +214,7 @@
 - **使用位置**:
   - `src/services/dglab_websocket_service.py` (更新二维码显示)
 
-#### ✅ `update_connection_status(is_online: bool) -> None`
+#### ✅ `update_client_state(is_online: bool) -> None`
 - **状态**: 被使用
 - **依赖模块**:
   - `src/gui/main_window.py` (主窗口)
@@ -291,7 +291,7 @@ CoreInterface
 - `on_client_connected()` / `on_client_disconnected()` / `on_client_reconnected()`
 - `update_current_channel_display()`
 - `update_qrcode()`
-- `update_connection_status()`
+- `update_client_state()`
 - `update_status()`
 - `save_settings()`
 - `log_error()`

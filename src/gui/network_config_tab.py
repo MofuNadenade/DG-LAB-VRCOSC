@@ -252,7 +252,47 @@ class NetworkConfigTab(QWidget):
         # 延迟执行二维码缩放以保证尺寸计算准确
         QTimer.singleShot(0, self.scale_qrcode)
 
-    def update_connection_status(self, is_online: bool) -> None:
+    def update_connection_state(self, state: ConnectionState, message: str = "") -> None:
+        text: str
+        style: str
+        enabled: bool
+
+        if state == ConnectionState.DISCONNECTED:
+            text = translate('connection_tab.connect')
+            style = 'background-color: green; color: white;'
+            enabled = True
+        elif state == ConnectionState.CONNECTING:
+            text = translate('connection_tab.cancel')
+            style = 'background-color: orange; color: white;'
+            enabled = True
+        elif state == ConnectionState.WAITING:
+            text = translate('connection_tab.disconnect')
+            style = 'background-color: blue; color: white;'
+            enabled = True
+        elif state == ConnectionState.CONNECTED:
+            text = translate('connection_tab.disconnect')
+            style = 'background-color: red; color: white;'
+            enabled = True
+        elif state == ConnectionState.FAILED:
+            text = message or translate('connection_tab.failed')
+            style = 'background-color: red; color: white;'
+            enabled = True
+        elif state == ConnectionState.ERROR:
+            text = message or translate('connection_tab.error')
+            style = 'background-color: darkred; color: white;'
+            enabled = True
+
+        self.start_button.setText(text)
+        self.start_button.setStyleSheet(style)
+        self.start_button.setEnabled(enabled)
+
+        self.update_client_state(state == ConnectionState.CONNECTED)
+
+        # 记录错误日志
+        if state in [ConnectionState.FAILED, ConnectionState.ERROR] and message:
+            self.ui_interface.log_error(message)
+
+    def update_client_state(self, is_online: bool) -> None:
         """根据设备连接状态更新标签的文本和颜色"""
         if is_online:
             self.connection_status_label.setText(translate('connection_tab.online'))
@@ -365,9 +405,6 @@ class NetworkConfigTab(QWidget):
         # 重置UI状态 - 使用统一接口
         self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
 
-        # 更新连接状态
-        self.update_connection_status(False)
-
         # 清空二维码
         self.qrcode_label.clear()
 
@@ -429,7 +466,6 @@ class NetworkConfigTab(QWidget):
             logger.error(error_msg)
             # 服务器异常后重置UI状态 - 使用统一接口
             self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
-            self.update_connection_status(False)
             raise
         finally:
             # 服务器结束后清理状态
@@ -538,18 +574,10 @@ class NetworkConfigTab(QWidget):
 
     def update_ui_texts(self) -> None:
         """更新UI上的文本为当前语言"""
-        # 获取当前连接状态（只获取一次）
-        current_state = self.ui_interface.get_connection_state()
         
         # 更新组标题和标签
         self.network_config_group.setTitle(translate("connection_tab.title"))
         self.language_label.setText(translate("main.settings.language_label"))
-        
-        # 更新按钮文本
-        self.start_button.setText(
-            translate("connection_tab.disconnect") if current_state == ConnectionState.CONNECTED 
-            else translate("connection_tab.connect")
-        )
         
         # 更新表单标签
         self.interface_label.setText(translate("connection_tab.interface_label"))
@@ -558,13 +586,10 @@ class NetworkConfigTab(QWidget):
         self.status_label.setText(translate("connection_tab.status_label"))
         self.remote_address_label.setText(translate("connection_tab.remote_address_label"))
         
-        # 更新连接状态标签
-        self.connection_status_label.setText(
-            translate("connection_tab.online") if current_state == ConnectionState.CONNECTED 
-            else translate("connection_tab.offline")
-        )
-        
         # 更新其他UI文本
         self.enable_remote_checkbox.setText(translate("connection_tab.enable_remote"))
         self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))
         self.get_public_ip_button.setText(translate("connection_tab.get_public_ip"))
+
+        # 更新客户端状态
+        self.update_connection_state(self.ui_interface.get_connection_state())
