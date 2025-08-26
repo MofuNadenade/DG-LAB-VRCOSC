@@ -663,7 +663,7 @@ class ParameterControlPanel(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self.frequency_mode = FrequencyMode.FIXED  # 默认固定频率模式
+        self.frequency_mode: FrequencyMode = FrequencyMode.FIXED
 
         # 预声明实例变量（在setup_ui中初始化）
         self.freq_group: QGroupBox

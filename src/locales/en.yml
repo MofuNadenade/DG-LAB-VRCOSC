@@ -107,8 +107,8 @@ pulse_editor:
   import_complete: "Import completed!\nSuccessfully imported: {0}\nSkipped duplicates: {1}"
   export_failed: "Export Failed"
   registry_unavailable: "Pulse registry unavailable"
-  no_custom_pulses: "No Exportable Pulses"
-  no_custom_pulses_msg: "No custom pulses available for export"
+  no_pulses_available: "No Pulses Available"
+  no_pulses_available_msg: "No pulses available for export"
 
 pulse_dialogs:
   new_pulse:

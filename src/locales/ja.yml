@@ -107,8 +107,8 @@ pulse_editor:
   import_complete: "読込完了！\n正常に読込: {0} 個\n重複をスキップ: {1} 個"
   export_failed: "書出失敗"
   registry_unavailable: "パルスレジストリが利用できません"
-  no_custom_pulses: "書出可能パルスなし"
-  no_custom_pulses_msg: "書出可能なカスタムパルスがありません"
+  no_pulses_available: "利用可能なパルスなし"
+  no_pulses_available_msg: "書出可能なパルスがありません"
 
 pulse_dialogs:
   new_pulse:

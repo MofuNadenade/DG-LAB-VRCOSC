@@ -384,8 +384,7 @@ class PulseEditorTab(QWidget):
 
         # 更新按钮状态
         self.copy_btn.setEnabled(has_selection)
-        self.delete_btn.setEnabled(
-            has_selection and selected_items[0].data(Qt.ItemDataRole.UserRole).index >= 15)  # 只能删除自定义波形
+        self.delete_btn.setEnabled(has_selection)
         self.info_btn.setEnabled(has_selection)
 
         if has_selection:
@@ -428,13 +427,17 @@ class PulseEditorTab(QWidget):
         if is_uniform_frequency and all_frequencies:
             # 如果是统一频率，设置为固定模式并更新面板显示
             self.param_panel.set_frequency_mode(FrequencyMode.FIXED)
+            self.param_panel.freq_slider.blockSignals(True)
             self.param_panel.freq_slider.setValue(main_frequency)
+            self.param_panel.freq_slider.blockSignals(False)
             self.pulse_editor.set_frequency(main_frequency)
             logger.debug(f"PulseEditorTab: 检测到统一频率: {main_frequency}ms，设置为固定模式")
         else:
             # 如果是混合频率，设置为独立模式
             self.param_panel.set_frequency_mode(FrequencyMode.INDIVIDUAL)
+            self.param_panel.freq_slider.blockSignals(True)
             self.param_panel.freq_slider.setValue(main_frequency)
+            self.param_panel.freq_slider.blockSignals(False)
             self.pulse_editor.set_frequency(main_frequency)
             logger.debug(f"PulseEditorTab: 检测到混合频率，设置为独立模式")
 
@@ -645,12 +648,6 @@ class PulseEditorTab(QWidget):
 
         pulse = selected_items[0].data(Qt.ItemDataRole.UserRole)
 
-        # 只能删除自定义波形
-        if pulse.index < 15:
-            QMessageBox.warning(self, translate("pulse_editor.delete_failed"),
-                                translate("pulse_editor.cannot_delete_preset"))
-            return
-
         reply = QMessageBox.question(self, translate("pulse_editor.confirm_delete"),
                                      translate("pulse_editor.confirm_delete_msg").format(pulse.name),
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -843,15 +840,15 @@ class PulseEditorTab(QWidget):
                                 translate("pulse_editor.registry_unavailable"))
             return
 
-        # 获取自定义波形（索引>=15的波形）
-        custom_pulses = [pulse for pulse in self.ui_interface.registries.pulse_registry.pulses if pulse.index >= 15]
+        # 获取所有可用的波形
+        all_pulses = self.ui_interface.registries.pulse_registry.pulses
 
-        if not custom_pulses:
-            QMessageBox.information(self, translate("pulse_editor.no_custom_pulses"),
-                                    translate("pulse_editor.no_custom_pulses_msg"))
+        if not all_pulses:
+            QMessageBox.information(self, translate("pulse_editor.no_pulses_available"),
+                                    translate("pulse_editor.no_pulses_available_msg"))
             return
 
-        dialog = ExportPulseDialog(custom_pulses, self)
+        dialog = ExportPulseDialog(all_pulses, self)
         dialog.exec()
 
     def show_pulse_info(self) -> None:
