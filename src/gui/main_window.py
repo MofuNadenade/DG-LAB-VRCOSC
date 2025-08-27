@@ -260,7 +260,7 @@ class MainWindow(QMainWindow):
             if isinstance(args[0], float):
                 await dglab_service.set_float_output(args[0], Channel.A)
         self.registries.action_registry.register_action(
-            "A通道触碰",
+            "设置A通道强度",
             set_float_output_channel_a,
             OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"}
         )
@@ -269,7 +269,7 @@ class MainWindow(QMainWindow):
             if isinstance(args[0], float):
                 await dglab_service.set_float_output(args[0], Channel.B)
         self.registries.action_registry.register_action(
-            "B通道触碰",
+            "设置B通道强度",
             set_float_output_channel_b,
             OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"}
         )
@@ -278,7 +278,7 @@ class MainWindow(QMainWindow):
             if isinstance(args[0], float):
                 await dglab_service.set_float_output(args[0], dglab_service.get_current_channel())
         self.registries.action_registry.register_action(
-            "当前通道触碰",
+            "设置当前通道强度",
             set_float_output_channel_current,
             OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"}
         )
@@ -288,7 +288,7 @@ class MainWindow(QMainWindow):
             if isinstance(args[0], float):
                 await dglab_service.set_panel_control(args[0])
         self.registries.action_registry.register_action(
-            "面板控制",
+            "面板控制开关",
             set_panel_control,
             OSCActionType.PANEL_CONTROL, {"panel"}
         )
@@ -297,7 +297,7 @@ class MainWindow(QMainWindow):
             if isinstance(args[0], float):
                 await dglab_service.set_strength_step(args[0])
         self.registries.action_registry.register_action(
-            "数值调节",
+            "强度调节",
             set_strength_step,
             OSCActionType.PANEL_CONTROL, {"value_adjust"}
         )

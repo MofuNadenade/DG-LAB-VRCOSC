@@ -83,7 +83,7 @@ class OSCActionRegistry:
                         action_type: OSCActionType = OSCActionType.CUSTOM,
                         tags: Optional[Set[str]] = None) -> OSCAction:
         """注册动作（增强版本）"""
-        action = OSCAction(len(self._actions), name, callback, action_type, tags)
+        action = OSCAction(name, callback, action_type, tags)
         self._actions.append(action)
         self._actions_by_name[name] = action
         self._actions_by_type[action_type].append(action)
@@ -101,10 +101,6 @@ class OSCActionRegistry:
                 del self._actions_by_name[action.name]
             if action in self._actions_by_type[action.action_type]:
                 self._actions_by_type[action.action_type].remove(action)
-
-            # 重新索引
-            for i, a in enumerate(self._actions):
-                a.index = i
 
             # 通知观察者
             self.notify_action_removed(action)

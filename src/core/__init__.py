@@ -8,13 +8,13 @@ from .dglab_controller import DGLabController
 # DGLab 相关
 from .dglab_pulse import Pulse, PulseRegistry
 # 动作管理
-from .osc_action import OSCAction, OSCActionRegistry, OSCActionCallback
+from .osc_action import OSCActionRegistry, OSCActionCallback
 # 地址管理
-from .osc_address import OSCAddress, OSCAddressRegistry
+from .osc_address import OSCAddressRegistry
 # 绑定管理
-from .osc_binding import OSCBindingRegistry, OSCBindingTemplate
+from .osc_binding import OSCBindingRegistry
 # 通用类型和枚举
-from .osc_common import OSCActionType, OSCRegistryObserver, OSCAddressValidator
+from .osc_common import OSCAction, OSCAddress, OSCActionType, OSCRegistryObserver, OSCAddressValidator
 # 选项提供
 from .osc_provider import OSCOptionsProvider
 # 模板管理
@@ -22,16 +22,16 @@ from .osc_template import OSCTemplate, OSCTemplateRegistry
 
 __all__ = [
     # 通用
+    'OSCAction',
+    'OSCAddress',
     'OSCActionType',
     'OSCRegistryObserver',
     'OSCAddressValidator',
 
     # 地址
-    'OSCAddress',
     'OSCAddressRegistry',
 
     # 动作
-    'OSCAction',
     'OSCActionRegistry',
     'OSCActionCallback',
 
@@ -41,7 +41,6 @@ __all__ = [
 
     # 绑定
     'OSCBindingRegistry',
-    'OSCBindingTemplate',
 
     # 提供者
     'OSCOptionsProvider',

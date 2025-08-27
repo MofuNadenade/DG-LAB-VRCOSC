@@ -30,7 +30,7 @@ class OSCActionCallback(Protocol):
 class OSCAction:
     """OSC动作"""
 
-    def __init__(self, index: int, name: str, callback: OSCActionCallback,
+    def __init__(self, name: str, callback: OSCActionCallback,
                  action_type: OSCActionType = OSCActionType.CUSTOM,
                  tags: Optional[Set[str]] = None) -> None:
         super().__init__()
@@ -39,7 +39,6 @@ class OSCAction:
         if not name_valid:
             raise ValueError(f"无效的动作名称: {name_error}")
 
-        self.index: int = index
         self.name: str = name.strip()
         self.callback: OSCActionCallback = callback
         self.action_type: OSCActionType = action_type
@@ -66,7 +65,7 @@ class OSCAction:
 class OSCAddress:
     """OSC地址"""
 
-    def __init__(self, index: int, name: str, code: str) -> None:
+    def __init__(self, name: str, code: str) -> None:
         super().__init__()
         # 验证输入
         name_valid, name_error = OSCAddressValidator.validate_address_name(name)
@@ -77,7 +76,6 @@ class OSCAddress:
         if not code_valid:
             raise ValueError(f"无效的OSC代码: {code_error}")
 
-        self.index: int = index
         self.name: str = name.strip()
         self.code: str = code.strip()
 

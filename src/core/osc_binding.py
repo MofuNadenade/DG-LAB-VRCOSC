@@ -15,33 +15,6 @@ from .osc_common import OSCRegistryObserver
 logger = logging.getLogger(__name__)
 
 
-class OSCBindingTemplate:
-    """OSC绑定模板"""
-
-    def __init__(self, address_name: str, action_name: str) -> None:
-        super().__init__()
-        self.address_name: str = address_name
-        self.action_name: str = action_name
-
-    def to_dict(self) -> Dict[str, str]:
-        """转换为字典格式"""
-        return {
-            'address_name': self.address_name,
-            'action_name': self.action_name
-        }
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, OSCBindingTemplate):
-            return False
-        return self.address_name == other.address_name and self.action_name == other.action_name
-
-    def __hash__(self) -> int:
-        return hash((self.address_name, self.action_name))
-
-    def __str__(self) -> str:
-        return f"OSCBindingTemplate({self.address_name} -> {self.action_name})"
-
-
 class OSCBindingRegistry:
     """OSC绑定注册表"""
 
@@ -102,6 +75,10 @@ class OSCBindingRegistry:
             del self._bindings[address]
             # 通知观察者
             self.notify_binding_changed(address, None)
+
+    def clear_bindings(self) -> None:
+        """清空所有绑定"""
+        self._bindings.clear()
 
     async def handle(self, address: OSCAddress, *args: OSCValue) -> None:
         """处理OSC消息"""

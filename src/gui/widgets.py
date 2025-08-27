@@ -100,7 +100,7 @@ class EditableComboBox(StyledComboBox):
                 line_edit.setFocus()
 
 
-class OSCTableDelegate(QStyledItemDelegate):
+class OSCAddressTableDelegate(QStyledItemDelegate):
     """OSC地址表格的自定义代理"""
 
     def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:

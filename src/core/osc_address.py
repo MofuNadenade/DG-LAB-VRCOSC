@@ -80,7 +80,7 @@ class OSCAddressRegistry:
 
     def register_address(self, name: str, code: str) -> OSCAddress:
         """注册地址"""
-        address = OSCAddress(len(self._addresses), name, code)
+        address = OSCAddress(name, code)
         self._addresses.append(address)
         self._addresses_by_name[name] = address
         self._addresses_by_code[code] = address
@@ -97,12 +97,14 @@ class OSCAddressRegistry:
             del self._addresses_by_name[address.name]
             del self._addresses_by_code[address.code]
 
-            # 重新索引
-            for i, a in enumerate(self._addresses):
-                a.index = i
-
             # 通知观察者
             self.notify_address_removed(address)
+
+    def clear_addresses(self) -> None:
+        """清空所有地址"""
+        self._addresses.clear()
+        self._addresses_by_name.clear()
+        self._addresses_by_code.clear()
 
     def load_from_config(self, addresses_config: List['OSCAddressDict']) -> None:
         """从配置加载地址"""

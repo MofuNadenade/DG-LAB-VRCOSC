@@ -11,14 +11,17 @@ from models import OSCAddressDict, OSCBindingDict, OSCTemplateDict, PulseOperati
 # 默认OSC地址配置
 DEFAULT_ADDRESSES: List[OSCAddressDict] = [
     # VRChat Avatar地址（完整OSC路径）
-    {"name": "碰左小腿", "code": "/avatar/parameters/DG-LAB/UpperLeg_L"},
-    {"name": "碰右小腿", "code": "/avatar/parameters/DG-LAB/UpperLeg_R"},
-    {"name": "拉尾巴", "code": "/avatar/parameters/DG-LAB/Tail_Stretch"},
+    {"name": "DG-LAB碰左小腿", "code": "/avatar/parameters/DG-LAB/UpperLeg_L"},
+    {"name": "DG-LAB碰右小腿", "code": "/avatar/parameters/DG-LAB/UpperLeg_R"},
+    {"name": "DG-LAB拉尾巴", "code": "/avatar/parameters/DG-LAB/Tail_Stretch"},
 
     # SoundPad地址（完整OSC路径）
-    {"name": "按钮面板控制", "code": "/avatar/parameters/SoundPad/PanelControl"},
-    {"name": "按钮数值调节", "code": "/avatar/parameters/SoundPad/Volume"},
-    {"name": "按钮通道调节", "code": "/avatar/parameters/SoundPad/Page"},
+    {"name": "SoundPad面板控制开关", "code": "/avatar/parameters/SoundPad/PanelControl"},
+    {"name": "SoundPad强度调节", "code": "/avatar/parameters/SoundPad/Volume"},
+    {"name": "SoundPad通道调节", "code": "/avatar/parameters/SoundPad/Page"},
+
+    # PCS地址（完整OSC路径）
+    {"name": "PCS进入", "code": "/avatar/parameters/pcs/contact/enterPass"},
 ]
 
 # SoundPad按钮1-15（完整OSC路径）
@@ -156,31 +159,22 @@ DEFAULT_PULSES: Dict[str, List[PulseOperation]] = {
 # 默认OSC模板配置
 DEFAULT_TEMPLATES: List[OSCTemplateDict] = [
     {"name": "Avatar参数地址", "pattern": "/avatar/parameters/", "description": "VRChat Avatar参数地址路径"},
-    {"name": "输入地址", "pattern": "/input/", "description": "输入控制地址路径"},
-    {"name": "Chatbox地址", "pattern": "/chatbox/", "description": "聊天框地址路径"},
-    {"name": "追踪地址", "pattern": "/tracking/", "description": "追踪数据地址路径"},
-
-    # 常用完整路径示例
     {"name": "DG-LAB触碰", "pattern": "/avatar/parameters/DG-LAB/", "description": "DG-LAB触碰地址前缀"},
     {"name": "SoundPad按钮", "pattern": "/avatar/parameters/SoundPad/Button/", "description": "SoundPad按钮地址前缀"},
-
-    # 游戏集成模板
-    {"name": "游戏伤害事件", "pattern": "/game/damage", "description": "游戏伤害事件地址"},
-    {"name": "游戏状态变化", "pattern": "/game/state", "description": "游戏状态变化地址"},
-    {"name": "游戏触发器", "pattern": "/game/trigger", "description": "游戏触发器地址"}
+    {"name": "PCS地址", "pattern": "/avatar/parameters/pcs/", "description": "PCS地址前缀"},
 ]
 
 # 默认OSC绑定配置
 DEFAULT_BINDINGS: List[OSCBindingDict] = [
     # VRChat触碰相关
-    {"address_name": "碰左小腿", "action_name": "A通道触碰"},
-    {"address_name": "碰右小腿", "action_name": "B通道触碰"},
-    {"address_name": "拉尾巴", "action_name": "当前通道触碰"},
+    {"address_name": "DG-LAB碰左小腿", "action_name": "设置A通道强度"},
+    {"address_name": "DG-LAB碰右小腿", "action_name": "设置B通道强度"},
+    {"address_name": "DG-LAB拉尾巴", "action_name": "设置当前通道强度"},
 
     # SoundPad控制相关
-    {"address_name": "按钮面板控制", "action_name": "面板控制"},
-    {"address_name": "按钮数值调节", "action_name": "数值调节"},
-    {"address_name": "按钮通道调节", "action_name": "通道调节"},
+    {"address_name": "SoundPad面板控制开关", "action_name": "面板控制开关"},
+    {"address_name": "SoundPad强度调节", "action_name": "强度调节"},
+    {"address_name": "SoundPad通道调节", "action_name": "通道调节"},
 
     # SoundPad按钮1-15
     {"address_name": "按钮1", "action_name": "设置模式"},
