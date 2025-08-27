@@ -19,13 +19,8 @@ class IDGLabService(Protocol):
 
     # ============ 连接管理 ============
 
-    async def start_service(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
-        """启动WebSocket服务器
-        
-        Args:
-            ip: 监听IP地址
-            port: WebSocket端口
-            remote_address: 远程地址（可选）
+    async def start_service(self) -> bool:
+        """启动服务器
             
         Returns:
             bool: 启动是否成功
@@ -33,7 +28,7 @@ class IDGLabService(Protocol):
         ...
 
     async def stop_service(self) -> None:
-        """停止WebSocket服务器"""
+        """停止服务器"""
         ...
 
     def is_server_running(self) -> bool:

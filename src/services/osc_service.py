@@ -32,7 +32,7 @@ class OSCService:
     - 自管理服务器生命周期
     """
 
-    def __init__(self, core_interface: CoreInterface) -> None:
+    def __init__(self, core_interface: CoreInterface, osc_port: int = 9001, vrchat_port: int = 9000) -> None:
         """
         初始化OSC服务
         """
@@ -45,10 +45,10 @@ class OSCService:
         self._is_running: bool = False
 
         # OSC服务器配置
-        self._osc_port: int = 9001
-        self._vrchat_port: int = 9000
+        self._osc_port: int = osc_port
+        self._vrchat_port: int = vrchat_port
 
-    async def start_service(self, osc_port: int) -> bool:
+    async def start_service(self) -> bool:
         """
         启动OSC服务器
         
@@ -61,8 +61,6 @@ class OSCService:
         if self._is_running:
             logger.warning("OSC服务器已在运行")
             return True
-
-        self._osc_port = osc_port
 
         try:
             # 初始化OSC客户端（用于发送消息到VRChat）
@@ -80,17 +78,17 @@ class OSCService:
 
             # 创建OSC服务器
             self._osc_server_instance = osc_server.AsyncIOOSCUDPServer(
-                ("0.0.0.0", osc_port), disp, event_loop
+                ("0.0.0.0", self._osc_port), disp, event_loop
             )
             self._osc_transport, _ = await self._osc_server_instance.create_serve_endpoint()
 
             self._is_running = True
-            logger.info(f"OSC服务器已启动，监听端口: {osc_port}")
+            logger.info(f"OSC服务器已启动，监听端口: {self._osc_port}")
             return True
 
         except OSError as e:
             if e.errno == 10048:  # Port already in use
-                error_message = translate("connection_tab.osc_port_in_use_detail").format(osc_port)
+                error_message = translate("connection_tab.osc_port_in_use_detail").format(self._osc_port)
                 logger.error(error_message)
                 # 通过UI接口报告错误
                 self._core_interface.set_connection_state(ConnectionState.ERROR, translate("connection_tab.osc_port_in_use"))

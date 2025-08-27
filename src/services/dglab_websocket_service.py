@@ -115,9 +115,12 @@ class DGLabWebSocketService:
     class _ServerManager:
         """内部服务器管理器 - 封装服务器生命周期"""
 
-        def __init__(self, service: 'DGLabWebSocketService'):
+        def __init__(self, service: 'DGLabWebSocketService', ip: str, port: int, remote_address: Optional[str] = None):
             super().__init__()
             self._service = service
+            self._ip = ip
+            self._port = port
+            self._remote_address = remote_address
             self._server: Optional[DGLabWSServer] = None
             self._client: Optional[DGLabLocalClient] = None
             self._server_task: Optional[asyncio.Task[None]] = None
@@ -125,7 +128,7 @@ class DGLabWebSocketService:
             self._client_event: asyncio.Event = asyncio.Event()
             self._is_running: bool = False
 
-        async def start(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
+        async def start(self) -> bool:
             """启动服务器"""
             if self._is_running:
                 logger.warning("服务器已在运行")
@@ -133,7 +136,7 @@ class DGLabWebSocketService:
 
             try:
                 # 启动服务器任务
-                self._server_task = asyncio.create_task(self._run_server(ip, port))
+                self._server_task = asyncio.create_task(self._run_server(self._ip, self._port))
 
                 # 等待客户端就绪事件
                 await self._client_event.wait()
@@ -145,7 +148,7 @@ class DGLabWebSocketService:
                     return False
 
                 # 生成二维码
-                url = self._client.get_qrcode(f"ws://{remote_address or ip}:{port}")
+                url = self._client.get_qrcode(f"ws://{self._remote_address or self._ip}:{self._port}")
                 if not url:
                     logger.error("无法生成二维码")
                     await self.stop()
@@ -160,7 +163,7 @@ class DGLabWebSocketService:
                 # 设置运行状态
                 self._is_running = True
 
-                logger.info(f"WebSocket服务器已启动，监听地址: {ip}:{port}")
+                logger.info(f"WebSocket服务器已启动，监听地址: {self._ip}:{self._port}")
                 return True
 
             except Exception as e:
@@ -243,13 +246,13 @@ class DGLabWebSocketService:
         def client(self) -> Optional[DGLabLocalClient]:
             return self._client
 
-    def __init__(self, core_interface: CoreInterface) -> None:
+    def __init__(self, core_interface: CoreInterface, ip: str, port: int, remote_address: Optional[str] = None) -> None:
         super().__init__()
 
         self._core_interface = core_interface
 
         # 服务器管理器
-        self._server_manager = self._ServerManager(self)
+        self._server_manager = self._ServerManager(self, ip, port, remote_address)
 
         # 连接状态管理
         self._connection_task: Optional[asyncio.Task[None]] = None
@@ -289,7 +292,7 @@ class DGLabWebSocketService:
 
     # ============ 连接管理 ============
 
-    async def start_service(self, ip: str, port: int, remote_address: Optional[str] = None) -> bool:
+    async def start_service(self) -> bool:
         """启动WebSocket服务器"""
         if self._server_manager.is_running:
             logger.warning("服务器已在运行")
@@ -298,7 +301,7 @@ class DGLabWebSocketService:
         # 重置停止事件
         self._server_stopped_event.clear()
 
-        success = await self._server_manager.start(ip, port, remote_address)
+        success = await self._server_manager.start()
         if success:
             # 启动连接处理任务
             self._connection_task = asyncio.create_task(self._handle_connection_lifecycle())

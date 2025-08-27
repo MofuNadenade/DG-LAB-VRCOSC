@@ -358,7 +358,7 @@ class NetworkConfigTab(QWidget):
             # 创建控制器（如果不存在）
             if not self.controller:
                 # 初始化服务
-                dglab_service: IDGLabService = DGLabWebSocketService(self.ui_interface)
+                dglab_service: IDGLabService = DGLabWebSocketService(self.ui_interface, selected_ip, selected_port, remote_address)
                 osc_service: OSCService = OSCService(self.ui_interface)
                 chatbox_service: ChatboxService = ChatboxService(self.ui_interface, dglab_service, osc_service)
 
@@ -367,8 +367,7 @@ class NetworkConfigTab(QWidget):
                 self.ui_interface.set_controller(controller)
 
             # 启动服务器任务，并保存任务引用
-            self.server_task = asyncio.create_task(
-                self._run_server_with_cleanup(selected_ip, selected_port, osc_port, remote_address))
+            self.server_task = asyncio.create_task(self._run_server_with_cleanup())
             logger.info("WebSocket 服务器启动任务已创建")
 
         except Exception as e:
@@ -425,8 +424,7 @@ class NetworkConfigTab(QWidget):
             except Exception as e:
                 logger.error(f"停止服务时发生异常: {e}")
 
-    async def _run_server_with_cleanup(self, ip: str, port: int, osc_port: int,
-                                      remote_address: Optional[str] = None) -> None:
+    async def _run_server_with_cleanup(self) -> None:
         """运行服务器并处理清理工作 - 重构版本"""
         try:
             if not self.controller:
@@ -434,7 +432,7 @@ class NetworkConfigTab(QWidget):
                 return
 
             # 启动WebSocket服务器
-            dglab_started = await self.controller.dglab_service.start_service(ip, port, remote_address)
+            dglab_started = await self.controller.dglab_service.start_service()
             if not dglab_started:
                 error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.websocket_server_failed"))
                 logger.error(error_msg)
@@ -442,7 +440,7 @@ class NetworkConfigTab(QWidget):
                 return
 
             # 启动OSC服务器
-            osc_started = await self.controller.osc_service.start_service(osc_port)
+            osc_started = await self.controller.osc_service.start_service()
             if not osc_started:
                 error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.osc_server_failed"))
                 logger.error(error_msg)
