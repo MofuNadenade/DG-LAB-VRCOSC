@@ -5,7 +5,7 @@
 """
 from datetime import datetime
 from enum import Enum, IntEnum
-from typing import Tuple, Union, Dict, List, TypedDict
+from typing import Set, Tuple, Union, Dict, List, TypedDict
 
 from pydantic import BaseModel
 
@@ -166,6 +166,11 @@ class OSCValueType(Enum):
     MIDI_PACKET = "midi_packet"
     TIME_TAG = "time_tag"
     LIST = "list"
+
+class OSCAddressInfo(TypedDict):
+    address: str
+    types: Set[OSCValueType]
+    last_value: OSCValue
 
 
 # OSC相关的具体类型定义

@@ -5,12 +5,12 @@ OSC服务 - 完全封装OSC功能
 
 import asyncio
 import logging
-from typing import Dict, Optional, Set
+from typing import Dict, Optional
 
 from pythonosc import dispatcher, osc_server, udp_client
 
 from core.core_interface import CoreInterface
-from models import ConnectionState, OSCValue, OSCValueType
+from models import ConnectionState, OSCAddressInfo, OSCValue, OSCValueType
 from i18n import translate
 
 logger = logging.getLogger(__name__)
@@ -48,8 +48,7 @@ class OSCService:
         self._osc_port: int = osc_port
         self._vrchat_port: int = vrchat_port
         
-        # 用于存储检测到的每个地址的值类型
-        self._detected_address_types: Dict[str, Set[OSCValueType]] = {}
+        self._address_infos: Dict[str, OSCAddressInfo] = {}
 
     async def start_service(self) -> bool:
         """
@@ -134,12 +133,17 @@ class OSCService:
             *args: OSC参数
         """
 
-        # 检测参数类型，并存储到字典中
+        # 更新地址信息
         for arg in args:
             value_type: OSCValueType = self._detect_osc_value_type(arg)
-            if address not in self._detected_address_types:
-                self._detected_address_types[address] = set()
-            self._detected_address_types[address].add(value_type)
+            if address not in self._address_infos:
+                self._address_infos[address] = {
+                    "address": address,
+                    "types": set(),
+                    "last_value": arg
+                }
+            self._address_infos[address]["types"].add(value_type)
+            self._address_infos[address]["last_value"] = arg
 
         # 注册到地址代码注册表
         if not self._core_interface.registries.code_registry.has_code(address):
@@ -180,14 +184,11 @@ class OSCService:
         elif len(arg) == 2:
             return OSCValueType.TIME_TAG
 
-    def get_detected_address_types(self) -> Dict[str, set[OSCValueType]]:
+    def get_address_infos(self) -> Dict[str, OSCAddressInfo]:
         """
-        获取检测到的OSC地址参数类型信息的摘要
-
-        Returns:
-            Dict[str, set[OSCValueType]]: 地址到类型集合的映射
+        获取检测到的OSC地址信息
         """
-        return self._detected_address_types
+        return self._address_infos
 
     # ============ VRChat通信方法 ============
 
