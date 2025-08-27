@@ -127,7 +127,7 @@ class OSCAddressTableTab(QWidget):
         delegate = OSCAddressTableDelegate(self.options_provider)
         self.address_table.setItemDelegate(delegate)
 
-        # 初始化表格数据
+        # 初始化表格数据 - 从registries加载
         self.refresh_address_table()
 
         # 连接语言切换信号
@@ -300,7 +300,7 @@ class OSCAddressTableTab(QWidget):
         self.address_table.itemSelectionChanged.connect(self.on_address_selection_changed)
 
     def refresh_address_table(self) -> None:
-        """刷新地址表格"""
+        """刷新地址表格 - 从registries重新加载数据"""
         addresses = self.registries.address_registry.addresses
         self.address_table.setRowCount(len(addresses))
 
@@ -310,8 +310,10 @@ class OSCAddressTableTab(QWidget):
         # 更新状态标签
         total_count = len(addresses)
         self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
+        logger.info(f"Refreshed address table with {total_count} addresses from registries")
 
     def update_address(self, row: int, addr: OSCAddress) -> None:
+        """更新表格中的地址行"""
         # 地址名
         name_item = QTableWidgetItem(addr.name)
         self.address_table.setItem(row, 0, name_item)
@@ -328,51 +330,65 @@ class OSCAddressTableTab(QWidget):
         self.address_table.setItem(row, 2, status_item)
 
     def add_address(self) -> None:
-        """添加新地址"""
-
+        """添加新地址 - 直接添加到address_table"""
         dialog = AddAddressDialog(self.options_provider, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             if dialog.validate_input():
                 name, code = dialog.get_address_data()
 
-                # 检查是否已存在
-                if self.registries.address_registry.has_address_name(name):
+                # 检查表格中是否已存在相同名称
+                if self.has_address_name_in_table(name):
                     QMessageBox.warning(self, translate("osc_address_tab.error"),
                                         translate("osc_address_tab.address_exists"))
                     return
 
-                if self.registries.address_registry.has_address_code(code):
+                # 检查表格中是否已存在相同代码
+                if self.has_address_code_in_table(code):
                     QMessageBox.warning(self, translate("osc_address_tab.error"),
                                         translate("osc_address_tab.code_exists"))
                     return
 
-                # 添加地址
-                try:
-                    # TODO 直接添加到address_table，不要注册到registries
-                    logger.info(f"Added OSC address: {name} -> {code}")
+                # 直接添加到表格
+                row = self.address_table.rowCount()
+                self.address_table.insertRow(row)
+                
+                # 创建新的地址项
+                name_item = QTableWidgetItem(name)
+                code_item = QTableWidgetItem(code)
+                status_item = QTableWidgetItem(translate("osc_address_tab.available"))
+                
+                # 设置状态列样式
+                status_item.setBackground(QColor(144, 238, 144))
+                status_item.setForeground(QColor(0, 128, 0))
+                status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                
+                # 添加到表格
+                self.address_table.setItem(row, 0, name_item)
+                self.address_table.setItem(row, 1, code_item)
+                self.address_table.setItem(row, 2, status_item)
 
-                    # 显示成功消息
-                    QMessageBox.information(self, translate("osc_address_tab.success"),
-                                            translate("osc_address_tab.address_added").format(name))
-                except Exception as e:
-                    QMessageBox.critical(self, translate("osc_address_tab.error"),
-                                         f"Failed to add address: {str(e)}")
+                # 更新状态标签
+                total_count = self.address_table.rowCount()
+                self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
+
+                logger.info(f"Added OSC address to table: {name} -> {code}")
+
+                # 显示成功消息
+                QMessageBox.information(self, translate("osc_address_tab.success"),
+                                        translate("osc_address_tab.address_added").format(name))
 
     def delete_address(self) -> None:
-        """删除选中的地址"""
+        """删除选中的地址 - 直接从address_table删除"""
         current_row = self.address_table.currentRow()
         if current_row < 0:
             return
 
-        # 获取选中的地址
+        # 获取选中的地址名称
         address_name_item = self.address_table.item(current_row, 0)
         if not address_name_item:
             return
 
         address_name = address_name_item.text()
-        addr = self.registries.address_registry.get_address_by_name(address_name)
-        if not addr:
-            return
 
         # 确认删除
         reply = QMessageBox.question(self, translate("osc_address_tab.confirm_delete"),
@@ -381,8 +397,14 @@ class OSCAddressTableTab(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                # TODO 直接从address_table删除，不要注册到registries
-                logger.info(f"Deleted OSC address: {address_name}")
+                # 直接从表格删除行
+                self.address_table.removeRow(current_row)
+
+                # 更新状态标签
+                total_count = self.address_table.rowCount()
+                self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
+
+                logger.info(f"Deleted OSC address from table: {address_name}")
 
                 # 显示成功消息
                 QMessageBox.information(self, translate("osc_address_tab.success"),
@@ -393,12 +415,12 @@ class OSCAddressTableTab(QWidget):
                                      f"Failed to delete address: {str(e)}")
 
     def save_addresses(self) -> None:
-        """保存地址到配置文件"""
+        """保存地址到registries - 将address_table数据更新到registries"""
         try:
-            # 清空地址
+            # 清空registries中的地址
             self.registries.address_registry.clear_addresses()
 
-            # 从表格中重新注册地址
+            # 从表格中获取所有地址并注册到registries
             for row in range(self.address_table.rowCount()):
                 name_item = self.address_table.item(row, 0)
                 code_item = self.address_table.item(row, 1)
@@ -407,7 +429,8 @@ class OSCAddressTableTab(QWidget):
                     name = name_item.text().strip()
                     code = code_item.text().strip()
 
-                    self.registries.address_registry.register_address(name, code)
+                    if name and code:  # 确保名称和代码都不为空
+                        self.registries.address_registry.register_address(name, code)
 
             # 导出所有地址
             all_addresses = self.registries.address_registry.export_to_config()
@@ -417,7 +440,7 @@ class OSCAddressTableTab(QWidget):
 
             # 保存到文件
             self.ui_interface.save_settings()
-            logger.info(f"Saved {len(all_addresses)} addresses to config")
+            logger.info(f"Saved {len(all_addresses)} addresses from table to registries and config")
 
             # 显示成功消息
             QMessageBox.information(self, translate("osc_address_tab.success"),
@@ -426,6 +449,22 @@ class OSCAddressTableTab(QWidget):
             logger.error(f"Failed to save addresses: {e}")
             QMessageBox.critical(self, translate("osc_address_tab.error"),
                                  translate("osc_address_tab.save_addresses_failed").format(str(e)))
+
+    def has_address_name_in_table(self, name: str) -> bool:
+        """检查表格中是否已存在相同名称的地址"""
+        for row in range(self.address_table.rowCount()):
+            name_item = self.address_table.item(row, 0)
+            if name_item and name_item.text().strip() == name:
+                return True
+        return False
+
+    def has_address_code_in_table(self, code: str) -> bool:
+        """检查表格中是否已存在相同代码的地址"""
+        for row in range(self.address_table.rowCount()):
+            code_item = self.address_table.item(row, 1)
+            if code_item and code_item.text().strip() == code:
+                return True
+        return False
 
     def on_address_selection_changed(self) -> None:
         """地址选择变化时的处理"""
