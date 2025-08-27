@@ -149,12 +149,23 @@ class StrengthData(BaseModel):
 
 
 # OSC 相关类型
-
 MidiPacket = Tuple[int, int, int, int]
 """MIDI消息包类型 - (port_id, status_byte, data1, data2)"""
 
 OSCValue = Union[int, float, str, bool, bytes, None, MidiPacket, Tuple[datetime, int], List['OSCValue']]
 """OSC 消息参数类型 - 支持所有OSC协议类型："""
+
+class OSCValueType(Enum):
+    """OSC消息参数类型枚举"""
+    INT = "int"
+    FLOAT = "float"
+    STRING = "string"
+    BOOL = "bool"
+    BYTES = "bytes"
+    NONE = "none"
+    MIDI_PACKET = "midi_packet"
+    TIME_TAG = "time_tag"
+    LIST = "list"
 
 
 # OSC相关的具体类型定义

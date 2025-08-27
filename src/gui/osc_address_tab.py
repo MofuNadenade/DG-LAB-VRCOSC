@@ -981,8 +981,175 @@ class OSCBindingTableTab(QWidget):
         self.refresh_binding_table()
 
 
+class OSCDetectedAddressesTab(QWidget):
+    """OSC检测地址标签页"""
+
+    def __init__(self, ui_interface: UIInterface, registries: Registries, options_provider: OSCOptionsProvider) -> None:
+        super().__init__()
+        self.ui_interface: UIInterface = ui_interface
+        self.registries: Registries = registries
+        self.options_provider: OSCOptionsProvider = options_provider
+
+        # UI组件类型注解
+        self.detected_addresses_table: QTableWidget
+        self.refresh_detected_addresses_btn: QPushButton
+        self.detected_addresses_status_label: QLabel
+        self.detected_addresses_group: QGroupBox
+
+        self.init_ui()
+
+        # 初始化表格数据
+        self.refresh_detected_addresses_table()
+
+        # 连接语言切换信号
+        language_signals.language_changed.connect(self.update_ui_texts)
+
+    def init_ui(self) -> None:
+        """初始化UI"""
+        layout = QVBoxLayout(self)
+
+        # 检测地址组
+        self.create_detected_addresses_group(layout)
+
+        # 操作按钮组
+        self.create_action_buttons_group(layout)
+
+    def create_detected_addresses_group(self, parent_layout: QVBoxLayout) -> None:
+        """创建检测地址组"""
+        self.detected_addresses_group = QGroupBox(translate("osc_address_tab.detected_addresses"))
+        group = self.detected_addresses_group
+        layout = QVBoxLayout(group)
+
+        # 检测地址表格
+        self.detected_addresses_table = QTableWidget()
+        self.detected_addresses_table.setColumnCount(2)
+        self.detected_addresses_table.setHorizontalHeaderLabels([
+            translate("osc_address_tab.osc_code"),
+            translate("osc_address_tab.osc_types")
+        ])
+
+        # 设置表格属性
+        header = self.detected_addresses_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)  # OSC地址列拉伸
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 检测类型列拉伸
+
+        self.detected_addresses_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.detected_addresses_table.setAlternatingRowColors(True)
+        self.detected_addresses_table.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #d0d0d0;
+                background-color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #e6f3ff;
+                color: black;
+            }
+            QTableWidget::item:hover {
+                background-color: #f0f8ff;
+            }
+        """)
+
+        layout.addWidget(self.detected_addresses_table)
+
+        # 检测地址状态标签
+        self.detected_addresses_status_label = QLabel(translate("osc_address_tab.no_detected_addresses"))
+        self.detected_addresses_status_label.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 12px;
+                padding: 5px;
+            }
+        """)
+        layout.addWidget(self.detected_addresses_status_label)
+
+        parent_layout.addWidget(group)
+
+    def create_action_buttons_group(self, parent_layout: QVBoxLayout) -> None:
+        """创建操作按钮组"""
+        button_layout = QHBoxLayout()
+
+        # 刷新检测地址按钮
+        self.refresh_detected_addresses_btn = QPushButton(translate("osc_address_tab.refresh_detected_addresses"))
+        self.refresh_detected_addresses_btn.clicked.connect(self.refresh_detected_addresses_table)
+        self.refresh_detected_addresses_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+            QPushButton:pressed {
+                background-color: #1565C0;
+            }
+        """)
+        self.refresh_detected_addresses_btn.setToolTip(translate("osc_address_tab.refresh_detected_addresses_tooltip"))
+        button_layout.addWidget(self.refresh_detected_addresses_btn)
+
+        button_layout.addStretch()  # 添加弹性空间
+        parent_layout.addLayout(button_layout)
+
+    def refresh_detected_addresses_table(self) -> None:
+        """刷新检测地址表格"""
+        # 获取OSC服务检测到的地址信息
+        detected_types = {}
+        if self.ui_interface.controller and hasattr(self.ui_interface.controller, 'osc_service'):
+            detected_types = self.ui_interface.controller.osc_service.get_detected_address_types()
+        
+        if not detected_types:
+            self.detected_addresses_table.setRowCount(0)
+            self.detected_addresses_status_label.setText(translate("osc_address_tab.no_detected_addresses"))
+            return
+
+        # 对检测到的地址按地址排序
+        sorted_detected_types = sorted(detected_types.items(), key=lambda x: x[0])
+        
+        # 设置表格行数
+        self.detected_addresses_table.setRowCount(len(sorted_detected_types))
+
+        for row, (address, types_set) in enumerate(sorted_detected_types):
+            # OSC地址
+            address_item = QTableWidgetItem(address)
+            self.detected_addresses_table.setItem(row, 0, address_item)
+
+            # 检测到的类型
+            types_text = ", ".join(sorted([t.value for t in types_set]))
+            types_item = QTableWidgetItem(types_text)
+            self.detected_addresses_table.setItem(row, 1, types_item)
+
+        # 更新状态标签
+        if len(detected_types) > 0:
+            self.detected_addresses_status_label.setText(translate("osc_address_tab.detected_addresses_count").format(len(detected_types)))
+        else:
+            self.detected_addresses_status_label.setText(translate("osc_address_tab.no_detected_addresses"))
+
+    def update_ui_texts(self) -> None:
+        """更新UI文本"""
+        # 更新分组框标题
+        self.detected_addresses_group.setTitle(translate("osc_address_tab.detected_addresses"))
+
+        # 更新表格标题
+        self.detected_addresses_table.setHorizontalHeaderLabels([
+            translate("osc_address_tab.osc_code"),
+            translate("osc_address_tab.osc_types")
+        ])
+
+        # 更新按钮文本
+        self.refresh_detected_addresses_btn.setText(translate("osc_address_tab.refresh_detected_addresses"))
+
+        # 更新工具提示
+        self.refresh_detected_addresses_btn.setToolTip(translate("osc_address_tab.refresh_detected_addresses_tooltip"))
+
+        # 刷新表格内容
+        self.refresh_detected_addresses_table()
+
+
 class OSCAddressTab(QWidget):
-    """OSC地址管理面板 - 包含地址列表和绑定管理的标签页"""
+    """OSC地址管理面板 - 包含地址列表、绑定管理和检测类型的标签页"""
 
     def __init__(self, ui_interface: UIInterface, registries: Registries, options_provider: OSCOptionsProvider) -> None:
         super().__init__()
@@ -994,6 +1161,7 @@ class OSCAddressTab(QWidget):
         self.tab_widget: QTabWidget
         self.address_table_tab: OSCAddressTableTab
         self.binding_table_tab: OSCBindingTableTab
+        self.detected_addresses_tab: OSCDetectedAddressesTab
 
         self.init_ui()
 
@@ -1015,6 +1183,10 @@ class OSCAddressTab(QWidget):
         self.binding_table_tab = OSCBindingTableTab(self.ui_interface, self.registries, self.options_provider)
         self.tab_widget.addTab(self.binding_table_tab, translate("osc_address_tab.address_binding"))
 
+        # 检测地址标签页
+        self.detected_addresses_tab = OSCDetectedAddressesTab(self.ui_interface, self.registries, self.options_provider)
+        self.tab_widget.addTab(self.detected_addresses_tab, translate("osc_address_tab.detected_addresses"))
+
         layout.addWidget(self.tab_widget)
 
     def refresh_address_table(self) -> None:
@@ -1025,12 +1197,18 @@ class OSCAddressTab(QWidget):
         """刷新绑定表格"""
         self.binding_table_tab.refresh_binding_table()
 
+    def refresh_detected_addresses_table(self) -> None:
+        """刷新检测地址表格"""
+        self.detected_addresses_tab.refresh_detected_addresses_table()
+
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新内部标签页标题
         self.tab_widget.setTabText(0, translate("osc_address_tab.address_list"))
         self.tab_widget.setTabText(1, translate("osc_address_tab.address_binding"))
+        self.tab_widget.setTabText(2, translate("osc_address_tab.detected_addresses"))
 
         # 更新子标签页的文本
         self.address_table_tab.update_ui_texts()
         self.binding_table_tab.update_ui_texts()
+        self.detected_addresses_tab.update_ui_texts()

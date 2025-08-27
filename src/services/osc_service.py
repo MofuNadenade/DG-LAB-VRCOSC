@@ -5,12 +5,12 @@ OSC服务 - 完全封装OSC功能
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Dict, Optional, Set
 
 from pythonosc import dispatcher, osc_server, udp_client
 
 from core.core_interface import CoreInterface
-from models import ConnectionState, OSCValue
+from models import ConnectionState, OSCValue, OSCValueType
 from i18n import translate
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,9 @@ class OSCService:
         # OSC服务器配置
         self._osc_port: int = osc_port
         self._vrchat_port: int = vrchat_port
+        
+        # 用于存储检测到的每个地址的值类型
+        self._detected_address_types: Dict[str, Set[OSCValueType]] = {}
 
     async def start_service(self) -> bool:
         """
@@ -131,6 +134,13 @@ class OSCService:
             *args: OSC参数
         """
 
+        # 检测参数类型，并存储到字典中
+        for arg in args:
+            value_type: OSCValueType = self._detect_osc_value_type(arg)
+            if address not in self._detected_address_types:
+                self._detected_address_types[address] = set()
+            self._detected_address_types[address].add(value_type)
+
         # 注册到地址代码注册表
         if not self._core_interface.registries.code_registry.has_code(address):
             self._core_interface.registries.code_registry.register_code(address)
@@ -140,6 +150,44 @@ class OSCService:
         if address_obj:
             logger.debug(f"收到OSC消息: {address} 参数: {args}")
             await self._core_interface.registries.binding_registry.handle(address_obj, *args)
+
+    def _detect_osc_value_type(self, arg: OSCValue) -> OSCValueType:
+        """
+        检测OSC值的类型
+        
+        Args:
+            arg: OSC值参数
+            
+        Returns:
+            OSCValueType: 检测到的OSC值类型
+        """
+        if arg is None:
+            return OSCValueType.NONE
+        elif isinstance(arg, bool):
+            return OSCValueType.BOOL
+        elif isinstance(arg, int):
+            return OSCValueType.INT
+        elif isinstance(arg, float):
+            return OSCValueType.FLOAT
+        elif isinstance(arg, str):
+            return OSCValueType.STRING
+        elif isinstance(arg, bytes):
+            return OSCValueType.BYTES
+        elif isinstance(arg, list):
+            return OSCValueType.LIST
+        elif len(arg) == 4:
+            return OSCValueType.MIDI_PACKET
+        elif len(arg) == 2:
+            return OSCValueType.TIME_TAG
+
+    def get_detected_address_types(self) -> Dict[str, set[OSCValueType]]:
+        """
+        获取检测到的OSC地址参数类型信息的摘要
+
+        Returns:
+            Dict[str, set[OSCValueType]]: 地址到类型集合的映射
+        """
+        return self._detected_address_types
 
     # ============ VRChat通信方法 ============
 
