@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Optional, List, Callable, Awaitable
+from typing import Optional, List
 
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QMainWindow, QTabWidget
@@ -8,7 +8,6 @@ from PySide6.QtWidgets import QMainWindow, QTabWidget
 from config import default_load_settings, save_settings
 from core import OSCActionType, OSCOptionsProvider
 from core.dglab_controller import DGLabController
-from core.osc_common import OSCActionCallback
 from core.registries import Registries
 from gui.about_tab import AboutTab
 from gui.controller_settings_tab import ControllerSettingsTab
@@ -257,111 +256,123 @@ class MainWindow(QMainWindow):
         chatbox_service = self.controller.chatbox_service
 
         # 注册通道控制操作
+        async def set_float_output_channel_a(*args: OSCValue) -> None:
+            if isinstance(args[0], float):
+                await dglab_service.set_float_output(args[0], Channel.A)
         self.registries.action_registry.register_action(
             "A通道触碰",
-            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.A)),
+            set_float_output_channel_a,
             OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"}
         )
 
+        async def set_float_output_channel_b(*args: OSCValue) -> None:
+            if isinstance(args[0], float):
+                await dglab_service.set_float_output(args[0], Channel.B)
         self.registries.action_registry.register_action(
             "B通道触碰",
-            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(args[0], Channel.B)),
+            set_float_output_channel_b,
             OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"}
         )
 
+        async def set_float_output_channel_current(*args: OSCValue) -> None:
+            if isinstance(args[0], float):
+                await dglab_service.set_float_output(args[0], dglab_service.get_current_channel())
         self.registries.action_registry.register_action(
             "当前通道触碰",
-            self._create_async_wrapper(lambda *args: dglab_service.set_float_output(
-                args[0], dglab_service.get_current_channel()
-            )),
+            set_float_output_channel_current,
             OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"}
         )
 
         # 注册面板控制操作
+        async def set_panel_control(*args: OSCValue) -> None:
+            if isinstance(args[0], float):
+                await dglab_service.set_panel_control(args[0])
         self.registries.action_registry.register_action(
             "面板控制",
-            self._create_async_wrapper(lambda *args: dglab_service.set_panel_control(args[0])),
+            set_panel_control,
             OSCActionType.PANEL_CONTROL, {"panel"}
         )
 
+        async def set_strength_step(*args: OSCValue) -> None:
+            if isinstance(args[0], float):
+                await dglab_service.set_strength_step(args[0])
         self.registries.action_registry.register_action(
             "数值调节",
-            self._create_async_wrapper(lambda *args: dglab_service.set_strength_step(args[0])),
+            set_strength_step,
             OSCActionType.PANEL_CONTROL, {"value_adjust"}
         )
 
-        async def set_channel_wrapper(*args: OSCValue) -> None:
+        async def set_channel(*args: OSCValue) -> None:
             if isinstance(args[0], (int, float)):
                 await dglab_service.set_channel(args[0])
-
         self.registries.action_registry.register_action(
             "通道调节",
-            set_channel_wrapper,
+            set_channel,
             OSCActionType.PANEL_CONTROL, {"channel_adjust"}
         )
 
         # 注册强度控制操作
+        async def set_mode(*args: OSCValue) -> None:
+            if isinstance(args[0], int):
+                await dglab_service.set_mode(args[0], dglab_service.get_current_channel())
         self.registries.action_registry.register_action(
             "设置模式",
-            self._create_async_wrapper(lambda *args: dglab_service.set_mode(
-                args[0], dglab_service.get_current_channel()
-            )),
+            set_mode,
             OSCActionType.STRENGTH_CONTROL, {"mode"}
         )
 
+        async def reset_strength(*args: OSCValue) -> None:
+            if isinstance(args[0], bool):
+                await dglab_service.reset_strength(args[0], dglab_service.get_current_channel())
         self.registries.action_registry.register_action(
             "重置强度",
-            self._create_async_wrapper(lambda *args: dglab_service.reset_strength(
-                args[0], dglab_service.get_current_channel()
-            )),
+            reset_strength,
             OSCActionType.STRENGTH_CONTROL, {"reset"}
         )
 
+        async def decrease_strength(*args: OSCValue) -> None:
+            if isinstance(args[0], bool):
+                await dglab_service.decrease_strength(args[0], dglab_service.get_current_channel())
         self.registries.action_registry.register_action(
             "降低强度",
-            self._create_async_wrapper(lambda *args: dglab_service.decrease_strength(
-                args[0], dglab_service.get_current_channel()
-            )),
+            decrease_strength,
             OSCActionType.STRENGTH_CONTROL, {"decrease"}
         )
 
+        async def increase_strength(*args: OSCValue) -> None:
+            if isinstance(args[0], bool):
+                await dglab_service.increase_strength(args[0], dglab_service.get_current_channel())
         self.registries.action_registry.register_action(
             "增加强度",
-            self._create_async_wrapper(lambda *args: dglab_service.increase_strength(
-                args[0], dglab_service.get_current_channel()
-            )),
+            increase_strength,
             OSCActionType.STRENGTH_CONTROL, {"increase"}
         )
 
+        async def strength_fire_mode(*args: OSCValue) -> None:
+            if isinstance(args[0], bool):
+                await dglab_service.strength_fire_mode(
+                    args[0],
+                    dglab_service.get_current_channel(),
+                    dglab_service.fire_mode_strength_step,
+                    dglab_service.get_last_strength()
+                )
         self.registries.action_registry.register_action(
             "一键开火",
-            self._create_async_wrapper(lambda *args: dglab_service.strength_fire_mode(
-                args[0],
-                dglab_service.get_current_channel(),
-                dglab_service.fire_mode_strength_step,
-                dglab_service.get_last_strength()
-            )),
+            strength_fire_mode,
             OSCActionType.STRENGTH_CONTROL, {"fire"}
         )
 
         # 注册ChatBox控制操作
+        async def toggle_chatbox(*args: OSCValue) -> None:
+            if isinstance(args[0], int):
+                await chatbox_service.toggle_chatbox(args[0])
         self.registries.action_registry.register_action(
             "ChatBox状态开关",
-            self._create_async_wrapper(lambda *args: chatbox_service.toggle_chatbox(args[0])),
+            toggle_chatbox,
             OSCActionType.CHATBOX_CONTROL, {"toggle"}
         )
 
         logger.info("基础OSC动作注册完成")
-
-    def _create_async_wrapper(self, func: Callable[..., Awaitable[None]]) -> OSCActionCallback:
-        """创建异步包装器"""
-        async def wrapper(*args: OSCValue) -> None:
-            try:
-                await func(*args)
-            except Exception as e:
-                logger.error(f"OSC动作执行失败: {e}")
-
-        return wrapper
 
     def _register_pulse_actions(self) -> None:
         """为控制器注册脉冲OSC操作"""
@@ -374,12 +385,11 @@ class MainWindow(QMainWindow):
             dglab_service = self.controller.dglab_service
             pulse_index = pulse.index
 
+            async def set_pulse_data(*args: OSCValue) -> None:
+                await dglab_service.set_pulse_data(dglab_service.get_current_channel(), pulse_index)
             self.registries.action_registry.register_action(
                 translate("main.action.set_pulse").format(pulse.name),
-                self._create_async_wrapper(lambda *args: dglab_service.set_pulse_data(
-                    dglab_service.get_current_channel(),
-                    pulse_index
-                )),
+                set_pulse_data,
                 OSCActionType.PULSE_CONTROL, {"pulse"})
 
         # 更新波形下拉框

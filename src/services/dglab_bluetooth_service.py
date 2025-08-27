@@ -8,9 +8,7 @@ import asyncio
 from typing import Optional, List, Union, Dict
 import logging
 
-# 使用正确的pydglab导入
-import pydglab
-from pydglab import model_v3
+from pydglab import model_v3, dglab_v3, bthandler_v3
 
 # 导入新的类型定义
 from core.core_interface import CoreInterface
@@ -19,50 +17,52 @@ from core.dglab_pulse import Pulse
 
 logger = logging.getLogger(__name__)
 
-
-class BluetoothChannelPulseTask:
-    """蓝牙通道脉冲任务实现"""
-    
-    def __init__(self, channel: Channel, bluetooth_service: 'DGLabBluetoothService') -> None:
-        super().__init__()
-        self.channel = channel
-        self.bluetooth_service = bluetooth_service
-        self.task: Optional[asyncio.Task[None]] = None
-        self._current_pulse: Optional[Pulse] = None
-        self._current_pulse_data: List[PulseOperation] = []
-        logger.info(f"蓝牙脉冲任务初始化 - 通道: {channel}")
-    
-    def set_pulse(self, pulse: Pulse) -> None:
-        """设置脉冲波形"""
-        self._current_pulse = pulse
-        if pulse and pulse.data:
-            self.set_pulse_data(pulse.data)
-        logger.info(f"蓝牙设置脉冲波形: {pulse.name if pulse else 'None'}")
-    
-    def set_pulse_data(self, data: List[PulseOperation]) -> None:
-        """设置脉冲数据"""
-        self._current_pulse_data = data.copy()
-        # 异步更新到蓝牙设备
-        asyncio.create_task(self.update_device_pulse_data())
-        logger.info(f"蓝牙设置脉冲数据: {len(data)}个操作")
-    
-    async def update_device_pulse_data(self) -> None:
-        """更新设备脉冲数据"""
-        if self.bluetooth_service.is_connected() and self._current_pulse_data:
-            try:
-                await self.bluetooth_service.send_pulse_data(self.channel, self._current_pulse_data)
-            except Exception as e:
-                logger.error(f"更新蓝牙设备脉冲数据失败: {e}")
-
-
 class DGLabBluetoothService:
-    """DG-LAB蓝牙直连服务"""
-    
+    """DG-LAB蓝牙直连服务
+
+    基于pydglab库实现的蓝牙直连设备服务，实现IDGLabService接口。
+    """
+
+    class _ChannelPulseTask:
+        """蓝牙通道脉冲任务实现"""
+        
+        def __init__(self, bluetooth_service: 'DGLabBluetoothService', dglab_instance: dglab_v3, channel: Channel) -> None:
+            super().__init__()
+            self.bluetooth_service = bluetooth_service
+            self.dglab_instance = dglab_instance
+            self.channel = channel
+            self.task: Optional[asyncio.Task[None]] = None
+            self._current_pulse: Optional[Pulse] = None
+            self._current_pulse_data: List[PulseOperation] = []
+            logger.info(f"蓝牙脉冲任务初始化 - 通道: {channel}")
+        
+        def set_pulse(self, pulse: Pulse) -> None:
+            """设置脉冲波形"""
+            self._current_pulse = pulse
+            if pulse and pulse.data:
+                self.set_pulse_data(pulse.data)
+            logger.info(f"蓝牙设置脉冲波形: {pulse.name if pulse else 'None'}")
+        
+        def set_pulse_data(self, data: List[PulseOperation]) -> None:
+            """设置脉冲数据"""
+            self._current_pulse_data = data.copy()
+            # 异步更新到蓝牙设备
+            asyncio.create_task(self.update_device_pulse_data())
+            logger.info(f"蓝牙设置脉冲数据: {len(data)}个操作")
+        
+        async def update_device_pulse_data(self) -> None:
+            """更新设备脉冲数据"""
+            if self.bluetooth_service.is_connected() and self._current_pulse_data:
+                try:
+                    await self.bluetooth_service.send_pulse_data(self.channel, self._current_pulse_data)
+                except Exception as e:
+                    logger.error(f"更新蓝牙设备脉冲数据失败: {e}")
+
     def __init__(self, core_interface: CoreInterface) -> None:
         """初始化蓝牙服务"""
         super().__init__()
         self._core_interface: CoreInterface = core_interface
-        self._dglab_instance: Optional['pydglab.dglab_v3'] = None
+        self._dglab_instance: Optional[dglab_v3] = None
         self._is_connected: bool = False
         self._last_strength: Optional[StrengthData] = None
         self._current_channel: Channel = Channel.A
@@ -81,14 +81,13 @@ class DGLabBluetoothService:
         self._frequency_coefficient: int = 100  # 频率系数
         
         # 通道脉冲任务
-        self._channel_pulse_tasks: Dict[Channel, BluetoothChannelPulseTask] = {}
+        self._channel_pulse_tasks: Dict[Channel, DGLabBluetoothService._ChannelPulseTask] = {}
         
         # 动态骨骼状态
         self._dynamic_bone_modes: Dict[Channel, bool] = {Channel.A: False, Channel.B: False}
         
         # 当前强度缓存
-        self._current_strength_a: int = 0
-        self._current_strength_b: int = 0
+        self._current_strengths: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
         
         # 服务器状态
         self._server_running: bool = False
@@ -162,10 +161,10 @@ class DGLabBluetoothService:
             logger.info("开始扫描DG-LAB蓝牙设备...")
             
             # 扫描设备
-            await pydglab.scan()
+            await bthandler_v3.scan()
             
             # 创建dglab_v3实例
-            self._dglab_instance = pydglab.dglab_v3()
+            self._dglab_instance = dglab_v3()
             
             # 尝试连接设备
             try:
@@ -354,69 +353,54 @@ class DGLabBluetoothService:
     
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度"""
-        if not self.is_connected():
-            logger.warning("设备未连接，无法调整强度")
-            return
-        
-        try:
-            current_strength: int = self._current_strength_a if channel == Channel.A else self._current_strength_b
+        if self._dglab_instance:
+            current_strength: int = self._current_strengths[channel]
             target_strength: int
-            
+
             if operation_type == StrengthOperationType.SET_TO:
                 target_strength = value
             elif operation_type == StrengthOperationType.INCREASE:
                 target_strength = current_strength + value
             elif operation_type == StrengthOperationType.DECREASE:
                 target_strength = current_strength - value
-            
+
             # 限制强度范围
             target_strength = max(0, min(self._strength_limit, target_strength))
-            
+
             # 更新内部状态
-            if channel == Channel.A:
-                self._current_strength_a = target_strength
-            else:
-                self._current_strength_b = target_strength
-            
+            self._current_strengths[channel] = target_strength
+
             # 同步设置两个通道的强度
             if self._dglab_instance:
-                await self._dglab_instance.set_strength_sync(self._current_strength_a, self._current_strength_b)
-            
+                await self._dglab_instance.set_strength_sync(self._current_strengths[Channel.A], self._current_strengths[Channel.B])
+
             # 更新强度数据
             self._last_strength = StrengthData(
-                a=self._current_strength_a, 
-                b=self._current_strength_b,
+                a=self._current_strengths[Channel.A],
+                b=self._current_strengths[Channel.B],
                 a_limit=self._strength_limit,
                 b_limit=self._strength_limit
             )
-            
+
             # 通知UI更新
             if self._core_interface:
                 self._core_interface.update_status(self._last_strength)
-            
-            logger.info(f"蓝牙调整通道{channel}强度为: {target_strength}")
-            
-        except Exception as e:
-            logger.error(f"蓝牙调整强度失败: {e}")
     
     async def reset_strength(self, value: bool, channel: Channel) -> None:
-        """重置通道强度"""
-        if value:
+        """重置通道强度为0"""
+        if value and self._dglab_instance:
             await self.adjust_strength(StrengthOperationType.SET_TO, 0, channel)
-            logger.info(f"蓝牙重置通道{channel}强度为0")
-    
+
     async def increase_strength(self, value: bool, channel: Channel) -> None:
-        """增大强度, 固定 1"""
-        if value:
+        """增加通道强度"""
+        if value and self._dglab_instance:
             await self.adjust_strength(StrengthOperationType.INCREASE, 1, channel)
-            logger.info(f"蓝牙增大通道{channel}强度")
-    
+
     async def decrease_strength(self, value: bool, channel: Channel) -> None:
-        """减小强度, 固定 1"""
-        if value:
+        """减少通道强度"""
+        if value and self._dglab_instance:
             await self.adjust_strength(StrengthOperationType.DECREASE, 1, channel)
-            logger.info(f"蓝牙减小通道{channel}强度")
-    
+
     # ==================== 波形控制接口 ====================
     
     async def update_pulse_data(self) -> None:
@@ -485,7 +469,7 @@ class DGLabBluetoothService:
         """开火模式强度控制"""
         if value and not self._fire_mode_disabled:
             # 计算目标强度
-            current_strength = self._current_strength_a if channel == Channel.A else self._current_strength_b
+            current_strength = self._current_strengths[channel]
             target_strength = min(current_strength + fire_strength, self._strength_limit)
             await self.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
             logger.info(f"蓝牙开火模式: 通道{channel}强度设置为{target_strength}")
@@ -497,8 +481,8 @@ class DGLabBluetoothService:
     def update_strength_data(self, strength_data: StrengthData) -> None:
         """更新强度数据"""
         self._last_strength = strength_data
-        self._current_strength_a = strength_data.a
-        self._current_strength_b = strength_data.b
+        self._current_strengths[Channel.A] = strength_data.a
+        self._current_strengths[Channel.B] = strength_data.b
         
         # 通知UI更新
         if self._core_interface:
@@ -536,8 +520,8 @@ class DGLabBluetoothService:
             
             # 获取当前强度
             strength_a, strength_b = await self._dglab_instance.get_strength()
-            self._current_strength_a = strength_a
-            self._current_strength_b = strength_b
+            self._current_strengths[Channel.A] = strength_a
+            self._current_strengths[Channel.B] = strength_b
             
             # 更新强度数据
             self._last_strength = StrengthData(
@@ -557,9 +541,6 @@ class DGLabBluetoothService:
     
     async def send_pulse_data(self, channel: Channel, data: List[PulseOperation]) -> None:
         """发送脉冲数据到设备"""
-        if not self.is_connected() or not data:
-            return
-        
         try:
             # 将PulseOperation转换为pydglab的波形格式
             wave_set = self._convert_pulse_operations_to_wave_set(data)
@@ -615,10 +596,10 @@ class DGLabBluetoothService:
 
     def _update_channel_pulse_tasks(self) -> None:
         """更新通道波形任务（当连接状态变化时）"""
-        if self.is_connected():
+        if self._dglab_instance:
             self._channel_pulse_tasks = {
-                Channel.A: BluetoothChannelPulseTask(Channel.A, self),
-                Channel.B: BluetoothChannelPulseTask(Channel.B, self)
+                Channel.A: DGLabBluetoothService._ChannelPulseTask(self, self._dglab_instance, Channel.A),
+                Channel.B: DGLabBluetoothService._ChannelPulseTask(self, self._dglab_instance, Channel.B)
             }
             logger.debug("通道波形任务已初始化")
         else:

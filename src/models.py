@@ -5,7 +5,7 @@
 """
 from datetime import datetime
 from enum import Enum, IntEnum
-from typing import Literal, Tuple, Union, Dict, List, TypedDict
+from typing import Tuple, Union, Dict, List, TypedDict
 
 from pydantic import BaseModel
 
@@ -153,7 +153,7 @@ class StrengthData(BaseModel):
 MidiPacket = Tuple[int, int, int, int]
 """MIDI消息包类型 - (port_id, status_byte, data1, data2)"""
 
-OSCValue = Union[int, float, str, bool, bytes, None, Literal[True], Literal[False], MidiPacket, Tuple[datetime, int], List['OSCValue']]
+OSCValue = Union[int, float, str, bool, bytes, None, MidiPacket, Tuple[datetime, int], List['OSCValue']]
 """OSC 消息参数类型 - 支持所有OSC协议类型："""
 
 
