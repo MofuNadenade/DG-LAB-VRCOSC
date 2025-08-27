@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class AddAddressDialog(QDialog):
     """添加OSC地址的对话框"""
 
-    def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: Optional[QWidget], options_provider: OSCOptionsProvider) -> None:
         super().__init__(parent)
         self.options_provider = options_provider
 
@@ -32,7 +32,7 @@ class AddAddressDialog(QDialog):
 
         self.setWindowTitle(translate("osc_address_tab.add_address"))
         self.setModal(True)
-        self.resize(450, 250)
+        self.resize(450, 200)
 
         # 设置对话框样式
         self.setStyleSheet("""
@@ -163,7 +163,7 @@ class OSCAddressTableTab(QWidget):
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)  # 名称列拉伸
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 代码列拉伸
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)  # 状态列固定宽度
-        header.resizeSection(2, 80)  # 状态列宽度80px
+        header.resizeSection(2, 100)  # 状态列宽度100px
 
         self.address_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.address_table.setAlternatingRowColors(True)
@@ -187,9 +187,10 @@ class OSCAddressTableTab(QWidget):
         self.status_label = QLabel(translate("osc_address_tab.total_addresses").format(0))
         self.status_label.setStyleSheet("""
             QLabel {
-                color: #666666;
+                color: #2e7d32;
                 font-size: 12px;
                 padding: 5px;
+                font-weight: bold;
             }
         """)
         layout.addWidget(self.status_label)
@@ -312,6 +313,42 @@ class OSCAddressTableTab(QWidget):
         self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
         logger.info(f"Refreshed address table with {total_count} addresses from registries")
 
+    def save_addresses(self) -> None:
+        """保存地址到registries - 将address_table数据更新到registries"""
+        try:
+            # 清空registries中的地址
+            self.registries.address_registry.clear_addresses()
+
+            # 从表格中获取所有地址并注册到registries
+            for row in range(self.address_table.rowCount()):
+                name_item = self.address_table.item(row, 0)
+                code_item = self.address_table.item(row, 1)
+
+                if name_item and code_item:
+                    name = name_item.text().strip()
+                    code = code_item.text().strip()
+
+                    if name and code:  # 确保名称和代码都不为空
+                        self.registries.address_registry.register_address(name, code)
+
+            # 导出所有地址
+            all_addresses = self.registries.address_registry.export_to_config()
+
+            # 更新settings
+            self.ui_interface.settings['addresses'] = all_addresses
+
+            # 保存到文件
+            self.ui_interface.save_settings()
+            logger.info(f"Saved {len(all_addresses)} addresses from table to registries and config")
+
+            # 显示成功消息
+            QMessageBox.information(self, translate("osc_address_tab.success"),
+                                    translate("osc_address_tab.addresses_saved").format(len(all_addresses)))
+        except Exception as e:
+            logger.error(f"Failed to save addresses: {e}")
+            QMessageBox.critical(self, translate("osc_address_tab.error"),
+                                 translate("osc_address_tab.save_addresses_failed").format(str(e)))
+
     def update_address(self, row: int, addr: OSCAddress) -> None:
         """更新表格中的地址行"""
         # 地址名
@@ -331,7 +368,7 @@ class OSCAddressTableTab(QWidget):
 
     def add_address(self) -> None:
         """添加新地址 - 直接添加到address_table"""
-        dialog = AddAddressDialog(self.options_provider, self)
+        dialog = AddAddressDialog(self, self.options_provider)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             if dialog.validate_input():
                 name, code = dialog.get_address_data()
@@ -413,42 +450,6 @@ class OSCAddressTableTab(QWidget):
             except Exception as e:
                 QMessageBox.critical(self, translate("osc_address_tab.error"),
                                      f"Failed to delete address: {str(e)}")
-
-    def save_addresses(self) -> None:
-        """保存地址到registries - 将address_table数据更新到registries"""
-        try:
-            # 清空registries中的地址
-            self.registries.address_registry.clear_addresses()
-
-            # 从表格中获取所有地址并注册到registries
-            for row in range(self.address_table.rowCount()):
-                name_item = self.address_table.item(row, 0)
-                code_item = self.address_table.item(row, 1)
-
-                if name_item and code_item:
-                    name = name_item.text().strip()
-                    code = code_item.text().strip()
-
-                    if name and code:  # 确保名称和代码都不为空
-                        self.registries.address_registry.register_address(name, code)
-
-            # 导出所有地址
-            all_addresses = self.registries.address_registry.export_to_config()
-
-            # 更新settings
-            self.ui_interface.settings['addresses'] = all_addresses
-
-            # 保存到文件
-            self.ui_interface.save_settings()
-            logger.info(f"Saved {len(all_addresses)} addresses from table to registries and config")
-
-            # 显示成功消息
-            QMessageBox.information(self, translate("osc_address_tab.success"),
-                                    translate("osc_address_tab.addresses_saved").format(len(all_addresses)))
-        except Exception as e:
-            logger.error(f"Failed to save addresses: {e}")
-            QMessageBox.critical(self, translate("osc_address_tab.error"),
-                                 translate("osc_address_tab.save_addresses_failed").format(str(e)))
 
     def has_address_name_in_table(self, name: str) -> bool:
         """检查表格中是否已存在相同名称的地址"""

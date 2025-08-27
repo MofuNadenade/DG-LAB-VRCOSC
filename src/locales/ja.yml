@@ -290,7 +290,7 @@ about_tab:
 
 osc_address_tab:
   address_list: "アドレスリスト"
-  address_binding: "アドレスバインディング"
+  binding_list: "バインディングリスト"
   address_name: "アドレス名"
   address_name_label: "アドレス名:"
   osc_code: "OSCアドレス"

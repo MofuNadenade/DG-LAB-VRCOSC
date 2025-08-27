@@ -290,7 +290,7 @@ about_tab:
 
 osc_address_tab:
   address_list: "Address List"
-  address_binding: "Address Binding"
+  binding_list: "Binding List"
   address_name: "Address Name"
   address_name_label: "Address Name:"
   osc_code: "OSC Address"

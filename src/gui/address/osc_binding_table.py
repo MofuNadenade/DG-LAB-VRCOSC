@@ -105,7 +105,7 @@ class OSCBindingTableTab(QWidget):
         self.refresh_btn: QPushButton
         self.save_config_btn: QPushButton
         self.binding_status_label: QLabel
-        self.address_binding_group: QGroupBox
+        self.binding_list_group: QGroupBox
 
         self.init_ui()
 
@@ -123,16 +123,16 @@ class OSCBindingTableTab(QWidget):
         """初始化UI"""
         layout = QVBoxLayout(self)
 
-        # 地址绑定组
-        self.create_address_binding_group(layout)
+        # 绑定列表组
+        self.create_binding_list_group(layout)
 
         # 操作按钮组
         self.create_action_buttons_group(layout)
 
-    def create_address_binding_group(self, parent_layout: QVBoxLayout) -> None:
-        """创建地址绑定组"""
-        self.address_binding_group = QGroupBox(translate("osc_address_tab.address_binding"))
-        group = self.address_binding_group
+    def create_binding_list_group(self, parent_layout: QVBoxLayout) -> None:
+        """创建绑定列表组"""
+        self.binding_list_group = QGroupBox(translate("osc_address_tab.binding_list"))
+        group = self.binding_list_group
         layout = QVBoxLayout(group)
 
         # 绑定表格
@@ -259,7 +259,7 @@ class OSCBindingTableTab(QWidget):
 
         # 保存配置按钮
         self.save_config_btn = QPushButton(translate("osc_address_tab.save_config"))
-        self.save_config_btn.clicked.connect(self.save_config)
+        self.save_config_btn.clicked.connect(self.save_bindings)
         self.save_config_btn.setStyleSheet("""
             QPushButton {
                 background-color: #FF9800;
@@ -331,6 +331,47 @@ class OSCBindingTableTab(QWidget):
             """)
 
         logger.info(f"Refreshed binding table with {total_count} bindings from registries")
+
+    def save_bindings(self) -> None:
+        """保存配置到registries - 将binding_table数据更新到registries"""
+        try:
+            # 清空registries中的绑定
+            self.registries.binding_registry.clear_bindings()
+
+            # 从表格中获取所有绑定并注册到registries
+            for row in range(self.binding_table.rowCount()):
+                address_name_item = self.binding_table.item(row, 0)
+                action_name_item = self.binding_table.item(row, 1)
+
+                if address_name_item and action_name_item:
+                    address_name = address_name_item.text().strip()
+                    action_name = action_name_item.text().strip()
+
+                    if address_name and action_name:  # 确保名称都不为空
+                        # 获取地址和动作对象
+                        address = self.registries.address_registry.get_address_by_name(address_name)
+                        action = self.registries.action_registry.get_action_by_name(action_name)
+
+                        if address and action:
+                            self.registries.binding_registry.register_binding(address, action)
+
+            # 导出所有绑定
+            all_bindings = self.registries.binding_registry.export_to_config()
+
+            # 更新settings
+            self.ui_interface.settings['bindings'] = all_bindings
+
+            # 保存到文件
+            self.ui_interface.save_settings()
+            logger.info(f"Saved {len(all_bindings)} bindings from table to registries and config")
+
+            # 显示成功消息
+            QMessageBox.information(self, translate("osc_address_tab.success"),
+                                    translate("osc_address_tab.config_saved"))
+        except Exception as e:
+            logger.error(f"Failed to save bindings: {e}")
+            QMessageBox.critical(self, translate("osc_address_tab.error"),
+                                 translate("osc_address_tab.save_config_failed").format(str(e)))
 
     def update_binding(self, row: int, addr: OSCAddress, action: OSCAction) -> None:
         """更新表格中的绑定行"""
@@ -414,47 +455,6 @@ class OSCBindingTableTab(QWidget):
             return False, f"动作'{action.name}'不存在于注册表中"
 
         return True, ""
-
-    def save_config(self) -> None:
-        """保存配置到registries - 将binding_table数据更新到registries"""
-        try:
-            # 清空registries中的绑定
-            self.registries.binding_registry.clear_bindings()
-
-            # 从表格中获取所有绑定并注册到registries
-            for row in range(self.binding_table.rowCount()):
-                address_name_item = self.binding_table.item(row, 0)
-                action_name_item = self.binding_table.item(row, 1)
-
-                if address_name_item and action_name_item:
-                    address_name = address_name_item.text().strip()
-                    action_name = action_name_item.text().strip()
-
-                    if address_name and action_name:  # 确保名称都不为空
-                        # 获取地址和动作对象
-                        address = self.registries.address_registry.get_address_by_name(address_name)
-                        action = self.registries.action_registry.get_action_by_name(action_name)
-
-                        if address and action:
-                            self.registries.binding_registry.register_binding(address, action)
-
-            # 导出所有绑定
-            all_bindings = self.registries.binding_registry.export_to_config()
-
-            # 更新settings
-            self.ui_interface.settings['bindings'] = all_bindings
-
-            # 保存到文件
-            self.ui_interface.save_settings()
-            logger.info(f"Saved {len(all_bindings)} bindings from table to registries and config")
-
-            # 显示成功消息
-            QMessageBox.information(self, translate("osc_address_tab.success"),
-                                    translate("osc_address_tab.config_saved"))
-        except Exception as e:
-            logger.error(f"Failed to save bindings: {e}")
-            QMessageBox.critical(self, translate("osc_address_tab.error"),
-                                 translate("osc_address_tab.save_config_failed").format(str(e)))
 
     def add_binding(self) -> None:
         """添加新的地址绑定 - 直接添加到binding_table"""
@@ -632,7 +632,7 @@ class OSCBindingTableTab(QWidget):
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新分组框标题
-        self.address_binding_group.setTitle(translate("osc_address_tab.address_binding"))
+        self.binding_list_group.setTitle(translate("osc_address_tab.binding_list"))
 
         # 更新表格标题
         self.binding_table.setHorizontalHeaderLabels([

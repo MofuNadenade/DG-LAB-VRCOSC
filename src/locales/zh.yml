@@ -290,7 +290,7 @@ about_tab:
 
 osc_address_tab:
   address_list: "地址列表"
-  address_binding: "地址绑定"
+  binding_list: "绑定列表"
   address_name: "地址名称"
   address_name_label: "地址名称:"
   osc_code: "OSC地址"
