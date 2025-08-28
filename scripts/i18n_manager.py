@@ -52,8 +52,8 @@ def extract_keys_from_file(file_path: str) -> Set[str]:
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-            # 匹配 _("key") 和 _('key') 模式
-            pattern = r'_\(["\']([^"\']+)["\']\)'
+            # 匹配 translate("key") 和 translate('key') 模式
+            pattern = r'translate\(["\']([^"\']+)["\']\)'
             matches = re.findall(pattern, content)
             keys.update(matches)
     except Exception as e:
