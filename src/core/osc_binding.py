@@ -178,3 +178,55 @@ class OSCBindingRegistry:
                 return False
 
         return True
+
+    def update_binding_address(self, binding_id: int, new_address: OSCAddress) -> bool:
+        """通过ID更新绑定的地址
+        
+        Args:
+            binding_id: 要更新的绑定ID
+            new_address: 新的地址对象
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        binding = self._bindings_by_id.get(binding_id)
+        if not binding:
+            return False
+            
+        old_address = binding.address
+        binding.address = new_address
+        
+        # 更新地址索引
+        self._bindings_by_address.pop(old_address, None)
+        self._bindings_by_address[new_address] = binding
+        
+        return True
+
+    def update_binding_action(self, binding_id: int, new_action: OSCAction) -> bool:
+        """通过ID更新绑定的动作
+        
+        Args:
+            binding_id: 要更新的绑定ID
+            new_action: 新的动作对象
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        binding = self._bindings_by_id.get(binding_id)
+        if not binding:
+            return False
+            
+        old_action = binding.action
+        binding.action = new_action
+        
+        # 更新动作索引
+        if old_action in self._bindings_by_action:
+            self._bindings_by_action[old_action].remove(binding)
+            if not self._bindings_by_action[old_action]:
+                del self._bindings_by_action[old_action]
+        
+        if new_action not in self._bindings_by_action:
+            self._bindings_by_action[new_action] = []
+        self._bindings_by_action[new_action].append(binding)
+        
+        return True

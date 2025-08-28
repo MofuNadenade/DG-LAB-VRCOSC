@@ -167,3 +167,83 @@ class OSCActionRegistry:
             if action.tags.intersection(tags):
                 matching_actions.append(action)
         return matching_actions
+
+    def update_action_name(self, action_id: int, new_name: str) -> bool:
+        """通过ID更新动作名称
+        
+        Args:
+            action_id: 要更新的动作ID
+            new_name: 新的动作名称
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        action = self._actions_by_id.get(action_id)
+        if not action:
+            return False
+            
+        old_name = action.name
+        action.name = new_name.strip()
+        
+        # 更新名称索引
+        self._actions_by_name.pop(old_name, None)
+        self._actions_by_name[action.name] = action
+        
+        return True
+
+    def update_action_callback(self, action_id: int, new_callback: OSCActionCallback) -> bool:
+        """通过ID更新动作回调函数
+        
+        Args:
+            action_id: 要更新的动作ID
+            new_callback: 新的回调函数
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        action = self._actions_by_id.get(action_id)
+        if not action:
+            return False
+            
+        action.callback = new_callback
+        return True
+
+    def update_action_type(self, action_id: int, new_type: OSCActionType) -> bool:
+        """通过ID更新动作类型
+        
+        Args:
+            action_id: 要更新的动作ID
+            new_type: 新的动作类型
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        action = self._actions_by_id.get(action_id)
+        if not action:
+            return False
+            
+        old_type = action.action_type
+        action.action_type = new_type
+        
+        # 更新类型索引
+        self._actions_by_type[old_type].remove(action)
+        self._actions_by_type[new_type].append(action)
+        
+        return True
+
+    def update_action_tags(self, action_id: int, new_tags: Set[str]) -> bool:
+        """通过ID更新动作标签
+        
+        Args:
+            action_id: 要更新的动作ID
+            new_tags: 新的标签集合
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        action = self._actions_by_id.get(action_id)
+        if not action:
+            return False
+            
+        action.tags = new_tags or set()
+        return True

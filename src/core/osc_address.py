@@ -174,3 +174,49 @@ class OSCAddressRegistry:
     def export_to_config(self) -> List[OSCAddressDict]:
         """导出所有地址到配置格式"""
         return [{'name': addr.name, 'code': addr.code} for addr in self._addresses]
+
+    def update_address_name(self, address_id: int, new_name: str) -> bool:
+        """通过ID更新地址名称
+        
+        Args:
+            address_id: 要更新的地址ID
+            new_name: 新的地址名称
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        address = self._addresses_by_id.get(address_id)
+        if not address:
+            return False
+            
+        old_name = address.name
+        address.name = new_name.strip()
+        
+        # 更新名称索引
+        self._addresses_by_name.pop(old_name, None)
+        self._addresses_by_name[address.name] = address
+        
+        return True
+
+    def update_address_code(self, address_id: int, new_code: str) -> bool:
+        """通过ID更新地址代码
+        
+        Args:
+            address_id: 要更新的地址ID
+            new_code: 新的地址代码
+            
+        Returns:
+            bool: 更新成功返回True，如果ID不存在返回False
+        """
+        address = self._addresses_by_id.get(address_id)
+        if not address:
+            return False
+            
+        old_code = address.code
+        address.code = new_code.strip()
+        
+        # 更新代码索引
+        self._addresses_by_code.pop(old_code, None)
+        self._addresses_by_code[address.code] = address
+        
+        return True
