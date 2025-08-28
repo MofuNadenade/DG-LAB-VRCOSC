@@ -1,12 +1,12 @@
 import logging
-from typing import Optional, List
+from typing import Optional, List, Any, Union
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QModelIndex, QPersistentModelIndex
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QPushButton, QGroupBox, QFormLayout, QLabel,
-    QHeaderView, QMessageBox, QDialog, QDialogButtonBox, QComboBox
+    QHeaderView, QMessageBox, QDialog, QDialogButtonBox, QComboBox, QStyledItemDelegate
 )
 
 from core import OSCOptionsProvider
@@ -14,7 +14,7 @@ from core.osc_common import OSCAction, OSCAddress, OSCBinding
 from core.registries import Registries
 from i18n import translate, language_signals
 from ..ui_interface import UIInterface
-from ..widgets import OSCBindingTableDelegate, EditableComboBox
+from ..widgets import EditableComboBox
 
 logger = logging.getLogger(__name__)
 
@@ -787,3 +787,47 @@ class OSCBindingTableTab(QWidget):
 
         # 刷新表格内容以更新状态列
         self.refresh_binding_table()
+
+
+class OSCBindingTableDelegate(QStyledItemDelegate):
+    """OSC地址绑定表格的自定义代理 - 只允许选择预定义选项"""
+
+    def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self.options_provider = options_provider
+
+    def createEditor(self, parent: QWidget, option: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> QWidget:
+        """创建编辑器"""
+        column = index.column()
+
+        if column == 1:  # 地址名称列 - 只能选择预定义地址
+            options = self.options_provider.get_address_name_options()
+            return EditableComboBox(options, parent, allow_manual_input=False)
+        elif column == 2:  # 动作名称列 - 只能选择预定义动作
+            options = self.options_provider.get_action_name_options()
+            return EditableComboBox(options, parent, allow_manual_input=False)
+        else:
+            return super().createEditor(parent, option, index)
+
+    def setEditorData(self, editor: QWidget, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
+        """设置编辑器数据"""
+        if isinstance(editor, EditableComboBox):
+            text = index.model().data(index, Qt.ItemDataRole.DisplayRole)
+            if text:
+                # 在下拉列表中找到匹配项
+                idx = editor.findText(text)
+                if idx >= 0:
+                    editor.setCurrentIndex(idx)
+                else:
+                    # 如果没找到，设置为第一项
+                    editor.setCurrentIndex(0)
+        else:
+            super().setEditorData(editor, index)
+
+    def setModelData(self, editor: QWidget, model: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
+        """将编辑器数据设置到模型"""
+        if isinstance(editor, EditableComboBox):
+            text = editor.currentText()
+            model.setData(index, text, Qt.ItemDataRole.EditRole)
+        else:
+            super().setModelData(editor, model, index)

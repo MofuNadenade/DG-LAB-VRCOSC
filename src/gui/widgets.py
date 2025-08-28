@@ -1,9 +1,6 @@
-from typing import Any, List, Optional, Union
+from typing import List, Optional
 
-from PySide6.QtCore import Qt, QModelIndex, QPersistentModelIndex
-from PySide6.QtWidgets import QComboBox, QWidget, QStyledItemDelegate
-
-from core import OSCOptionsProvider
+from PySide6.QtWidgets import QComboBox, QWidget
 
 
 class StyledComboBox(QComboBox):
@@ -98,91 +95,3 @@ class EditableComboBox(StyledComboBox):
             line_edit = self.lineEdit()
             if line_edit:
                 line_edit.setFocus()
-
-
-class OSCAddressTableDelegate(QStyledItemDelegate):
-    """OSC地址表格的自定义代理"""
-
-    def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
-        super().__init__(parent)
-        self.options_provider = options_provider
-
-    def createEditor(self, parent: QWidget, option: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> QWidget:
-        """创建编辑器"""
-        column = index.column()
-
-        if column == 0:  # 地址名称列
-            options = self.options_provider.get_address_name_options()
-            return EditableComboBox(options, parent, allow_manual_input=True)
-        elif column == 1:  # OSC代码列  
-            options = self.options_provider.get_osc_code_options()
-            return EditableComboBox(options, parent, allow_manual_input=True)
-        else:
-            return super().createEditor(parent, option, index)
-
-    def setEditorData(self, editor: QWidget, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
-        """设置编辑器数据"""
-        if isinstance(editor, EditableComboBox):
-            text = index.model().data(index, Qt.ItemDataRole.DisplayRole)
-            if text:
-                # 尝试在下拉列表中找到匹配项
-                idx = editor.findText(text)
-                if idx >= 0:
-                    editor.setCurrentIndex(idx)
-                else:
-                    # 如果没找到，直接设置文本
-                    editor.setCurrentText(text)
-        else:
-            super().setEditorData(editor, index)
-
-    def setModelData(self, editor: QWidget, model: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
-        """将编辑器数据设置到模型"""
-        if isinstance(editor, EditableComboBox):
-            text = editor.currentText()
-            model.setData(index, text, Qt.ItemDataRole.EditRole)
-        else:
-            super().setModelData(editor, model, index)
-
-
-class OSCBindingTableDelegate(QStyledItemDelegate):
-    """OSC地址绑定表格的自定义代理 - 只允许选择预定义选项"""
-
-    def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
-        super().__init__(parent)
-        self.options_provider = options_provider
-
-    def createEditor(self, parent: QWidget, option: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> QWidget:
-        """创建编辑器"""
-        column = index.column()
-
-        if column == 0:  # 地址名称列 - 只能选择预定义地址
-            options = self.options_provider.get_address_name_options()
-            return EditableComboBox(options, parent, allow_manual_input=False)
-        elif column == 1:  # 动作名称列 - 只能选择预定义动作
-            options = self.options_provider.get_action_name_options()
-            return EditableComboBox(options, parent, allow_manual_input=False)
-        else:
-            return super().createEditor(parent, option, index)
-
-    def setEditorData(self, editor: QWidget, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
-        """设置编辑器数据"""
-        if isinstance(editor, EditableComboBox):
-            text = index.model().data(index, Qt.ItemDataRole.DisplayRole)
-            if text:
-                # 在下拉列表中找到匹配项
-                idx = editor.findText(text)
-                if idx >= 0:
-                    editor.setCurrentIndex(idx)
-                else:
-                    # 如果没找到，设置为第一项
-                    editor.setCurrentIndex(0)
-        else:
-            super().setEditorData(editor, index)
-
-    def setModelData(self, editor: QWidget, model: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
-        """将编辑器数据设置到模型"""
-        if isinstance(editor, EditableComboBox):
-            text = editor.currentText()
-            model.setData(index, text, Qt.ItemDataRole.EditRole)
-        else:
-            super().setModelData(editor, model, index)
