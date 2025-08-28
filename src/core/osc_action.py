@@ -17,7 +17,9 @@ class OSCActionRegistry:
         self._actions: List[OSCAction] = []
         self._actions_by_name: Dict[str, OSCAction] = {}
         self._actions_by_type: Dict[OSCActionType, List[OSCAction]] = {}
+        self._actions_by_id: Dict[int, OSCAction] = {}  # 按ID索引
         self._observers: List[OSCRegistryObserver] = []
+        self._next_action_id: int = 1  # 下一个可用的动作ID
 
         # 初始化类型字典
         for action_type in OSCActionType:
@@ -38,23 +40,43 @@ class OSCActionRegistry:
         """获取按类型索引的动作字典（只读）"""
         return {k: v.copy() for k, v in self._actions_by_type.items()}
 
+    @property
+    def actions_by_id(self) -> Dict[int, OSCAction]:
+        """获取按ID索引的动作字典（只读）"""
+        return self._actions_by_id.copy()
+
     def get_action_by_name(self, name: str) -> Optional[OSCAction]:
         """根据名称获取动作"""
         return self._actions_by_name.get(name)
+
+    def get_action_by_id(self, action_id: int) -> Optional[OSCAction]:
+        """根据ID获取动作"""
+        return self._actions_by_id.get(action_id)
 
     def has_action_name(self, name: str) -> bool:
         """检查是否存在指定名称的动作"""
         return name in self._actions_by_name
 
+    def has_action_id(self, action_id: int) -> bool:
+        """检查是否存在指定ID的动作"""
+        return action_id in self._actions_by_id
+
     def get_action_count(self) -> int:
         """获取动作总数"""
         return len(self._actions)
+
+    def _get_next_action_id(self) -> int:
+        """获取下一个可用的动作ID"""
+        current_id = self._next_action_id
+        self._next_action_id += 1
+        return current_id
 
     def clear_all_actions(self) -> None:
         """清除所有动作（用于重新注册）"""
         self._actions.clear()
         self._actions_by_name.clear()
         self._actions_by_type.clear()
+        self._actions_by_id.clear()
 
         for action_type in OSCActionType:
             self._actions_by_type[action_type] = []
@@ -83,9 +105,11 @@ class OSCActionRegistry:
                         action_type: OSCActionType = OSCActionType.CUSTOM,
                         tags: Optional[Set[str]] = None) -> OSCAction:
         """注册动作（增强版本）"""
-        action = OSCAction(name, callback, action_type, tags)
+        action_id = self._get_next_action_id()
+        action = OSCAction(action_id, name, callback, action_type, tags)
         self._actions.append(action)
         self._actions_by_name[name] = action
+        self._actions_by_id[action_id] = action
         self._actions_by_type[action_type].append(action)
 
         # 通知观察者
@@ -93,17 +117,40 @@ class OSCActionRegistry:
 
         return action
 
-    def unregister_action(self, action: OSCAction) -> None:
-        """移除动作"""
-        if action in self._actions:
-            self._actions.remove(action)
-            if action.name in self._actions_by_name:
-                del self._actions_by_name[action.name]
-            if action in self._actions_by_type[action.action_type]:
-                self._actions_by_type[action.action_type].remove(action)
+    def unregister_action(self, action_id: int) -> bool:
+        """通过ID注销动作
+        
+        Args:
+            action_id: 要注销的动作ID
+            
+        Returns:
+            bool: 注销成功返回True，如果ID不存在返回False
+        """
+        action = self._actions_by_id.get(action_id)
+        if not action:
+            return False
+            
+        # 从所有索引中移除
+        self._actions.remove(action)
+        self._actions_by_name.pop(action.name, None)
+        self._actions_by_id.pop(action_id, None)
+        self._actions_by_type[action.action_type].remove(action)
+        
+        # 通知观察者
+        self.notify_action_removed(action)
+        
+        return True
 
-            # 通知观察者
-            self.notify_action_removed(action)
+    def unregister_action_by_instance(self, action: OSCAction) -> bool:
+        """通过动作实例来注销动作
+        
+        Args:
+            action: 要注销的动作实例
+            
+        Returns:
+            bool: 注销成功返回True，如果动作不存在返回False
+        """
+        return self.unregister_action(action.id)
 
     def get_actions_by_type(self, action_type: OSCActionType) -> List[OSCAction]:
         """按类型获取动作"""

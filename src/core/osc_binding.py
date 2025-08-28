@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Union
 from models import OSCBindingDict, OSCValue
 from .osc_action import OSCAction
 from .osc_address import OSCAddress
-from .osc_common import OSCRegistryObserver
+from .osc_common import OSCRegistryObserver, OSCBinding
 
 logger = logging.getLogger(__name__)
 
@@ -20,33 +20,69 @@ class OSCBindingRegistry:
 
     def __init__(self) -> None:
         super().__init__()
-        self._bindings: Dict[OSCAddress, OSCAction] = {}
+        self._bindings: List[OSCBinding] = []
+        self._bindings_by_address: Dict[OSCAddress, OSCBinding] = {}
+        self._bindings_by_action: Dict[OSCAction, List[OSCBinding]] = {}
+        self._bindings_by_id: Dict[int, OSCBinding] = {}
         self._observers: List[OSCRegistryObserver] = []
+        self._next_binding_id: int = 1
 
     @property
-    def bindings(self) -> Dict[OSCAddress, OSCAction]:
-        """获取所有绑定字典（只读）"""
+    def bindings(self) -> List[OSCBinding]:
+        """获取所有绑定列表（只读）"""
         return self._bindings.copy()
 
-    def get_binding(self, address: OSCAddress) -> Optional[OSCAction]:
-        """获取指定地址的绑定动作"""
-        return self._bindings.get(address)
+    @property
+    def bindings_by_address(self) -> Dict[OSCAddress, OSCBinding]:
+        """获取按地址索引的绑定字典（只读）"""
+        return self._bindings_by_address.copy()
 
-    def has_binding(self, address: OSCAddress) -> bool:
-        """检查是否存在指定地址的绑定"""
-        return address in self._bindings
+    @property
+    def bindings_by_action(self) -> Dict[OSCAction, List[OSCBinding]]:
+        """获取按动作索引的绑定字典（只读）"""
+        return {action: bindings.copy() for action, bindings in self._bindings_by_action.items()}
+
+    @property
+    def bindings_by_id(self) -> Dict[int, OSCBinding]:
+        """获取按ID索引的绑定字典（只读）"""
+        return self._bindings_by_id.copy()
+
+    def get_binding(self, address: OSCAddress) -> Optional[OSCAction]:
+        """根据地址获取绑定的动作"""
+        binding = self._bindings_by_address.get(address)
+        return binding.action if binding else None
+
+    def get_binding_by_id(self, binding_id: int) -> Optional[OSCBinding]:
+        """根据绑定ID获取绑定"""
+        return self._bindings_by_id.get(binding_id)
+
+    def get_bindings_by_action(self, action: OSCAction) -> List[OSCBinding]:
+        """根据动作获取所有相关的绑定"""
+        return self._bindings_by_action.get(action, []).copy()
 
     def get_binding_count(self) -> int:
         """获取绑定总数"""
         return len(self._bindings)
 
-    def get_all_addresses(self) -> List[OSCAddress]:
-        """获取所有已绑定的地址"""
-        return list(self._bindings.keys())
+    def has_binding(self, address: OSCAddress) -> bool:
+        """检查指定地址是否存在绑定"""
+        return address in self._bindings_by_address
 
-    def get_all_actions(self) -> List[OSCAction]:
-        """获取所有已绑定的动作"""
-        return list(self._bindings.values())
+    def has_binding_id(self, binding_id: int) -> bool:
+        """检查指定ID的绑定是否存在"""
+        return binding_id in self._bindings_by_id
+
+    def has_action_binding(self, action: OSCAction) -> bool:
+        """检查指定动作是否存在绑定"""
+        return action in self._bindings_by_action and len(self._bindings_by_action[action]) > 0
+
+    def is_address_bound(self, address: OSCAddress) -> bool:
+        """检查指定地址是否已被绑定（别名方法）"""
+        return self.has_binding(address)
+
+    def is_action_bound(self, action: OSCAction) -> bool:
+        """检查指定动作是否已被绑定（别名方法）"""
+        return self.has_action_binding(action)
 
     def add_observer(self, observer: OSCRegistryObserver) -> None:
         """添加观察者"""
@@ -63,35 +99,71 @@ class OSCBindingRegistry:
         for observer in self._observers:
             observer.on_binding_changed(address, action)
 
-    def register_binding(self, address: OSCAddress, action: OSCAction) -> None:
+    def _get_next_binding_id(self) -> int:
+        """获取下一个可用的绑定ID"""
+        current_id = self._next_binding_id
+        self._next_binding_id += 1
+        return current_id
+
+    def register_binding(self, address: OSCAddress, action: OSCAction) -> OSCBinding:
         """注册绑定"""
-        self._bindings[address] = action
+        # 如果地址已存在绑定，先移除
+        if address in self._bindings_by_address:
+            self.unregister_binding(address)
+        
+        binding_id = self._get_next_binding_id()
+        binding = OSCBinding(binding_id, address, action)
+        
+        self._bindings.append(binding)
+        self._bindings_by_address[address] = binding
+        self._bindings_by_id[binding_id] = binding
+        
+        # 添加到动作索引（支持一个动作被多个地址绑定）
+        if action not in self._bindings_by_action:
+            self._bindings_by_action[action] = []
+        self._bindings_by_action[action].append(binding)
+        
         # 通知观察者
         self.notify_binding_changed(address, action)
+        
+        return binding
 
     def unregister_binding(self, address: OSCAddress) -> None:
         """取消注册绑定"""
-        if address in self._bindings:
-            del self._bindings[address]
+        binding = self._bindings_by_address.get(address)
+        if binding:
+            self._bindings.remove(binding)
+            self._bindings_by_address.pop(address, None)
+            self._bindings_by_id.pop(binding.id, None)
+            
+            # 从动作索引中移除
+            if binding.action in self._bindings_by_action:
+                self._bindings_by_action[binding.action].remove(binding)
+                if not self._bindings_by_action[binding.action]:
+                    del self._bindings_by_action[binding.action]
+            
             # 通知观察者
             self.notify_binding_changed(address, None)
 
     def clear_bindings(self) -> None:
         """清空所有绑定"""
         self._bindings.clear()
+        self._bindings_by_address.clear()
+        self._bindings_by_action.clear()
+        self._bindings_by_id.clear()
 
     async def handle(self, address: OSCAddress, *args: OSCValue) -> None:
         """处理OSC消息"""
-        action = self._bindings.get(address)
+        action = self.get_binding(address)
         if action:
             await action.handle(*args)
 
     def export_to_config(self) -> List[OSCBindingDict]:
         """导出所有绑定到配置格式"""
         return [{
-            'address_name': address.name,
-            'action_name': action.name
-        } for address, action in self._bindings.items()]
+            'address_name': binding.address.name,
+            'action_name': binding.action.name
+        } for binding in self._bindings]
 
     def validate_binding_data(self, binding: Dict[str, Union[str, int, bool]]) -> bool:
         """验证绑定数据的完整性"""

@@ -433,23 +433,18 @@ class OSCAddressTableTab(QWidget):
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
-            try:
-                # 直接从表格删除行
-                self.address_table.removeRow(current_row)
+            # 直接从表格删除行
+            self.address_table.removeRow(current_row)
 
-                # 更新状态标签
-                total_count = self.address_table.rowCount()
-                self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
+            # 更新状态标签
+            total_count = self.address_table.rowCount()
+            self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
 
-                logger.info(f"Deleted OSC address from table: {address_name}")
+            logger.info(f"Deleted OSC address from table: {address_name}")
 
-                # 显示成功消息
-                QMessageBox.information(self, translate("osc_address_tab.success"),
-                                        translate("osc_address_tab.address_deleted").format(address_name))
-
-            except Exception as e:
-                QMessageBox.critical(self, translate("osc_address_tab.error"),
-                                     f"Failed to delete address: {str(e)}")
+            # 显示成功消息
+            QMessageBox.information(self, translate("osc_address_tab.success"),
+                                    translate("osc_address_tab.address_deleted").format(address_name))
 
     def has_address_name_in_table(self, name: str) -> bool:
         """检查表格中是否已存在相同名称的地址"""

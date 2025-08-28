@@ -30,7 +30,7 @@ class OSCActionCallback(Protocol):
 class OSCAction:
     """OSC动作"""
 
-    def __init__(self, name: str, callback: OSCActionCallback,
+    def __init__(self, action_id: int, name: str, callback: OSCActionCallback,
                  action_type: OSCActionType = OSCActionType.CUSTOM,
                  tags: Optional[Set[str]] = None) -> None:
         super().__init__()
@@ -39,6 +39,7 @@ class OSCAction:
         if not name_valid:
             raise ValueError(f"无效的动作名称: {name_error}")
 
+        self.id: int = action_id
         self.name: str = name.strip()
         self.callback: OSCActionCallback = callback
         self.action_type: OSCActionType = action_type
@@ -48,7 +49,7 @@ class OSCAction:
         await self.callback(*args)
 
     def __str__(self) -> str:
-        return f"OSCAction(name='{self.name}', type='{self.action_type.value}')"
+        return f"OSCAction(id={self.id}, name='{self.name}', type='{self.action_type.value}')"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -56,16 +57,16 @@ class OSCAction:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, OSCAction):
             return False
-        return self.name == other.name and self.action_type == other.action_type
+        return self.id == other.id
 
     def __hash__(self) -> int:
-        return hash((self.name, self.action_type))
+        return self.id
 
 
 class OSCAddress:
     """OSC地址"""
 
-    def __init__(self, name: str, code: str) -> None:
+    def __init__(self, address_id: int, name: str, code: str) -> None:
         super().__init__()
         # 验证输入
         name_valid, name_error = OSCAddressValidator.validate_address_name(name)
@@ -76,11 +77,12 @@ class OSCAddress:
         if not code_valid:
             raise ValueError(f"无效的OSC代码: {code_error}")
 
+        self.id: int = address_id
         self.name: str = name.strip()
         self.code: str = code.strip()
 
     def __str__(self) -> str:
-        return f"OSCAddress(name='{self.name}', code='{self.code}')"
+        return f"OSCAddress(id={self.id}, name='{self.name}', code='{self.code}')"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -88,10 +90,34 @@ class OSCAddress:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, OSCAddress):
             return False
-        return self.name == other.name and self.code == other.code
+        return self.id == other.id
 
     def __hash__(self) -> int:
-        return hash((self.name, self.code))
+        return self.id
+
+
+class OSCBinding:
+    """OSC绑定"""
+
+    def __init__(self, binding_id: int, address: OSCAddress, action: OSCAction) -> None:
+        super().__init__()
+        self.id: int = binding_id
+        self.address: OSCAddress = address
+        self.action: OSCAction = action
+
+    def __str__(self) -> str:
+        return f"OSCBinding(id={self.id}, address='{self.address.name}', action='{self.action.name}')"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, OSCBinding):
+            return False
+        return self.id == other.id
+
+    def __hash__(self) -> int:
+        return self.id
 
 
 class OSCAddressValidator:

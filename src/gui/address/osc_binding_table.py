@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from core import OSCOptionsProvider
-from core.osc_common import OSCAction, OSCAddress
+from core.osc_common import OSCAction, OSCAddress, OSCBinding
 from core.registries import Registries
 from i18n import translate, language_signals
 from ..ui_interface import UIInterface
@@ -287,19 +287,19 @@ class OSCBindingTableTab(QWidget):
 
     def refresh_binding_table(self) -> None:
         """刷新绑定表格 - 从registries重新加载数据"""
-        bindings = list(self.registries.binding_registry.bindings.items())
+        bindings: list[OSCBinding] = self.registries.binding_registry.bindings
         self.binding_table.setRowCount(len(bindings))
 
-        for row, (addr, action) in enumerate(bindings):
-            self.update_binding(row, addr, action)
+        for row, binding in enumerate(bindings):
+            self.update_binding(row, binding)
 
         # 统计有效和无效绑定数量
         valid_count = 0
         invalid_count = 0
 
-        for row, (addr, action) in enumerate(bindings):
+        for binding in bindings:
             # 验证绑定有效性
-            is_valid, _ = self.validate_binding(addr, action)
+            is_valid, _ = self.validate_binding(binding.address, binding.action)
             if is_valid:
                 valid_count += 1
             else:
@@ -373,15 +373,15 @@ class OSCBindingTableTab(QWidget):
             QMessageBox.critical(self, translate("osc_address_tab.error"),
                                  translate("osc_address_tab.save_config_failed").format(str(e)))
 
-    def update_binding(self, row: int, addr: OSCAddress, action: OSCAction) -> None:
+    def update_binding(self, row: int, binding: OSCBinding) -> None:
         """更新表格中的绑定行"""
         # 验证绑定有效性
-        is_valid, error_msg = self.validate_binding(addr, action)
+        is_valid, error_msg = self.validate_binding(binding.address, binding.action)
         # 地址名
-        addr_item = QTableWidgetItem(addr.name)
+        addr_item = QTableWidgetItem(binding.address.name)
         self.binding_table.setItem(row, 0, addr_item)
         # 动作名
-        action_item = QTableWidgetItem(action.name)
+        action_item = QTableWidgetItem(binding.action.name)
         self.binding_table.setItem(row, 1, action_item)
         # 状态列
         if is_valid:
@@ -428,29 +428,18 @@ class OSCBindingTableTab(QWidget):
             return False, "地址或动作对象为空"
 
         # 验证地址对象的有效性
-        try:
-            if not address.name or not address.name.strip():
-                return False, "地址名称为空"
-            if not address.code or not address.code.strip():
-                return False, "OSC代码为空"
-        except AttributeError:
-            return False, "地址对象缺少必要属性"
+        if not address.name or not address.name.strip():
+            return False, "地址名称为空"
+        if not address.code or not address.code.strip():
+            return False, "OSC代码为空"
 
         # 验证动作对象的有效性
-        try:
-            if not action.name or not action.name.strip():
-                return False, "动作名称为空"
-        except AttributeError:
-            return False, "动作对象缺少必要属性"
+        if not action.name or not action.name.strip():
+            return False, "动作名称为空"
 
         # 检查对象是否仍然在注册表中
         if not self.registries.address_registry.has_address_name(address.name):
             return False, f"地址'{address.name}'不存在于注册表中"
-        # 检查地址对象是否一致
-        registered_address = self.registries.address_registry.get_address_by_name(address.name)
-        if registered_address and registered_address.code != address.code:
-            return False, f"地址'{address.name}'的OSC代码已变更"
-
         if not self.registries.action_registry.has_action_name(action.name):
             return False, f"动作'{action.name}'不存在于注册表中"
 
@@ -550,22 +539,17 @@ class OSCBindingTableTab(QWidget):
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
-            try:
-                # 直接从表格删除行
-                self.binding_table.removeRow(current_row)
+            # 直接从表格删除行
+            self.binding_table.removeRow(current_row)
 
-                # 更新状态标签
-                self.update_binding_status_label()
+            # 更新状态标签
+            self.update_binding_status_label()
 
-                logger.info(f"Deleted binding from table: {address_name} -> {action_name}")
+            logger.info(f"Deleted binding from table: {address_name} -> {action_name}")
 
-                # 显示成功消息
-                QMessageBox.information(self, translate("osc_address_tab.success"),
-                                        translate("osc_address_tab.binding_deleted").format(address_name, action_name))
-
-            except Exception as e:
-                QMessageBox.critical(self, translate("osc_address_tab.error"),
-                                     translate("osc_address_tab.delete_binding_failed").format(str(e)))
+            # 显示成功消息
+            QMessageBox.information(self, translate("osc_address_tab.success"),
+                                    translate("osc_address_tab.binding_deleted").format(address_name, action_name))
 
     def has_binding_in_table(self, address_name: str) -> bool:
         """检查表格中是否已存在相同地址的绑定"""
