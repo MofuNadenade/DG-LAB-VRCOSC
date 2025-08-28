@@ -356,3 +356,5 @@ osc_address_tab:
   address_info_count: "Total detected addresses: {0}"
   osc_types: "OSC Types"
   last_value: "Last Value"
+  info: "Information"
+  no_changes_to_save: "No changes to save"

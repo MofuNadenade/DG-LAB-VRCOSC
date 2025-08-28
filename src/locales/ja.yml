@@ -356,3 +356,5 @@ osc_address_tab:
   address_info_count: "検出されたアドレス総数: {0}"
   osc_types: "OSCタイプ"
   last_value: "最後の値"
+  info: "情報"
+  no_changes_to_save: "保存する変更がありません"

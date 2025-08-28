@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
@@ -112,6 +112,9 @@ class OSCBindingTableTab(QWidget):
         # 设置表格代理以启用下拉列表编辑
         delegate = OSCBindingTableDelegate(self.options_provider)
         self.binding_table.setItemDelegate(delegate)
+
+        # 连接数据变化信号
+        self.binding_table.itemChanged.connect(self.on_item_changed)
 
         # 初始化表格数据 - 从registries加载
         self.refresh_binding_table()
@@ -291,11 +294,17 @@ class OSCBindingTableTab(QWidget):
 
     def refresh_binding_table(self) -> None:
         """刷新绑定表格 - 从registries重新加载数据"""
+        # 阻塞信号避免在刷新时触发itemChanged
+        self.binding_table.blockSignals(True)
+        
         bindings: list[OSCBinding] = self.registries.binding_registry.bindings
         self.binding_table.setRowCount(len(bindings))
 
         for row, binding in enumerate(bindings):
             self.update_binding(row, binding)
+
+        # 恢复信号连接
+        self.binding_table.blockSignals(False)
 
         # 统计有效和无效绑定数量
         valid_count = 0
@@ -337,45 +346,90 @@ class OSCBindingTableTab(QWidget):
         logger.info(f"Refreshed binding table with {total_count} bindings from registries")
 
     def save_bindings(self) -> None:
-        """保存配置到registries - 将binding_table数据更新到registries"""
+        """增量保存到registry"""
         try:
-            # 清空registries中的绑定
-            self.registries.binding_registry.clear_bindings()
-
-            # 从表格中获取所有绑定并注册到registries
-            for row in range(self.binding_table.rowCount()):
+            modified_rows = self.get_modified_rows()
+            
+            if not modified_rows:
+                QMessageBox.information(self, translate("osc_address_tab.info"),
+                                        translate("osc_address_tab.no_changes_to_save"))
+                return
+            
+            for row in modified_rows:
+                id_item = self.binding_table.item(row, 0)
                 address_name_item = self.binding_table.item(row, 1)
                 action_name_item = self.binding_table.item(row, 2)
-
-                if address_name_item and action_name_item:
-                    address_name = address_name_item.text().strip()
-                    action_name = action_name_item.text().strip()
-
-                    if address_name and action_name:  # 确保名称都不为空
-                        # 获取地址和动作对象
-                        address = self.registries.address_registry.get_address_by_name(address_name)
-                        action = self.registries.action_registry.get_action_by_name(action_name)
-
-                        if address and action:
-                            self.registries.binding_registry.register_binding(address, action)
-
-            # 导出所有绑定
-            all_bindings = self.registries.binding_registry.export_to_config()
-
-            # 更新settings
-            self.ui_interface.settings['bindings'] = all_bindings
-
-            # 保存到文件
-            self.ui_interface.save_settings()
-            logger.info(f"Saved {len(all_bindings)} bindings from table to registries and config")
-
+                
+                if not id_item or not address_name_item or not action_name_item:
+                    continue
+                    
+                binding_id = int(id_item.text())
+                address_name = address_name_item.text().strip()
+                action_name = action_name_item.text().strip()
+                
+                if binding_id == -1:  # 新增绑定
+                    self._handle_new_binding(row, address_name, action_name)
+                else:  # 更新绑定
+                    self._handle_update_binding(row, binding_id, address_name, action_name)
+                
+                # 标记为已保存
+                self.mark_row_as_saved(row)
+            
+            # 保存配置
+            self._save_config()
+            
             # 显示成功消息
             QMessageBox.information(self, translate("osc_address_tab.success"),
                                     translate("osc_address_tab.config_saved"))
+                                    
         except Exception as e:
             logger.error(f"Failed to save bindings: {e}")
             QMessageBox.critical(self, translate("osc_address_tab.error"),
                                  translate("osc_address_tab.save_config_failed").format(str(e)))
+
+    def _handle_new_binding(self, row: int, address_name: str, action_name: str) -> None:
+        """处理新增绑定"""
+        address = self.registries.address_registry.get_address_by_name(address_name)
+        action = self.registries.action_registry.get_action_by_name(action_name)
+        
+        if address and action:
+            new_binding = self.registries.binding_registry.register_binding(address, action)
+            # 更新ID列为新分配的ID
+            id_item = self.binding_table.item(row, 0)
+            if id_item:
+                id_item.setText(str(new_binding.id))
+            logger.info(f"Added new binding: {address_name} -> {action_name} with ID {new_binding.id}")
+
+    def _handle_update_binding(self, row: int, binding_id: int, address_name: str, action_name: str) -> None:
+        """处理更新绑定"""
+        addr_item = self.binding_table.item(row, 1)
+        action_item = self.binding_table.item(row, 2)
+        
+        # 检查地址是否变化
+        if addr_item and addr_item.data(Qt.ItemDataRole.UserRole) == True:
+            new_address = self.registries.address_registry.get_address_by_name(address_name)
+            if new_address:
+                self.registries.binding_registry.update_binding_address(binding_id, new_address)
+                logger.info(f"Updated binding {binding_id} address to: {address_name}")
+        
+        # 检查动作是否变化
+        if action_item and action_item.data(Qt.ItemDataRole.UserRole) == True:
+            new_action = self.registries.action_registry.get_action_by_name(action_name)
+            if new_action:
+                self.registries.binding_registry.update_binding_action(binding_id, new_action)
+                logger.info(f"Updated binding {binding_id} action to: {action_name}")
+
+    def _save_config(self) -> None:
+        """保存配置到文件"""
+        # 导出所有绑定
+        all_bindings = self.registries.binding_registry.export_to_config()
+
+        # 更新settings
+        self.ui_interface.settings['bindings'] = all_bindings
+
+        # 保存到文件
+        self.ui_interface.save_settings()
+        logger.info(f"Saved {len(all_bindings)} bindings to config")
 
     def update_binding(self, row: int, binding: OSCBinding) -> None:
         """更新表格中的绑定行"""
@@ -387,12 +441,16 @@ class OSCBindingTableTab(QWidget):
         id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.binding_table.setItem(row, 0, id_item)
         
-        # 地址名
+        # 地址名 - 存储原始值用于比较
         addr_item = QTableWidgetItem(binding.address.name)
+        addr_item.setData(Qt.ItemDataRole.UserRole, False)  # 初始未修改
         self.binding_table.setItem(row, 1, addr_item)
-        # 动作名
+        
+        # 动作名 - 存储原始值用于比较
         action_item = QTableWidgetItem(binding.action.name)
+        action_item.setData(Qt.ItemDataRole.UserRole, False)  # 初始未修改
         self.binding_table.setItem(row, 2, action_item)
+        
         # 状态列
         if is_valid:
             status_text = translate("osc_address_tab.available")
@@ -490,6 +548,10 @@ class OSCBindingTableTab(QWidget):
                 addr_item = QTableWidgetItem(address_name)
                 action_item = QTableWidgetItem(action_name)
                 
+                # 设置修改标记为True（新增项目）
+                addr_item.setData(Qt.ItemDataRole.UserRole, True)
+                action_item.setData(Qt.ItemDataRole.UserRole, True)
+                
                 # 验证绑定有效性并设置状态
                 is_valid, error_msg = self.validate_binding(address, action)
                 if is_valid:
@@ -531,7 +593,7 @@ class OSCBindingTableTab(QWidget):
                                                                                           action_name))
 
     def delete_binding(self) -> None:
-        """删除选中的地址绑定 - 直接从binding_table删除"""
+        """删除选中的地址绑定"""
         current_row = self.binding_table.currentRow()
         if current_row < 0:
             return
@@ -546,13 +608,27 @@ class OSCBindingTableTab(QWidget):
         address_name = address_name_item.text()
         action_name = action_name_item.text()
 
+        # 获取绑定ID
+        id_item = self.binding_table.item(current_row, 0)
+        if not id_item:
+            return
+        binding_id = int(id_item.text())
+
         # 确认删除
         reply = QMessageBox.question(self, translate("osc_address_tab.confirm_delete"),
                                      translate("osc_address_tab.delete_binding_msg").format(address_name, action_name),
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
-            # 直接从表格删除行
+            # 如果ID > 0，从registry删除
+            if binding_id > 0:
+                # 获取绑定对象然后删除
+                binding = self.registries.binding_registry.get_binding_by_id(binding_id)
+                if binding:
+                    self.registries.binding_registry.unregister_binding(binding.address)
+                    logger.info(f"Deleted binding from registry: ID {binding_id}")
+
+            # 从表格删除行
             self.binding_table.removeRow(current_row)
 
             # 更新状态标签
@@ -625,6 +701,64 @@ class OSCBindingTableTab(QWidget):
         """绑定选择变化时的处理"""
         has_selection = len(self.binding_table.selectedItems()) > 0
         self.delete_binding_btn.setEnabled(has_selection)
+
+    def on_item_changed(self, item: QTableWidgetItem) -> None:
+        """当表格项数据变化时自动标记"""
+        if item.column() in [1, 2]:  # 地址名和动作名列
+            # 标记为已修改
+            item.setData(Qt.ItemDataRole.UserRole, True)
+            
+            # 高亮显示修改的行
+            self.highlight_modified_row(item.row())
+
+    def highlight_modified_row(self, row: int) -> None:
+        """高亮显示修改的行"""
+        for col in range(self.binding_table.columnCount()):
+            item = self.binding_table.item(row, col)
+            if item and item.data(Qt.ItemDataRole.UserRole) == True:
+                # 设置背景色为浅黄色表示已修改
+                item.setBackground(QColor(255, 255, 200))
+
+    def is_item_modified(self, item: QTableWidgetItem) -> bool:
+        """检查表格项是否被修改"""
+        return item.data(Qt.ItemDataRole.UserRole) == True
+
+    def is_row_modified(self, row: int) -> bool:
+        """检查指定行是否被修改"""
+        addr_item = self.binding_table.item(row, 1)
+        action_item = self.binding_table.item(row, 2)
+        
+        addr_modified = addr_item and self.is_item_modified(addr_item)
+        action_modified = action_item and self.is_item_modified(action_item)
+        
+        return bool(addr_modified or action_modified)
+
+    def get_modified_rows(self) -> List[int]:
+        """获取所有修改过的行"""
+        return [row for row in range(self.binding_table.rowCount()) 
+                if self.is_row_modified(row)]
+
+    def get_modified_count(self) -> int:
+        """获取修改过的行数"""
+        return len(self.get_modified_rows())
+
+    def mark_row_as_saved(self, row: int) -> None:
+        """标记行为已保存"""
+        addr_item = self.binding_table.item(row, 1)
+        action_item = self.binding_table.item(row, 2)
+        
+        # 重置修改标记
+        if addr_item:
+            addr_item.setData(Qt.ItemDataRole.UserRole, False)
+            addr_item.setBackground(Qt.GlobalColor.white)
+        if action_item:
+            action_item.setData(Qt.ItemDataRole.UserRole, False)
+            action_item.setBackground(Qt.GlobalColor.white)
+
+    def reset_all_modifications(self) -> None:
+        """重置所有修改标记"""
+        for row in range(self.binding_table.rowCount()):
+            self.mark_row_as_saved(row)
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
