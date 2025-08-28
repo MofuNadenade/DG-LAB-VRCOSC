@@ -135,21 +135,25 @@ class OSCBindingTableTab(QWidget):
         group = self.binding_list_group
         layout = QVBoxLayout(group)
 
-        # 绑定表格
+        # 绑定表格 - 4列：ID(隐藏)、地址名、动作名、状态
         self.binding_table = QTableWidget()
-        self.binding_table.setColumnCount(3)
+        self.binding_table.setColumnCount(4)
         self.binding_table.setHorizontalHeaderLabels([
+            translate("osc_address_tab.id"),
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.action_name"),
             translate("osc_address_tab.status")
         ])
 
+        # 隐藏ID列
+        self.binding_table.setColumnHidden(0, True)
+
         # 设置表格属性
         header = self.binding_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)  # 地址名列拉伸
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 动作名列拉伸
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)  # 状态列固定宽度
-        header.resizeSection(2, 100)  # 状态列宽度100px
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 地址名列拉伸
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # 动作名列拉伸
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)  # 状态列固定宽度
+        header.resizeSection(3, 100)  # 状态列宽度100px
 
         self.binding_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.binding_table.setAlternatingRowColors(True)
@@ -340,8 +344,8 @@ class OSCBindingTableTab(QWidget):
 
             # 从表格中获取所有绑定并注册到registries
             for row in range(self.binding_table.rowCount()):
-                address_name_item = self.binding_table.item(row, 0)
-                action_name_item = self.binding_table.item(row, 1)
+                address_name_item = self.binding_table.item(row, 1)
+                action_name_item = self.binding_table.item(row, 2)
 
                 if address_name_item and action_name_item:
                     address_name = address_name_item.text().strip()
@@ -377,12 +381,18 @@ class OSCBindingTableTab(QWidget):
         """更新表格中的绑定行"""
         # 验证绑定有效性
         is_valid, error_msg = self.validate_binding(binding.address, binding.action)
+        
+        # ID列（隐藏）
+        id_item = QTableWidgetItem(str(binding.id))
+        id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.binding_table.setItem(row, 0, id_item)
+        
         # 地址名
         addr_item = QTableWidgetItem(binding.address.name)
-        self.binding_table.setItem(row, 0, addr_item)
+        self.binding_table.setItem(row, 1, addr_item)
         # 动作名
         action_item = QTableWidgetItem(binding.action.name)
-        self.binding_table.setItem(row, 1, action_item)
+        self.binding_table.setItem(row, 2, action_item)
         # 状态列
         if is_valid:
             status_text = translate("osc_address_tab.available")
@@ -411,7 +421,7 @@ class OSCBindingTableTab(QWidget):
 
         # 状态列不可编辑
         status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-        self.binding_table.setItem(row, 2, status_item)
+        self.binding_table.setItem(row, 3, status_item)
 
     def validate_binding(self, address: OSCAddress, action: OSCAction) -> tuple[bool, str]:
         """验证绑定的有效性
@@ -475,6 +485,8 @@ class OSCBindingTableTab(QWidget):
                 self.binding_table.insertRow(row)
                 
                 # 创建新的绑定项
+                id_item = QTableWidgetItem(str(-1))  # 临时ID，保存时会重新生成
+                id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 addr_item = QTableWidgetItem(address_name)
                 action_item = QTableWidgetItem(action_name)
                 
@@ -503,9 +515,10 @@ class OSCBindingTableTab(QWidget):
                 status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 
                 # 添加到表格
-                self.binding_table.setItem(row, 0, addr_item)
-                self.binding_table.setItem(row, 1, action_item)
-                self.binding_table.setItem(row, 2, status_item)
+                self.binding_table.setItem(row, 0, id_item)
+                self.binding_table.setItem(row, 1, addr_item)
+                self.binding_table.setItem(row, 2, action_item)
+                self.binding_table.setItem(row, 3, status_item)
 
                 # 更新状态标签
                 self.update_binding_status_label()
@@ -524,8 +537,8 @@ class OSCBindingTableTab(QWidget):
             return
 
         # 获取选中的绑定信息
-        address_name_item = self.binding_table.item(current_row, 0)
-        action_name_item = self.binding_table.item(current_row, 1)
+        address_name_item = self.binding_table.item(current_row, 1)
+        action_name_item = self.binding_table.item(current_row, 2)
         
         if not address_name_item or not action_name_item:
             return
@@ -554,7 +567,7 @@ class OSCBindingTableTab(QWidget):
     def has_binding_in_table(self, address_name: str) -> bool:
         """检查表格中是否已存在相同地址的绑定"""
         for row in range(self.binding_table.rowCount()):
-            addr_item = self.binding_table.item(row, 0)
+            addr_item = self.binding_table.item(row, 1)
             if addr_item and addr_item.text().strip() == address_name:
                 return True
         return False
@@ -566,8 +579,8 @@ class OSCBindingTableTab(QWidget):
         invalid_count = 0
 
         for row in range(total_count):
-            address_name_item = self.binding_table.item(row, 0)
-            action_name_item = self.binding_table.item(row, 1)
+            address_name_item = self.binding_table.item(row, 1)
+            action_name_item = self.binding_table.item(row, 2)
             
             if address_name_item and action_name_item:
                 address_name = address_name_item.text().strip()
@@ -620,6 +633,7 @@ class OSCBindingTableTab(QWidget):
 
         # 更新表格标题
         self.binding_table.setHorizontalHeaderLabels([
+            translate("osc_address_tab.id"),
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.action_name"),
             translate("osc_address_tab.status")

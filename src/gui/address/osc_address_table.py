@@ -149,21 +149,25 @@ class OSCAddressTableTab(QWidget):
         group = self.address_list_group
         layout = QVBoxLayout(group)
 
-        # 地址表格
+        # 地址表格 - 4列：ID(隐藏)、名称、OSC代码、状态
         self.address_table = QTableWidget()
-        self.address_table.setColumnCount(3)
+        self.address_table.setColumnCount(4)
         self.address_table.setHorizontalHeaderLabels([
+            translate("osc_address_tab.id"),
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.osc_code"),
             translate("osc_address_tab.status")
         ])
 
+        # 隐藏ID列
+        self.address_table.setColumnHidden(0, True)
+
         # 设置表格属性
         header = self.address_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)  # 名称列拉伸
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 代码列拉伸
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)  # 状态列固定宽度
-        header.resizeSection(2, 100)  # 状态列宽度100px
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 名称列拉伸
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # 代码列拉伸
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)  # 状态列固定宽度
+        header.resizeSection(3, 100)  # 状态列宽度100px
 
         self.address_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.address_table.setAlternatingRowColors(True)
@@ -321,8 +325,8 @@ class OSCAddressTableTab(QWidget):
 
             # 从表格中获取所有地址并注册到registries
             for row in range(self.address_table.rowCount()):
-                name_item = self.address_table.item(row, 0)
-                code_item = self.address_table.item(row, 1)
+                name_item = self.address_table.item(row, 1)
+                code_item = self.address_table.item(row, 2)
 
                 if name_item and code_item:
                     name = name_item.text().strip()
@@ -351,12 +355,17 @@ class OSCAddressTableTab(QWidget):
 
     def update_address(self, row: int, addr: OSCAddress) -> None:
         """更新表格中的地址行"""
+        # ID列（隐藏）
+        id_item = QTableWidgetItem(str(addr.id))
+        id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.address_table.setItem(row, 0, id_item)
+        
         # 地址名
         name_item = QTableWidgetItem(addr.name)
-        self.address_table.setItem(row, 0, name_item)
+        self.address_table.setItem(row, 1, name_item)
         # OSC代码
         code_item = QTableWidgetItem(addr.code)
-        self.address_table.setItem(row, 1, code_item)
+        self.address_table.setItem(row, 2, code_item)
         # 状态列 - 所有地址都显示为可用状态
         status_item = QTableWidgetItem(translate("osc_address_tab.available"))
         # 设置状态列样式为绿色
@@ -364,7 +373,7 @@ class OSCAddressTableTab(QWidget):
         status_item.setForeground(QColor(0, 128, 0))  # 深绿色文字
         # 状态列不可编辑
         status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-        self.address_table.setItem(row, 2, status_item)
+        self.address_table.setItem(row, 3, status_item)
 
     def add_address(self) -> None:
         """添加新地址 - 直接添加到address_table"""
@@ -390,6 +399,8 @@ class OSCAddressTableTab(QWidget):
                 self.address_table.insertRow(row)
                 
                 # 创建新的地址项
+                id_item = QTableWidgetItem(str(-1))  # 临时ID，保存时会重新生成
+                id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 name_item = QTableWidgetItem(name)
                 code_item = QTableWidgetItem(code)
                 status_item = QTableWidgetItem(translate("osc_address_tab.available"))
@@ -400,9 +411,10 @@ class OSCAddressTableTab(QWidget):
                 status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 
                 # 添加到表格
-                self.address_table.setItem(row, 0, name_item)
-                self.address_table.setItem(row, 1, code_item)
-                self.address_table.setItem(row, 2, status_item)
+                self.address_table.setItem(row, 0, id_item)
+                self.address_table.setItem(row, 1, name_item)
+                self.address_table.setItem(row, 2, code_item)
+                self.address_table.setItem(row, 3, status_item)
 
                 # 更新状态标签
                 total_count = self.address_table.rowCount()
@@ -421,7 +433,7 @@ class OSCAddressTableTab(QWidget):
             return
 
         # 获取选中的地址名称
-        address_name_item = self.address_table.item(current_row, 0)
+        address_name_item = self.address_table.item(current_row, 1)
         if not address_name_item:
             return
 
@@ -449,7 +461,7 @@ class OSCAddressTableTab(QWidget):
     def has_address_name_in_table(self, name: str) -> bool:
         """检查表格中是否已存在相同名称的地址"""
         for row in range(self.address_table.rowCount()):
-            name_item = self.address_table.item(row, 0)
+            name_item = self.address_table.item(row, 1)
             if name_item and name_item.text().strip() == name:
                 return True
         return False
@@ -457,7 +469,7 @@ class OSCAddressTableTab(QWidget):
     def has_address_code_in_table(self, code: str) -> bool:
         """检查表格中是否已存在相同代码的地址"""
         for row in range(self.address_table.rowCount()):
-            code_item = self.address_table.item(row, 1)
+            code_item = self.address_table.item(row, 2)
             if code_item and code_item.text().strip() == code:
                 return True
         return False
@@ -474,6 +486,7 @@ class OSCAddressTableTab(QWidget):
 
         # 更新表格标题
         self.address_table.setHorizontalHeaderLabels([
+            translate("osc_address_tab.id"),
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.osc_code"),
             translate("osc_address_tab.status")
