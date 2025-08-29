@@ -124,7 +124,7 @@ class OSCAddressTableTab(QWidget):
         self.init_ui()
 
         # 设置表格代理以启用下拉列表编辑
-        delegate = OSCAddressTableDelegate(self.options_provider)
+        delegate = OSCAddressTableDelegate(self)
         self.address_table.setItemDelegate(delegate)
 
         # 连接数据变化信号
@@ -556,9 +556,17 @@ class OSCAddressTableTab(QWidget):
             QMessageBox.information(self, translate("osc_address_tab.success"),
                                     translate("osc_address_tab.address_deleted").format(address_name))
 
-    def has_address_name_in_table(self, name: str) -> bool:
-        """检查表格中是否已存在相同名称的地址"""
+    def has_address_name_in_table(self, name: str, exclude_row: int = -1) -> bool:
+        """检查表格中是否已存在相同名称的地址
+        
+        Args:
+            name: 要检查的地址名
+            exclude_row: 要排除的行号，-1表示不排除任何行（默认值）
+        """
         for row in range(self.address_table.rowCount()):
+            if exclude_row >= 0 and row == exclude_row:
+                continue
+                
             # 检查编辑状态，忽略已删除的行
             edit_state_item = self.address_table.item(row, 4)
             if edit_state_item and edit_state_item.text() == EditState.DELETED.value:
@@ -569,9 +577,17 @@ class OSCAddressTableTab(QWidget):
                 return True
         return False
 
-    def has_address_code_in_table(self, code: str) -> bool:
-        """检查表格中是否已存在相同代码的地址"""
+    def has_address_code_in_table(self, code: str, exclude_row: int = -1) -> bool:
+        """检查表格中是否已存在相同代码的地址
+        
+        Args:
+            code: 要检查的OSC代码
+            exclude_row: 要排除的行号，-1表示不排除任何行（默认值）
+        """
         for row in range(self.address_table.rowCount()):
+            if exclude_row >= 0 and row == exclude_row:
+                continue
+                
             # 检查编辑状态，忽略已删除的行
             edit_state_item = self.address_table.item(row, 4)
             if edit_state_item and edit_state_item.text() == EditState.DELETED.value:
@@ -660,19 +676,19 @@ class OSCAddressTableTab(QWidget):
 class OSCAddressTableDelegate(QStyledItemDelegate):
     """OSC地址表格的自定义代理"""
 
-    def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, address_tab: OSCAddressTableTab, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.options_provider = options_provider
+        self.address_tab = address_tab
 
     def createEditor(self, parent: QWidget, option: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> QWidget:
         """创建编辑器"""
         column = index.column()
 
         if column == 1:  # 地址名称列
-            options = self.options_provider.get_address_name_options()
+            options = self.address_tab.options_provider.get_address_name_options()
             return EditableComboBox(options, parent, allow_manual_input=True)
         elif column == 2:  # OSC代码列
-            options = self.options_provider.get_osc_code_options()
+            options = self.address_tab.options_provider.get_osc_code_options()
             return EditableComboBox(options, parent, allow_manual_input=True)
         else:
             return super().createEditor(parent, option, index)
@@ -693,9 +709,30 @@ class OSCAddressTableDelegate(QStyledItemDelegate):
             super().setEditorData(editor, index)
 
     def setModelData(self, editor: QWidget, model: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
-        """将编辑器数据设置到模型"""
+        """将编辑器数据设置到模型 - 在此处进行冲突验证"""
         if isinstance(editor, EditableComboBox):
-            text = editor.currentText()
-            model.setData(index, text, Qt.ItemDataRole.EditRole)
+            new_text = editor.currentText().strip()
+            row = index.row()
+            column = index.column()
+            
+            # 获取编辑前的原始值
+            original_value = index.model().data(index, Qt.ItemDataRole.DisplayRole) or ""
+            
+            # 对地址名列和OSC代码列进行冲突检查
+            if new_text != original_value:
+                if column == 1:  # 地址名称列
+                    if self.address_tab.has_address_name_in_table(new_text, row):
+                        QMessageBox.warning(self.address_tab, translate("osc_address_tab.error"),
+                                            translate("osc_address_tab.address_exists"))
+                    return
+                elif column == 2:  # OSC代码列
+                    if self.address_tab.has_address_code_in_table(new_text, row):
+                        QMessageBox.warning(self.address_tab, translate("osc_address_tab.error"),
+                                            translate("osc_address_tab.code_exists"))
+                    return
+            
+            # 没有冲突，正常设置数据
+            model.setData(index, new_text, Qt.ItemDataRole.EditRole)
         else:
             super().setModelData(editor, model, index)
+

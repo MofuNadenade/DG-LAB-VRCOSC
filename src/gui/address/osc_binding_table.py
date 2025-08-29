@@ -110,7 +110,7 @@ class OSCBindingTableTab(QWidget):
         self.init_ui()
 
         # 设置表格代理以启用下拉列表编辑
-        delegate = OSCBindingTableDelegate(self.options_provider)
+        delegate = OSCBindingTableDelegate(self)
         self.binding_table.setItemDelegate(delegate)
 
         # 连接数据变化信号
@@ -634,9 +634,17 @@ class OSCBindingTableTab(QWidget):
             QMessageBox.information(self, translate("osc_address_tab.success"),
                                     translate("osc_address_tab.binding_deleted").format(address_name, action_name))
 
-    def has_binding_in_table(self, address_name: str) -> bool:
-        """检查表格中是否已存在相同地址的绑定"""
+    def has_binding_in_table(self, address_name: str, exclude_row: int = -1) -> bool:
+        """检查表格中是否已存在相同地址的绑定
+        
+        Args:
+            address_name: 要检查的地址名
+            exclude_row: 要排除的行号，-1表示不排除任何行（默认值）
+        """
         for row in range(self.binding_table.rowCount()):
+            if exclude_row >= 0 and row == exclude_row:
+                continue
+                
             # 检查编辑状态，忽略已删除的行
             edit_state_item = self.binding_table.item(row, 4)
             if edit_state_item and edit_state_item.text() == EditState.DELETED.value:
@@ -770,19 +778,19 @@ class OSCBindingTableTab(QWidget):
 class OSCBindingTableDelegate(QStyledItemDelegate):
     """OSC地址绑定表格的自定义代理 - 只允许选择预定义选项"""
 
-    def __init__(self, options_provider: OSCOptionsProvider, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, binding_tab: OSCBindingTableTab, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.options_provider = options_provider
+        self.binding_tab = binding_tab
 
     def createEditor(self, parent: QWidget, option: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> QWidget:
         """创建编辑器"""
         column = index.column()
 
         if column == 1:  # 地址名称列 - 只能选择预定义地址
-            options = self.options_provider.get_address_name_options()
+            options = self.binding_tab.options_provider.get_address_name_options()
             return EditableComboBox(options, parent, allow_manual_input=False)
         elif column == 2:  # 动作名称列 - 只能选择预定义动作
-            options = self.options_provider.get_action_name_options()
+            options = self.binding_tab.options_provider.get_action_name_options()
             return EditableComboBox(options, parent, allow_manual_input=False)
         else:
             return super().createEditor(parent, option, index)
@@ -803,9 +811,26 @@ class OSCBindingTableDelegate(QStyledItemDelegate):
             super().setEditorData(editor, index)
 
     def setModelData(self, editor: QWidget, model: Any, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
-        """将编辑器数据设置到模型"""
+        """将编辑器数据设置到模型 - 在此处进行冲突验证"""
         if isinstance(editor, EditableComboBox):
-            text = editor.currentText()
-            model.setData(index, text, Qt.ItemDataRole.EditRole)
+            new_text = editor.currentText().strip()
+            row = index.row()
+            column = index.column()
+            
+            # 获取编辑前的原始值
+            original_value = index.model().data(index, Qt.ItemDataRole.DisplayRole) or ""
+            
+            # 只对地址名列进行冲突检查
+            if new_text != original_value:
+                if column == 1:
+                    # 检查冲突 - 直接调用主类的方法
+                    if self.binding_tab.has_binding_in_table(new_text, row):
+                        QMessageBox.warning(self.binding_tab, translate("osc_address_tab.error"),
+                                            translate("osc_address_tab.binding_exists"))
+                        return
+            
+            # 没有冲突，正常设置数据
+            model.setData(index, new_text, Qt.ItemDataRole.EditRole)
         else:
             super().setModelData(editor, model, index)
+
