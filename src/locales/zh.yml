@@ -340,8 +340,6 @@ osc_address_tab:
   registry_not_ready: "注册表不可用，请等待初始化完成"
   address_added: "成功添加地址: {0}"
   address_deleted: "成功删除地址: {0}"
-  addresses_saved: "成功保存 {0} 个地址到配置文件"
-  save_addresses_failed: "保存地址失败: {0}"
   address_action_not_found: "未找到地址或动作: {0}, {1}"
   binding_added: "成功添加绑定: {0} -> {1}"
   binding_deleted: "成功删除绑定: {0} -> {1}"

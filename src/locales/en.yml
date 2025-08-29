@@ -340,8 +340,6 @@ osc_address_tab:
   registry_not_ready: "Registry not available, please wait for initialization"
   address_added: "Successfully added address: {0}"
   address_deleted: "Successfully deleted address: {0}"
-  addresses_saved: "Successfully saved {0} addresses to config file"
-  save_addresses_failed: "Failed to save addresses: {0}"
   address_action_not_found: "Address or action not found: {0}, {1}"
   binding_added: "Successfully added binding: {0} -> {1}"
   binding_deleted: "Successfully deleted binding: {0} -> {1}"

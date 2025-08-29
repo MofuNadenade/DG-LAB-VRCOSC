@@ -1,6 +1,15 @@
 from typing import List, Optional
+from enum import Enum
 
 from PySide6.QtWidgets import QComboBox, QWidget
+
+
+class EditState(Enum):
+    """编辑状态枚举"""
+    NONE = "none"          # 无变化
+    NEW = "new"            # 新增
+    MODIFIED = "modified"  # 修改
+    DELETED = "deleted"    # 删除（隐藏不显示）
 
 
 class StyledComboBox(QComboBox):

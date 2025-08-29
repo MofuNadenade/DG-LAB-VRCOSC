@@ -340,8 +340,6 @@ osc_address_tab:
   registry_not_ready: "レジストリが利用できません。初期化の完了をお待ちください"
   address_added: "アドレスを正常に追加しました: {0}"
   address_deleted: "アドレスを正常に削除しました: {0}"
-  addresses_saved: "{0} 個のアドレスを設定ファイルに正常に保存しました"
-  save_addresses_failed: "アドレスの保存に失敗しました: {0}"
   address_action_not_found: "アドレスまたはアクションが見つかりません: {0}, {1}"
   binding_added: "バインディングを正常に追加しました: {0} -> {1}"
   binding_deleted: "バインディングを正常に削除しました: {0} -> {1}"
