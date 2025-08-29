@@ -639,6 +639,11 @@ class OSCBindingTableTab(QWidget):
     def has_binding_in_table(self, address_name: str) -> bool:
         """检查表格中是否已存在相同地址的绑定"""
         for row in range(self.binding_table.rowCount()):
+            # 检查编辑状态，忽略已删除的行
+            edit_state_item = self.binding_table.item(row, 4)
+            if edit_state_item and edit_state_item.text() == EditState.DELETED.value:
+                continue
+                
             addr_item = self.binding_table.item(row, 1)
             if addr_item and addr_item.text().strip() == address_name:
                 return True
@@ -646,11 +651,16 @@ class OSCBindingTableTab(QWidget):
 
     def update_binding_status_label(self) -> None:
         """更新绑定状态标签"""
-        total_count = self.binding_table.rowCount()
+        total_count = 0
         valid_count = 0
         invalid_count = 0
 
-        for row in range(total_count):
+        for row in range(self.binding_table.rowCount()):
+            # 检查编辑状态，忽略已删除的行
+            edit_state_item = self.binding_table.item(row, 4)
+            if not edit_state_item or edit_state_item.text() == EditState.DELETED.value:
+                continue
+                
             address_name_item = self.binding_table.item(row, 1)
             action_name_item = self.binding_table.item(row, 2)
             
@@ -659,6 +669,7 @@ class OSCBindingTableTab(QWidget):
                 action_name = action_name_item.text().strip()
                 
                 if address_name and action_name:
+                    total_count += 1
                     # 获取地址和动作对象进行验证
                     address = self.registries.address_registry.get_address_by_name(address_name)
                     action = self.registries.action_registry.get_action_by_name(action_name)

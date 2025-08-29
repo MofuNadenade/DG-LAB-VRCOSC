@@ -559,6 +559,11 @@ class OSCAddressTableTab(QWidget):
     def has_address_name_in_table(self, name: str) -> bool:
         """检查表格中是否已存在相同名称的地址"""
         for row in range(self.address_table.rowCount()):
+            # 检查编辑状态，忽略已删除的行
+            edit_state_item = self.address_table.item(row, 4)
+            if edit_state_item and edit_state_item.text() == EditState.DELETED.value:
+                continue
+                
             name_item = self.address_table.item(row, 1)
             if name_item and name_item.text().strip() == name:
                 return True
@@ -567,6 +572,11 @@ class OSCAddressTableTab(QWidget):
     def has_address_code_in_table(self, code: str) -> bool:
         """检查表格中是否已存在相同代码的地址"""
         for row in range(self.address_table.rowCount()):
+            # 检查编辑状态，忽略已删除的行
+            edit_state_item = self.address_table.item(row, 4)
+            if edit_state_item and edit_state_item.text() == EditState.DELETED.value:
+                continue
+                
             code_item = self.address_table.item(row, 2)
             if code_item and code_item.text().strip() == code:
                 return True
@@ -574,7 +584,13 @@ class OSCAddressTableTab(QWidget):
 
     def update_address_status_label(self) -> None:
         """更新地址状态标签"""
-        total_count = self.address_table.rowCount()
+        total_count = 0
+        for row in range(self.address_table.rowCount()):
+            # 检查编辑状态，忽略已删除的行
+            edit_state_item = self.address_table.item(row, 4)
+            if edit_state_item and edit_state_item.text() != EditState.DELETED.value:
+                total_count += 1
+        
         self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
 
     def on_address_selection_changed(self) -> None:
