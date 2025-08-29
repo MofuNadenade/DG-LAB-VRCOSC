@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List, Any, Union
+from typing import Optional, Any, Union
 
 from PySide6.QtCore import Qt, QModelIndex, QPersistentModelIndex
 from PySide6.QtGui import QColor
@@ -353,9 +353,6 @@ class OSCBindingTableTab(QWidget):
     def save_bindings(self) -> None:
         """增量保存到registry"""
         try:
-            # 处理所有需要保存的行（包括删除的）
-            rows_to_remove: List[int] = []
-            
             for row in range(self.binding_table.rowCount()):
                 edit_state_item = self.binding_table.item(row, 4)
                 if not edit_state_item:
@@ -372,18 +369,12 @@ class OSCBindingTableTab(QWidget):
                 elif edit_state == EditState.DELETED.value:
                     # 处理删除
                     self._handle_delete_binding(row)
-                    rows_to_remove.append(row)
-                    continue  # 跳过后续处理
-                
-                # 重置编辑状态
-                edit_state_item.setText(EditState.NONE.value)
-            
-            # 从后往前删除行，避免索引变化
-            for row in reversed(rows_to_remove):
-                self.binding_table.removeRow(row)
             
             # 保存配置
             self._save_config()
+
+            # 刷新表格
+            self.refresh_binding_table()
             
             # 显示成功消息
             QMessageBox.information(self, translate("osc_address_tab.success"),
@@ -428,20 +419,14 @@ class OSCBindingTableTab(QWidget):
         binding_id = int(id_item.text())
         address_name = address_name_item.text().strip()
         action_name = action_name_item.text().strip()
-        
-        # 检查地址是否变化
-        if address_name_item.data(Qt.ItemDataRole.UserRole) == True:
-            new_address = self.registries.address_registry.get_address_by_name(address_name)
-            if new_address:
-                self.registries.binding_registry.update_binding_address(binding_id, new_address)
-                logger.info(f"Updated binding {binding_id} address to: {address_name}")
-        
-        # 检查动作是否变化
-        if action_name_item.data(Qt.ItemDataRole.UserRole) == True:
-            new_action = self.registries.action_registry.get_action_by_name(action_name)
-            if new_action:
-                self.registries.binding_registry.update_binding_action(binding_id, new_action)
-                logger.info(f"Updated binding {binding_id} action to: {action_name}")
+
+        new_address = self.registries.address_registry.get_address_by_name(address_name)
+        if new_address:
+            self.registries.binding_registry.update_binding_address(binding_id, new_address)
+
+        new_action = self.registries.action_registry.get_action_by_name(action_name)
+        if new_action:
+            self.registries.binding_registry.update_binding_action(binding_id, new_action)
 
     def _handle_delete_binding(self, row: int) -> None:
         """处理删除绑定"""
@@ -481,12 +466,10 @@ class OSCBindingTableTab(QWidget):
         
         # 地址名 - 存储原始值用于比较
         addr_item = QTableWidgetItem(binding.address.name)
-        addr_item.setData(Qt.ItemDataRole.UserRole, False)  # 初始未修改
         self.binding_table.setItem(row, 1, addr_item)
         
         # 动作名 - 存储原始值用于比较
         action_item = QTableWidgetItem(binding.action.name)
-        action_item.setData(Qt.ItemDataRole.UserRole, False)  # 初始未修改
         self.binding_table.setItem(row, 2, action_item)
         
         # 状态列
@@ -580,20 +563,19 @@ class OSCBindingTableTab(QWidget):
                                                  QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                     if reply != QMessageBox.StandardButton.Yes:
                         return
+                
+                # 阻塞信号避免在刷新时触发itemChanged
+                self.binding_table.blockSignals(True)
 
                 # 直接添加到表格
                 row = self.binding_table.rowCount()
-                self.binding_table.insertRow(row)
+                self.binding_table.setRowCount(row + 1)
                 
                 # 创建新的绑定项
                 id_item = QTableWidgetItem(str(-1))  # 临时ID，保存时会重新生成
                 id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 addr_item = QTableWidgetItem(address_name)
                 action_item = QTableWidgetItem(action_name)
-                
-                # 设置修改标记为True（新增项目）
-                addr_item.setData(Qt.ItemDataRole.UserRole, True)
-                action_item.setData(Qt.ItemDataRole.UserRole, True)
                 
                 # 验证绑定有效性并设置状态
                 is_valid, error_msg = self.validate_binding(address, action)
@@ -630,6 +612,12 @@ class OSCBindingTableTab(QWidget):
                 self.binding_table.setItem(row, 3, status_item)
                 self.binding_table.setItem(row, 4, edit_state_item)
 
+                # 高亮显示修改的行
+                self.update_highlight_row(row)
+
+                # 恢复信号连接
+                self.binding_table.blockSignals(False)
+
                 # 更新状态标签
                 self.update_binding_status_label()
 
@@ -662,18 +650,23 @@ class OSCBindingTableTab(QWidget):
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
-            # 不立即删除，而是标记为删除状态并隐藏行
+            # 检查是否为新增状态的绑定
             edit_state_item = self.binding_table.item(current_row, 4)
             if edit_state_item:
-                edit_state_item.setText(EditState.DELETED.value)
-            
-            # 隐藏行而不是删除
-            self.binding_table.setRowHidden(current_row, True)
+                if edit_state_item.text() == EditState.NEW.value:
+                    # 如果是新增的绑定，直接删除
+                    self.binding_table.removeRow(current_row)
+                    logger.info(f"Deleted new binding: {address_name} -> {action_name}")
+                else:
+                    # 如果是已存在的绑定，标记为删除状态并隐藏
+                    edit_state_item.setText(EditState.DELETED.value)
+                    
+                    # 隐藏行而不是删除
+                    self.binding_table.setRowHidden(current_row, True)
+                    logger.info(f"Marked binding for deletion: {address_name} -> {action_name}")
             
             # 更新状态标签
             self.update_binding_status_label()
-
-            logger.info(f"Marked binding for deletion: {address_name} -> {action_name}")
 
             # 显示成功消息
             QMessageBox.information(self, translate("osc_address_tab.success"),
@@ -743,78 +736,33 @@ class OSCBindingTableTab(QWidget):
 
     def on_item_changed(self, item: QTableWidgetItem) -> None:
         """当表格项数据变化时自动标记"""
-        if item.column() in [1, 2]:  # 地址名和动作名列
-            # 标记为已修改
-            item.setData(Qt.ItemDataRole.UserRole, True)
-            
-            # 设置编辑状态为修改
-            edit_state_item = self.binding_table.item(item.row(), 4)
-            if edit_state_item:
-                edit_state_item.setText(EditState.MODIFIED.value)
-            
-            # 高亮显示修改的行
-            self.highlight_modified_row(item.row())
+        # 设置编辑状态为修改
+        edit_state_item = self.binding_table.item(item.row(), 4)
+        if edit_state_item:
+            # 获取当前行的编辑状态
+            current_state = edit_state_item.text()
+            # 如果当前状态为NONE，则设置为MODIFIED
+            if current_state == EditState.NONE.value:
+                edit_state_item.setText(EditState.MODIFIED.value)        
+                # 高亮显示修改的行
+                self.update_highlight_row(item.row())
 
-    def highlight_modified_row(self, row: int) -> None:
+
+    def update_highlight_row(self, row: int) -> None:
         """高亮显示修改的行"""
         edit_state_item = self.binding_table.item(row, 4)
         if not edit_state_item:
             return
-            
+        
         edit_state = edit_state_item.text()
-        
-        if edit_state in [EditState.NEW.value, EditState.MODIFIED.value]:
-            # 设置背景色为浅黄色表示已修改
-            for col in range(self.binding_table.columnCount() - 1):  # 排除编辑状态列
-                item = self.binding_table.item(row, col)
-                if item:
+        for col in [1, 2]:
+            item = self.binding_table.item(row, col)
+            if item:
+                if edit_state in [EditState.NEW.value, EditState.MODIFIED.value]:
+                    # 设置背景色为浅黄色表示已修改
                     item.setBackground(QColor(255, 255, 200))
-
-    def is_item_modified(self, item: QTableWidgetItem) -> bool:
-        """检查表格项是否被修改"""
-        return item.data(Qt.ItemDataRole.UserRole) == True
-
-    def is_row_modified(self, row: int) -> bool:
-        """检查指定行是否被修改"""
-        edit_state_item = self.binding_table.item(row, 4)
-        if edit_state_item:
-            edit_state = edit_state_item.text()
-            return edit_state != EditState.NONE.value
-        return False
-
-    def get_modified_rows(self) -> List[int]:
-        """获取所有修改过的行"""
-        modified_rows: List[int] = []
-        for row in range(self.binding_table.rowCount()):
-            edit_state_item = self.binding_table.item(row, 4)
-            if edit_state_item and edit_state_item.text() != EditState.NONE.value:
-                modified_rows.append(row)
-        return modified_rows
-
-    def get_modified_count(self) -> int:
-        """获取修改过的行数"""
-        return len(self.get_modified_rows())
-
-    def mark_row_as_saved(self, row: int) -> None:
-        """标记行为已保存"""
-        addr_item = self.binding_table.item(row, 1)
-        action_item = self.binding_table.item(row, 2)
-        edit_state_item = self.binding_table.item(row, 4)
-        
-        # 重置修改标记
-        if addr_item:
-            addr_item.setData(Qt.ItemDataRole.UserRole, False)
-            addr_item.setBackground(Qt.GlobalColor.white)
-        if action_item:
-            action_item.setData(Qt.ItemDataRole.UserRole, False)
-            action_item.setBackground(Qt.GlobalColor.white)
-        if edit_state_item:
-            edit_state_item.setText(EditState.NONE.value)
-
-    def reset_all_modifications(self) -> None:
-        """重置所有修改标记"""
-        for row in range(self.binding_table.rowCount()):
-            self.mark_row_as_saved(row)
+                else:
+                    item.setBackground(Qt.GlobalColor.white)
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""

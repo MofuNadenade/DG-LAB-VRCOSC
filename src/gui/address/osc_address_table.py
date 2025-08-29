@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List, Any, Union
+from typing import Optional, Any, Union
 
 from PySide6.QtCore import Qt, QModelIndex, QPersistentModelIndex
 from PySide6.QtGui import QColor
@@ -334,9 +334,6 @@ class OSCAddressTableTab(QWidget):
     def save_addresses(self) -> None:
         """增量保存到registry"""
         try:
-            # 处理所有需要保存的行（包括删除的）
-            rows_to_remove: List[int] = []
-            
             for row in range(self.address_table.rowCount()):
                 edit_state_item = self.address_table.item(row, 4)
                 if not edit_state_item:
@@ -353,18 +350,12 @@ class OSCAddressTableTab(QWidget):
                 elif edit_state == EditState.DELETED.value:
                     # 处理删除
                     self._handle_delete_address(row)
-                    rows_to_remove.append(row)
-                    continue  # 跳过后续处理
-                
-                # 重置编辑状态
-                edit_state_item.setText(EditState.NONE.value)
-            
-            # 从后往前删除行，避免索引变化
-            for row in reversed(rows_to_remove):
-                self.address_table.removeRow(row)
             
             # 保存配置
             self._save_config()
+
+            # 刷新表格
+            self.refresh_address_table()
             
             # 显示成功消息
             QMessageBox.information(self, translate("osc_address_tab.success"),
@@ -405,16 +396,9 @@ class OSCAddressTableTab(QWidget):
         address_id = int(id_item.text())
         name = name_item.text().strip()
         code = code_item.text().strip()
-        
-        # 检查名称是否变化
-        if name_item.data(Qt.ItemDataRole.UserRole) == True:
-            self.registries.address_registry.update_address_name(address_id, name)
-            logger.info(f"Updated address {address_id} name to: {name}")
-        
-        # 检查代码是否变化
-        if code_item.data(Qt.ItemDataRole.UserRole) == True:
-            self.registries.address_registry.update_address_code(address_id, code)
-            logger.info(f"Updated address {address_id} code to: {code}")
+
+        self.registries.address_registry.update_address_name(address_id, name)
+        self.registries.address_registry.update_address_code(address_id, code)
 
     def _handle_delete_address(self, row: int) -> None:
         """处理删除地址"""
@@ -449,12 +433,10 @@ class OSCAddressTableTab(QWidget):
         
         # 地址名 - 存储原始值用于比较
         name_item = QTableWidgetItem(addr.name)
-        name_item.setData(Qt.ItemDataRole.UserRole, False)  # 初始未修改
         self.address_table.setItem(row, 1, name_item)
         
         # OSC代码 - 存储原始值用于比较
         code_item = QTableWidgetItem(addr.code)
-        code_item.setData(Qt.ItemDataRole.UserRole, False)  # 初始未修改
         self.address_table.setItem(row, 2, code_item)
         
         # 状态列 - 所有地址都显示为可用状态
@@ -489,10 +471,13 @@ class OSCAddressTableTab(QWidget):
                     QMessageBox.warning(self, translate("osc_address_tab.error"),
                                         translate("osc_address_tab.code_exists"))
                     return
+                
+                # 阻塞信号避免在刷新时触发itemChanged
+                self.address_table.blockSignals(True)
 
                 # 直接添加到表格
                 row = self.address_table.rowCount()
-                self.address_table.insertRow(row)
+                self.address_table.setRowCount(row + 1)
                 
                 # 创建新的地址项
                 id_item = QTableWidgetItem(str(-1))  # 临时ID，保存时会重新生成
@@ -500,10 +485,6 @@ class OSCAddressTableTab(QWidget):
                 name_item = QTableWidgetItem(name)
                 code_item = QTableWidgetItem(code)
                 status_item = QTableWidgetItem(translate("osc_address_tab.available"))
-                
-                # 设置修改标记为True（新增项目）
-                name_item.setData(Qt.ItemDataRole.UserRole, True)
-                code_item.setData(Qt.ItemDataRole.UserRole, True)
                 
                 # 设置状态列样式
                 status_item.setBackground(QColor(144, 238, 144))
@@ -520,6 +501,12 @@ class OSCAddressTableTab(QWidget):
                 self.address_table.setItem(row, 2, code_item)
                 self.address_table.setItem(row, 3, status_item)
                 self.address_table.setItem(row, 4, edit_state_item)
+
+                # 高亮显示修改的行
+                self.update_highlight_row(row)
+
+                # 恢复信号连接
+                self.address_table.blockSignals(False)
 
                 # 更新状态标签
                 total_count = self.address_table.rowCount()
@@ -550,19 +537,24 @@ class OSCAddressTableTab(QWidget):
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
-            # 不立即删除，而是标记为删除状态并隐藏行
+            # 检查是否为新增状态的行
             edit_state_item = self.address_table.item(current_row, 4)
             if edit_state_item:
-                edit_state_item.setText(EditState.DELETED.value)
-            
-            # 隐藏行而不是删除
-            self.address_table.setRowHidden(current_row, True)
+                if edit_state_item.text() == EditState.NEW.value:
+                    # 如果是新增的行，直接删除
+                    self.address_table.removeRow(current_row)
+                    logger.info(f"Deleted new OSC address: {address_name}")
+                else:
+                    # 如果是已存在的行，标记为删除状态并隐藏
+                    edit_state_item.setText(EditState.DELETED.value)
+                    
+                    # 隐藏行而不是删除
+                    self.address_table.setRowHidden(current_row, True)
+                    logger.info(f"Marked OSC address for deletion: {address_name}")
             
             # 更新状态标签
             total_count = self.address_table.rowCount()
             self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
-
-            logger.info(f"Marked OSC address for deletion: {address_name}")
 
             # 显示成功消息
             QMessageBox.information(self, translate("osc_address_tab.success"),
@@ -591,78 +583,32 @@ class OSCAddressTableTab(QWidget):
 
     def on_item_changed(self, item: QTableWidgetItem) -> None:
         """当表格项数据变化时自动标记"""
-        if item.column() in [1, 2]:  # 名称和代码列
-            # 标记为已修改
-            item.setData(Qt.ItemDataRole.UserRole, True)
-            
-            # 设置编辑状态为修改
-            edit_state_item = self.address_table.item(item.row(), 4)
-            if edit_state_item:
-                edit_state_item.setText(EditState.MODIFIED.value)
-            
-            # 高亮显示修改的行
-            self.highlight_modified_row(item.row())
+        # 设置编辑状态为修改
+        edit_state_item = self.address_table.item(item.row(), 4)
+        if edit_state_item:
+            # 获取当前行的编辑状态
+            current_state = edit_state_item.text()
+            # 如果当前状态为NONE，则设置为MODIFIED
+            if current_state == EditState.NONE.value:
+                edit_state_item.setText(EditState.MODIFIED.value)        
+                # 高亮显示修改的行
+                self.update_highlight_row(item.row())
 
-    def highlight_modified_row(self, row: int) -> None:
+    def update_highlight_row(self, row: int) -> None:
         """高亮显示修改的行"""
         edit_state_item = self.address_table.item(row, 4)
         if not edit_state_item:
             return
-            
+        
         edit_state = edit_state_item.text()
-        
-        if edit_state in [EditState.NEW.value, EditState.MODIFIED.value]:
-            # 设置背景色为浅黄色表示已修改
-            for col in range(self.address_table.columnCount() - 1):  # 排除编辑状态列
-                item = self.address_table.item(row, col)
-                if item:
+        for col in [1, 2]:
+            item = self.address_table.item(row, col)
+            if item:
+                if edit_state in [EditState.NEW.value, EditState.MODIFIED.value]:
+                    # 设置背景色为浅黄色表示已修改
                     item.setBackground(QColor(255, 255, 200))
-
-    def is_item_modified(self, item: QTableWidgetItem) -> bool:
-        """检查表格项是否被修改"""
-        return item.data(Qt.ItemDataRole.UserRole) == True
-
-    def is_row_modified(self, row: int) -> bool:
-        """检查指定行是否被修改"""
-        edit_state_item = self.address_table.item(row, 4)
-        if edit_state_item:
-            edit_state = edit_state_item.text()
-            return edit_state != EditState.NONE.value
-        return False
-
-    def get_modified_rows(self) -> List[int]:
-        """获取所有修改过的行"""
-        modified_rows: List[int] = []
-        for row in range(self.address_table.rowCount()):
-            edit_state_item = self.address_table.item(row, 4)
-            if edit_state_item and edit_state_item.text() != EditState.NONE.value:
-                modified_rows.append(row)
-        return modified_rows
-
-    def get_modified_count(self) -> int:
-        """获取修改过的行数"""
-        return len(self.get_modified_rows())
-
-    def mark_row_as_saved(self, row: int) -> None:
-        """标记行为已保存"""
-        name_item = self.address_table.item(row, 1)
-        code_item = self.address_table.item(row, 2)
-        edit_state_item = self.address_table.item(row, 4)
-        
-        # 重置修改标记
-        if name_item:
-            name_item.setData(Qt.ItemDataRole.UserRole, False)
-            name_item.setBackground(Qt.GlobalColor.white)
-        if code_item:
-            code_item.setData(Qt.ItemDataRole.UserRole, False)
-            code_item.setBackground(Qt.GlobalColor.white)
-        if edit_state_item:
-            edit_state_item.setText(EditState.NONE.value)
-
-    def reset_all_modifications(self) -> None:
-        """重置所有修改标记"""
-        for row in range(self.address_table.rowCount()):
-            self.mark_row_as_saved(row)
+                else:
+                    item.setBackground(Qt.GlobalColor.white)
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
