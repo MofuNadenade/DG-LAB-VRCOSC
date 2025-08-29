@@ -356,3 +356,4 @@ osc_address_tab:
   last_value: "Last Value"
   info: "Information"
   no_changes_to_save: "No changes to save"
+  edit_state: "Edit State"

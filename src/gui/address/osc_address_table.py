@@ -160,7 +160,7 @@ class OSCAddressTableTab(QWidget):
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.osc_code"),
             translate("osc_address_tab.status"),
-            "edit_state"  # 隐藏列，不需要翻译
+            translate("osc_address_tab.edit_state")
         ])
 
         # 隐藏ID列和编辑状态列
@@ -327,9 +327,7 @@ class OSCAddressTableTab(QWidget):
         self.address_table.blockSignals(False)
 
         # 更新状态标签
-        total_count = len(addresses)
-        self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
-        logger.info(f"Refreshed address table with {total_count} addresses from registries")
+        self.update_address_status_label()
 
     def save_addresses(self) -> None:
         """增量保存到registry"""
@@ -509,8 +507,7 @@ class OSCAddressTableTab(QWidget):
                 self.address_table.blockSignals(False)
 
                 # 更新状态标签
-                total_count = self.address_table.rowCount()
-                self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
+                self.update_address_status_label()
 
                 logger.info(f"Added OSC address to table: {name} -> {code}")
 
@@ -553,8 +550,7 @@ class OSCAddressTableTab(QWidget):
                     logger.info(f"Marked OSC address for deletion: {address_name}")
             
             # 更新状态标签
-            total_count = self.address_table.rowCount()
-            self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
+            self.update_address_status_label()
 
             # 显示成功消息
             QMessageBox.information(self, translate("osc_address_tab.success"),
@@ -575,6 +571,11 @@ class OSCAddressTableTab(QWidget):
             if code_item and code_item.text().strip() == code:
                 return True
         return False
+
+    def update_address_status_label(self) -> None:
+        """更新地址状态标签"""
+        total_count = self.address_table.rowCount()
+        self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
 
     def on_address_selection_changed(self) -> None:
         """地址选择变化时的处理"""
@@ -621,7 +622,7 @@ class OSCAddressTableTab(QWidget):
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.osc_code"),
             translate("osc_address_tab.status"),
-            "edit_state"  # 隐藏列，不需要翻译
+            translate("osc_address_tab.edit_state")
         ])
 
         # 更新按钮文本

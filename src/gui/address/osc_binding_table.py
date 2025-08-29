@@ -146,7 +146,7 @@ class OSCBindingTableTab(QWidget):
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.action_name"),
             translate("osc_address_tab.status"),
-            "edit_state"  # 隐藏列，不需要翻译
+            translate("osc_address_tab.edit_state")
         ])
 
         # 隐藏ID列和编辑状态列
@@ -311,44 +311,8 @@ class OSCBindingTableTab(QWidget):
         # 恢复信号连接
         self.binding_table.blockSignals(False)
 
-        # 统计有效和无效绑定数量
-        valid_count = 0
-        invalid_count = 0
-
-        for binding in bindings:
-            # 验证绑定有效性
-            is_valid, _ = self.validate_binding(binding.address, binding.action)
-            if is_valid:
-                valid_count += 1
-            else:
-                invalid_count += 1
-
-        # 更新状态标签，显示详细统计
-        total_count = len(bindings)
-        if invalid_count > 0:
-            self.binding_status_label.setText(
-                translate("osc_address_tab.binding_status_with_invalid").format(total_count, valid_count,
-                                                                                invalid_count))
-            self.binding_status_label.setStyleSheet("""
-                QLabel {
-                    color: #d32f2f;
-                    font-size: 12px;
-                    padding: 5px;
-                    font-weight: bold;
-                }
-            """)
-        else:
-            self.binding_status_label.setText(translate("osc_address_tab.binding_status_all_valid").format(total_count))
-            self.binding_status_label.setStyleSheet("""
-                QLabel {
-                    color: #2e7d32;
-                    font-size: 12px;
-                    padding: 5px;
-                    font-weight: bold;
-                }
-            """)
-
-        logger.info(f"Refreshed binding table with {total_count} bindings from registries")
+        # 更新状态标签
+        self.update_binding_status_label()
 
     def save_bindings(self) -> None:
         """增量保存到registry"""
@@ -747,7 +711,6 @@ class OSCBindingTableTab(QWidget):
                 # 高亮显示修改的行
                 self.update_highlight_row(item.row())
 
-
     def update_highlight_row(self, row: int) -> None:
         """高亮显示修改的行"""
         edit_state_item = self.binding_table.item(row, 4)
@@ -775,7 +738,8 @@ class OSCBindingTableTab(QWidget):
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.action_name"),
             translate("osc_address_tab.status"),
-            "edit_state"  # 隐藏列，不需要翻译
+            translate("osc_address_tab.edit_state")
+            
         ])
 
         # 更新按钮文本

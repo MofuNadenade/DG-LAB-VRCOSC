@@ -356,3 +356,4 @@ osc_address_tab:
   last_value: "最後の値"
   info: "情報"
   no_changes_to_save: "保存する変更がありません"
+  edit_state: "編集状態"
