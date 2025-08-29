@@ -522,11 +522,9 @@ class OSCBindingTableTab(QWidget):
 
                 # 检查表格中是否已存在相同地址的绑定
                 if self.has_binding_in_table(address_name):
-                    reply = QMessageBox.question(self, translate("osc_address_tab.confirm_replace"),
-                                                 translate("osc_address_tab.replace_binding_msg").format(address_name),
-                                                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-                    if reply != QMessageBox.StandardButton.Yes:
-                        return
+                    QMessageBox.warning(self, translate("osc_address_tab.error"),
+                                        translate("osc_address_tab.binding_exists"))
+                    return
                 
                 # 阻塞信号避免在刷新时触发itemChanged
                 self.binding_table.blockSignals(True)
