@@ -246,7 +246,7 @@ controller_tab:
   interaction_mode: "Interaction Mode"
   current_panel_channel: "Current Panel Control Channel"
   not_set: "Not Set"
-  strength_step_label: "Fire Intensity Step:"
+  fire_mode_strength_step_label: "Fire Intensity Step:"
   save_settings_tooltip: "Save all device controller settings to configuration file"
   settings_saved: "Device controller settings have been successfully saved to configuration file"
   save_failed: "Failed to save device controller settings: {0}"

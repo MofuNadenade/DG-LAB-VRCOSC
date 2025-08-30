@@ -132,10 +132,10 @@ class MainWindow(QMainWindow):
             self.controller.chatbox_service.set_enabled(enable_chatbox)
 
         # 强度步长
-        strength_step = self.settings.get('strength_step', 30)
-        self.set_strength_step(strength_step, silent=True)
+        fire_mode_strength_step = self.settings.get('fire_mode_strength_step', 30)
+        self.set_fire_mode_strength_step(fire_mode_strength_step)
         if self.controller is not None:
-            self.controller.osc_action_service.fire_mode_strength_step = strength_step
+            self.controller.osc_action_service.fire_mode_strength_step = fire_mode_strength_step
 
         # 其他设置
         fire_mode_disabled = self.settings.get('fire_mode_disabled', False)
@@ -296,12 +296,12 @@ class MainWindow(QMainWindow):
             OSCActionType.PANEL_CONTROL, {"panel"}
         )
 
-        async def set_strength_step(*args: OSCValue) -> None:
+        async def set_fire_mode_strength_step(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await osc_action_service.set_strength_step(args[0])
+                await osc_action_service.set_fire_mode_strength_step(args[0])
         self.registries.action_registry.register_action(
             "强度调节",
-            set_strength_step,
+            set_fire_mode_strength_step,
             OSCActionType.PANEL_CONTROL, {"value_adjust"}
         )
 
@@ -355,13 +355,13 @@ class MainWindow(QMainWindow):
             OSCActionType.STRENGTH_CONTROL, {"increase"}
         )
 
-        async def strength_fire_mode(*args: OSCValue) -> None:
+        async def activate_fire_mode(*args: OSCValue) -> None:
             if isinstance(args[0], bool):
                 current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.strength_fire_mode(args[0], current_channel)
+                await osc_action_service.activate_fire_mode(args[0], current_channel)
         self.registries.action_registry.register_action(
             "一键开火",
-            strength_fire_mode,
+            activate_fire_mode,
             OSCActionType.STRENGTH_CONTROL, {"fire"}
         )
 
@@ -537,19 +537,17 @@ class MainWindow(QMainWindow):
 
     # === 强度步进管理方法 ===
 
-    def set_strength_step(self, value: int, silent: bool = False) -> None:
+    def set_fire_mode_strength_step(self, value: int) -> None:
         """统一管理强度步进设置"""
-        spinbox = self.controller_tab.strength_step_spinbox
+        spinbox = self.controller_tab.fire_mode_strength_step_spinbox
 
-        if silent:
-            spinbox.blockSignals(True)
+        spinbox.blockSignals(True)
         spinbox.setValue(value)
-        if silent:
-            spinbox.blockSignals(False)
+        spinbox.blockSignals(False)
 
-    def get_strength_step(self) -> int:
+    def get_fire_mode_strength_step(self) -> int:
         """获取强度步进值"""
-        return self.controller_tab.strength_step_spinbox.value()
+        return self.controller_tab.fire_mode_strength_step_spinbox.value()
 
     # === 日志管理方法 ===
 

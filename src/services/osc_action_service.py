@@ -211,14 +211,14 @@ class OSCActionService:
 
     # ============ 开火模式业务逻辑 ============
 
-    async def set_strength_step(self, value: float) -> None:
+    async def set_fire_mode_strength_step(self, value: float) -> None:
         """设置开火模式步进值"""
         self._fire_mode_strength_step = math.floor(self._map_value(value, 0, 100))
         logger.info(f"当前强度步进值: {self._fire_mode_strength_step}")
         # 更新 UI 组件
-        self._core_interface.set_strength_step(self._fire_mode_strength_step, silent=True)
+        self._core_interface.set_fire_mode_strength_step(self._fire_mode_strength_step)
 
-    async def strength_fire_mode(self, value: bool, channel: Channel) -> None:
+    async def activate_fire_mode(self, value: bool, channel: Channel) -> None:
         """一键开火模式（完整业务逻辑实现）"""
         fire_strength = self.fire_mode_strength_step
         last_strength = self.get_last_strength()

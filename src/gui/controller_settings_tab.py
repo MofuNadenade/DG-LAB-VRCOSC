@@ -43,11 +43,11 @@ class ControllerSettingsTab(QWidget):
         self.current_channel_label: QLabel
         self.current_pulse_a_combobox: QComboBox
         self.current_pulse_b_combobox: QComboBox
-        self.strength_step_spinbox: QSpinBox
+        self.fire_mode_strength_step_spinbox: QSpinBox
         self.save_settings_btn: QPushButton
         self.current_pulse_a_label: QLabel
         self.current_pulse_b_label: QLabel
-        self.strength_step_label: QLabel
+        self.fire_mode_strength_step_label: QLabel
 
         self.init_ui()
 
@@ -138,13 +138,13 @@ class ControllerSettingsTab(QWidget):
         controller_form.addRow(self.current_pulse_b_label, self.current_pulse_b_combobox)
 
         # 强度步长
-        self.strength_step_spinbox = QSpinBox()
+        self.fire_mode_strength_step_spinbox = QSpinBox()
         # 强制使用英文区域设置，避免数字显示为繁体中文
-        self.strength_step_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.strength_step_spinbox.setRange(0, 100)
-        self.strength_step_spinbox.setValue(30)
-        self.strength_step_label = QLabel(translate("controller_tab.strength_step_label"))
-        controller_form.addRow(self.strength_step_label, self.strength_step_spinbox)
+        self.fire_mode_strength_step_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.fire_mode_strength_step_spinbox.setRange(0, 100)
+        self.fire_mode_strength_step_spinbox.setValue(30)
+        self.fire_mode_strength_step_label = QLabel(translate("controller_tab.fire_mode_strength_step_label"))
+        controller_form.addRow(self.fire_mode_strength_step_label, self.fire_mode_strength_step_spinbox)
 
         # 添加保存设置按钮
         self.save_settings_btn = QPushButton(translate("osc_address_tab.save_config"))
@@ -208,7 +208,7 @@ class ControllerSettingsTab(QWidget):
             self.current_pulse_a_combobox.currentIndexChanged.connect(self.on_current_pulse_a_changed)
             self.current_pulse_b_combobox.currentIndexChanged.connect(self.on_current_pulse_b_changed)
             self.enable_chatbox_status_checkbox.toggled.connect(self.on_chatbox_status_enabled_changed)
-            self.strength_step_spinbox.valueChanged.connect(self.on_strength_step_changed)
+            self.fire_mode_strength_step_spinbox.valueChanged.connect(self.on_strength_step_changed)
 
             # 标记信号槽已连接
             self._signals_connected = True
@@ -299,7 +299,7 @@ class ControllerSettingsTab(QWidget):
             self.settings['enable_chatbox_status'] = self.enable_chatbox_status_checkbox.isChecked()
 
             # 保存强度步长
-            self.settings['strength_step'] = self.strength_step_spinbox.value()
+            self.settings['fire_mode_strength_step'] = self.fire_mode_strength_step_spinbox.value()
 
             # 保存其他可配置的设置
             self.settings['fire_mode_disabled'] = self.fire_mode_disabled_checkbox.isChecked()
@@ -435,7 +435,7 @@ class ControllerSettingsTab(QWidget):
         # 更新表单行标签
         self.current_pulse_a_label.setText(f"A{translate('controller_tab.pulse')}:")
         self.current_pulse_b_label.setText(f"B{translate('controller_tab.pulse')}:")
-        self.strength_step_label.setText(translate("controller_tab.strength_step_label"))
+        self.fire_mode_strength_step_label.setText(translate("controller_tab.fire_mode_strength_step_label"))
 
         # 更新工具提示
         self.save_settings_btn.setToolTip(translate("controller_tab.save_settings_tooltip"))

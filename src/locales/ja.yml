@@ -246,7 +246,7 @@ controller_tab:
   interaction_mode: "インタラクションモード"
   current_panel_channel: "現在のパネル制御チャンネル"
   not_set: "未設定"
-  strength_step_label: "発火強度ステップ:"
+  fire_mode_strength_step_label: "発火強度ステップ:"
   save_settings_tooltip: "すべてのデバイスコントローラー設定を設定ファイルに保存"
   settings_saved: "デバイスコントローラー設定が正常に設定ファイルに保存されました"
   save_failed: "デバイスコントローラー設定の保存に失敗しました: {0}"

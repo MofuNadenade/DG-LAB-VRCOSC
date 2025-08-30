@@ -120,7 +120,7 @@ The application uses a service-based architecture where the controller is a pure
 
 ```python
 # Correct usage
-await controller.osc_action_service.set_strength_step(50)
+await controller.osc_action_service.set_fire_mode_strength_step(50)
 controller.osc_service.send_message_to_vrchat_chatbox("Hello")
 
 # Old usage (removed)

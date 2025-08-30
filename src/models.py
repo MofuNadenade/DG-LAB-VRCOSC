@@ -207,7 +207,7 @@ class SettingsDict(TypedDict, total=False):
 
     # 控制器设置
     enable_chatbox_status: bool
-    strength_step: int
+    fire_mode_strength_step: int
     fire_mode_disabled: bool
     enable_panel_control: bool
     dynamic_bone_mode_a: bool

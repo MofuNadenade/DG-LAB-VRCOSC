@@ -27,7 +27,7 @@ def get_default_settings() -> SettingsDict:
 
         # 控制器设置
         'enable_chatbox_status': False,
-        'strength_step': 30,
+        'fire_mode_strength_step': 30,
         'fire_mode_disabled': False,
         'enable_panel_control': True,
         'dynamic_bone_mode_a': False,
