@@ -38,17 +38,34 @@ class ChatboxService:
             if not enabled:
                 self._osc_service.send_message_to_vrchat_chatbox("")
 
-    def start_service(self) -> None:
+    async def start_service(self) -> bool:
         """启动状态更新任务"""
-        if self._send_status_task is None or self._send_status_task.done():
-            self._send_status_task = asyncio.create_task(self._periodic_status_update())
+        try:
+            if self._send_status_task is None or self._send_status_task.done():
+                self._send_status_task = asyncio.create_task(self._periodic_status_update())
+            logger.info("ChatBox服务已启动")
+            return True
+        except Exception as e:
+            logger.error(f"ChatBox服务启动失败: {e}")
+            return False
 
-    def stop_service(self) -> None:
+    async def stop_service(self) -> None:
         """停止状态更新任务"""
         if self._send_status_task and not self._send_status_task.done():
             self._send_status_task.cancel()
+            try:
+                await self._send_status_task
+            except asyncio.CancelledError:
+                pass
             self._send_status_task = None
-            logger.info("状态更新任务已停止")
+        logger.info("ChatBox服务已停止")
+
+    def is_service_running(self) -> bool:
+        """检查服务是否正在运行"""
+        return (
+            self._send_status_task is not None and 
+            not self._send_status_task.done()
+        )
 
     async def _periodic_status_update(self) -> None:
         """

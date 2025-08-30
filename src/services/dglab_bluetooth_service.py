@@ -86,7 +86,7 @@ class DGLabBluetoothService:
         except Exception as e:
             logger.error(f"停止蓝牙服务失败: {e}")
 
-    def is_server_running(self) -> bool:
+    def is_service_running(self) -> bool:
         """检查设备连接服务运行状态"""
         return self._server_running
 

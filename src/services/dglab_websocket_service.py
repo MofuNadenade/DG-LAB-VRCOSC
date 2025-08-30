@@ -281,7 +281,7 @@ class DGLabWebSocketService:
         # 通知服务器已停止（用于替代轮询）
         self._server_stopped_event.set()
 
-    def is_server_running(self) -> bool:
+    def is_service_running(self) -> bool:
         """检查服务器运行状态"""
         return self._server_manager.is_running
 

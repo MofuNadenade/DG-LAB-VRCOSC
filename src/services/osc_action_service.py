@@ -65,6 +65,9 @@ class OSCActionService:
         
         # 面板控制
         self._enable_panel_control: bool = True
+        
+        # 服务状态
+        self._is_running: bool = False
 
     # ============ 属性访问 ============
     
@@ -304,6 +307,38 @@ class OSCActionService:
         self._data_updated_event.set()
 
     # ============ 生命周期管理 ============
+    
+    async def start_service(self) -> bool:
+        """启动OSC动作服务
+        
+        Returns:
+            bool: 启动是否成功
+        """
+        if self._is_running:
+            logger.warning("OSC动作服务已在运行")
+            return True
+        
+        try:
+            # 初始化服务状态
+            self._is_running = True
+            logger.info("OSC动作服务已启动")
+            return True
+        except Exception as e:
+            logger.error(f"OSC动作服务启动失败: {e}")
+            return False
+    
+    async def stop_service(self) -> None:
+        """停止OSC动作服务"""
+        if not self._is_running:
+            return
+        
+        await self.cleanup()
+        self._is_running = False
+        logger.info("OSC动作服务已停止")
+    
+    def is_service_running(self) -> bool:
+        """检查OSC动作服务运行状态"""
+        return self._is_running
 
     async def cleanup(self) -> None:
         """清理资源"""
@@ -312,7 +347,7 @@ class OSCActionService:
             self._set_mode_timer.cancel()
             self._set_mode_timer = None
         
-        logger.info("OSC动作服务已清理")
+        logger.debug("OSC动作服务资源已清理")
 
     # ============ 私有辅助方法 ============
 

@@ -416,13 +416,7 @@ class NetworkConfigTab(QWidget):
         """停止所有服务"""
         if self.controller:
             try:
-                # 停止ChatBox状态更新任务
-                self.controller.chatbox_service.stop_service()
-                # 停止WebSocket服务器
-                await self.controller.dglab_device_service.stop_service()
-                # 停止OSC服务器
-                await self.controller.osc_service.stop_service()
-                logger.info("所有服务已停止")
+                await self.controller.stop_all_services()
             except Exception as e:
                 logger.error(f"停止服务时发生异常: {e}")
 
@@ -433,25 +427,13 @@ class NetworkConfigTab(QWidget):
                 logger.error("控制器未初始化")
                 return
 
-            # 启动WebSocket服务器
-            dglab_started = await self.controller.dglab_device_service.start_service()
-            if not dglab_started:
-                error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.websocket_server_failed"))
+            # 使用controller统一启动所有服务
+            services_started = await self.controller.start_all_services()
+            if not services_started:
+                error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.services_start_failed"))
                 logger.error(error_msg)
                 self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
                 return
-
-            # 启动OSC服务器
-            osc_started = await self.controller.osc_service.start_service()
-            if not osc_started:
-                error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.osc_server_failed"))
-                logger.error(error_msg)
-                await self.controller.dglab_device_service.stop_service()
-                self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
-                return
-
-            # 启动ChatBox状态更新任务
-            self.controller.chatbox_service.start_service()
 
             logger.info("所有服务启动成功")
 
@@ -593,3 +575,4 @@ class NetworkConfigTab(QWidget):
 
         # 更新客户端状态
         self.update_connection_state(self.ui_interface.get_connection_state())
+

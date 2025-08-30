@@ -115,7 +115,7 @@ class OSCService:
         self._osc_server_instance = None
         self._is_running = False
 
-    def is_running(self) -> bool:
+    def is_service_running(self) -> bool:
         """检查OSC服务器运行状态"""
         return self._is_running
 

@@ -9,9 +9,10 @@ from typing import Optional, Protocol
 
 from core.dglab_pulse import Pulse
 from models import Channel, StrengthData, StrengthOperationType
+from services.service_interface import IService
 
 
-class IDGLabDeviceService(Protocol):
+class IDGLabDeviceService(IService, Protocol):
     """DG-LAB设备服务抽象接口
     
     纯粹的设备硬件通信接口，只定义设备连接和基础操作功能。
@@ -33,7 +34,7 @@ class IDGLabDeviceService(Protocol):
         """停止设备连接服务"""
         ...
 
-    def is_server_running(self) -> bool:
+    def is_service_running(self) -> bool:
         """检查设备连接服务运行状态
         
         Returns:
