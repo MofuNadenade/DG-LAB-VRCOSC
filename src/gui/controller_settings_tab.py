@@ -410,7 +410,7 @@ class ControllerSettingsTab(QWidget):
                 self.a_channel_slider.setValue(last_strength.a)
                 self.a_channel_slider.blockSignals(False)
                 pulse_a = self.controller.osc_action_service.get_current_pulse(Channel.A)
-                pulse_a_name = pulse_a.name if pulse_a else "未知波形"
+                pulse_a_name = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
                 self.a_channel_label.setText(
                     f"A {translate('channel.strength_display')}: {last_strength.a} {translate('channel.strength_limit')}: {last_strength.a_limit}  {translate('channel.pulse')}: {pulse_a_name}")
 
@@ -421,7 +421,7 @@ class ControllerSettingsTab(QWidget):
                 self.b_channel_slider.setValue(last_strength.b)
                 self.b_channel_slider.blockSignals(False)
                 pulse_b = self.controller.osc_action_service.get_current_pulse(Channel.B)
-                pulse_b_name = pulse_b.name if pulse_b else "未知波形"
+                pulse_b_name = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
                 self.b_channel_label.setText(
                     f"B {translate('channel.strength_display')}: {last_strength.b} {translate('channel.strength_limit')}: {last_strength.b_limit}  {translate('channel.pulse')}: {pulse_b_name}")
 

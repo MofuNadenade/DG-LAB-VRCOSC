@@ -197,13 +197,23 @@ class MainWindow(QMainWindow):
             # 同步波形设置并更新设备
             pulse_registry = self.registries.pulse_registry
             if a_index >= 0:
-                pulse_a = pulse_registry.get_pulse_by_index(a_index)
-                if pulse_a is not None:
-                    self.controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
+                pulse_index_a = self.controller_tab.current_pulse_a_combobox.itemData(a_index)
+                if pulse_index_a is not None:
+                    if pulse_index_a == -1:
+                        self.controller.osc_action_service.set_current_pulse(Channel.A, None)
+                    elif pulse_registry.is_valid_index(pulse_index_a):
+                        pulse_a = pulse_registry.get_pulse_by_index(pulse_index_a)
+                        if pulse_a is not None:
+                            self.controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
             if b_index >= 0:
-                pulse_b = pulse_registry.get_pulse_by_index(b_index)
-                if pulse_b is not None:
-                    self.controller.osc_action_service.set_current_pulse(Channel.B, pulse_b)
+                pulse_index_b = self.controller_tab.current_pulse_a_combobox.itemData(a_index)
+                if pulse_index_b is not None:
+                    if pulse_index_b == -1:
+                        self.controller.osc_action_service.set_current_pulse(Channel.B, None)
+                    elif pulse_registry.is_valid_index(pulse_index_b):
+                        pulse_b = pulse_registry.get_pulse_by_index(pulse_index_b)
+                        if pulse_b is not None:
+                            self.controller.osc_action_service.set_current_pulse(Channel.B, pulse_b)
 
         logger.info("Controller settings loaded from configuration")
 

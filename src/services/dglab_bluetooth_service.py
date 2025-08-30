@@ -139,9 +139,6 @@ class DGLabBluetoothService:
                 target_strength = current_strength + value
             elif operation_type == StrengthOperationType.DECREASE:
                 target_strength = current_strength - value
-            else:
-                logger.warning(f"未知的强度操作类型: {operation_type}")
-                return
             
             # 限制强度范围
             target_strength = max(0, min(self._strength_limit, target_strength))

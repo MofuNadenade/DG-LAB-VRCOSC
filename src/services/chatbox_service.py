@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from core.core_interface import CoreInterface
+from i18n import translate
 from models import Channel, UIFeature
 from .osc_action_service import OSCActionService
 from .osc_service import OSCService
@@ -113,8 +114,8 @@ class ChatboxService:
             channel_strength = f"[A]: {last_strength.a} B: {last_strength.b}" if current_channel == Channel.A else f"A: {last_strength.a} [B]: {last_strength.b}"
             pulse_a = self._osc_action_service.get_current_pulse(Channel.A)
             pulse_b = self._osc_action_service.get_current_pulse(Channel.B)
-            pulse_name_a = pulse_a.name if pulse_a else "未知波形"
-            pulse_name_b = pulse_b.name if pulse_b else "未知波形"
+            pulse_name_a = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
+            pulse_name_b = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
 
             self._osc_service.send_message_to_vrchat_chatbox(
                 f"MAX A: {last_strength.a_limit} B: {last_strength.b_limit}\n" +

@@ -58,7 +58,8 @@ class DGLabWebSocketService:
             self.data = data
             if self.task and not self.task.cancelled() and not self.task.done():
                 self.task.cancel()
-            self.task = asyncio.create_task(self._internal_task(data))
+            if len(data) > 0:
+                self.task = asyncio.create_task(self._internal_task(data))
 
         async def _internal_task(self, data: List[PulseOperation], send_duration: float = 5,
                                  send_interval: float = 1) -> None:
