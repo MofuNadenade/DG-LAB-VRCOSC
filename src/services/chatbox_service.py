@@ -111,8 +111,10 @@ class ChatboxService:
             mode_name_b = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.B) else "面板"
             current_channel = self._osc_action_service.get_current_channel()
             channel_strength = f"[A]: {last_strength.a} B: {last_strength.b}" if current_channel == Channel.A else f"A: {last_strength.a} [B]: {last_strength.b}"
-            pulse_name_a = self._osc_action_service.get_current_pulse_name(Channel.A)
-            pulse_name_b = self._osc_action_service.get_current_pulse_name(Channel.B)
+            pulse_a = self._osc_action_service.get_current_pulse(Channel.A)
+            pulse_b = self._osc_action_service.get_current_pulse(Channel.B)
+            pulse_name_a = pulse_a.name if pulse_a else "未知波形"
+            pulse_name_b = pulse_b.name if pulse_b else "未知波形"
 
             self._osc_service.send_message_to_vrchat_chatbox(
                 f"MAX A: {last_strength.a_limit} B: {last_strength.b_limit}\n" +

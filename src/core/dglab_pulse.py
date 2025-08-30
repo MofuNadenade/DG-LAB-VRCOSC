@@ -48,11 +48,6 @@ class PulseRegistry:
             return self._pulses[index]
         return None
 
-    def get_pulse_name_by_index(self, index: int) -> str:
-        """安全获取指定索引的波形名称"""
-        pulse = self.get_pulse_by_index(index)
-        return pulse.name if pulse else "未知波形"
-
     def get_valid_index(self, index: int) -> int:
         """获取有效的索引，无效时返回0"""
         if 0 <= index < len(self._pulses):

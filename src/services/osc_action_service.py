@@ -45,7 +45,7 @@ class OSCActionService:
         self._current_channel: Channel = Channel.A
 
         # 波形管理
-        self._current_pulse: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
+        self._current_pulse: Dict[Channel, Pulse] = {}
         
         # 动骨模式管理
         self._dynamic_bone_modes: Dict[Channel, bool] = {Channel.A: False, Channel.B: False}
@@ -150,45 +150,23 @@ class OSCActionService:
 
     # ============ 波形控制业务逻辑 ============
 
-    def get_current_pulse(self, channel: Channel) -> int:
+    def get_current_pulse(self, channel: Channel) -> Optional[Pulse]:
         """获取指定通道的波形模式索引"""
-        return self._current_pulse[channel]
+        return self._current_pulse.get(channel)
 
     def set_current_pulse(self, channel: Channel, pulse: Pulse) -> None:
         """设置指定通道的波形模式"""
-        self._current_pulse[channel] = pulse.index
+        self._current_pulse[channel] = pulse
         self._core_interface.set_current_pulse(channel, pulse.name)
-
-    def get_current_pulse_name(self, channel: Channel) -> str:
-        """获取指定通道当前波形的名称"""
-        pulse_index = self.get_current_pulse(channel)
-        return self._core_interface.registries.pulse_registry.get_pulse_name_by_index(pulse_index)
 
     async def update_pulse(self) -> None:
         """将当前A、B通道的波形数据同步到设备"""
-        # 获取当前A、B通道的波形索引
-        pulse_registry = self._core_interface.registries.pulse_registry
-        a_index = self._current_pulse[Channel.A]
-        b_index = self._current_pulse[Channel.B]
-
-        # 校验索引有效性并获取Pulse对象
-        if not pulse_registry.is_valid_index(a_index):
-            logger.warning(f"A通道波形索引无效: {a_index}")
-        else:
-            pulse_a = pulse_registry.get_pulse_by_index(a_index)
-            if pulse_a is not None:
-                await self.send_pulse(Channel.A, pulse_a)
-            else:
-                logger.warning(f"A通道未找到索引为{a_index}的波形")
-
-        if not pulse_registry.is_valid_index(b_index):
-            logger.warning(f"B通道波形索引无效: {b_index}")
-        else:
-            pulse_b = pulse_registry.get_pulse_by_index(b_index)
-            if pulse_b is not None:
-                await self.send_pulse(Channel.B, pulse_b)
-            else:
-                logger.warning(f"B通道未找到索引为{b_index}的波形")
+        pulse_a = self._current_pulse.get(Channel.A)
+        pulse_b = self._current_pulse.get(Channel.B)
+        if pulse_a:
+            await self.send_pulse(Channel.A, pulse_a)
+        if pulse_b:
+            await self.send_pulse(Channel.B, pulse_b)
 
     async def set_pulse(self, channel: Channel, pulse: Pulse) -> None:
         """设置指定通道的波形"""
