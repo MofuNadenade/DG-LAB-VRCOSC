@@ -33,7 +33,7 @@ class ChatboxService:
             chatbox_status = "开启" if enabled else "关闭"
             logger.info(f"ChatBox显示状态设置为: {chatbox_status}")
             # 更新UI
-            self._core_interface.set_feature_state(UIFeature.CHATBOX_STATUS, enabled, silent=True)
+            self._core_interface.set_feature_state(UIFeature.CHATBOX_STATUS, enabled)
             # 如果禁用，立即清空chatbox
             if not enabled:
                 self._osc_service.send_message_to_vrchat_chatbox("")

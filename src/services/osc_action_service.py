@@ -207,7 +207,7 @@ class OSCActionService:
         interaction_type = "开启面板控制" if self._enable_panel_control else "已禁用面板控制"
         logger.info(f"面板控制状态: {interaction_type}")
         # 更新 UI 组件
-        self._core_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control, silent=True)
+        self._core_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control)
 
     # ============ 开火模式业务逻辑 ============
 
@@ -347,7 +347,7 @@ class OSCActionService:
             logger.info(f"通道 {self._get_channel_name(channel)} 切换为{interaction_type}")
             # 更新UI
             ui_feature = self._get_dynamic_bone_ui_feature(channel)
-            self._core_interface.set_feature_state(ui_feature, new_mode, silent=True)
+            self._core_interface.set_feature_state(ui_feature, new_mode)
         except asyncio.CancelledError:
             logger.debug(f"通道 {self._get_channel_name(channel)} 模式切换计时器已取消")
             raise

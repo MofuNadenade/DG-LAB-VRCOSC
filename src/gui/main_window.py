@@ -127,7 +127,7 @@ class MainWindow(QMainWindow):
         """从配置文件加载设备控制器设置"""
         # ChatBox状态
         enable_chatbox = self.settings.get('enable_chatbox_status', False)
-        self.set_feature_state(UIFeature.CHATBOX_STATUS, enable_chatbox, silent=True)
+        self.set_feature_state(UIFeature.CHATBOX_STATUS, enable_chatbox)
         if self.controller is not None:
             self.controller.chatbox_service.set_enabled(enable_chatbox)
 
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
 
     # === 功能开关管理方法 ===
 
-    def set_feature_state(self, feature: UIFeature, enabled: bool, silent: bool = False) -> None:
+    def set_feature_state(self, feature: UIFeature, enabled: bool) -> None:
         """统一管理功能开关"""
         feature_mapping = {
             UIFeature.PANEL_CONTROL: self.controller_tab.enable_panel_control_checkbox,
@@ -517,11 +517,9 @@ class MainWindow(QMainWindow):
 
         checkbox = feature_mapping.get(feature)
         if checkbox:
-            if silent:
-                checkbox.blockSignals(True)
+            checkbox.blockSignals(True)
             checkbox.setChecked(enabled)
-            if silent:
-                checkbox.blockSignals(False)
+            checkbox.blockSignals(False)
 
     def get_feature_state(self, feature: UIFeature) -> bool:
         """获取功能开关状态"""
