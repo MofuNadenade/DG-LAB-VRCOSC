@@ -1,7 +1,8 @@
-from typing import Protocol
+from typing import Optional, Protocol
 
 from PySide6.QtGui import QPixmap
 
+from core.dglab_pulse import Pulse
 from core.registries import Registries
 from models import ConnectionState, StrengthData, Channel, UIFeature
 
@@ -17,7 +18,7 @@ class CoreInterface(Protocol):
     def get_connection_state(self) -> ConnectionState: ...
 
     # 当前波形管理
-    def set_current_pulse(self, channel: Channel, mode_name: str) -> None: ...
+    def set_current_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None: ...
 
     def get_current_pulse(self, channel: Channel) -> str: ...
 

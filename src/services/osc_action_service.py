@@ -154,10 +154,13 @@ class OSCActionService:
         """获取指定通道的波形模式索引"""
         return self._current_pulse.get(channel)
 
-    def set_current_pulse(self, channel: Channel, pulse: Pulse) -> None:
+    def set_current_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """设置指定通道的波形模式"""
-        self._current_pulse[channel] = pulse
-        self._core_interface.set_current_pulse(channel, pulse.name)
+        if pulse:
+            self._current_pulse[channel] = pulse
+        else:
+            del self._current_pulse[channel]
+        self._core_interface.set_current_pulse(channel, pulse)
 
     async def update_pulse(self) -> None:
         """将当前A、B通道的波形数据同步到设备"""
@@ -201,8 +204,8 @@ class OSCActionService:
     async def set_panel_control(self, value: float) -> None:
         """设置面板控制功能开关"""
         self._enable_panel_control = value > 0
-        mode_name = "开启面板控制" if self._enable_panel_control else "已禁用面板控制"
-        logger.info(f"面板控制状态: {mode_name}")
+        interaction_type = "开启面板控制" if self._enable_panel_control else "已禁用面板控制"
+        logger.info(f"面板控制状态: {interaction_type}")
         # 更新 UI 组件
         self._core_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control, silent=True)
 
@@ -340,8 +343,8 @@ class OSCActionService:
 
             new_mode = not self._dynamic_bone_modes[channel]
             self.set_dynamic_bone_mode(channel, new_mode)
-            mode_name = "可交互模式" if new_mode else "面板设置模式"
-            logger.info(f"通道 {self._get_channel_name(channel)} 切换为{mode_name}")
+            interaction_type = "可交互模式" if new_mode else "面板设置模式"
+            logger.info(f"通道 {self._get_channel_name(channel)} 切换为{interaction_type}")
             # 更新UI
             ui_feature = self._get_dynamic_bone_ui_feature(channel)
             self._core_interface.set_feature_state(ui_feature, new_mode, silent=True)

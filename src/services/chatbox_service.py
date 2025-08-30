@@ -30,8 +30,8 @@ class ChatboxService:
         """设置ChatBox状态启用/禁用"""
         if self._enable_chatbox_status != enabled:
             self._enable_chatbox_status = enabled
-            mode_name = "开启" if enabled else "关闭"
-            logger.info(f"ChatBox显示状态设置为: {mode_name}")
+            chatbox_status = "开启" if enabled else "关闭"
+            logger.info(f"ChatBox显示状态设置为: {chatbox_status}")
             # 更新UI
             self._core_interface.set_feature_state(UIFeature.CHATBOX_STATUS, enabled, silent=True)
             # 如果禁用，立即清空chatbox
@@ -107,8 +107,8 @@ class ChatboxService:
         """通过 ChatBox 发送当前强度数值"""
         last_strength = self._osc_action_service.get_last_strength()
         if last_strength:
-            mode_name_a = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.A) else "面板"
-            mode_name_b = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.B) else "面板"
+            interaction_type_a = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.A) else "面板"
+            interaction_type_b = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.B) else "面板"
             current_channel = self._osc_action_service.get_current_channel()
             channel_strength = f"[A]: {last_strength.a} B: {last_strength.b}" if current_channel == Channel.A else f"A: {last_strength.a} [B]: {last_strength.b}"
             pulse_a = self._osc_action_service.get_current_pulse(Channel.A)
@@ -118,7 +118,7 @@ class ChatboxService:
 
             self._osc_service.send_message_to_vrchat_chatbox(
                 f"MAX A: {last_strength.a_limit} B: {last_strength.b_limit}\n" +
-                f"Mode A: {mode_name_a} B: {mode_name_b} \n" +
+                f"Mode A: {interaction_type_a} B: {interaction_type_b} \n" +
                 f"Pulse A: {pulse_name_a} B: {pulse_name_b} \n" +
                 f"Fire Step: {self._osc_action_service.fire_mode_strength_step}\n" +
                 f"Current: {channel_strength} \n"

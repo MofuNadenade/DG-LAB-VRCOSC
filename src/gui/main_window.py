@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QMainWindow, QTabWidget
 from config import default_load_settings, save_settings
 from core import OSCActionType, OSCOptionsProvider
 from core.dglab_controller import DGLabController
+from core.dglab_pulse import Pulse
 from core.registries import Registries
 from gui.about_tab import AboutTab
 from gui.controller_settings_tab import ControllerSettingsTab
@@ -472,23 +473,27 @@ class MainWindow(QMainWindow):
 
     # === 当前波形管理方法 ===
 
-    def set_current_pulse(self, channel: Channel, mode_name: str) -> None:
+    def set_current_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """统一管理当前波形设置"""
         combo = (self.controller_tab.current_pulse_a_combobox if channel == Channel.A
                  else self.controller_tab.current_pulse_b_combobox)
 
         combo.blockSignals(True)
 
-        # 查找并设置索引
-        index = combo.findText(mode_name)
-        if index >= 0:
-            combo.setCurrentIndex(index)
-        elif combo.count() > 0:
-            # 如果找不到，设置为第一项
-            logger.warning(f"波形模式 '{mode_name}' 未找到，使用第一个可用选项")
-            combo.setCurrentIndex(0)
+        if pulse:
+            # 查找并设置索引
+            index = combo.findText(pulse.name)
+            if index >= 0:
+                combo.setCurrentIndex(index)
+            elif combo.count() > 0:
+                # 如果找不到，设置为第一项
+                logger.warning(f"波形模式 '{pulse.name}' 未找到，使用第一个可用选项")
+                combo.setCurrentIndex(0)
+            else:
+                logger.error("组合框中没有可用的波形模式")
         else:
-            logger.error("组合框中没有可用的波形模式")
+            # TODO 这里需要支持无波形模式
+            combo.setCurrentIndex(0)
 
         combo.blockSignals(False)
 
