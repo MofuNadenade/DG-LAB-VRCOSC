@@ -161,8 +161,8 @@ class MainWindow(QMainWindow):
         self.controller_tab.dynamic_bone_mode_b_checkbox.blockSignals(False)
 
         # 波形选择
-        current_pulse_a = self.settings.get('current_pulse_a', '连击')
-        current_pulse_b = self.settings.get('current_pulse_b', '连击')
+        current_pulse_a = self.settings.get('current_pulse_a', '无波形')
+        current_pulse_b = self.settings.get('current_pulse_b', '无波形')
 
         a_index = self.controller_tab.current_pulse_a_combobox.findText(current_pulse_a)
         b_index = self.controller_tab.current_pulse_b_combobox.findText(current_pulse_b)
@@ -480,17 +480,19 @@ class MainWindow(QMainWindow):
 
         combo.blockSignals(True)
 
-        if pulse:
-            # 查找并设置索引
-            index = combo.findText(pulse.name)
-            if index >= 0:
-                combo.setCurrentIndex(index)
-            elif combo.count() > 0:
-                combo.setCurrentIndex(0)
-            else:
-                logger.error("组合框中没有可用的波形模式")
+        # 根据pulse确定目标UserData值
+        target_user_data = pulse.index if pulse else -1
+        
+        # 查找匹配UserData的项目
+        found_index = -1
+        for i in range(combo.count()):
+            if combo.itemData(i) == target_user_data:
+                found_index = i
+                break
+        
+        if found_index >= 0:
+            combo.setCurrentIndex(found_index)
         else:
-            # TODO 这里需要支持无波形模式
             combo.setCurrentIndex(0)
 
         combo.blockSignals(False)

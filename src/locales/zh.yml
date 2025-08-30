@@ -240,6 +240,7 @@ controller_tab:
   title: "DGLabController 设置"
   channel_intensity: "通道强度"
   pulse: "波形"
+  no_waveform: "无波形"
   disable_fire_mode: "禁用一键开火"
   enable_panel_control: "允许 avatar 控制设备"
   enable_chatbox: "启用ChatBox状态显示"

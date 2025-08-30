@@ -171,12 +171,12 @@ class OSCActionService:
         if pulse_b:
             await self.send_pulse(Channel.B, pulse_b)
 
-    async def set_pulse(self, channel: Channel, pulse: Pulse) -> None:
+    async def set_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """设置指定通道的波形，并发送波形到设备"""
         self.set_current_pulse(channel, pulse)
         await self.send_pulse(channel, pulse)
 
-    async def send_pulse(self, channel: Channel, pulse: Pulse) -> None:
+    async def send_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """发送波形到设备"""
         await self._dglab_device_service.set_pulse_data(channel, pulse)
 

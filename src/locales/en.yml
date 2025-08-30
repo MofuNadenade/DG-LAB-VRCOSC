@@ -240,6 +240,7 @@ controller_tab:
   title: "DGLabController Settings"
   channel_intensity: "Channel Intensity"
   pulse: "Pulse"
+  no_waveform: "No Waveform"
   disable_fire_mode: "Disable One-Click Fire"
   enable_panel_control: "Allow avatar to control device"
   enable_chatbox: "Enable ChatBox Status Display"

@@ -240,6 +240,7 @@ controller_tab:
   title: "DGLabController設定"
   channel_intensity: "チャンネル強度"
   pulse: "波形"
+  no_waveform: "波形なし"
   disable_fire_mode: "ワンクリック発火を無効化"
   enable_panel_control: "アバターによるデバイス制御を許可"
   enable_chatbox: "ChatBoxステータス表示を有効化"

@@ -32,8 +32,8 @@ def get_default_settings() -> SettingsDict:
         'enable_panel_control': True,
         'dynamic_bone_mode_a': False,
         'dynamic_bone_mode_b': False,
-        'current_pulse_a': "连击",
-        'current_pulse_b': "连击",
+        'current_pulse_a': "无波形",
+        'current_pulse_b': "无波形",
 
         # 默认配置数据
         'addresses': DEFAULT_ADDRESSES,

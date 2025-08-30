@@ -12,6 +12,20 @@ class Pulse:
         self.index: int = index
         self.name: str = name
         self.data: List[PulseOperation] = data
+    
+    def __str__(self) -> str:
+        return f"Pulse(index={self.index}, name={self.name}, data={self.data})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Pulse):
+            return False
+        return self.index == other.index
+    
+    def __hash__(self) -> int:
+        return self.index
 
 
 class PulseRegistry:

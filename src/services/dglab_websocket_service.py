@@ -43,12 +43,15 @@ class DGLabWebSocketService:
             self.task: Optional[asyncio.Task[None]] = None
             self.data: List[PulseOperation] = []
 
-        def set_pulse(self, pulse: Pulse) -> None:
+        def set_pulse(self, pulse: Optional[Pulse]) -> None:
             """设置波形"""
             old_pulse = self.pulse
             self.pulse = pulse
-            if old_pulse is None or pulse.index != old_pulse.index:
-                self.set_pulse_data(pulse.data)
+            if pulse != old_pulse:
+                if pulse:
+                    self.set_pulse_data(pulse.data)
+                else:
+                    self.set_pulse_data([])
 
         def set_pulse_data(self, data: List[PulseOperation]) -> None:
             """设置波形数据"""
@@ -345,7 +348,7 @@ class DGLabWebSocketService:
 
     # ============ 波形数据操作（实现IDGLabService接口） ============
 
-    async def set_pulse_data(self, channel: Channel, pulse: Pulse) -> None:
+    async def set_pulse_data(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """设置指定通道的波形数据"""
         if channel not in self._channel_pulse_tasks:
             logger.warning(f"通道 {channel} 任务未初始化，跳过波形设置")

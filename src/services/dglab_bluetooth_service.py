@@ -169,12 +169,13 @@ class DGLabBluetoothService:
 
     # ============ 波形数据操作 ============
 
-    async def set_pulse_data(self, channel: Channel, pulse: Pulse) -> None:
+    async def set_pulse_data(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """设置指定通道的波形数据"""
         if not self._is_connected or not self._dglab_instance:
             logger.warning("设备未连接，无法设置波形数据")
             return
-        await self._send_pulse_data(channel, pulse.data)
+        if pulse:
+            await self._send_pulse_data(channel, pulse.data)
 
     # ============ 数据访问 ============
 
