@@ -28,29 +28,27 @@ class OSCActionService:
     4. 提供智能化的业务方法（如自动处理动骨模式映射）
     """
 
-    def __init__(self, device_service: IDGLabDeviceService, core_interface: CoreInterface) -> None:
+    def __init__(self, dglab_device_service: IDGLabDeviceService, core_interface: CoreInterface) -> None:
         """
         初始化OSC动作服务
         
         Args:
-            device_service: 设备服务抽象接口
+            dglab_device_service: 设备服务抽象接口
             core_interface: 核心接口
         """
         super().__init__()
         
-        self._device_service = device_service
+        self._dglab_device_service = dglab_device_service
         self._core_interface = core_interface
         
-        # === 业务状态管理（从DGLabWebSocketService迁移） ===
-        
         # 通道管理
-        self._current_select_channel: Channel = Channel.A
+        self._current_channel: Channel = Channel.A
+
+        # 波形管理
+        self._current_pulse: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
         
         # 动骨模式管理
         self._dynamic_bone_modes: Dict[Channel, bool] = {Channel.A: False, Channel.B: False}
-        
-        # 波形管理
-        self._pulse_modes: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
         
         # 开火模式管理
         self._fire_mode_disabled: bool = False
@@ -98,86 +96,80 @@ class OSCActionService:
     def enable_panel_control(self, value: bool) -> None:
         self._enable_panel_control = value
 
-    # ============ 状态查询业务逻辑 ============
+    # ============ 通道控制业务逻辑 ============
 
     def get_current_channel(self) -> Channel:
         """获取当前选中的通道"""
-        return self._current_select_channel
+        return self._current_channel
 
-    def get_last_strength(self) -> Optional[StrengthData]:
-        """获取最后的强度数据"""
-        return self._device_service.get_last_strength()
-
-    def is_dynamic_bone_enabled(self, channel: Channel) -> bool:
-        """检查指定通道的动骨模式是否启用"""
-        return self._dynamic_bone_modes[channel]
-
-    def get_pulse_mode(self, channel: Channel) -> int:
-        """获取指定通道的波形模式索引"""
-        return self._pulse_modes[channel]
-
-    def get_current_pulse_name(self, channel: Channel) -> str:
-        """获取指定通道当前波形的名称"""
-        pulse_index = self.get_pulse_mode(channel)
-        return self._core_interface.registries.pulse_registry.get_pulse_name_by_index(pulse_index)
-
-    # ============ 通道控制业务逻辑 ============
-
-    async def set_channel(self, value: Union[int, float]) -> Optional[Channel]:
+    async def set_current_channel(self, value: Union[int, float]) -> Optional[Channel]:
         """设置当前活动通道"""
         if value >= 0:
-            self._current_select_channel = Channel.A if value <= 1 else Channel.B
-            logger.info(f"设置活动通道为: {self._current_select_channel}")
-            self._core_interface.update_current_channel(self._current_select_channel)
-            return self._current_select_channel
+            self._current_channel = Channel.A if value <= 1 else Channel.B
+            logger.info(f"设置活动通道为: {self._current_channel}")
+            self._core_interface.update_current_channel(self._current_channel)
+            return self._current_channel
         return None
 
-    # ============ 智能强度控制业务逻辑 ============
+    # ============ 强度控制业务逻辑 ============
 
-    async def set_float_output_smart(self, value: float, channel: Channel) -> None:
-        """智能设置浮点输出强度（自动处理动骨模式映射）"""
+    async def set_float_output(self, value: float, channel: Channel) -> None:
+        """设置浮点输出强度（自动处理动骨模式映射）"""
         if not self._enable_panel_control:
             return
 
-        last_strength = self._device_service.get_last_strength()
+        last_strength = self._dglab_device_service.get_last_strength()
         if value >= 0.0 and last_strength:
             if channel == Channel.A and self._dynamic_bone_modes[Channel.A]:
                 final_output_a = math.ceil(
                     self._map_value(value, last_strength.a_limit * 0.2, last_strength.a_limit))
-                await self._device_service.set_float_output(final_output_a, channel)
+                await self._dglab_device_service.set_float_output(final_output_a, channel)
             elif channel == Channel.B and self._dynamic_bone_modes[Channel.B]:
                 final_output_b = math.ceil(
                     self._map_value(value, last_strength.b_limit * 0.2, last_strength.b_limit))
-                await self._device_service.set_float_output(final_output_b, channel)
+                await self._dglab_device_service.set_float_output(final_output_b, channel)
             else:
                 # 非动骨模式，直接设置
-                await self._device_service.set_float_output(value, channel)
+                await self._dglab_device_service.set_float_output(value, channel)
 
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度（委托给设备服务）"""
-        await self._device_service.adjust_strength(operation_type, value, channel)
+        await self._dglab_device_service.adjust_strength(operation_type, value, channel)
 
     async def reset_strength(self, value: bool, channel: Channel) -> None:
         """重置通道强度为0（委托给设备服务）"""
-        await self._device_service.reset_strength(value, channel)
+        await self._dglab_device_service.reset_strength(value, channel)
 
     async def increase_strength(self, value: bool, channel: Channel) -> None:
         """增加通道强度（委托给设备服务）"""
-        await self._device_service.increase_strength(value, channel)
+        await self._dglab_device_service.increase_strength(value, channel)
 
     async def decrease_strength(self, value: bool, channel: Channel) -> None:
         """减少通道强度（委托给设备服务）"""
-        await self._device_service.decrease_strength(value, channel)
+        await self._dglab_device_service.decrease_strength(value, channel)
 
     # ============ 波形控制业务逻辑 ============
 
-    async def update_pulse_data(self) -> None:
-        """更新设备上的波形数据"""
+    def get_current_pulse(self, channel: Channel) -> int:
+        """获取指定通道的波形模式索引"""
+        return self._current_pulse[channel]
+
+    def set_current_pulse(self, channel: Channel, pulse: Pulse) -> None:
+        """设置指定通道的波形模式"""
+        self._current_pulse[channel] = pulse.index
+        self._core_interface.set_current_pulse(channel, pulse.name)
+
+    def get_current_pulse_name(self, channel: Channel) -> str:
+        """获取指定通道当前波形的名称"""
+        pulse_index = self.get_current_pulse(channel)
+        return self._core_interface.registries.pulse_registry.get_pulse_name_by_index(pulse_index)
+
+    async def update_pulse(self) -> None:
         """将当前A、B通道的波形数据同步到设备"""
         # 获取当前A、B通道的波形索引
         pulse_registry = self._core_interface.registries.pulse_registry
-        a_index = self._pulse_modes[Channel.A]
-        b_index = self._pulse_modes[Channel.B]
+        a_index = self._current_pulse[Channel.A]
+        b_index = self._current_pulse[Channel.B]
 
         # 校验索引有效性并获取Pulse对象
         if not pulse_registry.is_valid_index(a_index):
@@ -185,7 +177,7 @@ class OSCActionService:
         else:
             pulse_a = pulse_registry.get_pulse_by_index(a_index)
             if pulse_a is not None:
-                await self._device_service.set_pulse_data(Channel.A, pulse_a)
+                await self.send_pulse(Channel.A, pulse_a)
             else:
                 logger.warning(f"A通道未找到索引为{a_index}的波形")
 
@@ -194,27 +186,24 @@ class OSCActionService:
         else:
             pulse_b = pulse_registry.get_pulse_by_index(b_index)
             if pulse_b is not None:
-                await self._device_service.set_pulse_data(Channel.B, pulse_b)
+                await self.send_pulse(Channel.B, pulse_b)
             else:
                 logger.warning(f"B通道未找到索引为{b_index}的波形")
 
-    async def set_pulse_data_smart(self, channel: Channel, pulse: Pulse, update_ui: bool = True) -> None:
-        """智能设置指定通道的波形数据"""
-        self._update_pulse_mode(channel, pulse)
-        if update_ui:
-            self._update_pulse_ui(channel, pulse)
-        await self._device_service.set_pulse_data(channel, pulse)
+    async def set_pulse(self, channel: Channel, pulse: Pulse) -> None:
+        """设置指定通道的波形"""
+        self.set_current_pulse(channel, pulse)
+        await self.send_pulse(channel, pulse)
 
-    async def set_test_pulse(self, channel: Channel, pulse: Pulse) -> None:
-        """在指定通道播放测试波形（委托给设备服务）"""
-        await self._device_service.set_pulse_data(channel, pulse)
-
-    def set_pulse_mode(self, channel: Channel, pulse: Pulse) -> None:
-        """设置指定通道的波形模式"""
-        self._update_pulse_mode(channel, pulse)
-        self._update_pulse_ui(channel, pulse)
+    async def send_pulse(self, channel: Channel, pulse: Pulse) -> None:
+        """在指定通道播放波形"""
+        await self._dglab_device_service.set_pulse_data(channel, pulse)
 
     # ============ 模式控制业务逻辑 ============
+
+    def is_dynamic_bone_enabled(self, channel: Channel) -> bool:
+        """检查指定通道的动骨模式是否启用"""
+        return self._dynamic_bone_modes[channel]
 
     def set_dynamic_bone_mode(self, channel: Channel, enabled: bool) -> None:
         """设置指定通道的动骨模式"""
@@ -239,6 +228,8 @@ class OSCActionService:
         # 更新 UI 组件
         self._core_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control, silent=True)
 
+    # ============ 开火模式业务逻辑 ============
+
     async def set_strength_step(self, value: float) -> None:
         """设置开火模式步进值"""
         self._fire_mode_strength_step = math.floor(self._map_value(value, 0, 100))
@@ -246,11 +237,11 @@ class OSCActionService:
         # 更新 UI 组件
         self._core_interface.set_strength_step(self._fire_mode_strength_step, silent=True)
 
-    # ============ 开火模式业务逻辑 ============
-
-    async def strength_fire_mode(self, value: bool, channel: Channel, fire_strength: int,
-                                 last_strength: Optional[StrengthData]) -> None:
+    async def strength_fire_mode(self, value: bool, channel: Channel) -> None:
         """一键开火模式（完整业务逻辑实现）"""
+        fire_strength = self.fire_mode_strength_step
+        last_strength = self.get_last_strength()
+
         if self._fire_mode_disabled:
             return
 
@@ -276,26 +267,26 @@ class OSCActionService:
                             self._fire_mode_origin_strengths[Channel.A] + fire_strength, 
                             last_strength.a_limit
                         )
-                        await self._device_service.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
+                        await self._dglab_device_service.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
                     elif channel == Channel.B:
                         self._fire_mode_origin_strengths[Channel.B] = last_strength.b
                         target_strength = min(
                             self._fire_mode_origin_strengths[Channel.B] + fire_strength, 
                             last_strength.b_limit
                         )
-                        await self._device_service.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
+                        await self._dglab_device_service.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
                 self._data_updated_event.clear()
                 await self._data_updated_event.wait()
             else:
                 # 恢复原始强度
                 if channel == Channel.A:
-                    await self._device_service.adjust_strength(
+                    await self._dglab_device_service.adjust_strength(
                         StrengthOperationType.SET_TO, 
                         self._fire_mode_origin_strengths[Channel.A], 
                         channel
                     )
                 elif channel == Channel.B:
-                    await self._device_service.adjust_strength(
+                    await self._dglab_device_service.adjust_strength(
                         StrengthOperationType.SET_TO, 
                         self._fire_mode_origin_strengths[Channel.B], 
                         channel
@@ -309,9 +300,13 @@ class OSCActionService:
 
     # ============ 数据更新处理 ============
 
+    def get_last_strength(self) -> Optional[StrengthData]:
+        """获取最后的强度数据"""
+        return self._dglab_device_service.get_last_strength()
+
     def update_strength_data(self, strength_data: StrengthData) -> None:
         """处理强度数据更新（用于开火模式同步）"""
-        self._device_service.update_strength_data(strength_data)
+        self._dglab_device_service.update_strength_data(strength_data)
         self._data_updated_event.set()
 
     # ============ 生命周期管理 ============
@@ -358,14 +353,6 @@ class OSCActionService:
         logger.debug("OSC动作服务资源已清理")
 
     # ============ 私有辅助方法 ============
-
-    def _update_pulse_mode(self, channel: Channel, pulse: Pulse) -> None:
-        """更新波形模式索引"""
-        self._pulse_modes[channel] = pulse.index
-
-    def _update_pulse_ui(self, channel: Channel, pulse: Pulse) -> None:
-        """更新波形UI显示"""
-        self._core_interface.set_pulse_mode(channel, pulse.name, silent=True)
 
     async def _set_mode_timer_handle(self, channel: Channel) -> None:
         """模式切换计时器处理"""

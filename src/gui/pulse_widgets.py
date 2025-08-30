@@ -163,7 +163,7 @@ class PulsePreviewWidget(QWidget):
 
 
 class PulseBar(QWidget):
-    """单个脉冲条组件"""
+    """单个波形条组件"""
 
     value_changed = Signal(int, int)  # 位置, 新值
     frequency_changed = Signal(int, int)  # 位置, 新频率
@@ -180,7 +180,7 @@ class PulseBar(QWidget):
         self.frequency: int
         self.intensity: int
 
-        # 存储完整的脉冲操作数据，避免精度丢失
+        # 存储完整的波形操作数据，避免精度丢失
         if pulse_operation:
             self.pulse_operation = pulse_operation
             # 显示用的简化值（取第一个值作为显示）
@@ -284,7 +284,7 @@ class PulseBar(QWidget):
         """设置频率并发射信号（统一设置所有4个值）"""
         if frequency != self.frequency:
             self.frequency = frequency
-            # 更新脉冲操作数据，保持强度不变
+            # 更新波形操作数据，保持强度不变
             _, strength_tuple = self.pulse_operation
             self.pulse_operation = ((frequency, frequency, frequency, frequency), strength_tuple)
             self.update()  # 重绘条形
@@ -292,7 +292,7 @@ class PulseBar(QWidget):
             self.frequency_changed.emit(self.position, frequency)
 
     def set_pulse_operation(self, pulse_operation: PulseOperation) -> None:
-        """设置完整的脉冲操作数据"""
+        """设置完整的波形操作数据"""
         self.pulse_operation = pulse_operation
         # 更新显示值
         self.frequency = pulse_operation[0][0]
@@ -302,7 +302,7 @@ class PulseBar(QWidget):
         self.update_tooltip()
 
     def get_pulse_operation(self) -> PulseOperation:
-        """获取完整的脉冲操作数据"""
+        """获取完整的波形操作数据"""
         return self.pulse_operation
 
     def get_delete_button_rect(self) -> QRect:
@@ -317,7 +317,7 @@ class PulseBar(QWidget):
         )
 
     def paintEvent(self, event: QPaintEvent) -> None:
-        """绘制脉冲条"""
+        """绘制波形条"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -477,7 +477,7 @@ class PulseBar(QWidget):
 
 
 class PulseStepEditor(QWidget):
-    """脉冲步骤编辑器 - 仿照官方APP的条形图编辑器"""
+    """波形步骤编辑器 - 仿照官方APP的条形图编辑器"""
 
     step_changed = Signal(int, int)  # 步骤位置, 新强度值
     frequency_changed = Signal(int, int)  # 步骤位置, 新频率值
@@ -525,8 +525,8 @@ class PulseStepEditor(QWidget):
         """)
 
     def set_pulse_data(self, data: List[PulseOperation]) -> None:
-        """设置脉冲数据"""
-        logger.debug(f"PulseStepEditor: 设置脉冲数据，数据长度: {len(data)}")
+        """设置波形数据"""
+        logger.debug(f"PulseStepEditor: 设置波形数据，数据长度: {len(data)}")
 
         # 清除现有条形
         self.clear_bars()
@@ -539,7 +539,7 @@ class PulseStepEditor(QWidget):
             intensity = intensity_tuple[0]  # 使用第一个强度值作为显示
 
             logger.debug(f"PulseStepEditor: 创建第{i}个条形，频率: {frequency}, 强度: {intensity}")
-            # 传入完整的脉冲操作数据，避免精度丢失
+            # 传入完整的波形操作数据，避免精度丢失
             bar = PulseBar(i, intensity, pulse_operation=pulse_op)
             bar.value_changed.connect(self._on_bar_value_changed)
             bar.frequency_changed.connect(self._on_bar_frequency_changed)
@@ -568,7 +568,7 @@ class PulseStepEditor(QWidget):
     def add_step(self, intensity: float = 50.0) -> None:
         """添加新步骤"""
         position = len(self.pulse_bars)
-        # 创建默认的脉冲操作数据
+        # 创建默认的波形操作数据
         intensity_int = int(intensity)
         default_pulse_op = (
             (self.current_frequency, self.current_frequency, self.current_frequency, self.current_frequency),
@@ -618,10 +618,10 @@ class PulseStepEditor(QWidget):
         self.current_frequency = frequency
 
     def get_pulse_data(self) -> List[PulseOperation]:
-        """获取当前的脉冲数据（保持完整精度）"""
+        """获取当前的波形数据（保持完整精度）"""
         data: List[PulseOperation] = []
         for bar in self.pulse_bars:
-            # 直接使用条形存储的完整脉冲操作数据，避免精度丢失
+            # 直接使用条形存储的完整波形操作数据，避免精度丢失
             data.append(bar.get_pulse_operation())
         return data
 
@@ -681,7 +681,7 @@ class ParameterControlPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
 
-        # 脉冲频率区域
+        # 波形频率区域
         freq_group = self._create_frequency_group()
         layout.addWidget(freq_group)
 

@@ -41,12 +41,12 @@ class ControllerSettingsTab(QWidget):
         self.dynamic_bone_mode_a_checkbox: QCheckBox
         self.dynamic_bone_mode_b_checkbox: QCheckBox
         self.current_channel_label: QLabel
-        self.pulse_mode_a_combobox: QComboBox
-        self.pulse_mode_b_combobox: QComboBox
+        self.current_pulse_a_combobox: QComboBox
+        self.current_pulse_b_combobox: QComboBox
         self.strength_step_spinbox: QSpinBox
         self.save_settings_btn: QPushButton
-        self.pulse_mode_a_label: QLabel
-        self.pulse_mode_b_label: QLabel
+        self.current_pulse_a_label: QLabel
+        self.current_pulse_b_label: QLabel
         self.strength_step_label: QLabel
 
         self.init_ui()
@@ -61,7 +61,7 @@ class ControllerSettingsTab(QWidget):
 
     @property
     def pulse_registry(self) -> PulseRegistry:
-        """通过UIInterface获取脉冲注册表"""
+        """通过UIInterface获取波形注册表"""
         return self.ui_interface.registries.pulse_registry
 
     def init_ui(self) -> None:
@@ -125,17 +125,17 @@ class ControllerSettingsTab(QWidget):
         # 波形模式选择
         pulse_options = list(self.pulse_registry.pulses_by_name.keys())
 
-        self.pulse_mode_a_combobox = EditableComboBox(pulse_options, allow_manual_input=False)
+        self.current_pulse_a_combobox = EditableComboBox(pulse_options, allow_manual_input=False)
         # 强制使用英文区域设置，避免数字显示为繁体中文
-        self.pulse_mode_a_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.current_pulse_a_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
 
-        self.pulse_mode_b_combobox = EditableComboBox(pulse_options, allow_manual_input=False)
+        self.current_pulse_b_combobox = EditableComboBox(pulse_options, allow_manual_input=False)
         # 强制使用英文区域设置，避免数字显示为繁体中文
-        self.pulse_mode_b_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.pulse_mode_a_label = QLabel(f"A{translate('controller_tab.pulse')}:")
-        self.pulse_mode_b_label = QLabel(f"B{translate('controller_tab.pulse')}:")
-        controller_form.addRow(self.pulse_mode_a_label, self.pulse_mode_a_combobox)
-        controller_form.addRow(self.pulse_mode_b_label, self.pulse_mode_b_combobox)
+        self.current_pulse_b_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.current_pulse_a_label = QLabel(f"A{translate('controller_tab.pulse')}:")
+        self.current_pulse_b_label = QLabel(f"B{translate('controller_tab.pulse')}:")
+        controller_form.addRow(self.current_pulse_a_label, self.current_pulse_a_combobox)
+        controller_form.addRow(self.current_pulse_b_label, self.current_pulse_b_combobox)
 
         # 强度步长
         self.strength_step_spinbox = QSpinBox()
@@ -178,14 +178,20 @@ class ControllerSettingsTab(QWidget):
     def update_pulse_comboboxes(self) -> None:
         """更新波形下拉框选项"""
         # 清空现有选项
-        self.pulse_mode_a_combobox.clear()
-        self.pulse_mode_b_combobox.clear()
+        self.current_pulse_a_combobox.clear()
+        self.current_pulse_b_combobox.clear()
+
+        self.current_pulse_a_combobox.blockSignals(True)
+        self.current_pulse_b_combobox.blockSignals(True)
 
         # 重新添加所有波形选项（包括自定义波形）
         pulse_name: str
         for pulse_name in self.pulse_registry.pulses_by_name.keys():
-            self.pulse_mode_a_combobox.addItem(pulse_name)
-            self.pulse_mode_b_combobox.addItem(pulse_name)
+            self.current_pulse_a_combobox.addItem(pulse_name)
+            self.current_pulse_b_combobox.addItem(pulse_name)
+
+        self.current_pulse_a_combobox.blockSignals(False)
+        self.current_pulse_b_combobox.blockSignals(False)
 
     def bind_controller_settings(self) -> None:
         """将GUI设置与DGLabController变量绑定"""
@@ -199,8 +205,8 @@ class ControllerSettingsTab(QWidget):
             self.enable_panel_control_checkbox.toggled.connect(self.on_panel_control_enabled_changed)
             self.dynamic_bone_mode_a_checkbox.toggled.connect(self.on_dynamic_bone_mode_a_changed)
             self.dynamic_bone_mode_b_checkbox.toggled.connect(self.on_dynamic_bone_mode_b_changed)
-            self.pulse_mode_a_combobox.currentIndexChanged.connect(self.on_pulse_mode_a_changed)
-            self.pulse_mode_b_combobox.currentIndexChanged.connect(self.on_pulse_mode_b_changed)
+            self.current_pulse_a_combobox.currentIndexChanged.connect(self.on_current_pulse_a_changed)
+            self.current_pulse_b_combobox.currentIndexChanged.connect(self.on_current_pulse_b_changed)
             self.enable_chatbox_status_checkbox.toggled.connect(self.on_chatbox_status_enabled_changed)
             self.strength_step_spinbox.valueChanged.connect(self.on_strength_step_changed)
 
@@ -242,7 +248,7 @@ class ControllerSettingsTab(QWidget):
             self.controller.osc_action_service.set_dynamic_bone_mode(Channel.B, state)
             logger.info(f"Dynamic bone mode B: {self.controller.osc_action_service.is_dynamic_bone_enabled(Channel.B)}")
 
-    def on_pulse_mode_a_changed(self, index: int) -> None:
+    def on_current_pulse_a_changed(self, index: int) -> None:
         """当波形A模式发生变化时"""
         if not self.controller:
             return
@@ -258,14 +264,10 @@ class ControllerSettingsTab(QWidget):
             logger.warning(f"A通道未找到索引为{index}的波形")
             return
 
-        self.controller.osc_action_service.set_pulse_mode(Channel.A, pulse)
-        pulse_name = self.pulse_registry.get_pulse_name_by_index(index)
-        logger.info(f"A通道波形模式已更新为 {pulse_name}")
+        asyncio.create_task(self.controller.osc_action_service.set_pulse(Channel.A, pulse))
+        logger.info(f"A通道波形模式已更新为 {pulse.name}")
 
-        # 立即更新设备上的波形数据
-        asyncio.create_task(self.controller.osc_action_service.update_pulse_data())
-
-    def on_pulse_mode_b_changed(self, index: int) -> None:
+    def on_current_pulse_b_changed(self, index: int) -> None:
         """当波形B模式发生变化时"""
         if not self.controller:
             return
@@ -281,12 +283,8 @@ class ControllerSettingsTab(QWidget):
             logger.warning(f"B通道未找到索引为{index}的波形")
             return
 
-        self.controller.osc_action_service.set_pulse_mode(Channel.B, pulse)
-        pulse_name = self.pulse_registry.get_pulse_name_by_index(index)
-        logger.info(f"B通道波形模式已更新为 {pulse_name}")
-
-        # 立即更新设备上的波形数据
-        asyncio.create_task(self.controller.osc_action_service.update_pulse_data())
+        asyncio.create_task(self.controller.osc_action_service.set_pulse(Channel.B, pulse))
+        logger.info(f"B通道波形模式已更新为 {pulse.name}")
 
     def on_chatbox_status_enabled_changed(self, state: bool) -> None:
         """当ChatBox状态启用复选框状态改变时"""
@@ -310,8 +308,8 @@ class ControllerSettingsTab(QWidget):
             self.settings['dynamic_bone_mode_b'] = self.dynamic_bone_mode_b_checkbox.isChecked()
 
             # 保存波形选择
-            self.settings['pulse_mode_a'] = self.pulse_mode_a_combobox.currentText()
-            self.settings['pulse_mode_b'] = self.pulse_mode_b_combobox.currentText()
+            self.settings['current_pulse_a'] = self.current_pulse_a_combobox.currentText()
+            self.settings['current_pulse_b'] = self.current_pulse_b_combobox.currentText()
 
             # 调用UIInterface的保存方法
             self.ui_interface.save_settings()
@@ -382,7 +380,7 @@ class ControllerSettingsTab(QWidget):
                 self.a_channel_slider.setValue(last_strength.a)
                 self.a_channel_slider.blockSignals(False)
                 pulse_a_name = self.pulse_registry.get_pulse_name_by_index(
-                    self.controller.osc_action_service.get_pulse_mode(Channel.A))
+                    self.controller.osc_action_service.get_current_pulse(Channel.A))
                 self.a_channel_label.setText(
                     f"A {translate('channel.strength_display')}: {last_strength.a} {translate('channel.strength_limit')}: {last_strength.a_limit}  {translate('channel.pulse')}: {pulse_a_name}")
 
@@ -393,7 +391,7 @@ class ControllerSettingsTab(QWidget):
                 self.b_channel_slider.setValue(last_strength.b)
                 self.b_channel_slider.blockSignals(False)
                 pulse_b_name = self.pulse_registry.get_pulse_name_by_index(
-                    self.controller.osc_action_service.get_pulse_mode(Channel.B))
+                    self.controller.osc_action_service.get_current_pulse(Channel.B))
                 self.b_channel_label.setText(
                     f"B {translate('channel.strength_display')}: {last_strength.b} {translate('channel.strength_limit')}: {last_strength.b_limit}  {translate('channel.pulse')}: {pulse_b_name}")
 
@@ -435,8 +433,8 @@ class ControllerSettingsTab(QWidget):
                 f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}")
 
         # 更新表单行标签
-        self.pulse_mode_a_label.setText(f"A{translate('controller_tab.pulse')}:")
-        self.pulse_mode_b_label.setText(f"B{translate('controller_tab.pulse')}:")
+        self.current_pulse_a_label.setText(f"A{translate('controller_tab.pulse')}:")
+        self.current_pulse_b_label.setText(f"B{translate('controller_tab.pulse')}:")
         self.strength_step_label.setText(translate("controller_tab.strength_step_label"))
 
         # 更新工具提示

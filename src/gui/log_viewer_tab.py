@@ -172,9 +172,9 @@ class LogViewerTab(QWidget):
                 # 动态骨骼模式
                 f"Dynamic Bone Mode A: {self.controller.osc_action_service.is_dynamic_bone_enabled(Channel.A)}\n" +
                 f"Dynamic Bone Mode B: {self.controller.osc_action_service.is_dynamic_bone_enabled(Channel.B)}\n" +
-                # 脉冲模式
-                f"Pulse Mode A: {self.controller.osc_action_service.get_pulse_mode(Channel.A)}\n" +
-                f"Pulse Mode B: {self.controller.osc_action_service.get_pulse_mode(Channel.B)}\n" +
+                # 当前波形
+                f"Current Pulse A: {self.controller.osc_action_service.get_current_pulse(Channel.A)}\n" +
+                f"Current Pulse B: {self.controller.osc_action_service.get_current_pulse(Channel.B)}\n" +
                 f"Current Pulse Name A: {self.controller.osc_action_service.get_current_pulse_name(Channel.A)}\n" +
                 f"Current Pulse Name B: {self.controller.osc_action_service.get_current_pulse_name(Channel.B)}\n" +
                 # 强度和通道

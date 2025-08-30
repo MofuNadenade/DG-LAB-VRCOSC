@@ -1,7 +1,7 @@
 """
 默认配置数据模块
 
-存储所有默认的地址、脉冲、模板和绑定配置
+存储所有默认的地址、波形、模板和绑定配置
 """
 
 from typing import Dict, List
@@ -31,7 +31,7 @@ for i in range(1, 16):
         "code": f"/avatar/parameters/SoundPad/Button/{i}"
     })
 
-# 默认脉冲波形配置
+# 默认波形配置
 DEFAULT_PULSES: Dict[str, List[PulseOperation]] = {
     '呼吸': [
         ((10, 10, 10, 10), (0, 0, 0, 0)), ((10, 10, 10, 10), (0, 5, 10, 20)),

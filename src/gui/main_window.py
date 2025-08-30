@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
         addresses = self.settings.get('addresses', [])
         self.registries.address_registry.load_from_config(addresses)
 
-        # 加载脉冲
+        # 加载波形
         pulses = self.settings.get('pulses', {})
         self.registries.pulse_registry.load_from_config(pulses)
 
@@ -161,31 +161,31 @@ class MainWindow(QMainWindow):
         self.controller_tab.dynamic_bone_mode_b_checkbox.blockSignals(False)
 
         # 波形选择
-        pulse_mode_a = self.settings.get('pulse_mode_a', '连击')
-        pulse_mode_b = self.settings.get('pulse_mode_b', '连击')
+        current_pulse_a = self.settings.get('current_pulse_a', '连击')
+        current_pulse_b = self.settings.get('current_pulse_b', '连击')
 
-        a_index = self.controller_tab.pulse_mode_a_combobox.findText(pulse_mode_a)
-        b_index = self.controller_tab.pulse_mode_b_combobox.findText(pulse_mode_b)
+        a_index = self.controller_tab.current_pulse_a_combobox.findText(current_pulse_a)
+        b_index = self.controller_tab.current_pulse_b_combobox.findText(current_pulse_b)
 
         # 处理找不到的情况
         if a_index < 0:
-            logger.warning(f"波形模式A '{pulse_mode_a}' 未找到，使用默认值")
-            a_index = 0 if self.controller_tab.pulse_mode_a_combobox.count() > 0 else -1
+            logger.warning(f"波形模式A '{current_pulse_a}' 未找到，使用默认值")
+            a_index = 0 if self.controller_tab.current_pulse_a_combobox.count() > 0 else -1
 
         if b_index < 0:
-            logger.warning(f"波形模式B '{pulse_mode_b}' 未找到，使用默认值")
-            b_index = 0 if self.controller_tab.pulse_mode_b_combobox.count() > 0 else -1
+            logger.warning(f"波形模式B '{current_pulse_b}' 未找到，使用默认值")
+            b_index = 0 if self.controller_tab.current_pulse_b_combobox.count() > 0 else -1
 
         # 安全设置索引
         if a_index >= 0:
-            self.controller_tab.pulse_mode_a_combobox.blockSignals(True)
-            self.controller_tab.pulse_mode_a_combobox.setCurrentIndex(a_index)
-            self.controller_tab.pulse_mode_a_combobox.blockSignals(False)
+            self.controller_tab.current_pulse_a_combobox.blockSignals(True)
+            self.controller_tab.current_pulse_a_combobox.setCurrentIndex(a_index)
+            self.controller_tab.current_pulse_a_combobox.blockSignals(False)
 
         if b_index >= 0:
-            self.controller_tab.pulse_mode_b_combobox.blockSignals(True)
-            self.controller_tab.pulse_mode_b_combobox.setCurrentIndex(b_index)
-            self.controller_tab.pulse_mode_b_combobox.blockSignals(False)
+            self.controller_tab.current_pulse_b_combobox.blockSignals(True)
+            self.controller_tab.current_pulse_b_combobox.setCurrentIndex(b_index)
+            self.controller_tab.current_pulse_b_combobox.blockSignals(False)
 
         # 同步控制器状态
         if self.controller is not None:
@@ -199,14 +199,11 @@ class MainWindow(QMainWindow):
             if a_index >= 0:
                 pulse_a = pulse_registry.get_pulse_by_index(a_index)
                 if pulse_a is not None:
-                    self.controller.osc_action_service.set_pulse_mode(Channel.A, pulse_a)
+                    self.controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
             if b_index >= 0:
                 pulse_b = pulse_registry.get_pulse_by_index(b_index)
                 if pulse_b is not None:
-                    self.controller.osc_action_service.set_pulse_mode(Channel.B, pulse_b)
-
-            # 立即更新设备上的波形数据
-            asyncio.create_task(self.controller.osc_action_service.update_pulse_data())
+                    self.controller.osc_action_service.set_current_pulse(Channel.B, pulse_b)
 
         logger.info("Controller settings loaded from configuration")
 
@@ -227,7 +224,7 @@ class MainWindow(QMainWindow):
             # 注册基础OSC动作（通道控制、面板控制、强度控制、ChatBox控制等）
             self._register_basic_actions()
 
-            # 为控制器注册脉冲OSC操作
+            # 为控制器注册波形OSC操作
             self._register_pulse_actions()
 
             # 加载OSC地址绑定
@@ -260,10 +257,10 @@ class MainWindow(QMainWindow):
         osc_action_service = self.controller.osc_action_service
         chatbox_service = self.controller.chatbox_service
 
-        # 注册通道控制操作（使用智能版本，自动处理动骨模式）
+        # 注册通道控制操作
         async def set_float_output_channel_a(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await osc_action_service.set_float_output_smart(args[0], Channel.A)
+                await osc_action_service.set_float_output(args[0], Channel.A)
         self.registries.action_registry.register_action(
             "设置A通道强度",
             set_float_output_channel_a,
@@ -272,7 +269,7 @@ class MainWindow(QMainWindow):
 
         async def set_float_output_channel_b(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await osc_action_service.set_float_output_smart(args[0], Channel.B)
+                await osc_action_service.set_float_output(args[0], Channel.B)
         self.registries.action_registry.register_action(
             "设置B通道强度",
             set_float_output_channel_b,
@@ -282,7 +279,7 @@ class MainWindow(QMainWindow):
         async def set_float_output_channel_current(*args: OSCValue) -> None:
             if isinstance(args[0], float):
                 current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.set_float_output_smart(args[0], current_channel)
+                await osc_action_service.set_float_output(args[0], current_channel)
         self.registries.action_registry.register_action(
             "设置当前通道强度",
             set_float_output_channel_current,
@@ -308,12 +305,12 @@ class MainWindow(QMainWindow):
             OSCActionType.PANEL_CONTROL, {"value_adjust"}
         )
 
-        async def set_channel(*args: OSCValue) -> None:
+        async def set_current_channel(*args: OSCValue) -> None:
             if isinstance(args[0], (int, float)):
-                await osc_action_service.set_channel(args[0])
+                await osc_action_service.set_current_channel(args[0])
         self.registries.action_registry.register_action(
             "通道调节",
-            set_channel,
+            set_current_channel,
             OSCActionType.PANEL_CONTROL, {"channel_adjust"}
         )
 
@@ -360,12 +357,8 @@ class MainWindow(QMainWindow):
 
         async def strength_fire_mode(*args: OSCValue) -> None:
             if isinstance(args[0], bool):
-                await osc_action_service.strength_fire_mode(
-                    args[0],
-                    osc_action_service.get_current_channel(),
-                    osc_action_service.fire_mode_strength_step,
-                    osc_action_service.get_last_strength()
-                )
+                current_channel = osc_action_service.get_current_channel()
+                await osc_action_service.strength_fire_mode(args[0], current_channel)
         self.registries.action_registry.register_action(
             "一键开火",
             strength_fire_mode,
@@ -385,21 +378,21 @@ class MainWindow(QMainWindow):
         logger.info("基础OSC动作注册完成")
 
     def _register_pulse_actions(self) -> None:
-        """为控制器注册脉冲OSC操作"""
+        """为控制器注册波形OSC操作"""
         if self.controller is None:
             logger.warning("Controller not available, cannot register pulse actions")
             return
 
-        # 为所有脉冲注册OSC操作
+        # 为所有波形注册OSC操作
         for pulse in self.registries.pulse_registry.pulses:
             osc_action_service = self.controller.osc_action_service
 
-            async def set_pulse_data(*args: OSCValue) -> None:
+            async def set_pulse(*args: OSCValue) -> None:
                 current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.set_pulse_data_smart(current_channel, pulse)
+                await osc_action_service.set_pulse(current_channel, pulse)
             self.registries.action_registry.register_action(
                 translate("main.action.set_pulse").format(pulse.name),
-                set_pulse_data,
+                set_pulse,
                 OSCActionType.PULSE_CONTROL, {"pulse"})
 
         # 更新波形下拉框
@@ -478,15 +471,14 @@ class MainWindow(QMainWindow):
         """获取当前连接状态"""
         return self._current_connection_state
 
-    # === 脉冲模式管理方法 ===
+    # === 当前波形管理方法 ===
 
-    def set_pulse_mode(self, channel: Channel, mode_name: str, silent: bool = False) -> None:
-        """统一管理脉冲模式设置"""
-        combo = (self.controller_tab.pulse_mode_a_combobox if channel == Channel.A
-                 else self.controller_tab.pulse_mode_b_combobox)
+    def set_current_pulse(self, channel: Channel, mode_name: str) -> None:
+        """统一管理当前波形设置"""
+        combo = (self.controller_tab.current_pulse_a_combobox if channel == Channel.A
+                 else self.controller_tab.current_pulse_b_combobox)
 
-        if silent:
-            combo.blockSignals(True)
+        combo.blockSignals(True)
 
         # 查找并设置索引
         index = combo.findText(mode_name)
@@ -499,15 +491,14 @@ class MainWindow(QMainWindow):
         else:
             logger.error("组合框中没有可用的波形模式")
 
-        if silent:
-            combo.blockSignals(False)
+        combo.blockSignals(False)
 
-    def get_pulse_mode(self, channel: Channel) -> str:
-        """获取脉冲模式选择"""
+    def get_current_pulse(self, channel: Channel) -> str:
+        """获取当前波形选择"""
         if channel == Channel.A:
-            return self.controller_tab.pulse_mode_a_combobox.currentText()
+            return self.controller_tab.current_pulse_a_combobox.currentText()
         else:
-            return self.controller_tab.pulse_mode_b_combobox.currentText()
+            return self.controller_tab.current_pulse_b_combobox.currentText()
 
     # === 功能开关管理方法 ===
 

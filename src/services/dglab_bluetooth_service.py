@@ -369,7 +369,7 @@ class DGLabBluetoothService:
             logger.error(f"设置通道强度失败: {e}")
 
     async def _send_pulse_data(self, channel: Channel, data: List[PulseOperation]) -> None:
-        """发送脉冲数据到设备"""
+        """发送波形数据到设备"""
         if not self._dglab_instance:
             return
         
@@ -383,10 +383,10 @@ class DGLabBluetoothService:
             else:
                 await self._dglab_instance.set_wave_set(wave_set, model_v3.ChannelB)  # type: ignore
             
-            logger.debug(f"蓝牙发送脉冲数据到通道{channel}: {len(data)}个操作")
+            logger.debug(f"蓝牙发送波形数据到通道{channel}: {len(data)}个操作")
             
         except Exception as e:
-            logger.error(f"蓝牙发送脉冲数据失败: {e}")
+            logger.error(f"蓝牙发送波形数据失败: {e}")
 
     def _convert_pulse_operations_to_wave_set(self, operations: List[PulseOperation]) -> List[tuple[int, int, int]]:
         """将PulseOperation转换为pydglab的波形集合格式"""

@@ -212,8 +212,8 @@ class SettingsDict(TypedDict, total=False):
     enable_panel_control: bool
     dynamic_bone_mode_a: bool
     dynamic_bone_mode_b: bool
-    pulse_mode_a: str
-    pulse_mode_b: str
+    current_pulse_a: str
+    current_pulse_b: str
 
     # 配置数据 - 使用具体的TypedDict类型
     addresses: List[OSCAddressDict]
@@ -222,7 +222,7 @@ class SettingsDict(TypedDict, total=False):
     bindings: List[OSCBindingDict]
 
 
-# 脉冲相关类型
+# 波形相关类型
 class IntegrityReportStats(TypedDict):
     """完整性报告统计信息"""
     steps: int
@@ -240,7 +240,7 @@ class IntegrityReport(TypedDict):
 
 
 class PulseDict(TypedDict):
-    """导入脉冲项的数据结构"""
+    """导入波形项的数据结构"""
     name: str
     data: List[PulseOperation]
     integrity: IntegrityReport

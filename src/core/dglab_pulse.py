@@ -22,34 +22,34 @@ class PulseRegistry:
 
     @property
     def pulses(self) -> List[Pulse]:
-        """获取所有脉冲列表（只读）"""
+        """获取所有波形列表（只读）"""
         return self._pulses.copy()
 
     @property
     def pulses_by_name(self) -> Dict[str, Pulse]:
-        """获取按名称索引的脉冲字典（只读）"""
+        """获取按名称索引的波形字典（只读）"""
         return self._pulses_by_name.copy()
 
     def get_pulse_by_name(self, name: str) -> Optional[Pulse]:
-        """根据名称获取脉冲"""
+        """根据名称获取波形"""
         return self._pulses_by_name.get(name)
 
     def has_pulse_name(self, name: str) -> bool:
-        """检查是否存在指定名称的脉冲"""
+        """检查是否存在指定名称的波形"""
         return name in self._pulses_by_name
 
     def get_pulse_count(self) -> int:
-        """获取脉冲总数"""
+        """获取波形总数"""
         return len(self._pulses)
 
     def get_pulse_by_index(self, index: int) -> Optional[Pulse]:
-        """安全获取指定索引的脉冲"""
+        """安全获取指定索引的波形"""
         if 0 <= index < len(self._pulses):
             return self._pulses[index]
         return None
 
     def get_pulse_name_by_index(self, index: int) -> str:
-        """安全获取指定索引的脉冲名称"""
+        """安全获取指定索引的波形名称"""
         pulse = self.get_pulse_by_index(index)
         return pulse.name if pulse else "未知波形"
 
@@ -64,7 +64,7 @@ class PulseRegistry:
         return 0 <= index < len(self._pulses)
 
     def unregister_pulse(self, pulse: Pulse) -> None:
-        """移除脉冲"""
+        """移除波形"""
         if pulse in self._pulses:
             self._pulses.remove(pulse)
             if pulse.name in self._pulses_by_name:
@@ -81,7 +81,7 @@ class PulseRegistry:
         return pulse
 
     def load_from_config(self, pulses_config: Dict[str, List[PulseOperation]]) -> None:
-        """从配置加载脉冲"""
+        """从配置加载波形"""
         self._pulses.clear()
         self._pulses_by_name.clear()
 
@@ -95,5 +95,5 @@ class PulseRegistry:
         logger.info(f"Loaded {len(self._pulses)} pulses from config")
 
     def export_to_config(self) -> Dict[str, List[PulseOperation]]:
-        """导出所有脉冲到配置格式"""
+        """导出所有波形到配置格式"""
         return {pulse.name: list(pulse.data) for pulse in self._pulses}

@@ -218,7 +218,7 @@ class PulseEditorTab(QWidget):
 
         layout.addLayout(control_layout)
 
-        # 脉冲编辑器
+        # 波形编辑器
         self.editor_group = QGroupBox(translate("pulse_editor.pulse_editor"))
         editor_group = self.editor_group
         editor_layout = QVBoxLayout(editor_group)
@@ -257,7 +257,7 @@ class PulseEditorTab(QWidget):
         # 通道选择
         self.channel_button_group.buttonClicked.connect(self.on_channel_changed)
 
-        # 脉冲编辑器
+        # 波形编辑器
         self.pulse_editor.step_changed.connect(self.on_pulse_step_changed)
         self.pulse_editor.frequency_changed.connect(self.on_pulse_step_frequency_changed)
         self.pulse_editor.step_added.connect(self.on_pulse_step_added)
@@ -410,7 +410,7 @@ class PulseEditorTab(QWidget):
         self.current_pulse = pulse
         self.is_modified = False
 
-        # 更新脉冲编辑器（保留原始频率信息）
+        # 更新波形编辑器（保留原始频率信息）
         logger.debug(f"PulseEditorTab: 加载波形 '{pulse.name}'，数据长度: {len(pulse.data)}")
         logger.debug(f"PulseEditorTab: 波形数据前3个: {pulse.data[:3]}")
         self.pulse_editor.set_pulse_data(pulse.data)
@@ -468,7 +468,7 @@ class PulseEditorTab(QWidget):
         logger.info(f"Channel changed to: {self.current_channel}")
 
     def on_pulse_step_changed(self, position: int, value: int) -> None:
-        """脉冲步骤改变"""
+        """波形步骤改变"""
         if not self.current_pulse:
             return
 
@@ -481,7 +481,7 @@ class PulseEditorTab(QWidget):
         self.preview_widget.set_pulse_data(current_data)
 
     def on_pulse_step_added(self) -> None:
-        """脉冲步骤添加"""
+        """波形步骤添加"""
         self.is_modified = True
         self.save_btn.setEnabled(True)
 
@@ -490,7 +490,7 @@ class PulseEditorTab(QWidget):
         self.preview_widget.set_pulse_data(current_data)
 
     def on_pulse_step_removed(self) -> None:
-        """脉冲步骤移除"""
+        """波形步骤移除"""
         self.is_modified = True
         self.save_btn.setEnabled(True)
 
@@ -500,7 +500,7 @@ class PulseEditorTab(QWidget):
 
     def on_frequency_changed(self, frequency: int) -> None:
         """频率参数改变"""
-        # 更新脉冲编辑器的频率设置
+        # 更新波形编辑器的频率设置
         self.pulse_editor.set_frequency(frequency)
 
         # 在固定频率模式下，更新所有现有条形的频率
@@ -719,7 +719,7 @@ class PulseEditorTab(QWidget):
                 raise
 
     def add_pulse_step(self) -> None:
-        """添加脉冲步骤"""
+        """添加波形步骤"""
         self.pulse_editor.add_step(50.0)  # 默认50%强度
 
     def clear_all_steps(self) -> None:
@@ -761,12 +761,12 @@ class PulseEditorTab(QWidget):
             # 如果有控制器，在设备上播放
             if self.ui_interface.controller:
                 try:
-                    # 创建临时脉冲对象
+                    # 创建临时波形对象
                     temp_pulse = Pulse(-1, translate("pulse_editor.test_waveform"), current_data)
 
                     # 在当前通道播放
                     asyncio.create_task(
-                        self.ui_interface.controller.osc_action_service.set_test_pulse(self.current_channel, temp_pulse))
+                        self.ui_interface.controller.osc_action_service.send_pulse(self.current_channel, temp_pulse))
 
                     logger.info(f"Playing test pulse on channel {self.current_channel}")
 
@@ -784,7 +784,7 @@ class PulseEditorTab(QWidget):
             if self.ui_interface.controller:
                 try:
                     # 恢复当前通道的正常波形
-                    asyncio.create_task(self.ui_interface.controller.osc_action_service.update_pulse_data())
+                    asyncio.create_task(self.ui_interface.controller.osc_action_service.update_pulse())
                     logger.info(f"Restored normal pulse on channel {self.current_channel}")
                 except Exception as e:
                     logger.error(f"Failed to restore normal pulse: {e}")
@@ -863,7 +863,7 @@ class PulseEditorTab(QWidget):
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
-        # 更新脉冲列表标题
+        # 更新波形列表标题
         self.pulse_list_title.setText(translate("pulse_editor.pulse_list"))
 
         # 更新组框标题
@@ -891,11 +891,11 @@ class PulseEditorTab(QWidget):
         # 更新参数控制面板
         self.param_panel.update_ui_texts()
 
-        # 更新脉冲列表的工具提示
+        # 更新波形列表的工具提示
         self._update_pulse_list_tooltips()
 
     def _update_pulse_list_tooltips(self) -> None:
-        """更新脉冲列表的工具提示文本"""
+        """更新波形列表的工具提示文本"""
         for i in range(self.pulse_list.count()):
             item = self.pulse_list.item(i)
             if item:

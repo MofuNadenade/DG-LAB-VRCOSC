@@ -1,5 +1,5 @@
 """
-精细脉冲编辑器
+精细波形编辑器
 支持4元组频率和强度的详细编辑，确保不丢失精度
 """
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class DetailedPulseStepDialog(QDialog):
-    """单个脉冲步骤的详细编辑对话框"""
+    """单个波形步骤的详细编辑对话框"""
 
     def __init__(self, pulse_operation: PulseOperation, step_index: int, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -340,7 +340,7 @@ class DetailedPulseStepDialog(QDialog):
         self.preview_label.setText(preview_text)
 
     def get_pulse_operation(self) -> PulseOperation:
-        """获取编辑后的脉冲操作数据"""
+        """获取编辑后的波形操作数据"""
         frequency_values = (
             self.frequency_sliders[0].value(),
             self.frequency_sliders[1].value(),
