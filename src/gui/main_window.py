@@ -486,8 +486,6 @@ class MainWindow(QMainWindow):
             if index >= 0:
                 combo.setCurrentIndex(index)
             elif combo.count() > 0:
-                # 如果找不到，设置为第一项
-                logger.warning(f"波形模式 '{pulse.name}' 未找到，使用第一个可用选项")
                 combo.setCurrentIndex(0)
             else:
                 logger.error("组合框中没有可用的波形模式")
