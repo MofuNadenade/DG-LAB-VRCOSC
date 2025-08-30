@@ -151,11 +151,11 @@ class OSCActionService:
     # ============ 波形控制业务逻辑 ============
 
     def get_current_pulse(self, channel: Channel) -> Optional[Pulse]:
-        """获取指定通道的波形模式索引"""
+        """获取指定通道的波形"""
         return self._current_pulse.get(channel)
 
     def set_current_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
-        """设置指定通道的波形模式"""
+        """设置指定通道的波形"""
         if pulse:
             self._current_pulse[channel] = pulse
         else:
@@ -163,21 +163,21 @@ class OSCActionService:
         self._core_interface.set_current_pulse(channel, pulse)
 
     async def update_pulse(self) -> None:
-        """将当前A、B通道的波形数据同步到设备"""
-        pulse_a = self._current_pulse.get(Channel.A)
-        pulse_b = self._current_pulse.get(Channel.B)
+        """更新波形"""
+        pulse_a = self.get_current_pulse(Channel.A)
+        pulse_b = self.get_current_pulse(Channel.B)
         if pulse_a:
             await self.send_pulse(Channel.A, pulse_a)
         if pulse_b:
             await self.send_pulse(Channel.B, pulse_b)
 
     async def set_pulse(self, channel: Channel, pulse: Pulse) -> None:
-        """设置指定通道的波形"""
+        """设置指定通道的波形，并发送波形到设备"""
         self.set_current_pulse(channel, pulse)
         await self.send_pulse(channel, pulse)
 
     async def send_pulse(self, channel: Channel, pulse: Pulse) -> None:
-        """在指定通道播放波形"""
+        """发送波形到设备"""
         await self._dglab_device_service.set_pulse_data(channel, pulse)
 
     # ============ 模式控制业务逻辑 ============
