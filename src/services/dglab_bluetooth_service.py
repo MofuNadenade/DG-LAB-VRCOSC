@@ -169,47 +169,12 @@ class DGLabBluetoothService:
 
     # ============ 波形数据操作 ============
 
-    async def update_pulse_data(self) -> None:
-        """更新设备上的波形数据"""
-        if not self._is_connected or not self._dglab_instance:
-            logger.warning("设备未连接，无法更新波形数据")
-            return
-        
-        try:
-            # 这里可以实现波形数据的批量更新逻辑
-            # 目前暂时留空，具体实现根据业务需求确定
-            logger.debug("蓝牙波形数据更新完成")
-            
-        except Exception as e:
-            logger.error(f"更新波形数据失败: {e}")
-
-    async def set_pulse_data(self, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
+    async def set_pulse_data(self, channel: Channel, pulse: Pulse) -> None:
         """设置指定通道的波形数据"""
         if not self._is_connected or not self._dglab_instance:
             logger.warning("设备未连接，无法设置波形数据")
             return
-        
-        try:
-            # 这里应该根据pulse_index获取对应的波形数据并发送到设备
-            # 具体实现需要与波形注册系统结合
-            logger.debug(f"蓝牙设置通道{channel}波形索引为{pulse_index}")
-            
-        except Exception as e:
-            logger.error(f"设置波形数据失败: {e}")
-
-    async def set_test_pulse(self, channel: Channel, pulse: Pulse) -> None:
-        """在指定通道播放测试波形"""
-        if not self._is_connected or not self._dglab_instance:
-            logger.warning("设备未连接，无法播放测试波形")
-            return
-        
-        try:
-            if pulse and pulse.data:
-                await self._send_pulse_data(channel, pulse.data)
-                logger.debug(f"蓝牙播放测试波形: 通道{channel}, 波形{pulse.name}")
-            
-        except Exception as e:
-            logger.error(f"播放测试波形失败: {e}")
+        await self._send_pulse_data(channel, pulse.data)
 
     # ============ 数据访问 ============
 

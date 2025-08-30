@@ -172,37 +172,47 @@ class OSCActionService:
     # ============ 波形控制业务逻辑 ============
 
     async def update_pulse_data(self) -> None:
-        """更新设备上的波形数据（委托给设备服务）"""
-        await self._device_service.update_pulse_data()
+        """更新设备上的波形数据"""
+        """将当前A、B通道的波形数据同步到设备"""
+        # 获取当前A、B通道的波形索引
+        pulse_registry = self._core_interface.registries.pulse_registry
+        a_index = self._pulse_modes[Channel.A]
+        b_index = self._pulse_modes[Channel.B]
 
-    async def set_pulse_data_smart(self, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
+        # 校验索引有效性并获取Pulse对象
+        if not pulse_registry.is_valid_index(a_index):
+            logger.warning(f"A通道波形索引无效: {a_index}")
+        else:
+            pulse_a = pulse_registry.get_pulse_by_index(a_index)
+            if pulse_a is not None:
+                await self._device_service.set_pulse_data(Channel.A, pulse_a)
+            else:
+                logger.warning(f"A通道未找到索引为{a_index}的波形")
+
+        if not pulse_registry.is_valid_index(b_index):
+            logger.warning(f"B通道波形索引无效: {b_index}")
+        else:
+            pulse_b = pulse_registry.get_pulse_by_index(b_index)
+            if pulse_b is not None:
+                await self._device_service.set_pulse_data(Channel.B, pulse_b)
+            else:
+                logger.warning(f"B通道未找到索引为{b_index}的波形")
+
+    async def set_pulse_data_smart(self, channel: Channel, pulse: Pulse, update_ui: bool = True) -> None:
         """智能设置指定通道的波形数据"""
-        # 验证索引有效性
-        if not self._core_interface.registries.pulse_registry.is_valid_index(pulse_index):
-            logger.warning(f"无效的波形索引 {pulse_index}，操作已取消")
-            return
-
-        self._update_pulse_mode(channel, pulse_index)
+        self._update_pulse_mode(channel, pulse)
         if update_ui:
-            self._update_pulse_ui(channel, pulse_index)
-        await self._device_service.set_pulse_data(channel, pulse_index, update_ui)
+            self._update_pulse_ui(channel, pulse)
+        await self._device_service.set_pulse_data(channel, pulse)
 
     async def set_test_pulse(self, channel: Channel, pulse: Pulse) -> None:
         """在指定通道播放测试波形（委托给设备服务）"""
-        await self._device_service.set_test_pulse(channel, pulse)
+        await self._device_service.set_pulse_data(channel, pulse)
 
-    def set_pulse_mode(self, channel: Channel, value: int) -> None:
+    def set_pulse_mode(self, channel: Channel, pulse: Pulse) -> None:
         """设置指定通道的波形模式"""
-        # 添加边界检查
-        if not self._core_interface.registries.pulse_registry.is_valid_index(value):
-            logger.warning(f"通道 {channel} 的波形索引 {value} 无效，使用默认值")
-            value = self._core_interface.registries.pulse_registry.get_valid_index(value)
-            if value == -1:
-                logger.error("没有可用的波形")
-                return
-
-        self._update_pulse_mode(channel, value)
-        self._update_pulse_ui(channel, value)
+        self._update_pulse_mode(channel, pulse)
+        self._update_pulse_ui(channel, pulse)
 
     # ============ 模式控制业务逻辑 ============
 
@@ -349,14 +359,13 @@ class OSCActionService:
 
     # ============ 私有辅助方法 ============
 
-    def _update_pulse_mode(self, channel: Channel, pulse_index: int) -> None:
+    def _update_pulse_mode(self, channel: Channel, pulse: Pulse) -> None:
         """更新波形模式索引"""
-        self._pulse_modes[channel] = pulse_index
+        self._pulse_modes[channel] = pulse.index
 
-    def _update_pulse_ui(self, channel: Channel, pulse_index: int) -> None:
+    def _update_pulse_ui(self, channel: Channel, pulse: Pulse) -> None:
         """更新波形UI显示"""
-        pulse_name = self._core_interface.registries.pulse_registry.get_pulse_name_by_index(pulse_index)
-        self._core_interface.set_pulse_mode(channel, pulse_name, silent=True)
+        self._core_interface.set_pulse_mode(channel, pulse.name, silent=True)
 
     async def _set_mode_timer_handle(self, channel: Channel) -> None:
         """模式切换计时器处理"""

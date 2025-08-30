@@ -345,49 +345,13 @@ class DGLabWebSocketService:
 
     # ============ 波形数据操作（实现IDGLabService接口） ============
 
-    async def update_pulse_data(self) -> None:
-        """更新设备上的波形数据"""
-        # 检查客户端和通道任务是否已初始化
-        if not self.client or not self._channel_pulse_tasks:
-            logger.warning("客户端或通道任务未初始化，跳过波形更新")
-            return
-
-        # 检查具体通道任务是否存在
-        if Channel.A not in self._channel_pulse_tasks or Channel.B not in self._channel_pulse_tasks:
-            logger.warning("通道任务不完整，跳过波形更新")
-            return
-
-        # 需要从OSCActionService获取当前波形模式
-        # 这里暂时使用默认值，实际使用时需要通过回调获取
-        pulse_a = self._core_interface.registries.pulse_registry.get_pulse_by_index(0)
-        pulse_b = self._core_interface.registries.pulse_registry.get_pulse_by_index(0)
-
-        if pulse_a and pulse_b:
-            logger.info(f"更新波形 A {pulse_a.name} B {pulse_b.name}")
-            self._channel_pulse_tasks[Channel.A].set_pulse(pulse_a)
-            self._channel_pulse_tasks[Channel.B].set_pulse(pulse_b)
-
-    async def set_pulse_data(self, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
+    async def set_pulse_data(self, channel: Channel, pulse: Pulse) -> None:
         """设置指定通道的波形数据"""
-        # 验证索引有效性
-        if not self._core_interface.registries.pulse_registry.is_valid_index(pulse_index):
-            logger.warning(f"无效的波形索引 {pulse_index}，操作已取消")
-            return
-
         if channel not in self._channel_pulse_tasks:
             logger.warning(f"通道 {channel} 任务未初始化，跳过波形设置")
             return
-
-        pulse = self._core_interface.registries.pulse_registry.get_pulse_by_index(pulse_index)
-        if pulse:
-            self._channel_pulse_tasks[channel].set_pulse(pulse)
-
-    async def set_test_pulse(self, channel: Channel, pulse: Pulse) -> None:
-        """在指定通道播放测试波形"""
-        if channel not in self._channel_pulse_tasks:
-            logger.warning(f"通道 {channel} 任务未初始化，跳过测试波形")
-            return
         self._channel_pulse_tasks[channel].set_pulse(pulse)
+
 
     # ============ 数据访问（实现IDGLabService接口） ============
 
@@ -447,10 +411,6 @@ class DGLabWebSocketService:
         """处理强度数据"""
         # 转换为models中的StrengthData类型
         models_strength_data = self._convert_strength_data_from_pydglab(data)
-
-        # 首次接收数据时更新波形数据
-        if self._last_strength is None:
-            asyncio.create_task(self.update_pulse_data())
 
         # 更新内部状态
         self.update_strength_data(models_strength_data)

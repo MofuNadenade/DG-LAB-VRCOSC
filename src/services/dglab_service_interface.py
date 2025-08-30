@@ -78,16 +78,8 @@ class IDGLabDeviceService(IService, Protocol):
 
     # ============ 波形数据操作 ============
 
-    async def update_pulse_data(self) -> None:
-        """更新设备上的波形数据"""
-        ...
-
-    async def set_pulse_data(self, channel: Channel, pulse_index: int, update_ui: bool = True) -> None:
+    async def set_pulse_data(self, channel: Channel, pulse: Pulse) -> None:
         """设置指定通道的波形数据"""
-        ...
-
-    async def set_test_pulse(self, channel: Channel, pulse: Pulse) -> None:
-        """在指定通道播放测试波形"""
         ...
 
     # ============ 数据访问 ============

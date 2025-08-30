@@ -195,10 +195,15 @@ class MainWindow(QMainWindow):
             self.controller.osc_action_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
 
             # 同步波形设置并更新设备
+            pulse_registry = self.registries.pulse_registry
             if a_index >= 0:
-                self.controller.osc_action_service.set_pulse_mode(Channel.A, a_index)
+                pulse_a = pulse_registry.get_pulse_by_index(a_index)
+                if pulse_a is not None:
+                    self.controller.osc_action_service.set_pulse_mode(Channel.A, pulse_a)
             if b_index >= 0:
-                self.controller.osc_action_service.set_pulse_mode(Channel.B, b_index)
+                pulse_b = pulse_registry.get_pulse_by_index(b_index)
+                if pulse_b is not None:
+                    self.controller.osc_action_service.set_pulse_mode(Channel.B, pulse_b)
 
             # 立即更新设备上的波形数据
             asyncio.create_task(self.controller.osc_action_service.update_pulse_data())
@@ -388,11 +393,10 @@ class MainWindow(QMainWindow):
         # 为所有脉冲注册OSC操作
         for pulse in self.registries.pulse_registry.pulses:
             osc_action_service = self.controller.osc_action_service
-            pulse_index = pulse.index
 
             async def set_pulse_data(*args: OSCValue) -> None:
                 current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.set_pulse_data_smart(current_channel, pulse_index)
+                await osc_action_service.set_pulse_data_smart(current_channel, pulse)
             self.registries.action_registry.register_action(
                 translate("main.action.set_pulse").format(pulse.name),
                 set_pulse_data,

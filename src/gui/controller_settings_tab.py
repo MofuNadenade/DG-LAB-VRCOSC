@@ -252,7 +252,13 @@ class ControllerSettingsTab(QWidget):
             logger.warning(f"A通道波形索引无效: {index}")
             return
 
-        self.controller.osc_action_service.set_pulse_mode(Channel.A, index)
+        # 获取 Pulse 对象
+        pulse = self.pulse_registry.get_pulse_by_index(index)
+        if pulse is None:
+            logger.warning(f"A通道未找到索引为{index}的波形")
+            return
+
+        self.controller.osc_action_service.set_pulse_mode(Channel.A, pulse)
         pulse_name = self.pulse_registry.get_pulse_name_by_index(index)
         logger.info(f"A通道波形模式已更新为 {pulse_name}")
 
@@ -269,7 +275,13 @@ class ControllerSettingsTab(QWidget):
             logger.warning(f"B通道波形索引无效: {index}")
             return
 
-        self.controller.osc_action_service.set_pulse_mode(Channel.B, index)
+        # 获取 Pulse 对象
+        pulse = self.pulse_registry.get_pulse_by_index(index)
+        if pulse is None:
+            logger.warning(f"B通道未找到索引为{index}的波形")
+            return
+
+        self.controller.osc_action_service.set_pulse_mode(Channel.B, pulse)
         pulse_name = self.pulse_registry.get_pulse_name_by_index(index)
         logger.info(f"B通道波形模式已更新为 {pulse_name}")
 
