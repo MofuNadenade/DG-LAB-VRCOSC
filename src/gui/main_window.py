@@ -300,7 +300,7 @@ class MainWindow(QMainWindow):
             if isinstance(args[0], float):
                 await osc_action_service.set_fire_mode_strength_step(args[0])
         self.registries.action_registry.register_action(
-            "强度调节",
+            "设置开火强度步长",
             set_fire_mode_strength_step,
             OSCActionType.PANEL_CONTROL, {"value_adjust"}
         )
@@ -309,19 +309,19 @@ class MainWindow(QMainWindow):
             if isinstance(args[0], (int, float)):
                 await osc_action_service.set_current_channel(args[0])
         self.registries.action_registry.register_action(
-            "通道调节",
+            "设置当前通道",
             set_current_channel,
             OSCActionType.PANEL_CONTROL, {"channel_adjust"}
         )
 
         # 注册强度控制操作
-        async def set_mode(*args: OSCValue) -> None:
+        async def set_dynamic_bone_mode_timer(*args: OSCValue) -> None:
             if isinstance(args[0], int):
                 current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.set_mode(args[0], current_channel)
+                await osc_action_service.set_dynamic_bone_mode_timer(args[0], current_channel)
         self.registries.action_registry.register_action(
             "设置模式",
-            set_mode,
+            set_dynamic_bone_mode_timer,
             OSCActionType.STRENGTH_CONTROL, {"mode"}
         )
 

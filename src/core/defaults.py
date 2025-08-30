@@ -17,8 +17,8 @@ DEFAULT_ADDRESSES: List[OSCAddressDict] = [
 
     # SoundPad地址（完整OSC路径）
     {"name": "SoundPad面板控制开关", "code": "/avatar/parameters/SoundPad/PanelControl"},
-    {"name": "SoundPad强度调节", "code": "/avatar/parameters/SoundPad/Volume"},
-    {"name": "SoundPad通道调节", "code": "/avatar/parameters/SoundPad/Page"},
+    {"name": "SoundPad设置开火强度步长", "code": "/avatar/parameters/SoundPad/Volume"},
+    {"name": "SoundPad设置当前通道", "code": "/avatar/parameters/SoundPad/Page"},
 
     # PCS地址（完整OSC路径）
     {"name": "PCS进入", "code": "/avatar/parameters/pcs/contact/enterPass"},
@@ -173,8 +173,8 @@ DEFAULT_BINDINGS: List[OSCBindingDict] = [
 
     # SoundPad控制相关
     {"address_name": "SoundPad面板控制开关", "action_name": "面板控制开关"},
-    {"address_name": "SoundPad强度调节", "action_name": "强度调节"},
-    {"address_name": "SoundPad通道调节", "action_name": "通道调节"},
+    {"address_name": "SoundPad设置开火强度步长", "action_name": "设置开火强度步长"},
+    {"address_name": "SoundPad设置当前通道", "action_name": "设置当前通道"},
 
     # SoundPad按钮1-15
     {"address_name": "按钮1", "action_name": "设置模式"},

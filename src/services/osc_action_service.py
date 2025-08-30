@@ -59,7 +59,7 @@ class OSCActionService:
         self._fire_mode_origin_strengths: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
         
         # 模式切换管理
-        self._set_mode_timer: Optional[asyncio.Task[None]] = None
+        self._set_dynamic_bone_mode_timer: Optional[asyncio.Task[None]] = None
         
         # 面板控制
         self._enable_panel_control: bool = True
@@ -190,16 +190,16 @@ class OSCActionService:
         """设置指定通道的动骨模式"""
         self._dynamic_bone_modes[channel] = enabled
 
-    async def set_mode(self, value: int, channel: Channel) -> None:
+    async def set_dynamic_bone_mode_timer(self, value: int, channel: Channel) -> None:
         """切换工作模式（延时触发动骨模式切换）"""
         if value == 1:  # 按下按键
-            if self._set_mode_timer is not None:
-                self._set_mode_timer.cancel()
-            self._set_mode_timer = asyncio.create_task(self._set_mode_timer_handle(channel))
+            if self._set_dynamic_bone_mode_timer is not None:
+                self._set_dynamic_bone_mode_timer.cancel()
+            self._set_dynamic_bone_mode_timer = asyncio.create_task(self._set_dynamic_bone_mode_timer_handle(channel))
         elif value == 0:  # 松开按键
-            if self._set_mode_timer:
-                self._set_mode_timer.cancel()
-                self._set_mode_timer = None
+            if self._set_dynamic_bone_mode_timer:
+                self._set_dynamic_bone_mode_timer.cancel()
+                self._set_dynamic_bone_mode_timer = None
 
     async def set_panel_control(self, value: float) -> None:
         """设置面板控制功能开关"""
@@ -327,18 +327,17 @@ class OSCActionService:
     async def cleanup(self) -> None:
         """清理资源"""
         # 取消模式切换定时器
-        if self._set_mode_timer:
-            self._set_mode_timer.cancel()
-            self._set_mode_timer = None
+        if self._set_dynamic_bone_mode_timer:
+            self._set_dynamic_bone_mode_timer.cancel()
+            self._set_dynamic_bone_mode_timer = None
         
         logger.debug("OSC动作服务资源已清理")
 
     # ============ 私有辅助方法 ============
 
-    async def _set_mode_timer_handle(self, channel: Channel) -> None:
+    async def _set_dynamic_bone_mode_timer_handle(self, channel: Channel) -> None:
         """模式切换计时器处理"""
         try:
-            # 使用更精确的延迟，避免不必要的轮询
             await asyncio.sleep(1.0)
 
             new_mode = not self._dynamic_bone_modes[channel]
