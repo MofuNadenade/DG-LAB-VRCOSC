@@ -128,9 +128,7 @@ class OSCActionService:
         if value >= 0:
             self._current_select_channel = Channel.A if value <= 1 else Channel.B
             logger.info(f"设置活动通道为: {self._current_select_channel}")
-            # 更新 UI 显示
-            channel_name = "A" if self._current_select_channel == Channel.A else "B"
-            self._core_interface.update_current_channel_display(channel_name)
+            self._core_interface.update_current_channel(self._current_select_channel)
             return self._current_select_channel
         return None
 

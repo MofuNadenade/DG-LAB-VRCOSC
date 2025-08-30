@@ -385,8 +385,9 @@ class ControllerSettingsTab(QWidget):
                 self.b_channel_label.setText(
                     f"B {translate('channel.strength_display')}: {last_strength.b} {translate('channel.strength_limit')}: {last_strength.b_limit}  {translate('channel.pulse')}: {pulse_b_name}")
 
-    def update_current_channel_display(self, channel_name: str) -> None:
+    def update_current_channel(self, channel: Channel) -> None:
         """更新当前选择通道显示"""
+        channel_name = "A" if channel == Channel.A else "B"
         self.current_channel_label.setText(f"{translate('channel.current_control')}: {channel_name}")
 
     def update_ui_texts(self) -> None:

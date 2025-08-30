@@ -7,7 +7,7 @@ DG-LAB 蓝牙直连服务实现
 
 import asyncio
 import logging
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, TypedDict
 
 from pydglab import model_v3, dglab_v3, bthandler_v3
 
@@ -15,6 +15,12 @@ from core.dglab_pulse import Pulse
 from models import Channel, StrengthData, StrengthOperationType, PulseOperation
 
 logger = logging.getLogger(__name__)
+
+
+class DGLabDevice(TypedDict):
+    """设备信息类型定义"""
+    address: str
+    rssi: int
 
 
 class DGLabBluetoothService:
@@ -219,16 +225,59 @@ class DGLabBluetoothService:
 
     # ============ 公共设备管理方法 ============
 
-    async def connect_device(self) -> bool:
-        """连接到DG-LAB设备"""
+    async def scan_devices(self) -> List[DGLabDevice]:
+        """
+        扫描可用的DG-LAB v3.0设备
+        
+        Returns:
+            List[DGLabDevice]: 设备信息列表，包含address和rssi字段
+        """
         try:
-            logger.info("开始扫描DG-LAB蓝牙设备...")
+            logger.info("开始扫描可用的DG-LAB v3.0设备...")
             
-            # 扫描设备
-            await bthandler_v3.scan()
+            # 使用pydglab的扫描API
+            devices = await bthandler_v3.scan()
             
-            # 创建dglab_v3实例
-            self._dglab_instance = dglab_v3()
+            # 转换为DeviceInfo格式
+            device_list: List[DGLabDevice] = []
+            for address, rssi in devices:
+                device_info: DGLabDevice = {
+                    "address": address,
+                    "rssi": rssi
+                }
+                device_list.append(device_info)
+            
+            logger.info(f"扫描完成，发现 {len(device_list)} 个设备")
+            return device_list
+            
+        except Exception as e:
+            logger.error(f"扫描设备失败: {e}")
+            return []
+
+    async def connect_device(self, device: Optional[DGLabDevice] = None) -> bool:
+        """
+        连接到DG-LAB设备
+        
+        Args:
+            device (DeviceInfo, optional): 指定设备信息，如果为None则扫描并连接第一个可用设备
+            
+        Returns:
+            bool: 连接是否成功
+        """
+        try:
+            if device:
+                logger.info(f"尝试连接到指定设备: {device['address']}")
+                # 断开现有连接
+                if self._is_connected:
+                    await self._disconnect_device()
+                # 使用指定地址创建dglab_v3实例
+                self._dglab_instance = await dglab_v3.from_address(device['address'])
+            else:
+                logger.info("开始扫描DG-LAB蓝牙设备...")
+                # 扫描设备
+                await bthandler_v3.scan()
+                # 创建dglab_v3实例
+                self._dglab_instance = dglab_v3()
             
             # 尝试连接设备
             try:
@@ -242,11 +291,17 @@ class DGLabBluetoothService:
             # 初始化设备设置
             await self._initialize_device()
             
-            logger.info("蓝牙设备连接成功")
+            if device:
+                logger.info(f"成功连接到设备: {device['address']}")
+            else:
+                logger.info("蓝牙设备连接成功")
             return True
             
         except Exception as e:
-            logger.error(f"蓝牙设备连接失败: {e}")
+            if device:
+                logger.error(f"连接到指定设备失败 {device['address']}: {e}")
+            else:
+                logger.error(f"蓝牙设备连接失败: {e}")
             await self._cleanup_connection()
             return False
 

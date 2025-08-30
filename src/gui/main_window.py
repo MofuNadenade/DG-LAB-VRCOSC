@@ -429,9 +429,9 @@ class MainWindow(QMainWindow):
 
     # === 状态更新方法 ===
 
-    def update_current_channel_display(self, channel_name: str) -> None:
+    def update_current_channel(self, channel: Channel) -> None:
         """更新当前选择通道显示"""
-        self.controller_tab.update_current_channel_display(channel_name)
+        self.controller_tab.update_current_channel(channel)
 
     def update_qrcode(self, qrcode_pixmap: QPixmap) -> None:
         """更新二维码并调整QLabel的大小"""
