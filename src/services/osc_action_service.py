@@ -158,7 +158,7 @@ class OSCActionService:
         """设置指定通道的波形"""
         if pulse:
             self._current_pulse[channel] = pulse
-        else:
+        elif channel in self._current_pulse:
             del self._current_pulse[channel]
         self._core_interface.set_current_pulse(channel, pulse)
 
