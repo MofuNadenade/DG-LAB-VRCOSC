@@ -13,8 +13,9 @@ from core.dglab_controller import DGLabController
 from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
 from models import ConnectionState, SettingsDict
 from services.chatbox_service import ChatboxService
-from services.dglab_service_interface import IDGLabService
+from services.dglab_service_interface import IDGLabDeviceService
 from services.dglab_websocket_service import DGLabWebSocketService
+from services.osc_action_service import OSCActionService
 from services.osc_service import OSCService
 from .ui_interface import UIInterface
 from .widgets import EditableComboBox
@@ -358,11 +359,12 @@ class NetworkConfigTab(QWidget):
             # 创建控制器（如果不存在）
             if not self.controller:
                 # 初始化服务
-                dglab_service: IDGLabService = DGLabWebSocketService(self.ui_interface, selected_ip, selected_port, remote_address)
+                dglab_device_service: IDGLabDeviceService = DGLabWebSocketService(self.ui_interface, selected_ip, selected_port, remote_address)
                 osc_service: OSCService = OSCService(self.ui_interface)
-                chatbox_service: ChatboxService = ChatboxService(self.ui_interface, dglab_service, osc_service)
+                osc_action_service: OSCActionService = OSCActionService(dglab_device_service, self.ui_interface)
+                chatbox_service: ChatboxService = ChatboxService(self.ui_interface, osc_service, osc_action_service)
 
-                controller = DGLabController(dglab_service, osc_service, chatbox_service)
+                controller = DGLabController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
 
                 self.ui_interface.set_controller(controller)
 
@@ -417,7 +419,7 @@ class NetworkConfigTab(QWidget):
                 # 停止ChatBox状态更新任务
                 self.controller.chatbox_service.stop_service()
                 # 停止WebSocket服务器
-                await self.controller.dglab_service.stop_service()
+                await self.controller.dglab_device_service.stop_service()
                 # 停止OSC服务器
                 await self.controller.osc_service.stop_service()
                 logger.info("所有服务已停止")
@@ -432,7 +434,7 @@ class NetworkConfigTab(QWidget):
                 return
 
             # 启动WebSocket服务器
-            dglab_started = await self.controller.dglab_service.start_service()
+            dglab_started = await self.controller.dglab_device_service.start_service()
             if not dglab_started:
                 error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.websocket_server_failed"))
                 logger.error(error_msg)
@@ -444,7 +446,7 @@ class NetworkConfigTab(QWidget):
             if not osc_started:
                 error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.osc_server_failed"))
                 logger.error(error_msg)
-                await self.controller.dglab_service.stop_service()
+                await self.controller.dglab_device_service.stop_service()
                 self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
                 return
 
@@ -454,7 +456,7 @@ class NetworkConfigTab(QWidget):
             logger.info("所有服务启动成功")
 
             # 等待服务器停止事件（完全消除轮询）
-            await self.controller.dglab_service.wait_for_server_stop()
+            await self.controller.dglab_device_service.wait_for_server_stop()
 
         except asyncio.CancelledError:
             logger.info("服务器任务被取消")

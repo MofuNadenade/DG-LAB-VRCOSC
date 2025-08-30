@@ -766,7 +766,7 @@ class PulseEditorTab(QWidget):
 
                     # 在当前通道播放
                     asyncio.create_task(
-                        self.ui_interface.controller.dglab_service.set_test_pulse(self.current_channel, temp_pulse))
+                        self.ui_interface.controller.osc_action_service.set_test_pulse(self.current_channel, temp_pulse))
 
                     logger.info(f"Playing test pulse on channel {self.current_channel}")
 
@@ -784,7 +784,7 @@ class PulseEditorTab(QWidget):
             if self.ui_interface.controller:
                 try:
                     # 恢复当前通道的正常波形
-                    asyncio.create_task(self.ui_interface.controller.dglab_service.update_pulse_data())
+                    asyncio.create_task(self.ui_interface.controller.osc_action_service.update_pulse_data())
                     logger.info(f"Restored normal pulse on channel {self.current_channel}")
                 except Exception as e:
                     logger.error(f"Failed to restore normal pulse: {e}")

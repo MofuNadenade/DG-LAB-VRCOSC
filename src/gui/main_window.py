@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
         strength_step = self.settings.get('strength_step', 30)
         self.set_strength_step(strength_step, silent=True)
         if self.controller is not None:
-            self.controller.dglab_service.fire_mode_strength_step = strength_step
+            self.controller.osc_action_service.fire_mode_strength_step = strength_step
 
         # 其他设置
         fire_mode_disabled = self.settings.get('fire_mode_disabled', False)
@@ -189,19 +189,19 @@ class MainWindow(QMainWindow):
 
         # 同步控制器状态
         if self.controller is not None:
-            self.controller.dglab_service.fire_mode_disabled = fire_mode_disabled
-            self.controller.dglab_service.enable_panel_control = enable_panel_control
-            self.controller.dglab_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
-            self.controller.dglab_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
+            self.controller.osc_action_service.fire_mode_disabled = fire_mode_disabled
+            self.controller.osc_action_service.enable_panel_control = enable_panel_control
+            self.controller.osc_action_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
+            self.controller.osc_action_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
 
             # 同步波形设置并更新设备
             if a_index >= 0:
-                self.controller.dglab_service.set_pulse_mode(Channel.A, a_index)
+                self.controller.osc_action_service.set_pulse_mode(Channel.A, a_index)
             if b_index >= 0:
-                self.controller.dglab_service.set_pulse_mode(Channel.B, b_index)
+                self.controller.osc_action_service.set_pulse_mode(Channel.B, b_index)
 
             # 立即更新设备上的波形数据
-            asyncio.create_task(self.controller.dglab_service.update_pulse_data())
+            asyncio.create_task(self.controller.osc_action_service.update_pulse_data())
 
         logger.info("Controller settings loaded from configuration")
 
@@ -252,13 +252,13 @@ class MainWindow(QMainWindow):
         # 清除现有动作（避免重复注册）
         self.registries.action_registry.clear_all_actions()
 
-        dglab_service = self.controller.dglab_service
+        osc_action_service = self.controller.osc_action_service
         chatbox_service = self.controller.chatbox_service
 
-        # 注册通道控制操作
+        # 注册通道控制操作（使用智能版本，自动处理动骨模式）
         async def set_float_output_channel_a(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await dglab_service.set_float_output(args[0], Channel.A)
+                await osc_action_service.set_float_output_smart(args[0], Channel.A)
         self.registries.action_registry.register_action(
             "设置A通道强度",
             set_float_output_channel_a,
@@ -267,7 +267,7 @@ class MainWindow(QMainWindow):
 
         async def set_float_output_channel_b(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await dglab_service.set_float_output(args[0], Channel.B)
+                await osc_action_service.set_float_output_smart(args[0], Channel.B)
         self.registries.action_registry.register_action(
             "设置B通道强度",
             set_float_output_channel_b,
@@ -276,7 +276,8 @@ class MainWindow(QMainWindow):
 
         async def set_float_output_channel_current(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await dglab_service.set_float_output(args[0], dglab_service.get_current_channel())
+                current_channel = osc_action_service.get_current_channel()
+                await osc_action_service.set_float_output_smart(args[0], current_channel)
         self.registries.action_registry.register_action(
             "设置当前通道强度",
             set_float_output_channel_current,
@@ -286,7 +287,7 @@ class MainWindow(QMainWindow):
         # 注册面板控制操作
         async def set_panel_control(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await dglab_service.set_panel_control(args[0])
+                await osc_action_service.set_panel_control(args[0])
         self.registries.action_registry.register_action(
             "面板控制开关",
             set_panel_control,
@@ -295,7 +296,7 @@ class MainWindow(QMainWindow):
 
         async def set_strength_step(*args: OSCValue) -> None:
             if isinstance(args[0], float):
-                await dglab_service.set_strength_step(args[0])
+                await osc_action_service.set_strength_step(args[0])
         self.registries.action_registry.register_action(
             "强度调节",
             set_strength_step,
@@ -304,7 +305,7 @@ class MainWindow(QMainWindow):
 
         async def set_channel(*args: OSCValue) -> None:
             if isinstance(args[0], (int, float)):
-                await dglab_service.set_channel(args[0])
+                await osc_action_service.set_channel(args[0])
         self.registries.action_registry.register_action(
             "通道调节",
             set_channel,
@@ -314,7 +315,8 @@ class MainWindow(QMainWindow):
         # 注册强度控制操作
         async def set_mode(*args: OSCValue) -> None:
             if isinstance(args[0], int):
-                await dglab_service.set_mode(args[0], dglab_service.get_current_channel())
+                current_channel = osc_action_service.get_current_channel()
+                await osc_action_service.set_mode(args[0], current_channel)
         self.registries.action_registry.register_action(
             "设置模式",
             set_mode,
@@ -323,7 +325,8 @@ class MainWindow(QMainWindow):
 
         async def reset_strength(*args: OSCValue) -> None:
             if isinstance(args[0], bool):
-                await dglab_service.reset_strength(args[0], dglab_service.get_current_channel())
+                current_channel = osc_action_service.get_current_channel()
+                await osc_action_service.reset_strength(args[0], current_channel)
         self.registries.action_registry.register_action(
             "重置强度",
             reset_strength,
@@ -332,7 +335,8 @@ class MainWindow(QMainWindow):
 
         async def decrease_strength(*args: OSCValue) -> None:
             if isinstance(args[0], bool):
-                await dglab_service.decrease_strength(args[0], dglab_service.get_current_channel())
+                current_channel = osc_action_service.get_current_channel()
+                await osc_action_service.decrease_strength(args[0], current_channel)
         self.registries.action_registry.register_action(
             "降低强度",
             decrease_strength,
@@ -341,7 +345,8 @@ class MainWindow(QMainWindow):
 
         async def increase_strength(*args: OSCValue) -> None:
             if isinstance(args[0], bool):
-                await dglab_service.increase_strength(args[0], dglab_service.get_current_channel())
+                current_channel = osc_action_service.get_current_channel()
+                await osc_action_service.increase_strength(args[0], current_channel)
         self.registries.action_registry.register_action(
             "增加强度",
             increase_strength,
@@ -350,11 +355,11 @@ class MainWindow(QMainWindow):
 
         async def strength_fire_mode(*args: OSCValue) -> None:
             if isinstance(args[0], bool):
-                await dglab_service.strength_fire_mode(
+                await osc_action_service.strength_fire_mode(
                     args[0],
-                    dglab_service.get_current_channel(),
-                    dglab_service.fire_mode_strength_step,
-                    dglab_service.get_last_strength()
+                    osc_action_service.get_current_channel(),
+                    osc_action_service.fire_mode_strength_step,
+                    osc_action_service.get_last_strength()
                 )
         self.registries.action_registry.register_action(
             "一键开火",
@@ -382,11 +387,12 @@ class MainWindow(QMainWindow):
 
         # 为所有脉冲注册OSC操作
         for pulse in self.registries.pulse_registry.pulses:
-            dglab_service = self.controller.dglab_service
+            osc_action_service = self.controller.osc_action_service
             pulse_index = pulse.index
 
             async def set_pulse_data(*args: OSCValue) -> None:
-                await dglab_service.set_pulse_data(dglab_service.get_current_channel(), pulse_index)
+                current_channel = osc_action_service.get_current_channel()
+                await osc_action_service.set_pulse_data_smart(current_channel, pulse_index)
             self.registries.action_registry.register_action(
                 translate("main.action.set_pulse").format(pulse.name),
                 set_pulse_data,

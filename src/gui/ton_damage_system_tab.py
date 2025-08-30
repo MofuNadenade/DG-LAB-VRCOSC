@@ -302,7 +302,7 @@ class TonDamageSystemTab(QWidget):
 
         logger.warning(f"Death penalty triggered: Strength={penalty_strength}, Time={penalty_time}s")
 
-        last_strength_mod = self.controller.dglab_service.get_last_strength() if self.controller else None
+        last_strength_mod = self.controller.osc_action_service.get_last_strength() if self.controller else None
         if self.controller and last_strength_mod:
             logger.warning(f"Death penalty triggered: a {last_strength_mod.a} fire {penalty_strength}")
 

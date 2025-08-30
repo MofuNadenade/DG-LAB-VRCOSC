@@ -117,9 +117,10 @@ The application uses a service-based architecture where the controller is a pure
 - **ChatboxService**: VRChat ChatBox status display and periodic updates
 
 **CRITICAL**: All controller methods have been removed. Must use services directly:
+
 ```python
 # Correct usage
-await controller.dglab_service.set_strength_step(50)
+await controller.osc_action_service.set_strength_step(50)
 controller.osc_service.send_message_to_vrchat_chatbox("Hello")
 
 # Old usage (removed)
