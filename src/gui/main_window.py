@@ -1,3 +1,4 @@
+import functools
 import logging
 from typing import Optional, List
 
@@ -21,7 +22,6 @@ from models import ConnectionState, StrengthData, Channel, SettingsDict, OSCValu
 from util import resource_path
 
 logger = logging.getLogger(__name__)
-
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
@@ -392,17 +392,17 @@ class MainWindow(QMainWindow):
         if self.controller is None:
             logger.warning("Controller not available, cannot register pulse actions")
             return
+            
+        osc_action_service = self.controller.osc_action_service
 
         # 为所有波形注册OSC操作
         for pulse in self.registries.pulse_registry.pulses:
-            osc_action_service = self.controller.osc_action_service
-
-            async def set_pulse(*args: OSCValue) -> None:
+            async def set_pulse(pulse: Pulse, *args: OSCValue) -> None:
                 current_channel = osc_action_service.get_current_channel()
                 await osc_action_service.set_pulse(current_channel, pulse)
             self.registries.action_registry.register_action(
                 translate("main.action.set_pulse").format(pulse.name),
-                set_pulse,
+                functools.partial(set_pulse, pulse),
                 OSCActionType.PULSE_CONTROL, {"pulse"})
 
         # 更新波形下拉框
