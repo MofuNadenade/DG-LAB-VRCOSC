@@ -366,7 +366,7 @@ class NetworkConfigTab(QWidget):
 
                 controller = ServiceController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
 
-                self.ui_interface.set_controller(controller)
+                self.ui_interface.set_service_controller(controller)
 
             # 启动服务器任务，并保存任务引用
             self.server_task = asyncio.create_task(self._run_server_with_cleanup())
@@ -410,7 +410,7 @@ class NetworkConfigTab(QWidget):
         self.qrcode_label.clear()
 
         # 通过UI回调清空控制器引用
-        self.ui_interface.set_controller(None)
+        self.ui_interface.set_service_controller(None)
 
     async def _stop_services(self) -> None:
         """停止所有服务"""
