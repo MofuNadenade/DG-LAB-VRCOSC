@@ -8,7 +8,7 @@ from models import SettingsDict
 class UIInterface(CoreInterface, Protocol):
     """统一的UI操作接口协议"""
     # 数据访问属性
-    controller: Optional[ServiceController]
+    service_controller: Optional[ServiceController]
     settings: SettingsDict
 
     def set_controller(self, controller: Optional[ServiceController]) -> None: ...

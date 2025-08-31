@@ -57,7 +57,7 @@ class ControllerSettingsTab(QWidget):
     @property
     def controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
-        return self.ui_interface.controller
+        return self.ui_interface.service_controller
 
     @property
     def pulse_registry(self) -> PulseRegistry:

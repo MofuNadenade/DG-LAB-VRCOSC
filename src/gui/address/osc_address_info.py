@@ -131,8 +131,8 @@ class OSCAddressInfoTab(QWidget):
         """刷新地址信息表格"""
         # 获取OSC服务检测到的地址信息
         address_infos = {}
-        if self.ui_interface.controller:
-            address_infos = self.ui_interface.controller.osc_service.get_address_infos()
+        if self.ui_interface.service_controller:
+            address_infos = self.ui_interface.service_controller.osc_service.get_address_infos()
 
         if not address_infos:
             self.address_info_table.setRowCount(0)

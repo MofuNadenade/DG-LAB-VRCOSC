@@ -759,14 +759,14 @@ class PulseEditorTab(QWidget):
             self.test_channel = self.current_channel  # 记录测试时的通道
 
             # 如果有控制器，在设备上播放
-            if self.ui_interface.controller:
+            if self.ui_interface.service_controller:
                 try:
                     # 创建临时波形对象
                     temp_pulse = Pulse(-1, translate("pulse_editor.test_waveform"), current_data)
 
                     # 在当前通道播放
                     asyncio.create_task(
-                        self.ui_interface.controller.osc_action_service.send_pulse(self.current_channel, temp_pulse))
+                        self.ui_interface.service_controller.osc_action_service.send_pulse(self.current_channel, temp_pulse))
 
                     logger.info(f"Playing test pulse on channel {self.current_channel}")
 
@@ -781,10 +781,10 @@ class PulseEditorTab(QWidget):
             self.is_playing = False
 
             # 恢复设备上的原始波形
-            if self.ui_interface.controller:
+            if self.ui_interface.service_controller:
                 try:
                     # 恢复当前通道的正常波形
-                    asyncio.create_task(self.ui_interface.controller.osc_action_service.update_pulse())
+                    asyncio.create_task(self.ui_interface.service_controller.osc_action_service.update_pulse())
                     logger.info(f"Restored normal pulse on channel {self.current_channel}")
                 except Exception as e:
                     logger.error(f"Failed to restore normal pulse: {e}")

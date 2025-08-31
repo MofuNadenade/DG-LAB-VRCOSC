@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         set_language(language)
 
         # 初始化控制器相关组件
-        self.controller: Optional[ServiceController] = None
+        self.service_controller: Optional[ServiceController] = None
         self.registries: Registries = Registries()
         self.options_provider: OSCOptionsProvider = OSCOptionsProvider(self.registries)
 
@@ -128,14 +128,14 @@ class MainWindow(QMainWindow):
         # ChatBox状态
         enable_chatbox = self.settings.get('enable_chatbox_status', False)
         self.set_feature_state(UIFeature.CHATBOX_STATUS, enable_chatbox)
-        if self.controller is not None:
-            self.controller.chatbox_service.set_enabled(enable_chatbox)
+        if self.service_controller is not None:
+            self.service_controller.chatbox_service.set_enabled(enable_chatbox)
 
         # 强度步长
         fire_mode_strength_step = self.settings.get('fire_mode_strength_step', 30)
         self.set_fire_mode_strength_step(fire_mode_strength_step)
-        if self.controller is not None:
-            self.controller.osc_action_service.fire_mode_strength_step = fire_mode_strength_step
+        if self.service_controller is not None:
+            self.service_controller.osc_action_service.fire_mode_strength_step = fire_mode_strength_step
 
         # 其他设置
         fire_mode_disabled = self.settings.get('fire_mode_disabled', False)
@@ -188,11 +188,11 @@ class MainWindow(QMainWindow):
             self.controller_tab.current_pulse_b_combobox.blockSignals(False)
 
         # 同步控制器状态
-        if self.controller is not None:
-            self.controller.osc_action_service.fire_mode_disabled = fire_mode_disabled
-            self.controller.osc_action_service.enable_panel_control = enable_panel_control
-            self.controller.osc_action_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
-            self.controller.osc_action_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
+        if self.service_controller is not None:
+            self.service_controller.osc_action_service.fire_mode_disabled = fire_mode_disabled
+            self.service_controller.osc_action_service.enable_panel_control = enable_panel_control
+            self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
+            self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
 
             # 同步波形设置并更新设备
             pulse_registry = self.registries.pulse_registry
@@ -200,20 +200,20 @@ class MainWindow(QMainWindow):
                 pulse_index_a = self.controller_tab.current_pulse_a_combobox.itemData(a_index)
                 if pulse_index_a is not None:
                     if pulse_index_a == -1:
-                        self.controller.osc_action_service.set_current_pulse(Channel.A, None)
+                        self.service_controller.osc_action_service.set_current_pulse(Channel.A, None)
                     elif pulse_registry.is_valid_index(pulse_index_a):
                         pulse_a = pulse_registry.get_pulse_by_index(pulse_index_a)
                         if pulse_a is not None:
-                            self.controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
+                            self.service_controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
             if b_index >= 0:
                 pulse_index_b = self.controller_tab.current_pulse_a_combobox.itemData(a_index)
                 if pulse_index_b is not None:
                     if pulse_index_b == -1:
-                        self.controller.osc_action_service.set_current_pulse(Channel.B, None)
+                        self.service_controller.osc_action_service.set_current_pulse(Channel.B, None)
                     elif pulse_registry.is_valid_index(pulse_index_b):
                         pulse_b = pulse_registry.get_pulse_by_index(pulse_index_b)
                         if pulse_b is not None:
-                            self.controller.osc_action_service.set_current_pulse(Channel.B, pulse_b)
+                            self.service_controller.osc_action_service.set_current_pulse(Channel.B, pulse_b)
 
         logger.info("Controller settings loaded from configuration")
 
@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
 
     def set_controller(self, controller: Optional['ServiceController']) -> None:
         """设置控制器实例（当服务器启动后调用）"""
-        self.controller = controller
+        self.service_controller = controller
 
         if controller is not None:
             # 绑定控制器设置
@@ -257,15 +257,15 @@ class MainWindow(QMainWindow):
 
     def _register_basic_actions(self) -> None:
         """注册基础OSC动作（通道控制、面板控制、强度控制、ChatBox控制等）"""
-        if self.controller is None:
+        if self.service_controller is None:
             logger.warning("Controller not available, cannot register basic OSC actions")
             return
 
         # 清除现有动作（避免重复注册）
         self.registries.action_registry.clear_all_actions()
 
-        osc_action_service = self.controller.osc_action_service
-        chatbox_service = self.controller.chatbox_service
+        osc_action_service = self.service_controller.osc_action_service
+        chatbox_service = self.service_controller.chatbox_service
 
         # 注册通道控制操作
         async def set_float_output_channel_a(*args: OSCValue) -> None:
@@ -389,11 +389,11 @@ class MainWindow(QMainWindow):
 
     def _register_pulse_actions(self) -> None:
         """为控制器注册波形OSC操作"""
-        if self.controller is None:
+        if self.service_controller is None:
             logger.warning("Controller not available, cannot register pulse actions")
             return
             
-        osc_action_service = self.controller.osc_action_service
+        osc_action_service = self.service_controller.osc_action_service
 
         # 为所有波形注册OSC操作
         for pulse in self.registries.pulse_registry.pulses:
