@@ -138,6 +138,10 @@
 - **Terrors of Nowhere**: [https://terror.moe/](https://terror.moe/)
 - **VRSuya SoundPad**: [https://booth.pm/zh-cn/items/5950846](https://booth.pm/zh-cn/items/5950846)
 
+## 👨‍💻 开发者资源
+
+- **开发指南**: [DEVELOPMENT.md](DEVELOPMENT.md) - 开发环境配置、代码规范、贡献指南
+
 ---
 
 <div align="center">
