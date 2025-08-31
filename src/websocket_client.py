@@ -1,35 +1,36 @@
-# ton_websocket_handler.py
-import asyncio
-import websockets
 import json
 import logging
+from typing import Optional
+
+import websockets
 from PySide6.QtCore import Signal, QObject
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class WebSocketClient(QObject):
     status_update_signal = Signal(str)
     message_received = Signal(str)
     error_signal = Signal(str)
 
-    def __init__(self, url):
+    def __init__(self, url: str) -> None:
         super().__init__()
-        self.url = url
-        self.websocket = None
+        self.url: str = url
+        self.websocket: Optional[websockets.WebSocketClientProtocol] = None
 
-    async def start_connection(self):
+    async def start_connection(self) -> None:
         """Starts the WebSocket connection and listens for messages."""
         try:
             async with websockets.connect(self.url) as ws:
                 self.websocket = ws
                 async for message in ws:
                     # Process received message
-                    await self.process_message(message)
+                    await self.process_message(str(message))
         except Exception as e:
             self.error_signal.emit(f"WebSocket connection error: {e}")
 
-    async def process_message(self, message):
+    async def process_message(self, message: str) -> None:
         """Process the received WebSocket message and parse JSON."""
         logger.info(message)
         try:
@@ -53,7 +54,7 @@ class WebSocketClient(QObject):
             self.message_received.emit(message)
             self.status_update_signal.emit("error")
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the WebSocket connection."""
         if self.websocket:
             await self.websocket.close()

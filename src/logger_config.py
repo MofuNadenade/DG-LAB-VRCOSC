@@ -1,9 +1,11 @@
 import logging
-import colorlog
-from datetime import datetime
 import os
+from datetime import datetime
 
-def setup_logging():
+import colorlog
+
+
+def setup_logging() -> None:
     # 获取当前时间，用于生成日志文件名
     log_filename = datetime.now().strftime("DG-LAB-VRCOSC_%Y-%m-%d_%H-%M-%S.log")
 
@@ -39,6 +41,7 @@ def setup_logging():
     # 获取根记录器，并添加文件和控制台处理器
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)  # 全局日志级别
+    logger.handlers.clear()
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
@@ -46,4 +49,3 @@ def setup_logging():
     logging.getLogger("websockets.server").setLevel(logging.WARNING)
     logging.getLogger("websockets.protocol").setLevel(logging.WARNING)
     logging.getLogger('qasync').setLevel(logging.WARNING)
-
