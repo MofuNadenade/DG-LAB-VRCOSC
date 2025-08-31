@@ -27,7 +27,7 @@ from gui.ui_interface import UIInterface
 logger = logging.getLogger(__name__)
 
 
-class PulseEditorTab(QWidget):
+class PulseTab(QWidget):
     """波形编辑器主标签页"""
 
     pulse_saved = Signal(str)  # 波形保存信号

@@ -13,7 +13,7 @@ from gui.ui_interface import UIInterface
 logger = logging.getLogger(__name__)
 
 
-class OSCAddressTab(QWidget):
+class OSCTab(QWidget):
     """OSC地址管理面板 - 包含地址列表、绑定管理和检测类型的标签页"""
 
     def __init__(self, ui_interface: UIInterface) -> None:

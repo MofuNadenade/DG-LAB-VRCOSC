@@ -84,48 +84,48 @@ class UIController(UIInterface):
         dynamic_bone_mode_b = self.settings.get('dynamic_bone_mode_b', False)
 
         # 设置UI状态（静默方式，不触发事件）
-        self.main_window.controller_tab.fire_mode_disabled_checkbox.blockSignals(True)
-        self.main_window.controller_tab.fire_mode_disabled_checkbox.setChecked(fire_mode_disabled)
-        self.main_window.controller_tab.fire_mode_disabled_checkbox.blockSignals(False)
+        self.main_window.settings_tab.fire_mode_disabled_checkbox.blockSignals(True)
+        self.main_window.settings_tab.fire_mode_disabled_checkbox.setChecked(fire_mode_disabled)
+        self.main_window.settings_tab.fire_mode_disabled_checkbox.blockSignals(False)
 
-        self.main_window.controller_tab.enable_panel_control_checkbox.blockSignals(True)
-        self.main_window.controller_tab.enable_panel_control_checkbox.setChecked(enable_panel_control)
-        self.main_window.controller_tab.enable_panel_control_checkbox.blockSignals(False)
+        self.main_window.settings_tab.enable_panel_control_checkbox.blockSignals(True)
+        self.main_window.settings_tab.enable_panel_control_checkbox.setChecked(enable_panel_control)
+        self.main_window.settings_tab.enable_panel_control_checkbox.blockSignals(False)
 
-        self.main_window.controller_tab.dynamic_bone_mode_a_checkbox.blockSignals(True)
-        self.main_window.controller_tab.dynamic_bone_mode_a_checkbox.setChecked(dynamic_bone_mode_a)
-        self.main_window.controller_tab.dynamic_bone_mode_a_checkbox.blockSignals(False)
+        self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.blockSignals(True)
+        self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.setChecked(dynamic_bone_mode_a)
+        self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.blockSignals(False)
 
-        self.main_window.controller_tab.dynamic_bone_mode_b_checkbox.blockSignals(True)
-        self.main_window.controller_tab.dynamic_bone_mode_b_checkbox.setChecked(dynamic_bone_mode_b)
-        self.main_window.controller_tab.dynamic_bone_mode_b_checkbox.blockSignals(False)
+        self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.blockSignals(True)
+        self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.setChecked(dynamic_bone_mode_b)
+        self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.blockSignals(False)
 
         # 波形选择
         current_pulse_a = self.settings.get('current_pulse_a', '无波形')
         current_pulse_b = self.settings.get('current_pulse_b', '无波形')
 
-        a_index = self.main_window.controller_tab.current_pulse_a_combobox.findText(current_pulse_a)
-        b_index = self.main_window.controller_tab.current_pulse_b_combobox.findText(current_pulse_b)
+        a_index = self.main_window.settings_tab.current_pulse_a_combobox.findText(current_pulse_a)
+        b_index = self.main_window.settings_tab.current_pulse_b_combobox.findText(current_pulse_b)
 
         # 处理找不到的情况
         if a_index < 0:
             logger.warning(f"波形模式A '{current_pulse_a}' 未找到，使用默认值")
-            a_index = 0 if self.main_window.controller_tab.current_pulse_a_combobox.count() > 0 else -1
+            a_index = 0 if self.main_window.settings_tab.current_pulse_a_combobox.count() > 0 else -1
 
         if b_index < 0:
             logger.warning(f"波形模式B '{current_pulse_b}' 未找到，使用默认值")
-            b_index = 0 if self.main_window.controller_tab.current_pulse_b_combobox.count() > 0 else -1
+            b_index = 0 if self.main_window.settings_tab.current_pulse_b_combobox.count() > 0 else -1
 
         # 安全设置索引
         if a_index >= 0:
-            self.main_window.controller_tab.current_pulse_a_combobox.blockSignals(True)
-            self.main_window.controller_tab.current_pulse_a_combobox.setCurrentIndex(a_index)
-            self.main_window.controller_tab.current_pulse_a_combobox.blockSignals(False)
+            self.main_window.settings_tab.current_pulse_a_combobox.blockSignals(True)
+            self.main_window.settings_tab.current_pulse_a_combobox.setCurrentIndex(a_index)
+            self.main_window.settings_tab.current_pulse_a_combobox.blockSignals(False)
 
         if b_index >= 0:
-            self.main_window.controller_tab.current_pulse_b_combobox.blockSignals(True)
-            self.main_window.controller_tab.current_pulse_b_combobox.setCurrentIndex(b_index)
-            self.main_window.controller_tab.current_pulse_b_combobox.blockSignals(False)
+            self.main_window.settings_tab.current_pulse_b_combobox.blockSignals(True)
+            self.main_window.settings_tab.current_pulse_b_combobox.setCurrentIndex(b_index)
+            self.main_window.settings_tab.current_pulse_b_combobox.blockSignals(False)
 
         # 同步控制器状态
         if self.service_controller is not None:
@@ -137,7 +137,7 @@ class UIController(UIInterface):
             # 同步波形设置并更新设备
             pulse_registry = self.registries.pulse_registry
             if a_index >= 0:
-                pulse_index_a = self.main_window.controller_tab.current_pulse_a_combobox.itemData(a_index)
+                pulse_index_a = self.main_window.settings_tab.current_pulse_a_combobox.itemData(a_index)
                 if pulse_index_a is not None:
                     if pulse_index_a == -1:
                         self.service_controller.osc_action_service.set_current_pulse(Channel.A, None)
@@ -146,7 +146,7 @@ class UIController(UIInterface):
                         if pulse_a is not None:
                             self.service_controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
             if b_index >= 0:
-                pulse_index_b = self.main_window.controller_tab.current_pulse_a_combobox.itemData(a_index)
+                pulse_index_b = self.main_window.settings_tab.current_pulse_a_combobox.itemData(a_index)
                 if pulse_index_b is not None:
                     if pulse_index_b == -1:
                         self.service_controller.osc_action_service.set_current_pulse(Channel.B, None)
@@ -169,7 +169,7 @@ class UIController(UIInterface):
 
         if service_controller is not None:
             # 绑定控制器设置
-            self.main_window.controller_tab.bind_controller_settings()
+            self.main_window.settings_tab.bind_settings()
 
             # 注册基础OSC动作（通道控制、面板控制、强度控制、ChatBox控制等）
             self._register_basic_actions()
@@ -191,7 +191,7 @@ class UIController(UIInterface):
 
     def set_controller_available(self, available: bool) -> None:
         """设置控制器可用状态"""
-        self.main_window.controller_tab.controller_group.setEnabled(available)
+        self.main_window.settings_tab.controller_group.setEnabled(available)
 
     # === OSC注册和绑定管理方法 ===
 
@@ -346,7 +346,7 @@ class UIController(UIInterface):
                 OSCActionType.PULSE_CONTROL, {"pulse"})
 
         # 更新波形下拉框
-        self.main_window.controller_tab.update_pulse_comboboxes()
+        self.main_window.settings_tab.update_pulse_comboboxes()
 
     def _register_osc_bindings(self) -> None:
         """加载OSC地址绑定"""
@@ -370,7 +370,7 @@ class UIController(UIInterface):
                 if address is not None and action is not None:
                     self.registries.binding_registry.register_binding(address, action)
 
-        self.main_window.osc_address_tab.refresh_binding_table()
+        self.main_window.osc_tab.refresh_binding_table()
 
         logger.info(f"Loaded {len(self.registries.binding_registry.bindings)} OSC bindings")
 
@@ -378,22 +378,22 @@ class UIController(UIInterface):
 
     def update_current_channel(self, channel: Channel) -> None:
         """更新当前选择通道显示"""
-        self.main_window.controller_tab.update_current_channel(channel)
+        self.main_window.settings_tab.update_current_channel(channel)
 
     def update_qrcode(self, qrcode_pixmap: QPixmap) -> None:
         """更新二维码并调整QLabel的大小"""
-        self.main_window.network_tab.update_qrcode(qrcode_pixmap)
+        self.main_window.connection_tab.update_qrcode(qrcode_pixmap)
 
     def update_status(self, strength_data: StrengthData) -> None:
         """更新通道强度和波形"""
-        self.main_window.controller_tab.update_status(strength_data)
+        self.main_window.settings_tab.update_status(strength_data)
 
     # === 连接状态管理方法 ===
 
     def set_connection_state(self, state: ConnectionState, message: str = "") -> None:
         """统一管理连接状态"""
         self._current_connection_state = state
-        self.main_window.network_tab.update_connection_state(state, message)
+        self.main_window.connection_tab.update_connection_state(state, message)
 
     def get_connection_state(self) -> ConnectionState:
         """获取当前连接状态"""
@@ -403,8 +403,8 @@ class UIController(UIInterface):
 
     def set_current_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """统一管理当前波形设置"""
-        combo = (self.main_window.controller_tab.current_pulse_a_combobox if channel == Channel.A
-                else self.main_window.controller_tab.current_pulse_b_combobox)
+        combo = (self.main_window.settings_tab.current_pulse_a_combobox if channel == Channel.A
+                else self.main_window.settings_tab.current_pulse_b_combobox)
 
         combo.blockSignals(True)
 
@@ -428,19 +428,19 @@ class UIController(UIInterface):
     def get_current_pulse(self, channel: Channel) -> str:
         """获取当前波形选择"""
         if channel == Channel.A:
-            return self.main_window.controller_tab.current_pulse_a_combobox.currentText()
+            return self.main_window.settings_tab.current_pulse_a_combobox.currentText()
         else:
-            return self.main_window.controller_tab.current_pulse_b_combobox.currentText()
+            return self.main_window.settings_tab.current_pulse_b_combobox.currentText()
 
     # === 功能开关管理方法 ===
 
     def set_feature_state(self, feature: UIFeature, enabled: bool) -> None:
         """统一管理功能开关"""
         feature_mapping = {
-            UIFeature.PANEL_CONTROL: self.main_window.controller_tab.enable_panel_control_checkbox,
-            UIFeature.CHATBOX_STATUS: self.main_window.controller_tab.enable_chatbox_status_checkbox,
-            UIFeature.DYNAMIC_BONE_A: self.main_window.controller_tab.dynamic_bone_mode_a_checkbox,
-            UIFeature.DYNAMIC_BONE_B: self.main_window.controller_tab.dynamic_bone_mode_b_checkbox,
+            UIFeature.PANEL_CONTROL: self.main_window.settings_tab.enable_panel_control_checkbox,
+            UIFeature.CHATBOX_STATUS: self.main_window.settings_tab.enable_chatbox_status_checkbox,
+            UIFeature.DYNAMIC_BONE_A: self.main_window.settings_tab.dynamic_bone_mode_a_checkbox,
+            UIFeature.DYNAMIC_BONE_B: self.main_window.settings_tab.dynamic_bone_mode_b_checkbox,
         }
 
         checkbox = feature_mapping.get(feature)
@@ -452,10 +452,10 @@ class UIController(UIInterface):
     def get_feature_state(self, feature: UIFeature) -> bool:
         """获取功能开关状态"""
         feature_mapping = {
-            UIFeature.PANEL_CONTROL: self.main_window.controller_tab.enable_panel_control_checkbox,
-            UIFeature.CHATBOX_STATUS: self.main_window.controller_tab.enable_chatbox_status_checkbox,
-            UIFeature.DYNAMIC_BONE_A: self.main_window.controller_tab.dynamic_bone_mode_a_checkbox,
-            UIFeature.DYNAMIC_BONE_B: self.main_window.controller_tab.dynamic_bone_mode_b_checkbox,
+            UIFeature.PANEL_CONTROL: self.main_window.settings_tab.enable_panel_control_checkbox,
+            UIFeature.CHATBOX_STATUS: self.main_window.settings_tab.enable_chatbox_status_checkbox,
+            UIFeature.DYNAMIC_BONE_A: self.main_window.settings_tab.dynamic_bone_mode_a_checkbox,
+            UIFeature.DYNAMIC_BONE_B: self.main_window.settings_tab.dynamic_bone_mode_b_checkbox,
         }
 
         checkbox = feature_mapping.get(feature)
@@ -465,7 +465,7 @@ class UIController(UIInterface):
 
     def set_fire_mode_strength_step(self, value: int) -> None:
         """统一管理强度步进设置"""
-        spinbox = self.main_window.controller_tab.fire_mode_strength_step_spinbox
+        spinbox = self.main_window.settings_tab.fire_mode_strength_step_spinbox
 
         spinbox.blockSignals(True)
         spinbox.setValue(value)
@@ -473,25 +473,25 @@ class UIController(UIInterface):
 
     def get_fire_mode_strength_step(self) -> int:
         """获取强度步进值"""
-        return self.main_window.controller_tab.fire_mode_strength_step_spinbox.value()
+        return self.main_window.settings_tab.fire_mode_strength_step_spinbox.value()
 
     # === 日志管理方法 ===
 
     def log_info(self, message: str) -> None:
         """记录信息日志"""
-        self.main_window.log_tab.log_text_edit.append(f"<span>INFO: {message}</span>")
+        self.main_window.debug_tab.log_text_edit.append(f"<span>INFO: {message}</span>")
 
     def log_warning(self, message: str) -> None:
         """记录警告日志"""
-        self.main_window.log_tab.log_text_edit.append(f"<b style='color:orange;'>WARNING: {message}</b>")
+        self.main_window.debug_tab.log_text_edit.append(f"<b style='color:orange;'>WARNING: {message}</b>")
 
     def log_error(self, message: str) -> None:
         """记录错误日志"""
-        self.main_window.log_tab.log_text_edit.append(f"<b style='color:red;'>ERROR: {message}</b>")
+        self.main_window.debug_tab.log_text_edit.append(f"<b style='color:red;'>ERROR: {message}</b>")
 
     def clear_logs(self) -> None:
         """清空日志"""
-        self.main_window.log_tab.log_text_edit.clear()
+        self.main_window.debug_tab.log_text_edit.clear()
 
     # === 连接状态回调方法 ===
 

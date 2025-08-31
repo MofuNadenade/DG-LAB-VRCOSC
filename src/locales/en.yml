@@ -8,12 +8,12 @@ main:
   title: "DG-Lab WebSocket Controller for VRChat"
   tabs:
     connection: "Connection"
-    controller: "Device Control"
-    game: "Game Integration"
+    settings: "Device Control"
+    ton: "Game Integration"
     debug: "Debug"
     about: "About"
-    osc_address: "OSC Addresses"
-    pulse_editor: "Pulse Editor"
+    osc: "OSC Addresses"
+    pulse: "Pulse Editor"
   settings:
     language_label: "Language:"
   action:

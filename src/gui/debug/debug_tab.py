@@ -63,7 +63,7 @@ class QTextEditHandler(logging.Handler):
             scrollbar.setValue(scrollbar.maximum())
 
 
-class LogViewerTab(QWidget):
+class DebugTab(QWidget):
     def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
@@ -88,7 +88,7 @@ class LogViewerTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[ServiceController]:
+    def service_controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.service_controller
 
@@ -161,24 +161,24 @@ class LogViewerTab(QWidget):
 
     def update_debug_info(self) -> None:
         """更新调试信息"""
-        if self.controller:
+        if self.service_controller:
             debug_text = (
                 # 连接状态
                 f"Device connection state: {self.ui_interface.get_connection_state()}\n" +
                 # 功能开关
-                f"Enable Panel Control: {self.controller.osc_action_service.enable_panel_control}\n" +
-                f"Fire Mode Disabled: {self.controller.osc_action_service.fire_mode_disabled}\n" +
-                f"Enable ChatBox Status: {self.controller.chatbox_service.is_enabled}\n" +
+                f"Enable Panel Control: {self.service_controller.osc_action_service.enable_panel_control}\n" +
+                f"Fire Mode Disabled: {self.service_controller.osc_action_service.fire_mode_disabled}\n" +
+                f"Enable ChatBox Status: {self.service_controller.chatbox_service.is_enabled}\n" +
                 # 动态骨骼模式
-                f"Dynamic Bone Mode A: {self.controller.osc_action_service.is_dynamic_bone_enabled(Channel.A)}\n" +
-                f"Dynamic Bone Mode B: {self.controller.osc_action_service.is_dynamic_bone_enabled(Channel.B)}\n" +
+                f"Dynamic Bone Mode A: {self.service_controller.osc_action_service.is_dynamic_bone_enabled(Channel.A)}\n" +
+                f"Dynamic Bone Mode B: {self.service_controller.osc_action_service.is_dynamic_bone_enabled(Channel.B)}\n" +
                 # 当前波形
-                f"Current Pulse Name A: {self.controller.osc_action_service.get_current_pulse(Channel.A)}\n" +
-                f"Current Pulse Name B: {self.controller.osc_action_service.get_current_pulse(Channel.B)}\n" +
+                f"Current Pulse Name A: {self.service_controller.osc_action_service.get_current_pulse(Channel.A)}\n" +
+                f"Current Pulse Name B: {self.service_controller.osc_action_service.get_current_pulse(Channel.B)}\n" +
                 # 强度和通道
-                f"Fire Mode Strength Step: {self.controller.osc_action_service.fire_mode_strength_step}\n" +
-                f"Current Channel: {self.controller.osc_action_service.get_current_channel()}\n" +
-                f"Last Strength: {self.controller.osc_action_service.get_last_strength()}\n"
+                f"Fire Mode Strength Step: {self.service_controller.osc_action_service.fire_mode_strength_step}\n" +
+                f"Current Channel: {self.service_controller.osc_action_service.get_current_channel()}\n" +
+                f"Last Strength: {self.service_controller.osc_action_service.get_last_strength()}\n"
             )
             self.param_label.setText(debug_text)
         else:

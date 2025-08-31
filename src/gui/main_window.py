@@ -4,12 +4,12 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow, QTabWidget
 
 from gui.about.about_tab import AboutTab
-from gui.settings.controller_settings_tab import ControllerSettingsTab
-from gui.debug.log_viewer_tab import LogViewerTab
-from gui.connection.network_config_tab import NetworkConfigTab
-from gui.osc.osc_address_tab import OSCAddressTab
-from gui.pulse.pulse_editor_tab import PulseEditorTab
-from gui.game.ton_damage_system_tab import TonDamageSystemTab
+from gui.settings.settings_tab import SettingsTab
+from gui.debug.debug_tab import DebugTab
+from gui.connection.connection_tab import ConnectionTab
+from gui.osc.osc_tab import OSCTab
+from gui.pulse.pulse_tab import PulseTab
+from gui.ton.ton_tab import TonTab
 from gui.ui_interface import UIInterface
 from i18n import translate, language_signals
 from util import resource_path
@@ -23,12 +23,12 @@ class MainWindow(QMainWindow):
 
         # GUI组件类型注解
         self.tab_widget: QTabWidget
-        self.network_tab: NetworkConfigTab
-        self.controller_tab: ControllerSettingsTab
-        self.ton_tab: TonDamageSystemTab
-        self.osc_address_tab: OSCAddressTab
-        self.pulse_editor_tab: PulseEditorTab
-        self.log_tab: LogViewerTab
+        self.connection_tab: ConnectionTab
+        self.settings_tab: SettingsTab
+        self.ton_tab: TonTab
+        self.osc_tab: OSCTab
+        self.pulse_tab: PulseTab
+        self.debug_tab: DebugTab
         self.about_tab: AboutTab
 
         self.ui_interface = ui_interface
@@ -56,28 +56,28 @@ class MainWindow(QMainWindow):
     def _init_tabs(self) -> None:
         """初始化所有选项卡"""
         # 连接设置选项卡
-        self.network_tab = NetworkConfigTab(self.ui_interface)
-        self.tab_widget.addTab(self.network_tab, translate("main.tabs.connection"))
+        self.connection_tab = ConnectionTab(self.ui_interface)
+        self.tab_widget.addTab(self.connection_tab, translate("main.tabs.connection"))
 
         # 设备控制选项卡
-        self.controller_tab = ControllerSettingsTab(self.ui_interface)
-        self.tab_widget.addTab(self.controller_tab, translate("main.tabs.controller"))
+        self.settings_tab = SettingsTab(self.ui_interface)
+        self.tab_widget.addTab(self.settings_tab, translate("main.tabs.settings"))
 
         # 游戏联动选项卡
-        self.ton_tab = TonDamageSystemTab(self.ui_interface)
-        self.tab_widget.addTab(self.ton_tab, translate("main.tabs.game"))
+        self.ton_tab = TonTab(self.ui_interface)
+        self.tab_widget.addTab(self.ton_tab, translate("main.tabs.ton"))
 
         # OSC地址管理选项卡
-        self.osc_address_tab = OSCAddressTab(self.ui_interface)
-        self.tab_widget.addTab(self.osc_address_tab, translate("main.tabs.osc_address"))
+        self.osc_tab = OSCTab(self.ui_interface)
+        self.tab_widget.addTab(self.osc_tab, translate("main.tabs.osc"))
 
         # 波形编辑器选项卡
-        self.pulse_editor_tab = PulseEditorTab(self.ui_interface)
-        self.tab_widget.addTab(self.pulse_editor_tab, translate("main.tabs.pulse_editor"))
+        self.pulse_tab = PulseTab(self.ui_interface)
+        self.tab_widget.addTab(self.pulse_tab, translate("main.tabs.pulse"))
 
         # 调试选项卡
-        self.log_tab = LogViewerTab(self.ui_interface)
-        self.tab_widget.addTab(self.log_tab, translate("main.tabs.debug"))
+        self.debug_tab = DebugTab(self.ui_interface)
+        self.tab_widget.addTab(self.debug_tab, translate("main.tabs.debug"))
 
         # 关于选项卡
         self.about_tab = AboutTab(self.ui_interface)
@@ -91,18 +91,18 @@ class MainWindow(QMainWindow):
 
         # 更新标签页标题
         self.tab_widget.setTabText(0, translate("main.tabs.connection"))
-        self.tab_widget.setTabText(1, translate("main.tabs.controller"))
-        self.tab_widget.setTabText(2, translate("main.tabs.game"))
-        self.tab_widget.setTabText(3, translate("main.tabs.osc_address"))
-        self.tab_widget.setTabText(4, translate("main.tabs.pulse_editor"))
+        self.tab_widget.setTabText(1, translate("main.tabs.settings"))
+        self.tab_widget.setTabText(2, translate("main.tabs.ton"))
+        self.tab_widget.setTabText(3, translate("main.tabs.osc"))
+        self.tab_widget.setTabText(4, translate("main.tabs.pulse"))
         self.tab_widget.setTabText(5, translate("main.tabs.debug"))
         self.tab_widget.setTabText(6, translate("main.tabs.about"))
 
         # 让各个选项卡更新自己的文本
-        self.network_tab.update_ui_texts()
-        self.controller_tab.update_ui_texts()
+        self.connection_tab.update_ui_texts()
+        self.settings_tab.update_ui_texts()
         self.ton_tab.update_ui_texts()
-        self.osc_address_tab.update_ui_texts()
-        self.pulse_editor_tab.update_ui_texts()
-        self.log_tab.update_ui_texts()
+        self.osc_tab.update_ui_texts()
+        self.pulse_tab.update_ui_texts()
+        self.debug_tab.update_ui_texts()
         self.about_tab.update_ui_texts()

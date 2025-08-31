@@ -17,7 +17,7 @@ from gui.widgets import EditableComboBox
 logger = logging.getLogger(__name__)
 
 
-class ControllerSettingsTab(QWidget):
+class SettingsTab(QWidget):
     def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
@@ -55,7 +55,7 @@ class ControllerSettingsTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[ServiceController]:
+    def service_controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.service_controller
 
@@ -148,7 +148,7 @@ class ControllerSettingsTab(QWidget):
 
         # 添加保存设置按钮
         self.save_settings_btn = QPushButton(translate("osc_address_tab.save_config"))
-        self.save_settings_btn.clicked.connect(self.save_controller_settings)
+        self.save_settings_btn.clicked.connect(self.save_settings)
         self.save_settings_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
@@ -197,9 +197,9 @@ class ControllerSettingsTab(QWidget):
         self.current_pulse_a_combobox.blockSignals(False)
         self.current_pulse_b_combobox.blockSignals(False)
 
-    def bind_controller_settings(self) -> None:
+    def bind_settings(self) -> None:
         """将GUI设置与ServiceController变量绑定"""
-        if self.controller:
+        if self.service_controller:
             # 防止重复绑定信号槽
             if self._signals_connected:
                 logger.debug("信号槽已连接，跳过重复绑定")
@@ -222,39 +222,39 @@ class ControllerSettingsTab(QWidget):
 
     def on_strength_step_changed(self, value: int) -> None:
         """当强度步长发生变化时更新控制器"""
-        if self.controller:
-            self.controller.osc_action_service.fire_mode_strength_step = value
+        if self.service_controller:
+            self.service_controller.osc_action_service.fire_mode_strength_step = value
             logger.info(f"Updated strength step to {value}")
-            self.controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/Volume", 0.01 * value)
+            self.service_controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/Volume", 0.01 * value)
 
     def on_fire_mode_disabled_changed(self, state: bool) -> None:
         """当禁用火力模式复选框状态改变时"""
-        if self.controller:
-            self.controller.osc_action_service.fire_mode_disabled = state
-            logger.info(f"Fire mode disabled: {self.controller.osc_action_service.fire_mode_disabled}")
+        if self.service_controller:
+            self.service_controller.osc_action_service.fire_mode_disabled = state
+            logger.info(f"Fire mode disabled: {self.service_controller.osc_action_service.fire_mode_disabled}")
 
     def on_panel_control_enabled_changed(self, state: bool) -> None:
         """当启用面板控制复选框状态改变时"""
-        if self.controller:
-            self.controller.osc_action_service.enable_panel_control = state
-            logger.info(f"Panel control enabled: {self.controller.osc_action_service.enable_panel_control}")
-            self.controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/PanelControl", bool(state))
+        if self.service_controller:
+            self.service_controller.osc_action_service.enable_panel_control = state
+            logger.info(f"Panel control enabled: {self.service_controller.osc_action_service.enable_panel_control}")
+            self.service_controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/PanelControl", bool(state))
 
     def on_dynamic_bone_mode_a_changed(self, state: bool) -> None:
         """当动骨模式A复选框状态改变时"""
-        if self.controller:
-            self.controller.osc_action_service.set_dynamic_bone_mode(Channel.A, state)
-            logger.info(f"Dynamic bone mode A: {self.controller.osc_action_service.is_dynamic_bone_enabled(Channel.A)}")
+        if self.service_controller:
+            self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.A, state)
+            logger.info(f"Dynamic bone mode A: {self.service_controller.osc_action_service.is_dynamic_bone_enabled(Channel.A)}")
 
     def on_dynamic_bone_mode_b_changed(self, state: bool) -> None:
         """当动骨模式B复选框状态改变时"""
-        if self.controller:
-            self.controller.osc_action_service.set_dynamic_bone_mode(Channel.B, state)
-            logger.info(f"Dynamic bone mode B: {self.controller.osc_action_service.is_dynamic_bone_enabled(Channel.B)}")
+        if self.service_controller:
+            self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.B, state)
+            logger.info(f"Dynamic bone mode B: {self.service_controller.osc_action_service.is_dynamic_bone_enabled(Channel.B)}")
 
     def on_current_pulse_a_changed(self, index: int) -> None:
         """当波形A模式发生变化时"""
-        if not self.controller:
+        if not self.service_controller:
             return
 
         # 获取UserData（pulse的真实index）
@@ -266,7 +266,7 @@ class ControllerSettingsTab(QWidget):
         # 如果是"无波形"选项（UserData为-1）
         if pulse_index == -1:
             # 设置为None表示无波形
-            asyncio.create_task(self.controller.osc_action_service.set_pulse(Channel.A, None))
+            asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.A, None))
             logger.info("A通道波形模式已更新为 无波形")
             return
 
@@ -281,12 +281,12 @@ class ControllerSettingsTab(QWidget):
             logger.warning(f"A通道未找到索引为{pulse_index}的波形")
             return
 
-        asyncio.create_task(self.controller.osc_action_service.set_pulse(Channel.A, pulse))
+        asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.A, pulse))
         logger.info(f"A通道波形模式已更新为 {pulse.name}")
 
     def on_current_pulse_b_changed(self, index: int) -> None:
         """当波形B模式发生变化时"""
-        if not self.controller:
+        if not self.service_controller:
             return
 
         # 获取UserData（pulse的真实index）
@@ -298,7 +298,7 @@ class ControllerSettingsTab(QWidget):
         # 如果是"无波形"选项（UserData为-1）
         if pulse_index == -1:
             # 设置为None表示无波形
-            asyncio.create_task(self.controller.osc_action_service.set_pulse(Channel.B, None))
+            asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.B, None))
             logger.info("B通道波形模式已更新为 无波形")
             return
 
@@ -313,16 +313,16 @@ class ControllerSettingsTab(QWidget):
             logger.warning(f"B通道未找到索引为{pulse_index}的波形")
             return
 
-        asyncio.create_task(self.controller.osc_action_service.set_pulse(Channel.B, pulse))
+        asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.B, pulse))
         logger.info(f"B通道波形模式已更新为 {pulse.name}")
 
     def on_chatbox_status_enabled_changed(self, state: bool) -> None:
         """当ChatBox状态启用复选框状态改变时"""
-        if self.controller:
-            self.controller.chatbox_service.set_enabled(state)
-            logger.info(f"ChatBox status enabled: {self.controller.chatbox_service.is_enabled}")
+        if self.service_controller:
+            self.service_controller.chatbox_service.set_enabled(state)
+            logger.info(f"ChatBox status enabled: {self.service_controller.chatbox_service.is_enabled}")
 
-    def save_controller_settings(self) -> None:
+    def save_settings(self) -> None:
         """保存设备控制器设置到配置文件"""
         try:
             # 保存ChatBox状态
@@ -356,10 +356,10 @@ class ControllerSettingsTab(QWidget):
 
     def set_a_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 A 通道强度"""
-        if self.controller:
+        if self.service_controller:
             asyncio.create_task(
-                self.controller.osc_action_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.A))
-            last_strength = self.controller.osc_action_service.get_last_strength()
+                self.service_controller.osc_action_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.A))
+            last_strength = self.service_controller.osc_action_service.get_last_strength()
             if last_strength:
                 last_strength['strength'][Channel.A] = value  # 同步更新 last_strength 的 A 通道值
 
@@ -367,10 +367,10 @@ class ControllerSettingsTab(QWidget):
 
     def set_b_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 B 通道强度"""
-        if self.controller:
+        if self.service_controller:
             asyncio.create_task(
-                self.controller.osc_action_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.B))
-            last_strength = self.controller.osc_action_service.get_last_strength()
+                self.service_controller.osc_action_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.B))
+            last_strength = self.service_controller.osc_action_service.get_last_strength()
             if last_strength:
                 last_strength['strength'][Channel.B] = value  # 同步更新 last_strength 的 B 通道值
 
@@ -401,15 +401,15 @@ class ControllerSettingsTab(QWidget):
         """更新通道强度和波形"""
         logger.info(f"通道状态已更新 - A通道强度: {strength_data['strength'][Channel.A]}, B通道强度: {strength_data['strength'][Channel.B]}")
 
-        last_strength = self.controller.osc_action_service.get_last_strength() if self.controller else None
-        if self.controller and last_strength:
+        last_strength = self.service_controller.osc_action_service.get_last_strength() if self.service_controller else None
+        if self.service_controller and last_strength:
             # 仅当允许外部更新时更新 A 通道滑动条
             if self.allow_channel_updates[Channel.A]:
                 self.a_channel_slider.blockSignals(True)
                 self.a_channel_slider.setRange(0, last_strength['strength_limit'][Channel.A])  # 根据限制更新范围
                 self.a_channel_slider.setValue(last_strength['strength'][Channel.A])
                 self.a_channel_slider.blockSignals(False)
-                pulse_a = self.controller.osc_action_service.get_current_pulse(Channel.A)
+                pulse_a = self.service_controller.osc_action_service.get_current_pulse(Channel.A)
                 pulse_a_name = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
                 self.a_channel_label.setText(
                     f"A {translate('channel.strength_display')}: {last_strength['strength'][Channel.A]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.A]}  {translate('channel.pulse')}: {pulse_a_name}")
@@ -420,7 +420,7 @@ class ControllerSettingsTab(QWidget):
                 self.b_channel_slider.setRange(0, last_strength['strength_limit'][Channel.B])  # 根据限制更新范围
                 self.b_channel_slider.setValue(last_strength['strength'][Channel.B])
                 self.b_channel_slider.blockSignals(False)
-                pulse_b = self.controller.osc_action_service.get_current_pulse(Channel.B)
+                pulse_b = self.service_controller.osc_action_service.get_current_pulse(Channel.B)
                 pulse_b_name = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
                 self.b_channel_label.setText(
                     f"B {translate('channel.strength_display')}: {last_strength['strength'][Channel.B]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.B]}  {translate('channel.pulse')}: {pulse_b_name}")

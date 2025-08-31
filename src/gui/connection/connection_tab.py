@@ -23,7 +23,7 @@ from gui.widgets import EditableComboBox
 logger = logging.getLogger(__name__)
 
 
-class NetworkConfigTab(QWidget):
+class ConnectionTab(QWidget):
     def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
@@ -31,7 +31,7 @@ class NetworkConfigTab(QWidget):
         self.server_task: Optional[asyncio.Task[None]] = None
 
         # UI组件类型注解
-        self.network_config_group: QGroupBox
+        self.conection_group: QGroupBox
         self.form_layout: QFormLayout
         self.ip_combobox: QComboBox
         self.port_spinbox: QSpinBox
@@ -65,7 +65,7 @@ class NetworkConfigTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[ServiceController]:
+    def service_controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.service_controller
 
@@ -77,7 +77,7 @@ class NetworkConfigTab(QWidget):
         network_layout = QHBoxLayout()
 
         # 创建网络配置组
-        self.network_config_group = QGroupBox(translate("connection_tab.title"))
+        self.conection_group = QGroupBox(translate("connection_tab.title"))
         self.form_layout = QFormLayout()
 
         # 网卡选择
@@ -186,8 +186,8 @@ class NetworkConfigTab(QWidget):
 
         self.form_layout.addRow(self.language_layout)
 
-        self.network_config_group.setLayout(self.form_layout)
-        network_layout.addWidget(self.network_config_group)
+        self.conection_group.setLayout(self.form_layout)
+        network_layout.addWidget(self.conection_group)
 
         # 二维码显示
         self.qrcode_label = QLabel()
@@ -357,7 +357,7 @@ class NetworkConfigTab(QWidget):
                 remote_address = remote_text if remote_text else None
 
             # 创建控制器（如果不存在）
-            if not self.controller:
+            if not self.service_controller:
                 # 初始化服务
                 dglab_device_service: IDGLabDeviceService = DGLabWebSocketService(self.ui_interface, selected_ip, selected_port, remote_address)
                 osc_service: OSCService = OSCService(self.ui_interface)
@@ -386,7 +386,7 @@ class NetworkConfigTab(QWidget):
             logger.info("WebSocket 服务器任务已取消")
 
         # 通过控制器停止服务器 - 创建异步任务但不等待
-        if self.controller:
+        if self.service_controller:
             asyncio.create_task(self._stop_services_and_cleanup())
         else:
             # 如果没有控制器，直接清理UI
@@ -414,21 +414,21 @@ class NetworkConfigTab(QWidget):
 
     async def _stop_services(self) -> None:
         """停止所有服务"""
-        if self.controller:
+        if self.service_controller:
             try:
-                await self.controller.stop_all_services()
+                await self.service_controller.stop_all_services()
             except Exception as e:
                 logger.error(f"停止服务时发生异常: {e}")
 
     async def _run_server_with_cleanup(self) -> None:
         """运行服务器并处理清理工作 - 重构版本"""
         try:
-            if not self.controller:
+            if not self.service_controller:
                 logger.error("控制器未初始化")
                 return
 
             # 使用controller统一启动所有服务
-            services_started = await self.controller.start_all_services()
+            services_started = await self.service_controller.start_all_services()
             if not services_started:
                 error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.services_start_failed"))
                 logger.error(error_msg)
@@ -438,7 +438,7 @@ class NetworkConfigTab(QWidget):
             logger.info("所有服务启动成功")
 
             # 等待服务器停止事件（完全消除轮询）
-            await self.controller.dglab_device_service.wait_for_server_stop()
+            await self.service_controller.dglab_device_service.wait_for_server_stop()
 
         except asyncio.CancelledError:
             logger.info("服务器任务被取消")
@@ -558,7 +558,7 @@ class NetworkConfigTab(QWidget):
         """更新UI上的文本为当前语言"""
         
         # 更新组标题和标签
-        self.network_config_group.setTitle(translate("connection_tab.title"))
+        self.conection_group.setTitle(translate("connection_tab.title"))
         self.language_label.setText(translate("main.settings.language_label"))
         
         # 更新表单标签

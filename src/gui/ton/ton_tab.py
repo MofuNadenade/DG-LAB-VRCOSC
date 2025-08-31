@@ -16,7 +16,7 @@ from gui.ui_interface import UIInterface
 logger = logging.getLogger(__name__)
 
 
-class TonDamageSystemTab(QWidget):
+class TonTab(QWidget):
     def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
@@ -51,7 +51,7 @@ class TonDamageSystemTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[ServiceController]:
+    def service_controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.service_controller
 
@@ -210,7 +210,7 @@ class TonDamageSystemTab(QWidget):
             new_value = max(0, current_value - reduction_strength)
             self.damage_progress_bar.setValue(new_value)
 
-            if self.controller and new_value != current_value:
+            if self.service_controller and new_value != current_value:
                 # TODO: Implement damage intensity control via dglab_service
                 # self.controller.set_damage_intensity(new_value)
                 pass
@@ -290,7 +290,7 @@ class TonDamageSystemTab(QWidget):
         logger.info("Resetting damage accumulation.")
         self.damage_progress_bar.setValue(0)
 
-        if self.controller:
+        if self.service_controller:
             # TODO: Implement damage intensity control via dglab_service
             # self.controller.set_damage_intensity(0)
             pass
@@ -305,8 +305,8 @@ class TonDamageSystemTab(QWidget):
 
         logger.warning(f"Death penalty triggered: Strength={penalty_strength}, Time={penalty_time}s")
 
-        last_strength_mod = self.controller.osc_action_service.get_last_strength() if self.controller else None
-        if self.controller and last_strength_mod:
+        last_strength_mod = self.service_controller.osc_action_service.get_last_strength() if self.service_controller else None
+        if self.service_controller and last_strength_mod:
             logger.warning(f"Death penalty triggered: a {last_strength_mod['strength'][Channel.A]} fire {penalty_strength}")
 
             # Apply death penalty for specified time
@@ -314,7 +314,7 @@ class TonDamageSystemTab(QWidget):
 
     async def _apply_death_penalty_async(self, _strength: int, duration: int) -> None:
         """Apply death penalty asynchronously for the specified duration."""
-        if self.controller:
+        if self.service_controller:
             # Apply penalty strength
             # TODO: Implement damage intensity control via dglab_service  
             # self.controller.set_damage_intensity(100)

@@ -8,12 +8,12 @@ main:
   title: "DG-Lab WebSocket Controller for VRChat"
   tabs:
     connection: "连接设置"
-    controller: "设备控制"
-    game: "游戏联动"
+    settings: "设备控制"
+    ton: "游戏联动"
     debug: "日志调试"
     about: "关于"
-    osc_address: "OSC地址"
-    pulse_editor: "波形编辑器"
+    osc: "OSC地址"
+    pulse: "波形编辑器"
   settings:
     language_label: "语言:"
   action:
