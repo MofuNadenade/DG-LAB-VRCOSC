@@ -33,6 +33,12 @@ class NewPulseDialog(QDialog):
         super().__init__(parent)
         self.pulse_name = ""
         self.template_data: List[PulseOperation] = []
+        
+        # UI组件类型注解
+        self.name_edit: QLineEdit
+        self.template_combo: QComboBox
+        self.steps_spinbox: QSpinBox
+        self.description_edit: QTextEdit
 
         self.setWindowTitle(translate("pulse_dialogs.new_pulse.title"))
         self.setModal(True)
@@ -177,6 +183,11 @@ class ImportPulseDialog(QDialog):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.imported_pulses: List[PulseDict] = []
+        
+        # UI组件类型注解
+        self.file_path_edit: QLineEdit
+        self.pulse_list: QListWidget
+        self.preview_text: QTextEdit
 
         self.setWindowTitle(translate("pulse_dialogs.import_pulse.title"))
         self.setModal(True)
@@ -517,6 +528,10 @@ class ExportPulseDialog(QDialog):
     def __init__(self, pulses: List[Pulse], parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.pulses = pulses
+        
+        # UI组件类型注解
+        self.pulse_list: QListWidget
+        self.file_path_edit: QLineEdit
 
         self.setWindowTitle(translate("pulse_dialogs.export_pulse.title"))
         self.setModal(True)
@@ -716,6 +731,9 @@ class PulseInfoDialog(QDialog):
     def __init__(self, pulse: Pulse, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.pulse = pulse
+        
+        # UI组件类型注解
+        self.data_text: QTextEdit
 
         self.setWindowTitle(f"{translate('pulse_dialogs.pulse_info.title')} - {pulse.name}")
         self.setModal(True)

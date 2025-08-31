@@ -41,6 +41,9 @@ class TonDamageSystemTab(QWidget):
         self.death_penalty_strength_label: QLabel
         self.death_penalty_strength_slider: QSlider
         self.death_penalty_time_spinbox: QSpinBox
+        self.accumulated_damage_label: QLabel
+        self.death_penalty_time_label: QLabel
+        self.damage_controls: List[QWidget]
 
         self.init_ui()
 
@@ -142,7 +145,7 @@ class TonDamageSystemTab(QWidget):
         self.setLayout(layout)
 
         # 创建需要控制启用/禁用状态的组件列表（不包括复选框和标签）
-        self.damage_controls: List[QWidget] = [
+        self.damage_controls = [
             self.damage_progress_bar,
             self.damage_reduction_slider,
             self.damage_strength_slider,
