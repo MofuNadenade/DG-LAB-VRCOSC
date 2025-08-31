@@ -56,19 +56,19 @@ class MainWindow(QMainWindow):
     def _init_tabs(self) -> None:
         """初始化所有选项卡"""
         # 连接设置选项卡
-        self.network_tab = NetworkConfigTab(self.ui_interface, self.ui_interface.settings)
+        self.network_tab = NetworkConfigTab(self.ui_interface)
         self.tab_widget.addTab(self.network_tab, translate("main.tabs.connection"))
 
         # 设备控制选项卡
-        self.controller_tab = ControllerSettingsTab(self.ui_interface, self.ui_interface.settings)
+        self.controller_tab = ControllerSettingsTab(self.ui_interface)
         self.tab_widget.addTab(self.controller_tab, translate("main.tabs.controller"))
 
         # 游戏联动选项卡
-        self.ton_tab = TonDamageSystemTab(self.ui_interface, self.ui_interface.settings)
+        self.ton_tab = TonDamageSystemTab(self.ui_interface)
         self.tab_widget.addTab(self.ton_tab, translate("main.tabs.game"))
 
         # OSC地址管理选项卡
-        self.osc_address_tab = OSCAddressTab(self.ui_interface, self.ui_interface.registries, self.ui_interface.options_provider)
+        self.osc_address_tab = OSCAddressTab(self.ui_interface)
         self.tab_widget.addTab(self.osc_address_tab, translate("main.tabs.osc_address"))
 
         # 波形编辑器选项卡
@@ -76,11 +76,11 @@ class MainWindow(QMainWindow):
         self.tab_widget.addTab(self.pulse_editor_tab, translate("main.tabs.pulse_editor"))
 
         # 调试选项卡
-        self.log_tab = LogViewerTab(self.ui_interface, self.ui_interface.settings)
+        self.log_tab = LogViewerTab(self.ui_interface)
         self.tab_widget.addTab(self.log_tab, translate("main.tabs.debug"))
 
         # 关于选项卡
-        self.about_tab = AboutTab(self.ui_interface, self.ui_interface.settings)
+        self.about_tab = AboutTab(self.ui_interface)
         self.tab_widget.addTab(self.about_tab, translate("main.tabs.about"))
 
     # === 语言切换方法 ===

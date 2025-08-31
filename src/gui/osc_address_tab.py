@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 class OSCAddressTab(QWidget):
     """OSC地址管理面板 - 包含地址列表、绑定管理和检测类型的标签页"""
 
-    def __init__(self, ui_interface: UIInterface, registries: Registries, options_provider: OSCOptionsProvider) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.registries: Registries = registries
-        self.options_provider: OSCOptionsProvider = options_provider
+        self.registries: Registries = ui_interface.registries
+        self.options_provider: OSCOptionsProvider = ui_interface.options_provider
 
         # UI组件类型注解
         self.tab_widget: QTabWidget

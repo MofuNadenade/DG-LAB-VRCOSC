@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class ControllerSettingsTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: SettingsDict = settings
+        self.settings: SettingsDict = ui_interface.settings
 
         # 控制滑动条外部更新的状态标志
         self.allow_channel_updates: Dict[Channel, bool] = {Channel.A: True, Channel.B: True}

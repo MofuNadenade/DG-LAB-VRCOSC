@@ -64,10 +64,10 @@ class QTextEditHandler(logging.Handler):
 
 
 class LogViewerTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: SettingsDict = settings
+        self.settings: SettingsDict = ui_interface.settings
 
         # 调试信息定时更新
         self.debug_timer: QTimer = QTimer()

@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 class AboutTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: SettingsDict = settings
+        self.settings: SettingsDict = ui_interface.settings
 
         # UI组件类型注解
         self.version_label: QLabel

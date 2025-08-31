@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class TonDamageSystemTab(QWidget):
-    def __init__(self, ui_interface: UIInterface, settings: SettingsDict) -> None:
+    def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
-        self.settings: SettingsDict = settings
+        self.settings: SettingsDict = ui_interface.settings
         self.websocket_client: Optional[WebSocketClient] = None
 
         # 累计伤害减免定时器
