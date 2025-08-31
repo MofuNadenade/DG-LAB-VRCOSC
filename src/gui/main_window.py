@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QMainWindow, QTabWidget
 
 from config import default_load_settings, save_settings
 from core import OSCActionType, OSCOptionsProvider
-from core.dglab_controller import DGLabController
+from core.service_controller import ServiceController
 from core.dglab_pulse import Pulse
 from core.registries import Registries
 from gui.about_tab import AboutTab
@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         set_language(language)
 
         # 初始化控制器相关组件
-        self.controller: Optional[DGLabController] = None
+        self.controller: Optional[ServiceController] = None
         self.registries: Registries = Registries()
         self.options_provider: OSCOptionsProvider = OSCOptionsProvider(self.registries)
 
@@ -223,7 +223,7 @@ class MainWindow(QMainWindow):
 
     # === 控制器管理方法 ===
 
-    def set_controller(self, controller: Optional['DGLabController']) -> None:
+    def set_controller(self, controller: Optional['ServiceController']) -> None:
         """设置控制器实例（当服务器启动后调用）"""
         self.controller = controller
 

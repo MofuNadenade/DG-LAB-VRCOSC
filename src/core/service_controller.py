@@ -9,14 +9,14 @@ from typing import List, Tuple
 logger = logging.getLogger(__name__)
 
 
-class DGLabController:
+class ServiceController:
     """
-    DGLab 控制器 - 服务容器
+    服务控制器
     """
 
     def __init__(self, dglab_device_service: IDGLabDeviceService, osc_service: OSCService, osc_action_service: OSCActionService, chatbox_service: ChatboxService) -> None:
         """
-        初始化 DGLabController 实例
+        初始化 ServiceController 实例
         """
         super().__init__()
 

@@ -237,7 +237,7 @@ connection_tab:
   osc_port_in_use_detail: "OSC port {0} is already in use, please try another port or close the program using this port"
 
 controller_tab:
-  title: "DGLabController Settings"
+  title: "Device Settings"
   channel_intensity: "Channel Intensity"
   pulse: "Pulse"
   no_waveform: "No Waveform"
@@ -269,7 +269,7 @@ game_tab:
 debug_tab:
   simple_log: "Simple Log"
   debug_info: "Debug Information"
-  controller_params_label: "DGLabController Parameters:"
+  controller_params_label: "Device Parameters:"
   loading_params: "Loading controller parameters..."
   controller_not_initialized: "Controller not initialized."
 

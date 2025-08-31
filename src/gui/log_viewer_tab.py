@@ -5,7 +5,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QTextEdit, QLabel)
 
-from core.dglab_controller import DGLabController
+from core.service_controller import ServiceController
 from i18n import translate, language_signals
 from models import Channel
 from models import SettingsDict
@@ -88,7 +88,7 @@ class LogViewerTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[DGLabController]:
+    def controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.controller
 

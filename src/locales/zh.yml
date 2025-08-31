@@ -237,7 +237,7 @@ connection_tab:
   osc_port_in_use_detail: "OSC端口 {0} 已被占用，请尝试使用其他端口或关闭占用该端口的程序"
 
 controller_tab:
-  title: "DGLabController 设置"
+  title: "设备设置"
   channel_intensity: "通道强度"
   pulse: "波形"
   no_waveform: "无波形"
@@ -269,7 +269,7 @@ game_tab:
 debug_tab:
   simple_log: "简约日志"
   debug_info: "调试信息"
-  controller_params_label: "DGLabController 参数:"
+  controller_params_label: "设备参数:"
   loading_params: "正在加载控制器参数..."
   controller_not_initialized: "控制器未初始化."
 

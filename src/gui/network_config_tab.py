@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFo
                                QComboBox, QSpinBox, QLabel, QPushButton, QLineEdit, QCheckBox, QMessageBox, QSizePolicy)
 
 from config import get_active_ip_addresses, save_settings
-from core.dglab_controller import DGLabController
+from core.service_controller import ServiceController
 from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
 from models import ConnectionState, SettingsDict
 from services.chatbox_service import ChatboxService
@@ -65,7 +65,7 @@ class NetworkConfigTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[DGLabController]:
+    def controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.controller
 
@@ -364,7 +364,7 @@ class NetworkConfigTab(QWidget):
                 osc_action_service: OSCActionService = OSCActionService(dglab_device_service, self.ui_interface)
                 chatbox_service: ChatboxService = ChatboxService(self.ui_interface, osc_service, osc_action_service)
 
-                controller = DGLabController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
+                controller = ServiceController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
 
                 self.ui_interface.set_controller(controller)
 

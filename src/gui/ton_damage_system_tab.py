@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QTimer, QPoint
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
                                QCheckBox, QLabel, QProgressBar, QSlider, QSpinBox, QToolTip)
 
-from core.dglab_controller import DGLabController
+from core.service_controller import ServiceController
 from i18n import translate, language_signals
 from models import Channel, SettingsDict
 from websocket_client import WebSocketClient
@@ -48,7 +48,7 @@ class TonDamageSystemTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[DGLabController]:
+    def controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.controller
 

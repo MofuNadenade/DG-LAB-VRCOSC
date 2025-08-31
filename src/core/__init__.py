@@ -4,7 +4,7 @@ OSC核心模块
 按功能拆分的OSC系统模块集合。
 """
 
-from .dglab_controller import DGLabController
+from .service_controller import ServiceController
 # DGLab 相关
 from .dglab_pulse import Pulse, PulseRegistry
 # 动作管理
@@ -48,5 +48,5 @@ __all__ = [
     # DGLab
     'Pulse',
     'PulseRegistry',
-    'DGLabController',
+    'ServiceController',
 ]

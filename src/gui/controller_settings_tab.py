@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFo
                                QComboBox, QSpinBox, QLabel, QCheckBox, QSlider, QToolTip,
                                QPushButton, QMessageBox)
 
-from core.dglab_controller import DGLabController
+from core.service_controller import ServiceController
 from core.dglab_pulse import PulseRegistry
 from i18n import translate, language_signals
 from models import Channel, StrengthData, StrengthOperationType, SettingsDict
@@ -55,7 +55,7 @@ class ControllerSettingsTab(QWidget):
         language_signals.language_changed.connect(self.update_ui_texts)
 
     @property
-    def controller(self) -> Optional[DGLabController]:
+    def controller(self) -> Optional[ServiceController]:
         """通过UIInterface获取当前控制器"""
         return self.ui_interface.controller
 
@@ -198,7 +198,7 @@ class ControllerSettingsTab(QWidget):
         self.current_pulse_b_combobox.blockSignals(False)
 
     def bind_controller_settings(self) -> None:
-        """将GUI设置与DGLabController变量绑定"""
+        """将GUI设置与ServiceController变量绑定"""
         if self.controller:
             # 防止重复绑定信号槽
             if self._signals_connected:
@@ -216,7 +216,7 @@ class ControllerSettingsTab(QWidget):
 
             # 标记信号槽已连接
             self._signals_connected = True
-            logger.info("DGLabController 参数已绑定")
+            logger.info("ServiceController 参数已绑定")
         else:
             logger.warning("Controller is not initialized yet.")
 

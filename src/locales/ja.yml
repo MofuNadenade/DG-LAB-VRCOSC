@@ -237,7 +237,7 @@ connection_tab:
   osc_port_in_use_detail: "OSCポート {0} は既に使用中です。別のポートを試すか、このポートを使用しているプログラムを閉じてください"
 
 controller_tab:
-  title: "DGLabController設定"
+  title: "デバイス設定"
   channel_intensity: "チャンネル強度"
   pulse: "波形"
   no_waveform: "波形なし"
@@ -269,7 +269,7 @@ game_tab:
 debug_tab:
   simple_log: "シンプルログ"
   debug_info: "デバッグ情報"
-  controller_params_label: "DGLabControllerパラメータ:"
+  controller_params_label: "デバイスパラメータ:"
   loading_params: "コントローラーパラメータを読み込み中..."
   controller_not_initialized: "コントローラーが初期化されていません。"
 
