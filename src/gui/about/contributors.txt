@@ -1,0 +1,49 @@
+项目维护者: MofuNadenade
+
+主要功能:
+- 基于原项目v0.1.1版本Fork而来，实现了一些想实现的新功能
+- 重构了原项目大部分代码，实现了严格类型检查、模块化设计和解耦
+- DG-LAB 连接与控制
+- VRChat OSC 集成
+- 脉冲波形编辑器
+- OSC 地址、绑定编辑器
+- OSC 信息实时查询
+- 多语言支持（中文、英文、日文）
+
+项目地址: https://github.com/MofuNadenade/DG-LAB-VRCOSC
+
+特别感谢: ccvrc 组织 (原项目)
+- 感谢 ccvrc 组织创建并维护了原 DG-LAB-VRCOSC 项目
+- 感谢原项目为 VRChat OSC 与 DG-LAB 设备集成提供了基础
+
+感谢名单：
+- icrazt
+- 光水
+- icelly_QAQ
+- ChrisFeline (ToNSaveManager)
+- VRChat OSC 社区
+- VRSuya SoundPad
+- WastingMisaka（鱼板）
+- Wanlin
+- 所有参与测试、使用本项目及贡献问题反馈的用户
+
+使用的开源项目:
+- PySide6
+- websockets
+- qasync
+- pydglab-ws
+- qrcode
+- python-osc
+- colorlog
+- pillow
+- ruamel.yaml
+- psutil
+- pydantic
+- pydglab
+- pyright
+- requests
+- types-requests
+- watchdog
+- pyinstaller
+- reactivex
+

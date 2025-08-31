@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Dict
 
 from PySide6.QtCore import QLocale, QUrl
@@ -74,45 +75,23 @@ class AboutTab(QWidget):
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.contributors_text.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.contributors_text.setReadOnly(True)
-        # 直接拼接字符串，不使用数组
-        self.contributors_text.setText(
-            "开发组织: ccvrc\n" +
-            "\n" +
-            "贡献者:\n" +
-            "- MofuNadenade（架构重构，波形编辑器，OSC地址绑定）\n" +
-            "- icrazt\n" +
-            "- 光水\n" +
-            "- icelly_QAQ\n" +
-            "\n" +
-            "特别感谢:\n" +
-            "- ChrisFeline (ToNSaveManager)\n" +
-            "- VRChat OSC 社区\n" +
-            "- VRSuya SoundPad\n" +
-            "- WastingMisaka（鱼板）\n" +
-            "- Wanlin\n" +
-            "- 所有参与测试、使用本项目及贡献问题反馈的用户\n" +
-            "\n" +
-            "项目地址: https://github.com/ccvrc/DG-LAB-VRCOSC\n" +
-            "\n" +
-            "使用的开源项目:\n" +
-            "- PySide6 (LGPL)\n" +
-            "- websockets (BSD)\n" +
-            "- qasync (MIT)\n" +
-            "- pydglab-ws (BSD)\n" +
-            "- qrcode (LGPL)\n" +
-            "- python-osc (MIT)\n" +
-            "- colorlog (MIT)\n" +
-            "- pillow (HPND)\n" +
-            "- ruamel.yaml (MIT)\n" +
-            "- psutil (BSD)"
-        )
+        
+        # 从文件中读取贡献者信息
+        try:
+            contributors_file = os.path.join(os.path.dirname(__file__), "contributors.txt")
+            with open(contributors_file, 'r', encoding='utf-8') as f:
+                contributors_content = f.read()
+            self.contributors_text.setText(contributors_content)
+        except Exception as e:
+            logger.warning(f"无法读取贡献者信息文件: {e}")
+            self.contributors_text.setText("贡献者信息加载失败！")
 
         layout.addWidget(self.contributors_text)
         self.setLayout(layout)
 
     def open_feedback(self) -> None:
         """打开问题反馈页面"""
-        url = QUrl("https://qiz80xlgzfj.feishu.cn/share/base/form/shrcn5tv1swXYDkg8HZ99BwOWfh")
+        url = QUrl("https://qm.qq.com/q/1Mc6R9IvTq")
         QDesktopServices.openUrl(url)
         logger.info("已打开问题反馈页面")
 
