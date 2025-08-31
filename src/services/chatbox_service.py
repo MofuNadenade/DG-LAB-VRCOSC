@@ -7,11 +7,12 @@ from i18n import translate
 from models import Channel, UIFeature
 from .osc_action_service import OSCActionService
 from .osc_service import OSCService
+from .service_interface import IService
 
 logger = logging.getLogger(__name__)
 
 
-class ChatboxService:
+class ChatboxService(IService):
     def __init__(self, core_interface: CoreInterface, osc_service: OSCService, osc_action_service: OSCActionService) -> None:
         super().__init__()
         self._core_interface = core_interface

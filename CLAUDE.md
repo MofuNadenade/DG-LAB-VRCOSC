@@ -98,7 +98,7 @@ The project includes comprehensive VSCode configuration:
 
 - **Service-Oriented Architecture**: All business logic separated into specialized services (`src/services/`)
 - **Registry Pattern**: OSC parameters and actions use centralized registries for mapping
-- **Protocol/Interface Pattern**: UICallback protocol defines the contract between controller and UI
+- **Abstract Base Classes**: All interfaces use ABC with `@abstractmethod` decorators (not Protocol)
 - **Async/Await**: Heavy use of asyncio for WebSocket and network operations
 - **Event-Driven**: OSC parameter changes trigger bound actions through the registry system
 
@@ -106,33 +106,42 @@ The project includes comprehensive VSCode configuration:
 
 The application uses a service-based architecture where the controller is a pure data container:
 
-#### DGLabController (`src/dglab_controller.py`)
-- **Pure Service Container**: No methods, only property accessors and service instances
-- **Service References**: `dglab_service`, `osc_service`, `chatbox_service`
-- **Data Access**: Read-only properties like `last_strength`, `current_select_channel`
+#### ServiceController (`src/core/service_controller.py`)
+- **Service Orchestration**: Manages the lifecycle of all services in the correct order
+- **Service References**: `dglab_device_service`, `osc_service`, `osc_action_service`, `chatbox_service`
+- **Unified Management**: Single point for starting/stopping all services
 
 #### Core Services (`src/services/`)
 - **DGLabService**: All DG-LAB hardware control (strength, channels, pulses, fire mode)
 - **OSCService**: OSC message processing and VRChat communication
 - **ChatboxService**: VRChat ChatBox status display and periodic updates
+- **OSCActionService**: Business logic for all OSC actions, independent of device connection type
 
-**CRITICAL**: All controller methods have been removed. Must use services directly:
+**CRITICAL**: All services inherit from abstract base classes (ABC), not Protocol:
 
 ```python
 # Correct usage
-await controller.osc_action_service.set_fire_mode_strength_step(50)
-controller.osc_service.send_message_to_vrchat_chatbox("Hello")
-
-# Old usage (removed)
-# await controller.set_strength_step(50)  # NO LONGER EXISTS
+class MyService(IService):  # Inherits from ABC
+    @abstractmethod
+    async def start_service(self) -> bool:
+        ...  # Use ellipsis, not pass
 ```
+
+### Interface Architecture
+
+All interfaces use Abstract Base Classes (ABC) with `@abstractmethod` decorators:
+
+- **IService**: Base service interface for lifecycle management
+- **IDGLabDeviceService**: Hardware abstraction for different connection types (WebSocket, Bluetooth)
+- **CoreInterface**: Core functionality interface for logging, state management
+- **UIInterface**: UI operations interface extending CoreInterface
 
 ### OSC Parameter System
 
 The application uses a three-layer OSC binding system:
-- `OSCParameterRegistry`: Maps parameter names to OSC codes
+- `OSCAddressRegistry`: Maps parameter names to OSC codes
 - `OSCActionRegistry`: Maps action names to callback functions  
-- `OSCParameterBindings`: Binds parameters to actions for event handling
+- `OSCBindingRegistry`: Binds parameters to actions for event handling
 
 Default parameters include VRChat contact/physbone interactions and SoundPad button controls.
 
@@ -212,19 +221,19 @@ The project uses a comprehensive build system with automated version management:
 - `settings.yml`: User configuration file (auto-generated)
 - `requirements.txt`: Python dependencies
 - `DG-LAB-VRCOSC.spec`: PyInstaller configuration
-- `mypy.ini`: MyPy type checker configuration
 
 ## Development Notes
 
 ### Core Development Guidelines
-- **Service Usage**: Always use `controller.service_name.method()` - controller has NO methods
+- **Service Usage**: Always use service-based architecture - services are managed by ServiceController
+- **Interface Implementation**: Use ABC with `@abstractmethod`, never Protocol
+- **Abstract Methods**: Use `...` (ellipsis) in abstract method bodies, not `pass`
 - **Translation System**: Use `_("translation.key")` with dot-notation for nested keys
 - **Language Support**: Add translations to ALL three language files in `src/locales/`
 - **QR Code Generation**: Handled in `util.py` for device pairing
 - **Logging**: Configured in `logger_config.py` with file + UI output
 - **Chinese Parameters**: VRChat integration uses Chinese parameter names by default
 - **Async Operations**: Heavy use of asyncio - ensure proper await usage
-- **UI Callback Protocol**: MainWindow implements UICallback for controller communication
 
 ### Build System Guidelines
 - **Version Management**: Never edit `src/version.py` manually - it's auto-generated

@@ -8,13 +8,14 @@ from config import default_load_settings, save_settings
 from core import ServiceController, OSCOptionsProvider, OSCActionType, Pulse
 from core.registries import Registries
 from gui.main_window import MainWindow
+from gui.ui_interface import UIInterface
 from i18n import set_language, translate
 from models import SettingsDict, ConnectionState, UIFeature, Channel, OSCValue, OSCBindingDict, StrengthData
 
 logger = logging.getLogger(__name__)
 
 
-class UIController:
+class UIController(UIInterface):
     """UI控制器类，实现UIInterface接口"""
 
     def __init__(self) -> None:

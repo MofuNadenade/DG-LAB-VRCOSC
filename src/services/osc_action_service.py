@@ -14,11 +14,12 @@ from core.core_interface import CoreInterface
 from core.dglab_pulse import Pulse
 from models import Channel, StrengthData, StrengthOperationType, UIFeature
 from services.dglab_service_interface import IDGLabDeviceService
+from services.service_interface import IService
 
 logger = logging.getLogger(__name__)
 
 
-class OSCActionService:
+class OSCActionService(IService):
     """OSC动作服务 - 统一实现所有OSC动作的业务逻辑
     
     职责：

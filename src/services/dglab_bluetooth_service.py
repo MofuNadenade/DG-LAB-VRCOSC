@@ -13,6 +13,7 @@ from pydglab import model_v3, dglab_v3, bthandler_v3
 
 from core.dglab_pulse import Pulse
 from models import Channel, StrengthData, StrengthOperationType, PulseOperation
+from services.dglab_service_interface import IDGLabDeviceService
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class DGLabDevice(TypedDict):
     rssi: int
 
 
-class DGLabBluetoothService:
+class DGLabBluetoothService(IDGLabDeviceService):
     """DG-LAB蓝牙直连服务
     
     纯粹的蓝牙设备硬件通信实现，只负责：

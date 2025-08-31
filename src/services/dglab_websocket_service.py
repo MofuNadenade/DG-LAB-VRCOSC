@@ -16,12 +16,13 @@ from pydglab_ws import DGLabLocalClient, DGLabWSServer, PulseDataTooLong
 from core.core_interface import CoreInterface
 from core.dglab_pulse import Pulse
 from models import Channel, ConnectionState, StrengthData, PulseOperation, StrengthOperationType
+from services.dglab_service_interface import IDGLabDeviceService
 from util import generate_qrcode
 
 logger = logging.getLogger(__name__)
 
 
-class DGLabWebSocketService:
+class DGLabWebSocketService(IDGLabDeviceService):
     """DG-LAB WebSocket 设备服务实现
     
     纯粹的WebSocket连接管理和基础设备操作，实现IDGLabService接口。

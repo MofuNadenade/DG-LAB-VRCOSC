@@ -12,11 +12,12 @@ from pythonosc import dispatcher, osc_server, udp_client
 from core.core_interface import CoreInterface
 from models import ConnectionState, OSCAddressInfo, OSCValue, OSCValueType
 from i18n import translate
+from .service_interface import IService
 
 logger = logging.getLogger(__name__)
 
 
-class OSCService:
+class OSCService(IService):
     """
     OSC服务 - 完全封装的OSC功能模块
     
