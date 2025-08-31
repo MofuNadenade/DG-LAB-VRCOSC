@@ -17,8 +17,8 @@ from services.dglab_service_interface import IDGLabDeviceService
 from services.dglab_websocket_service import DGLabWebSocketService
 from services.osc_action_service import OSCActionService
 from services.osc_service import OSCService
-from .ui_interface import UIInterface
-from .widgets import EditableComboBox
+from gui.ui_interface import UIInterface
+from gui.widgets import EditableComboBox
 
 logger = logging.getLogger(__name__)
 

@@ -22,7 +22,7 @@ from models import PulseOperation, Channel, FrequencyMode
 from .pulse_detailed_editor import DetailedPulseStepDialog
 from .pulse_dialogs import NewPulseDialog, ImportPulseDialog, ExportPulseDialog, PulseInfoDialog
 from .pulse_widgets import PulsePreviewWidget, PulseStepEditor, ParameterControlPanel
-from .ui_interface import UIInterface
+from gui.ui_interface import UIInterface
 
 logger = logging.getLogger(__name__)
 

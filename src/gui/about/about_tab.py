@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushBu
 
 from i18n import translate, language_signals
 from models import SettingsDict
-from .ui_interface import UIInterface
+from gui.ui_interface import UIInterface
 
 try:
     from version import get_version, get_build_info

@@ -5,10 +5,10 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from core import OSCOptionsProvider
 from core.registries import Registries
 from i18n import translate, language_signals
-from .address.osc_address_info import OSCAddressInfoTab
-from .address.osc_address_table import OSCAddressTableTab
-from .address.osc_binding_table import OSCBindingTableTab
-from .ui_interface import UIInterface
+from gui.address.osc_address_info import OSCAddressInfoTab
+from gui.address.osc_address_table import OSCAddressTableTab
+from gui.address.osc_binding_table import OSCBindingTableTab
+from gui.ui_interface import UIInterface
 
 logger = logging.getLogger(__name__)
 

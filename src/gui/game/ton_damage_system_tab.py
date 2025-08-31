@@ -11,7 +11,7 @@ from core.service_controller import ServiceController
 from i18n import translate, language_signals
 from models import Channel, SettingsDict
 from websocket_client import WebSocketClient
-from .ui_interface import UIInterface
+from gui.ui_interface import UIInterface
 
 logger = logging.getLogger(__name__)
 

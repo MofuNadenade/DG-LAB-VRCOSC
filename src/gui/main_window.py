@@ -3,13 +3,13 @@ import logging
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow, QTabWidget
 
-from gui.about_tab import AboutTab
-from gui.controller_settings_tab import ControllerSettingsTab
-from gui.log_viewer_tab import LogViewerTab
-from gui.network_config_tab import NetworkConfigTab
-from gui.osc_address_tab import OSCAddressTab
-from gui.pulse_editor_tab import PulseEditorTab
-from gui.ton_damage_system_tab import TonDamageSystemTab
+from gui.about.about_tab import AboutTab
+from gui.settings.controller_settings_tab import ControllerSettingsTab
+from gui.debug.log_viewer_tab import LogViewerTab
+from gui.connection.network_config_tab import NetworkConfigTab
+from gui.osc.osc_address_tab import OSCAddressTab
+from gui.pulse.pulse_editor_tab import PulseEditorTab
+from gui.game.ton_damage_system_tab import TonDamageSystemTab
 from gui.ui_interface import UIInterface
 from i18n import translate, language_signals
 from util import resource_path

@@ -11,8 +11,8 @@ from core.service_controller import ServiceController
 from core.dglab_pulse import PulseRegistry
 from i18n import translate, language_signals
 from models import Channel, StrengthData, StrengthOperationType, SettingsDict
-from .ui_interface import UIInterface
-from .widgets import EditableComboBox
+from gui.ui_interface import UIInterface
+from gui.widgets import EditableComboBox
 
 logger = logging.getLogger(__name__)
 
