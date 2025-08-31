@@ -492,9 +492,7 @@ class DGLabWebSocketService:
 
     def _convert_strength_data_from_pydglab(self, pydglab_data: pydglab_ws.StrengthData) -> StrengthData:
         """将pydglab_ws的StrengthData转换为models的StrengthData"""
-        return StrengthData(
-            a=pydglab_data.a,
-            b=pydglab_data.b,
-            a_limit=pydglab_data.a_limit,
-            b_limit=pydglab_data.b_limit
-        )
+        return {
+            "strength": {Channel.A: pydglab_data.a, Channel.B: pydglab_data.b},
+            "strength_limit": {Channel.A: pydglab_data.a_limit, Channel.B: pydglab_data.b_limit}
+        }

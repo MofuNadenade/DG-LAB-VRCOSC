@@ -7,8 +7,6 @@ from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Set, Tuple, Union, Dict, List, TypedDict
 
-from pydantic import BaseModel
-
 
 class FrequencyMode(Enum):
     """
@@ -133,7 +131,7 @@ class RetCode(IntEnum):
     SERVER_INTERNAL_ERROR = 500
 
 
-class StrengthData(BaseModel):
+class StrengthData(TypedDict):
     """
     强度数据模型
     
@@ -142,10 +140,8 @@ class StrengthData(BaseModel):
     :ivar a_limit: A 通道强度上限
     :ivar b_limit: B 通道强度上限
     """
-    a: int
-    b: int
-    a_limit: int
-    b_limit: int
+    strength: Dict[Channel, int]
+    strength_limit: Dict[Channel, int]
 
 
 # OSC 相关类型

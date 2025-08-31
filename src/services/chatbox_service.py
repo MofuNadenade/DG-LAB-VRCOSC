@@ -111,14 +111,14 @@ class ChatboxService:
             interaction_type_a = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.A) else "面板"
             interaction_type_b = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.B) else "面板"
             current_channel = self._osc_action_service.get_current_channel()
-            channel_strength = f"[A]: {last_strength.a} B: {last_strength.b}" if current_channel == Channel.A else f"A: {last_strength.a} [B]: {last_strength.b}"
+            channel_strength = f"[A]: {last_strength['strength'][Channel.A]} B: {last_strength['strength'][Channel.B]}" if current_channel == Channel.A else f"A: {last_strength['strength'][Channel.A]} [B]: {last_strength['strength'][Channel.B]}"
             pulse_a = self._osc_action_service.get_current_pulse(Channel.A)
             pulse_b = self._osc_action_service.get_current_pulse(Channel.B)
             pulse_name_a = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
             pulse_name_b = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
 
             self._osc_service.send_message_to_vrchat_chatbox(
-                f"MAX A: {last_strength.a_limit} B: {last_strength.b_limit}\n" +
+                f"MAX A: {last_strength['strength_limit'][Channel.A]} B: {last_strength['strength_limit'][Channel.B]}\n" +
                 f"Mode A: {interaction_type_a} B: {interaction_type_b} \n" +
                 f"Pulse A: {pulse_name_a} B: {pulse_name_b} \n" +
                 f"Fire Step: {self._osc_action_service.fire_mode_strength_step}\n" +

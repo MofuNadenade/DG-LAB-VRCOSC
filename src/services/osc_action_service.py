@@ -118,18 +118,14 @@ class OSCActionService:
         if not self._enable_panel_control:
             return
 
-        last_strength = self._dglab_device_service.get_last_strength()
+        last_strength = self.get_last_strength()
         if value >= 0.0 and last_strength:
-            if channel == Channel.A and self._dynamic_bone_modes[Channel.A]:
-                final_output_a = math.ceil(
-                    self._map_value(value, last_strength.a_limit * 0.2, last_strength.a_limit))
-                await self._dglab_device_service.set_float_output(final_output_a, channel)
-            elif channel == Channel.B and self._dynamic_bone_modes[Channel.B]:
-                final_output_b = math.ceil(
-                    self._map_value(value, last_strength.b_limit * 0.2, last_strength.b_limit))
-                await self._dglab_device_service.set_float_output(final_output_b, channel)
+            # 简化动骨模式和非动骨模式的强度设置逻辑
+            if self._dynamic_bone_modes.get(channel):
+                limit = last_strength['strength_limit'][channel]
+                final_output = math.ceil(self._map_value(value, limit * 0.2, limit))
+                await self._dglab_device_service.set_float_output(final_output, channel)
             else:
-                # 非动骨模式，直接设置
                 await self._dglab_device_service.set_float_output(value, channel)
 
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
@@ -242,36 +238,22 @@ class OSCActionService:
                 self._fire_mode_active = True
                 logger.debug(f"开火模式开始 {last_strength}")
                 if last_strength:
-                    if channel == Channel.A:
-                        self._fire_mode_origin_strengths[Channel.A] = last_strength.a
-                        target_strength = min(
-                            self._fire_mode_origin_strengths[Channel.A] + fire_strength, 
-                            last_strength.a_limit
-                        )
-                        await self._dglab_device_service.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
-                    elif channel == Channel.B:
-                        self._fire_mode_origin_strengths[Channel.B] = last_strength.b
-                        target_strength = min(
-                            self._fire_mode_origin_strengths[Channel.B] + fire_strength, 
-                            last_strength.b_limit
-                        )
-                        await self._dglab_device_service.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
+                    self._fire_mode_origin_strengths[channel] = last_strength['strength'][channel]
+                    target_strength = min(
+                        self._fire_mode_origin_strengths[channel] + fire_strength, 
+                        last_strength['strength_limit'][channel]
+                    )
+                    await self._dglab_device_service.adjust_strength(StrengthOperationType.SET_TO, target_strength, channel)
                 self._data_updated_event.clear()
                 await self._data_updated_event.wait()
             else:
                 # 恢复原始强度
-                if channel == Channel.A:
-                    await self._dglab_device_service.adjust_strength(
-                        StrengthOperationType.SET_TO, 
-                        self._fire_mode_origin_strengths[Channel.A], 
-                        channel
-                    )
-                elif channel == Channel.B:
-                    await self._dglab_device_service.adjust_strength(
-                        StrengthOperationType.SET_TO, 
-                        self._fire_mode_origin_strengths[Channel.B], 
-                        channel
-                    )
+                # 简化：合并A/B通道处理逻辑
+                await self._dglab_device_service.adjust_strength(
+                    StrengthOperationType.SET_TO,
+                    self._fire_mode_origin_strengths[channel],
+                    channel
+                )
                 # 等待数据更新
                 self._data_updated_event.clear()
                 await self._data_updated_event.wait()

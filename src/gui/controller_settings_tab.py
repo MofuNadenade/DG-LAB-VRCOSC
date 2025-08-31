@@ -361,7 +361,7 @@ class ControllerSettingsTab(QWidget):
                 self.controller.osc_action_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.A))
             last_strength = self.controller.osc_action_service.get_last_strength()
             if last_strength:
-                last_strength.a = value  # 同步更新 last_strength 的 A 通道值
+                last_strength['strength'][Channel.A] = value  # 同步更新 last_strength 的 A 通道值
 
         self.a_channel_slider.setToolTip(f"SET A {translate('channel.strength_display')}: {value}")
 
@@ -372,7 +372,7 @@ class ControllerSettingsTab(QWidget):
                 self.controller.osc_action_service.adjust_strength(StrengthOperationType.SET_TO, value, Channel.B))
             last_strength = self.controller.osc_action_service.get_last_strength()
             if last_strength:
-                last_strength.b = value  # 同步更新 last_strength 的 B 通道值
+                last_strength['strength'][Channel.B] = value  # 同步更新 last_strength 的 B 通道值
 
         self.b_channel_slider.setToolTip(f"SET B {translate('channel.strength_display')}: {value}")
 
@@ -399,31 +399,31 @@ class ControllerSettingsTab(QWidget):
 
     def update_status(self, strength_data: StrengthData) -> None:
         """更新通道强度和波形"""
-        logger.info(f"通道状态已更新 - A通道强度: {strength_data.a}, B通道强度: {strength_data.b}")
+        logger.info(f"通道状态已更新 - A通道强度: {strength_data['strength'][Channel.A]}, B通道强度: {strength_data['strength'][Channel.B]}")
 
         last_strength = self.controller.osc_action_service.get_last_strength() if self.controller else None
         if self.controller and last_strength:
             # 仅当允许外部更新时更新 A 通道滑动条
             if self.allow_channel_updates[Channel.A]:
                 self.a_channel_slider.blockSignals(True)
-                self.a_channel_slider.setRange(0, last_strength.a_limit)  # 根据限制更新范围
-                self.a_channel_slider.setValue(last_strength.a)
+                self.a_channel_slider.setRange(0, last_strength['strength_limit'][Channel.A])  # 根据限制更新范围
+                self.a_channel_slider.setValue(last_strength['strength'][Channel.A])
                 self.a_channel_slider.blockSignals(False)
                 pulse_a = self.controller.osc_action_service.get_current_pulse(Channel.A)
                 pulse_a_name = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
                 self.a_channel_label.setText(
-                    f"A {translate('channel.strength_display')}: {last_strength.a} {translate('channel.strength_limit')}: {last_strength.a_limit}  {translate('channel.pulse')}: {pulse_a_name}")
+                    f"A {translate('channel.strength_display')}: {last_strength['strength'][Channel.A]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.A]}  {translate('channel.pulse')}: {pulse_a_name}")
 
             # 仅当允许外部更新时更新 B 通道滑动条
             if self.allow_channel_updates[Channel.B]:
                 self.b_channel_slider.blockSignals(True)
-                self.b_channel_slider.setRange(0, last_strength.b_limit)  # 根据限制更新范围
-                self.b_channel_slider.setValue(last_strength.b)
+                self.b_channel_slider.setRange(0, last_strength['strength_limit'][Channel.B])  # 根据限制更新范围
+                self.b_channel_slider.setValue(last_strength['strength'][Channel.B])
                 self.b_channel_slider.blockSignals(False)
                 pulse_b = self.controller.osc_action_service.get_current_pulse(Channel.B)
                 pulse_b_name = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
                 self.b_channel_label.setText(
-                    f"B {translate('channel.strength_display')}: {last_strength.b} {translate('channel.strength_limit')}: {last_strength.b_limit}  {translate('channel.pulse')}: {pulse_b_name}")
+                    f"B {translate('channel.strength_display')}: {last_strength['strength'][Channel.B]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.B]}  {translate('channel.pulse')}: {pulse_b_name}")
 
     def update_current_channel(self, channel: Channel) -> None:
         """更新当前选择通道显示"""

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFo
 
 from core.dglab_controller import DGLabController
 from i18n import translate, language_signals
-from models import SettingsDict
+from models import Channel, SettingsDict
 from websocket_client import WebSocketClient
 from .ui_interface import UIInterface
 
@@ -304,7 +304,7 @@ class TonDamageSystemTab(QWidget):
 
         last_strength_mod = self.controller.osc_action_service.get_last_strength() if self.controller else None
         if self.controller and last_strength_mod:
-            logger.warning(f"Death penalty triggered: a {last_strength_mod.a} fire {penalty_strength}")
+            logger.warning(f"Death penalty triggered: a {last_strength_mod['strength'][Channel.A]} fire {penalty_strength}")
 
             # Apply death penalty for specified time
             asyncio.create_task(self._apply_death_penalty_async(penalty_strength, penalty_time))

@@ -183,8 +183,8 @@ class DGLabBluetoothService:
     def update_strength_data(self, strength_data: StrengthData) -> None:
         """更新强度数据（通常由连接层调用）"""
         self._last_strength = strength_data
-        self._current_strengths[Channel.A] = strength_data.a
-        self._current_strengths[Channel.B] = strength_data.b
+        self._current_strengths[Channel.A] = strength_data['strength'][Channel.A]
+        self._current_strengths[Channel.B] = strength_data['strength'][Channel.B]
 
     # ============ 公共设备管理方法 ============
 
@@ -325,12 +325,10 @@ class DGLabBluetoothService:
             self._current_strengths[Channel.B] = strength_b
             
             # 更新强度数据
-            self._last_strength = StrengthData(
-                a=strength_a,
-                b=strength_b,
-                a_limit=self._strength_limit,
-                b_limit=self._strength_limit
-            )
+            self._last_strength = {
+                "strength": {Channel.A: strength_a, Channel.B: strength_b},
+                "strength_limit": {Channel.A: self._strength_limit, Channel.B: self._strength_limit}
+            }
             
             # 初始化波形为静止状态
             await self._dglab_instance.set_wave_sync(0, 0, 0, 0, 0, 0)
@@ -356,12 +354,10 @@ class DGLabBluetoothService:
             )
             
             # 更新强度数据
-            self._last_strength = StrengthData(
-                a=self._current_strengths[Channel.A],
-                b=self._current_strengths[Channel.B],
-                a_limit=self._strength_limit,
-                b_limit=self._strength_limit
-            )
+            self._last_strength = {
+                "strength": {Channel.A: self._current_strengths[Channel.A], Channel.B: self._current_strengths[Channel.B]},
+                "strength_limit": {Channel.A: self._strength_limit, Channel.B: self._strength_limit}
+            }
             
         except Exception as e:
             logger.error(f"设置通道强度失败: {e}")
