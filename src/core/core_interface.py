@@ -41,13 +41,6 @@ class CoreInterface(ABC):
     @abstractmethod
     def get_fire_mode_strength_step(self) -> int: ...
 
-    # 状态更新管理
-    @abstractmethod
-    def update_current_channel(self, channel: Channel) -> None: ...
-
-    @abstractmethod
-    def update_status(self, strength_data: StrengthData) -> None: ...
-
     # 配置文件管理
     @abstractmethod
     def save_settings(self) -> None: ...
@@ -65,10 +58,6 @@ class CoreInterface(ABC):
     @abstractmethod
     def clear_logs(self) -> None: ...
 
-    # 控制器管理
-    @abstractmethod
-    def set_controller_available(self, available: bool) -> None: ...
-
     # 连接状态通知回调
     @abstractmethod
     def on_client_connected(self) -> None: ...
@@ -78,3 +67,10 @@ class CoreInterface(ABC):
 
     @abstractmethod
     def on_client_reconnected(self) -> None: ...
+
+    # 状态更新回调
+    @abstractmethod
+    def on_current_channel_updated(self, channel: Channel) -> None: ...
+
+    @abstractmethod
+    def on_strength_data_updated(self, strength_data: StrengthData) -> None: ...

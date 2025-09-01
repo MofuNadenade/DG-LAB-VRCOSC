@@ -432,7 +432,7 @@ class DGLabWebSocketService(IDGLabDeviceService):
         logger.info(f"接收到数据包 - A通道: {data.a}, B通道: {data.b}")
 
         # 更新应用状态和UI
-        self._core_interface.update_status(models_strength_data)
+        self._core_interface.on_strength_data_updated(models_strength_data)
 
     async def _handle_feedback_button(self, data: pydglab_ws.FeedbackButton) -> None:
         """处理反馈按钮"""

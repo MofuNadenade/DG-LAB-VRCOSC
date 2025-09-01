@@ -401,8 +401,13 @@ class SettingsTab(QWidget):
         """
         self.allow_channel_updates[channel] = enabled
 
-    def update_status(self, strength_data: StrengthData) -> None:
-        """更新通道强度和波形"""
+    def on_current_channel_updated(self, channel: Channel) -> None:
+        """更新当前选择通道显示"""
+        channel_name = "A" if channel == Channel.A else "B"
+        self.current_channel_label.setText(f"{translate('channel.current_control')}: {channel_name}")
+
+    def on_strength_data_updated(self, strength_data: StrengthData) -> None:
+        """更新通道强度"""
         logger.info(f"通道状态已更新 - A通道强度: {strength_data['strength'][Channel.A]}, B通道强度: {strength_data['strength'][Channel.B]}")
 
         last_strength = self.service_controller.osc_action_service.get_last_strength() if self.service_controller else None
@@ -428,11 +433,6 @@ class SettingsTab(QWidget):
                 pulse_b_name = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
                 self.b_channel_label.setText(
                     f"B {translate('channel.strength_display')}: {last_strength['strength'][Channel.B]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.B]}  {translate('channel.pulse')}: {pulse_b_name}")
-
-    def update_current_channel(self, channel: Channel) -> None:
-        """更新当前选择通道显示"""
-        channel_name = "A" if channel == Channel.A else "B"
-        self.current_channel_label.setText(f"{translate('channel.current_control')}: {channel_name}")
 
     def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""

@@ -108,7 +108,7 @@ class OSCActionService(IService):
         if value >= 0:
             self._current_channel = Channel.A if value <= 1 else Channel.B
             logger.info(f"设置活动通道为: {self._current_channel}")
-            self._core_interface.update_current_channel(self._current_channel)
+            self._core_interface.on_current_channel_updated(self._current_channel)
             return self._current_channel
         return None
 

@@ -376,13 +376,13 @@ class UIController(UIInterface):
 
     # === 状态更新方法 ===
 
-    def update_current_channel(self, channel: Channel) -> None:
+    def on_current_channel_updated(self, channel: Channel) -> None:
         """更新当前选择通道显示"""
-        self.main_window.settings_tab.update_current_channel(channel)
+        self.main_window.settings_tab.on_current_channel_updated(channel)
 
-    def update_status(self, strength_data: StrengthData) -> None:
+    def on_strength_data_updated(self, strength_data: StrengthData) -> None:
         """更新通道强度和波形"""
-        self.main_window.settings_tab.update_status(strength_data)
+        self.main_window.settings_tab.on_strength_data_updated(strength_data)
 
     # === 连接状态管理方法 ===
 
