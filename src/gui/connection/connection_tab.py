@@ -44,6 +44,7 @@ class ConnectionTab(QWidget):
         self.language_layout: QHBoxLayout
         self.language_label: QLabel
         self.language_combo: QComboBox
+        self.save_settings_button: QPushButton
         self.qrcode_label: QLabel
         self.original_qrcode_pixmap: Optional[QPixmap]  # 保存原始二维码图像
 
@@ -79,49 +80,6 @@ class ConnectionTab(QWidget):
     def init_ui(self) -> None:
         """初始化连接设置选项卡UI"""
         layout = QVBoxLayout()
-
-        # 创建全局设置组
-        self.global_settings_group = QGroupBox(translate("connection_tab.global_settings"))
-        self.global_settings_layout = QFormLayout()
-
-        # OSC端口选择
-        self.osc_port_spinbox = QSpinBox()
-        # 强制使用英文区域设置，避免数字显示为繁体中文
-        self.osc_port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.osc_port_spinbox.setRange(1024, 65535)
-        self.osc_port_spinbox.setValue(self.settings.get('osc_port', 9001))
-        self.osc_port_label = QLabel(translate("connection_tab.osc_port_label"))
-        self.global_settings_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
-
-        # 语言选择
-        self.language_layout = QHBoxLayout()
-        self.language_label = QLabel(translate("main.settings.language_label"))
-
-        language_options = list(LANGUAGES.values())
-        self.language_combo = EditableComboBox(language_options)
-
-        # 设置语言数据
-        for i, (lang_code, _) in enumerate(LANGUAGES.items()):
-            self.language_combo.setItemData(i, lang_code)
-
-        # 设置当前语言
-        current_language = self.settings.get('language') or get_current_language()
-        for i in range(self.language_combo.count()):
-            if self.language_combo.itemData(i) == current_language:
-                self.language_combo.setCurrentIndex(i)
-                break
-
-        # 连接语言选择变更信号
-        self.language_combo.currentTextChanged.connect(self.on_language_changed)
-
-        self.language_layout.addWidget(self.language_label)
-        self.language_layout.addWidget(self.language_combo)
-        self.language_layout.addStretch()
-
-        self.global_settings_layout.addRow(self.language_layout)
-
-        self.global_settings_group.setLayout(self.global_settings_layout)
-        layout.addWidget(self.global_settings_group)
 
         # 创建一个水平布局，用于放置网络配置和二维码
         network_layout = QHBoxLayout()
@@ -214,6 +172,56 @@ class ConnectionTab(QWidget):
         layout.addLayout(network_layout)
         layout.addStretch()  # 添加弹性空间
 
+        # 创建全局设置组 - 放在底部
+        self.global_settings_group = QGroupBox(translate("connection_tab.global_settings"))
+        self.global_settings_layout = QFormLayout()
+
+        # OSC端口选择
+        self.osc_port_spinbox = QSpinBox()
+        # 强制使用英文区域设置，避免数字显示为繁体中文
+        self.osc_port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.osc_port_spinbox.setRange(1024, 65535)
+        self.osc_port_spinbox.setValue(self.settings.get('osc_port', 9001))
+        self.osc_port_label = QLabel(translate("connection_tab.osc_port_label"))
+        self.global_settings_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
+
+        # 语言选择
+        self.language_layout = QHBoxLayout()
+        self.language_label = QLabel(translate("main.settings.language_label"))
+
+        language_options = list(LANGUAGES.values())
+        self.language_combo = QComboBox()
+        self.language_combo.addItems(language_options)
+
+        # 设置语言数据
+        for i, (lang_code, _) in enumerate(LANGUAGES.items()):
+            self.language_combo.setItemData(i, lang_code)
+
+        # 设置当前语言
+        current_language = self.settings.get('language') or get_current_language()
+        for i in range(self.language_combo.count()):
+            if self.language_combo.itemData(i) == current_language:
+                self.language_combo.setCurrentIndex(i)
+                break
+
+        # 连接语言选择变更信号
+        self.language_combo.currentTextChanged.connect(self.on_language_changed)
+
+        self.language_layout.addWidget(self.language_label)
+        self.language_layout.addWidget(self.language_combo)
+        self.language_layout.addStretch()
+
+        self.global_settings_layout.addRow(self.language_layout)
+
+        # 添加保存设置按钮
+        self.save_settings_button = QPushButton(translate("connection_tab.save_settings"))
+        self.save_settings_button.setStyleSheet("background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;")
+        self.save_settings_button.clicked.connect(self.save_all_settings)
+        self.global_settings_layout.addRow(self.save_settings_button)
+
+        self.global_settings_group.setLayout(self.global_settings_layout)
+        layout.addWidget(self.global_settings_group)
+
         self.setLayout(layout)
 
     def load_settings(self) -> None:
@@ -245,6 +253,20 @@ class ConnectionTab(QWidget):
             enable_remote=self.enable_remote_checkbox.isChecked(),
             remote_address=self.remote_address_edit.text()
         )
+    
+    def save_all_settings(self) -> None:
+        """保存所有设置按钮点击事件"""
+        try:
+            # 委托给现有的保存方法
+            self.save_network_settings()
+            
+            # 显示保存成功提示
+            QMessageBox.information(self, translate("common.save_success"), translate("connection_tab.settings_saved_successfully"))
+            
+        except Exception as e:
+            # 显示保存失败提示
+            error_msg = translate("connection_tab.save_settings_failed").format(str(e))
+            QMessageBox.warning(self, translate("common.error"), error_msg)
 
     def update_qrcode(self, qrcode_pixmap: QPixmap) -> None:
         """更新二维码并保存原始图像"""
@@ -342,7 +364,6 @@ class ConnectionTab(QWidget):
         else:
             # 启动连接
             selected_ip = self.ip_combobox.currentText().split(": ")[-1]
-            self.save_network_settings()  # 先保存设置
             
             self.connection_manager.start_connection(
                 selected_ip=selected_ip,
@@ -379,9 +400,6 @@ class ConnectionTab(QWidget):
             # 未启用远程连接时恢复启动按钮状态 - 使用统一接口
             self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
 
-        # 保存设置
-        self.save_network_settings()
-
     def on_remote_address_changed(self, text: str) -> None:
         """处理远程地址输入变化"""
         enable_remote = self.enable_remote_checkbox.isChecked()
@@ -404,32 +422,18 @@ class ConnectionTab(QWidget):
                 self.remote_address_edit.setStyleSheet("")
                 # 启用启动按钮 - 使用统一接口
                 self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
-                # 保存设置
-                self.save_network_settings()
         else:
             # 未启用远程连接或地址为空时恢复正常状态
             self.remote_address_edit.setStyleSheet("")
             self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
 
     def on_language_changed(self) -> None:
-        """处理语言选择变更，直接生效"""
+        """处理语言选择变更，立即生效但不保存到文件"""
         selected_language: Optional[str] = self.language_combo.currentData()
         if selected_language:
-            # 设置语言
             success: bool = set_language(selected_language)
             if success:
-                # 保存语言设置 - 委托给ConnectionManager
-                self.connection_manager.save_network_settings(
-                    interface_name=self.settings.get('websocket', {}).get('interface', ''),
-                    ip=self.settings.get('websocket', {}).get('ip', ''),
-                    websocket_port=self.settings.get('websocket', {}).get('port', 5678),
-                    osc_port=self.settings.get('osc_port', 9001),
-                    language=selected_language,
-                    enable_remote=self.settings.get('websocket', {}).get('enable_remote', False),
-                    remote_address=self.settings.get('websocket', {}).get('remote_address', '')
-                )
-                logger.info(
-                    f"Language changed to {LANGUAGES.get(selected_language, selected_language)} ({selected_language})")
+                logger.info(f"Language changed to {LANGUAGES.get(selected_language, selected_language)} ({selected_language})")
 
     def _set_button_disabled(self) -> None:
         """禁用按钮状态（用于地址验证失败等情况）"""
@@ -454,6 +458,7 @@ class ConnectionTab(QWidget):
         self.enable_remote_checkbox.setText(translate("connection_tab.enable_remote"))
         self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))
         self.get_public_ip_button.setText(translate("connection_tab.get_public_ip"))
+        self.save_settings_button.setText(translate("connection_tab.save_settings"))
 
         # 更新客户端状态
         self.update_connection_state(self.ui_interface.get_connection_state())
@@ -462,7 +467,7 @@ class ConnectionTab(QWidget):
     def _on_public_ip_received(self, public_ip: str) -> None:
         """接收到公网IP"""
         self.remote_address_edit.setText(public_ip)
-        self.save_network_settings()
+        # 注意：获取公网IP后不自动保存，需用户手动点击保存按钮
     
     def _on_validation_error(self, error_message: str) -> None:
         """接收到验证错误"""
