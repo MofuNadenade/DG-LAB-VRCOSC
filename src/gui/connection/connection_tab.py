@@ -2,21 +2,16 @@ import asyncio
 import logging
 from typing import Optional
 
-import requests
 from PySide6.QtCore import Qt, QLocale, QTimer
 from PySide6.QtGui import QPixmap, QResizeEvent
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
                                QComboBox, QSpinBox, QLabel, QPushButton, QLineEdit, QCheckBox, QMessageBox, QSizePolicy)
 
-from config import get_active_ip_addresses, save_settings
+from config import get_active_ip_addresses
+from core.connection_manager import ConnectionManager
 from core.service_controller import ServiceController
 from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
 from models import ConnectionState, SettingsDict
-from services.chatbox_service import ChatboxService
-from services.dglab_service_interface import IDGLabDeviceService
-from services.dglab_websocket_service import DGLabWebSocketService
-from services.osc_action_service import OSCActionService
-from services.osc_service import OSCService
 from gui.ui_interface import UIInterface
 from gui.widgets import EditableComboBox
 
@@ -28,7 +23,9 @@ class ConnectionTab(QWidget):
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
         self.settings: SettingsDict = ui_interface.settings
-        self.server_task: Optional[asyncio.Task[None]] = None
+        
+        # 组合模式 - ConnectionManager作为字段
+        self.connection_manager = ConnectionManager(ui_interface)
 
         # UI组件类型注解
         self.global_settings_group: QGroupBox
@@ -62,14 +59,22 @@ class ConnectionTab(QWidget):
 
         self.init_ui()
         self.load_settings()
+        
+        # 连接ConnectionManager的信号
+        self._connect_manager_signals()
 
         # 连接语言变更信号
         language_signals.language_changed.connect(self.update_ui_texts)
 
+    def _connect_manager_signals(self) -> None:
+        """连接ConnectionManager的信号"""
+        self.connection_manager.public_ip_received.connect(self._on_public_ip_received)
+        self.connection_manager.validation_error.connect(self._on_validation_error)
+    
     @property
     def service_controller(self) -> Optional[ServiceController]:
-        """通过UIInterface获取当前控制器"""
-        return self.ui_interface.service_controller
+        """通过ConnectionManager获取服务控制器"""
+        return self.connection_manager.service_controller
 
     def init_ui(self) -> None:
         """初始化连接设置选项卡UI"""
@@ -224,24 +229,22 @@ class ConnectionTab(QWidget):
                     break
 
     def save_network_settings(self) -> None:
-        """Save network settings to the settings.yml file."""
+        """保存网络设置 - 委托给ConnectionManager"""
         selected_interface_ip = self.ip_combobox.currentText().split(": ")
         if len(selected_interface_ip) >= 2:
             interface_name, ip = selected_interface_ip[0], selected_interface_ip[1]
-            if 'websocket' not in self.settings:
-                self.settings['websocket'] = {}
-            self.settings['websocket']['interface'] = interface_name
-            self.settings['websocket']['ip'] = ip
-
-        if 'websocket' not in self.settings:
-            self.settings['websocket'] = {}
-        self.settings['websocket']['port'] = self.port_spinbox.value()
-        self.settings['osc_port'] = self.osc_port_spinbox.value()
-        self.settings['language'] = self.language_combo.currentData()
-        self.settings['websocket']['enable_remote'] = self.enable_remote_checkbox.isChecked()
-        self.settings['websocket']['remote_address'] = self.remote_address_edit.text()
-
-        save_settings(self.settings)
+        else:
+            interface_name, ip = "", ""
+        
+        self.connection_manager.save_network_settings(
+            interface_name=interface_name,
+            ip=ip,
+            websocket_port=self.port_spinbox.value(),
+            osc_port=self.osc_port_spinbox.value(),
+            language=self.language_combo.currentData(),
+            enable_remote=self.enable_remote_checkbox.isChecked(),
+            remote_address=self.remote_address_edit.text()
+        )
 
     def update_qrcode(self, qrcode_pixmap: QPixmap) -> None:
         """更新二维码并保存原始图像"""
@@ -332,171 +335,30 @@ class ConnectionTab(QWidget):
         self.connection_status_label.adjustSize()
 
     def start_button_clicked(self) -> None:
-        """启动/断开按钮被点击后的处理逻辑"""
-        if self.server_task is None or self.server_task.done():
-            # 启动服务器 - 使用统一接口
-            self.ui_interface.set_connection_state(ConnectionState.CONNECTING)
-
-            # 保存网络设置
-            self.save_network_settings()
-            self.start_server()
+        """启动按钮点击 - 委托给ConnectionManager"""
+        if self.connection_manager.is_connected():
+            # 停止连接
+            self.connection_manager.stop_connection()
         else:
-            # 断开服务器
-            self.stop_server()
-
-    def start_server(self) -> None:
-        """启动 WebSocket 服务器 - 通过服务层管理"""
-        # 验证远程地址（如果启用）
-        if self.enable_remote_checkbox.isChecked():
-            remote_addr_text = self.remote_address_edit.text()
-            if remote_addr_text and not self.validate_ip_address(remote_addr_text):
-                error_msg = translate("connection_tab.invalid_remote_address")
-                logger.error(error_msg)
-                QMessageBox.warning(self, translate("common.error"), error_msg)
-                return
-
-        selected_ip = self.ip_combobox.currentText().split(": ")[-1]
-        selected_port = self.port_spinbox.value()
-        osc_port = self.osc_port_spinbox.value()
-
-        logger.info(
-            f"正在启动 WebSocket 服务器，监听地址: {selected_ip}:{selected_port} 和 OSC 数据接收端口: {osc_port}")
-
-        try:
-            # 获取远程地址（如果启用）
-            remote_address: Optional[str] = None
-            if self.enable_remote_checkbox.isChecked():
-                remote_text = self.remote_address_edit.text()
-                remote_address = remote_text if remote_text else None
-
-            # 创建控制器（如果不存在）
-            if not self.service_controller:
-                # 初始化服务
-                dglab_device_service: IDGLabDeviceService = DGLabWebSocketService(self.ui_interface, selected_ip, selected_port, remote_address)
-                osc_service: OSCService = OSCService(self.ui_interface, osc_port)
-                osc_action_service: OSCActionService = OSCActionService(dglab_device_service, self.ui_interface)
-                chatbox_service: ChatboxService = ChatboxService(self.ui_interface, osc_service, osc_action_service)
-
-                controller = ServiceController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
-
-                self.ui_interface.set_service_controller(controller)
-
-            # 启动服务器任务，并保存任务引用
-            self.server_task = asyncio.create_task(self._run_server_with_cleanup())
-            logger.info("WebSocket 服务器启动任务已创建")
-
-        except Exception as e:
-            error_message = translate("connection_tab.start_server_failed").format(str(e))
-            logger.error(error_message)
-
-            # 恢复按钮状态 - 使用统一接口
-            self.ui_interface.set_connection_state(ConnectionState.FAILED, error_message)
-
-    def stop_server(self) -> None:
-        """停止 WebSocket 服务器"""
-        if self.server_task and not self.server_task.done():
-            self.server_task.cancel()
-            logger.info("WebSocket 服务器任务已取消")
-
-        # 通过控制器停止服务器 - 创建异步任务但不等待
-        if self.service_controller:
-            asyncio.create_task(self._stop_services_and_cleanup())
-        else:
-            # 如果没有控制器，直接清理UI
-            self._cleanup_ui()
-
-    async def _stop_services_and_cleanup(self) -> None:
-        """停止服务并清理UI状态"""
-        try:
-            # 等待服务实际停止
-            await self._stop_services()
-        finally:
-            # 无论成功与否，都要清理UI状态
-            self._cleanup_ui()
-
-    def _cleanup_ui(self) -> None:
-        """清理UI状态"""
-        # 重置UI状态 - 使用统一接口
-        self.ui_interface.set_connection_state(ConnectionState.DISCONNECTED)
-
-        # 清空二维码
-        self.qrcode_label.clear()
-
-        # 通过UI回调清空控制器引用
-        self.ui_interface.set_service_controller(None)
-
-    async def _stop_services(self) -> None:
-        """停止所有服务"""
-        if self.service_controller:
-            try:
-                await self.service_controller.stop_all_services()
-            except Exception as e:
-                logger.error(f"停止服务时发生异常: {e}")
-
-    async def _run_server_with_cleanup(self) -> None:
-        """运行服务器并处理清理工作 - 重构版本"""
-        try:
-            if not self.service_controller:
-                logger.error("控制器未初始化")
-                return
-
-            # 使用controller统一启动所有服务
-            services_started = await self.service_controller.start_all_services()
-            if not services_started:
-                error_msg = translate("connection_tab.start_server_failed").format(translate("connection_tab.services_start_failed"))
-                logger.error(error_msg)
-                self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
-                return
-
-            logger.info("所有服务启动成功")
-
-            # 等待服务器停止事件（完全消除轮询）
-            await self.service_controller.dglab_device_service.wait_for_server_stop()
-
-        except asyncio.CancelledError:
-            logger.info("服务器任务被取消")
-            raise
-        except Exception as e:
-            error_msg = translate("connection_tab.server_error").format(str(e))
-            logger.error(error_msg)
-            # 服务器异常后重置UI状态 - 使用统一接口
-            self.ui_interface.set_connection_state(ConnectionState.FAILED, error_msg)
-            raise
-        finally:
-            # 服务器结束后清理状态
-            self.server_task = None
+            # 启动连接
+            selected_ip = self.ip_combobox.currentText().split(": ")[-1]
+            self.save_network_settings()  # 先保存设置
+            
+            self.connection_manager.start_connection(
+                selected_ip=selected_ip,
+                websocket_port=self.port_spinbox.value(),
+                osc_port=self.osc_port_spinbox.value(),
+                enable_remote=self.enable_remote_checkbox.isChecked(),
+                remote_address=self.remote_address_edit.text() if self.enable_remote_checkbox.isChecked() else None
+            )
 
     def get_public_ip(self) -> None:
-        """获取公网IP地址"""
-        try:
-            response = requests.get('http://myip.ipip.net', timeout=5)
-            # 解析返回的文本,通常格式为: "当前 IP：xxx.xxx.xxx.xxx 来自于：xxx"
-            public_ip = response.text.split('：')[1].split(' ')[0]
-            self.remote_address_edit.setText(public_ip)
-            logger.info(f"获取到公网IP: {public_ip}")
-            # 保存设置
-            self.save_network_settings()
-        except Exception as e:
-            error_msg = translate("connection_tab.get_public_ip_failed").format(str(e))
-            logger.error(error_msg)
-            # 显示错误提示框
-            QMessageBox.warning(self, translate("common.error"), error_msg)
+        """获取公网IP - 委托给ConnectionManager"""
+        asyncio.create_task(self.connection_manager.get_public_ip())
 
     def validate_ip_address(self, ip: str) -> bool:
-        """验证IP地址格式是否正确"""
-        try:
-            parts = ip.split('.')
-            if len(parts) != 4:
-                return False
-            for part in parts:
-                if not part.isdigit():
-                    return False
-                num = int(part)
-                if num < 0 or num > 255:
-                    return False
-            return True
-        except (AttributeError, TypeError):
-            return False
+        """验证IP地址 - 委托给ConnectionManager"""
+        return self.connection_manager.validate_remote_address(ip)
 
     def on_remote_enabled_changed(self, state: int) -> None:
         """处理开启异地复选框状态变化"""
@@ -556,11 +418,16 @@ class ConnectionTab(QWidget):
             # 设置语言
             success: bool = set_language(selected_language)
             if success:
-                # 保存语言设置到配置文件
-                if 'websocket' not in self.settings:
-                    self.settings['websocket'] = {}
-                self.settings['language'] = selected_language
-                save_settings(self.settings)
+                # 保存语言设置 - 委托给ConnectionManager
+                self.connection_manager.save_network_settings(
+                    interface_name=self.settings.get('websocket', {}).get('interface', ''),
+                    ip=self.settings.get('websocket', {}).get('ip', ''),
+                    websocket_port=self.settings.get('websocket', {}).get('port', 5678),
+                    osc_port=self.settings.get('osc_port', 9001),
+                    language=selected_language,
+                    enable_remote=self.settings.get('websocket', {}).get('enable_remote', False),
+                    remote_address=self.settings.get('websocket', {}).get('remote_address', '')
+                )
                 logger.info(
                     f"Language changed to {LANGUAGES.get(selected_language, selected_language)} ({selected_language})")
 
@@ -590,4 +457,14 @@ class ConnectionTab(QWidget):
 
         # 更新客户端状态
         self.update_connection_state(self.ui_interface.get_connection_state())
+    
+    # 信号槽方法 - 处理ConnectionManager的通知
+    def _on_public_ip_received(self, public_ip: str) -> None:
+        """接收到公网IP"""
+        self.remote_address_edit.setText(public_ip)
+        self.save_network_settings()
+    
+    def _on_validation_error(self, error_message: str) -> None:
+        """接收到验证错误"""
+        QMessageBox.warning(self, translate("common.error"), error_message)
 
