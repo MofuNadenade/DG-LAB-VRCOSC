@@ -190,9 +190,8 @@ class OSCBindingDict(TypedDict):
 
 
 # 配置设置类型定义
-class SettingsDict(TypedDict, total=False):
-    """应用程序设置配置类型定义"""
-    # 网络设置
+class WebsocketSettingsDict(TypedDict, total=False):
+    """网络设置配置类型定义"""
     interface: str
     ip: str
     port: int
@@ -201,7 +200,9 @@ class SettingsDict(TypedDict, total=False):
     enable_remote: bool
     remote_address: str
 
-    # 控制器设置
+
+class ControllerSettingsDict(TypedDict, total=False):
+    """控制器设置配置类型定义"""
     enable_chatbox_status: bool
     fire_mode_strength_step: int
     fire_mode_disabled: bool
@@ -210,6 +211,15 @@ class SettingsDict(TypedDict, total=False):
     dynamic_bone_mode_b: bool
     current_pulse_a: str
     current_pulse_b: str
+
+
+class SettingsDict(TypedDict, total=False):
+    """应用程序设置配置类型定义"""
+    # 网络设置
+    websocket: WebsocketSettingsDict
+    
+    # 控制器设置
+    controller: ControllerSettingsDict
 
     # 配置数据 - 使用具体的TypedDict类型
     addresses: List[OSCAddressDict]

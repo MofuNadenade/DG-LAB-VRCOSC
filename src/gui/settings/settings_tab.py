@@ -325,21 +325,25 @@ class SettingsTab(QWidget):
     def save_settings(self) -> None:
         """保存设备控制器设置到配置文件"""
         try:
+            # 确保controller字典存在
+            if 'controller' not in self.settings:
+                self.settings['controller'] = {}
+            
             # 保存ChatBox状态
-            self.settings['enable_chatbox_status'] = self.enable_chatbox_status_checkbox.isChecked()
+            self.settings['controller']['enable_chatbox_status'] = self.enable_chatbox_status_checkbox.isChecked()
 
             # 保存强度步长
-            self.settings['fire_mode_strength_step'] = self.fire_mode_strength_step_spinbox.value()
+            self.settings['controller']['fire_mode_strength_step'] = self.fire_mode_strength_step_spinbox.value()
 
             # 保存其他可配置的设置
-            self.settings['fire_mode_disabled'] = self.fire_mode_disabled_checkbox.isChecked()
-            self.settings['enable_panel_control'] = self.enable_panel_control_checkbox.isChecked()
-            self.settings['dynamic_bone_mode_a'] = self.dynamic_bone_mode_a_checkbox.isChecked()
-            self.settings['dynamic_bone_mode_b'] = self.dynamic_bone_mode_b_checkbox.isChecked()
+            self.settings['controller']['fire_mode_disabled'] = self.fire_mode_disabled_checkbox.isChecked()
+            self.settings['controller']['enable_panel_control'] = self.enable_panel_control_checkbox.isChecked()
+            self.settings['controller']['dynamic_bone_mode_a'] = self.dynamic_bone_mode_a_checkbox.isChecked()
+            self.settings['controller']['dynamic_bone_mode_b'] = self.dynamic_bone_mode_b_checkbox.isChecked()
 
             # 保存波形选择
-            self.settings['current_pulse_a'] = self.current_pulse_a_combobox.currentText()
-            self.settings['current_pulse_b'] = self.current_pulse_b_combobox.currentText()
+            self.settings['controller']['current_pulse_a'] = self.current_pulse_a_combobox.currentText()
+            self.settings['controller']['current_pulse_b'] = self.current_pulse_b_combobox.currentText()
 
             # 调用UIInterface的保存方法
             self.ui_interface.save_settings()

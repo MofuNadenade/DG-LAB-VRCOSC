@@ -17,23 +17,27 @@ def get_default_settings() -> SettingsDict:
     """获取默认设置，包含所有默认配置"""
     return {
         # 网络设置
-        'interface': "",
-        'ip': "",
-        'port': 5678,
-        'osc_port': 9001,
-        'language': "zh",
-        'enable_remote': False,
-        'remote_address': "",
+        'websocket': {
+            'interface': "",
+            'ip': "",
+            'port': 5678,
+            'osc_port': 9001,
+            'language': "zh",
+            'enable_remote': False,
+            'remote_address': "",
+        },
 
         # 控制器设置
-        'enable_chatbox_status': False,
-        'fire_mode_strength_step': 30,
-        'fire_mode_disabled': False,
-        'enable_panel_control': True,
-        'dynamic_bone_mode_a': False,
-        'dynamic_bone_mode_b': False,
-        'current_pulse_a': "无波形",
-        'current_pulse_b': "无波形",
+        'controller': {
+            'enable_chatbox_status': False,
+            'fire_mode_strength_step': 30,
+            'fire_mode_disabled': False,
+            'enable_panel_control': True,
+            'dynamic_bone_mode_a': False,
+            'dynamic_bone_mode_b': False,
+            'current_pulse_a': "无波形",
+            'current_pulse_b': "无波形",
+        },
 
         # 默认配置数据
         'addresses': DEFAULT_ADDRESSES,

@@ -95,7 +95,7 @@ class ConnectionTab(QWidget):
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.port_spinbox.setRange(1024, 65535)
-        self.port_spinbox.setValue(self.settings.get('port', 8080))
+        self.port_spinbox.setValue(self.settings.get('websocket', {}).get('port', 8080))
         self.websocket_port_label = QLabel(translate("connection_tab.websocket_port_label"))
         self.form_layout.addRow(self.websocket_port_label, self.port_spinbox)
 
@@ -104,7 +104,7 @@ class ConnectionTab(QWidget):
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.osc_port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.osc_port_spinbox.setRange(1024, 65535)
-        self.osc_port_spinbox.setValue(self.settings.get('osc_port', 9000))
+        self.osc_port_spinbox.setValue(self.settings.get('websocket', {}).get('osc_port', 9000))
         self.osc_port_label = QLabel(translate("connection_tab.osc_port_label"))
         self.form_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
 
@@ -113,14 +113,14 @@ class ConnectionTab(QWidget):
 
         # 创建开启异地复选框
         self.enable_remote_checkbox = QCheckBox(translate("connection_tab.enable_remote"))
-        self.enable_remote_checkbox.setChecked(self.settings.get('enable_remote', False))
+        self.enable_remote_checkbox.setChecked(self.settings.get('websocket', {}).get('enable_remote', False))
         self.enable_remote_checkbox.stateChanged.connect(self.on_remote_enabled_changed)
 
         # 远程地址输入框
         self.remote_address_edit = QLineEdit()
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.remote_address_edit.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.remote_address_edit.setText(self.settings.get('remote_address', ''))
+        self.remote_address_edit.setText(self.settings.get('websocket', {}).get('remote_address', ''))
         self.remote_address_edit.setEnabled(self.enable_remote_checkbox.isChecked())
         self.remote_address_edit.textChanged.connect(self.on_remote_address_changed)
         self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))
@@ -171,7 +171,7 @@ class ConnectionTab(QWidget):
             self.language_combo.setItemData(i, lang_code)
 
         # 设置当前语言
-        current_language = self.settings.get('language') or get_current_language()
+        current_language = self.settings.get('websocket', {}).get('language') or get_current_language()
         for i in range(self.language_combo.count()):
             if self.language_combo.itemData(i) == current_language:
                 self.language_combo.setCurrentIndex(i)
@@ -209,7 +209,7 @@ class ConnectionTab(QWidget):
             interface_ip = self.ip_combobox.itemText(i).split(": ")
             if len(interface_ip) >= 2:
                 _, ip = interface_ip[0], interface_ip[1]
-                if ip == self.settings.get('ip'):
+                if ip == self.settings.get('websocket', {}).get('ip'):
                     self.ip_combobox.setCurrentIndex(i)
                     logger.info("set to previous used network interface")
                     break
@@ -219,14 +219,18 @@ class ConnectionTab(QWidget):
         selected_interface_ip = self.ip_combobox.currentText().split(": ")
         if len(selected_interface_ip) >= 2:
             interface_name, ip = selected_interface_ip[0], selected_interface_ip[1]
-            self.settings['interface'] = interface_name
-            self.settings['ip'] = ip
+            if 'websocket' not in self.settings:
+                self.settings['websocket'] = {}
+            self.settings['websocket']['interface'] = interface_name
+            self.settings['websocket']['ip'] = ip
 
-        self.settings['port'] = self.port_spinbox.value()
-        self.settings['osc_port'] = self.osc_port_spinbox.value()
-        self.settings['language'] = self.language_combo.currentData()
-        self.settings['enable_remote'] = self.enable_remote_checkbox.isChecked()
-        self.settings['remote_address'] = self.remote_address_edit.text()
+        if 'websocket' not in self.settings:
+            self.settings['websocket'] = {}
+        self.settings['websocket']['port'] = self.port_spinbox.value()
+        self.settings['websocket']['osc_port'] = self.osc_port_spinbox.value()
+        self.settings['websocket']['language'] = self.language_combo.currentData()
+        self.settings['websocket']['enable_remote'] = self.enable_remote_checkbox.isChecked()
+        self.settings['websocket']['remote_address'] = self.remote_address_edit.text()
 
         save_settings(self.settings)
 
@@ -544,7 +548,9 @@ class ConnectionTab(QWidget):
             success: bool = set_language(selected_language)
             if success:
                 # 保存语言设置到配置文件
-                self.settings['language'] = selected_language
+                if 'websocket' not in self.settings:
+                    self.settings['websocket'] = {}
+                self.settings['websocket']['language'] = selected_language
                 save_settings(self.settings)
                 logger.info(
                     f"Language changed to {LANGUAGES.get(selected_language, selected_language)} ({selected_language})")

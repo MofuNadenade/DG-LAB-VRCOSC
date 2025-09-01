@@ -29,7 +29,7 @@ class UIController(UIInterface):
         self.settings: SettingsDict = default_load_settings()
 
         # 设置语言
-        language: str = self.settings.get('language', 'zh')
+        language: str = self.settings.get('websocket', {}).get('language', 'zh')
         set_language(language)
 
         # 初始化控制器相关组件
@@ -66,22 +66,22 @@ class UIController(UIInterface):
     def _load_controller_settings(self) -> None:
         """从配置文件加载设备控制器设置"""
         # ChatBox状态
-        enable_chatbox = self.settings.get('enable_chatbox_status', False)
+        enable_chatbox = self.settings.get('controller', {}).get('enable_chatbox_status', False)
         self.set_feature_state(UIFeature.CHATBOX_STATUS, enable_chatbox)
         if self.service_controller is not None:
             self.service_controller.chatbox_service.set_enabled(enable_chatbox)
 
         # 强度步长
-        fire_mode_strength_step = self.settings.get('fire_mode_strength_step', 30)
+        fire_mode_strength_step = self.settings.get('controller', {}).get('fire_mode_strength_step', 30)
         self.set_fire_mode_strength_step(fire_mode_strength_step)
         if self.service_controller is not None:
             self.service_controller.osc_action_service.fire_mode_strength_step = fire_mode_strength_step
 
         # 其他设置
-        fire_mode_disabled = self.settings.get('fire_mode_disabled', False)
-        enable_panel_control = self.settings.get('enable_panel_control', True)
-        dynamic_bone_mode_a = self.settings.get('dynamic_bone_mode_a', False)
-        dynamic_bone_mode_b = self.settings.get('dynamic_bone_mode_b', False)
+        fire_mode_disabled = self.settings.get('controller', {}).get('fire_mode_disabled', False)
+        enable_panel_control = self.settings.get('controller', {}).get('enable_panel_control', True)
+        dynamic_bone_mode_a = self.settings.get('controller', {}).get('dynamic_bone_mode_a', False)
+        dynamic_bone_mode_b = self.settings.get('controller', {}).get('dynamic_bone_mode_b', False)
 
         # 设置UI状态（静默方式，不触发事件）
         self.main_window.settings_tab.fire_mode_disabled_checkbox.blockSignals(True)
@@ -101,8 +101,8 @@ class UIController(UIInterface):
         self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.blockSignals(False)
 
         # 波形选择
-        current_pulse_a = self.settings.get('current_pulse_a', '无波形')
-        current_pulse_b = self.settings.get('current_pulse_b', '无波形')
+        current_pulse_a = self.settings.get('controller', {}).get('current_pulse_a', '无波形')
+        current_pulse_b = self.settings.get('controller', {}).get('current_pulse_b', '无波形')
 
         a_index = self.main_window.settings_tab.current_pulse_a_combobox.findText(current_pulse_a)
         b_index = self.main_window.settings_tab.current_pulse_b_combobox.findText(current_pulse_b)
