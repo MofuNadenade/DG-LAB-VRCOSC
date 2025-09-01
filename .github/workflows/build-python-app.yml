@@ -37,7 +37,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8
         if (Test-Path requirements.txt) {
           pip install -r requirements.txt
         }
@@ -50,9 +49,9 @@ jobs:
         Get-Content src/version.py
       shell: pwsh
 
-    - name: Type check with mypy
+    - name: Type check with pyright
       run: |
-        python -m mypy src/ --ignore-missing-imports
+        python -m pyright src/
       shell: pwsh
       continue-on-error: true
 

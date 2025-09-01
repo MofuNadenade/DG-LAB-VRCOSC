@@ -56,7 +56,7 @@ Main build script with full automation.
 
 **Features:**
 - Dependency management
-- Type checking with mypy
+- Type checking with pyright
 - PyInstaller integration
 - Resource bundling
 - Build artifact management
@@ -218,7 +218,7 @@ The build system integrates with GitHub Actions for:
 ### Workflow Features
 - Fetch full git history for version generation
 - Python 3.11 support
-- mypy type checking
+- pyright type checking
 - Optimized PyInstaller builds
 - Build artifact collection
 

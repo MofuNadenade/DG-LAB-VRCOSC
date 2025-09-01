@@ -82,9 +82,9 @@ def generate_version(project_root: Path) -> bool:
 
 
 def run_type_check(project_root: Path) -> bool:
-    """Run type checking with mypy"""
+    """Run type checking with pyright"""
     print("Running type check...")
-    return run_command("python -m mypy src/ --ignore-missing-imports", shell=True, cwd=project_root)
+    return run_command("python -m pyright src/", shell=True, cwd=project_root)
 
 
 def build_application(project_root: Path) -> bool:
@@ -159,8 +159,7 @@ def clean_build_artifacts(project_root: Path) -> None:
         '__pycache__',
         '*.pyc',
         '*.pyo',
-        '*.pyd',
-        '.mypy_cache'
+        '*.pyd'
     ]
     
     for pattern in cleanup_paths:

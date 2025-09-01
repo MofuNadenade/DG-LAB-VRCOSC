@@ -48,24 +48,10 @@ python scripts/generate_version.py
 ### Code Quality
 The project uses multiple tools for code quality, integrated into the build system:
 
-**Type Checking (mypy):**
+**Type Checking (pyright):**
 ```bash
 # Run type checking on all typed modules
-python -m mypy src/ --ignore-missing-imports
-```
-
-**Linting (flake8):**
-```bash
-python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-```
-
-**Code Formatting (ruff):**
-```bash
-# Check formatting
-python -m ruff check src/
-
-# Auto-fix issues
-python -m ruff check --fix src/
+python -m pyright src/
 ```
 
 ### VSCode Integration
@@ -197,7 +183,7 @@ The project uses a comprehensive build system with automated version management:
 #### Build Configuration
 - **`DG-LAB-VRCOSC.spec`**: Optimized PyInstaller configuration with proper resource bundling
 - **Dependency Management**: Automatic pip updates and requirement installation
-- **Type Safety**: Integrated mypy type checking in build process
+- **Type Safety**: Integrated pyright type checking in build process
 - **Cross-Platform**: Windows-optimized with proper console encoding
 
 ## Key File Structure
@@ -239,7 +225,7 @@ The project uses a comprehensive build system with automated version management:
 - **Version Management**: Never edit `src/version.py` manually - it's auto-generated
 - **Development Workflow**: Use `scripts/dev_build.py --watch` for active development
 - **Production Builds**: Use `scripts/build.py` for release builds
-- **Type Safety**: All builds include mypy type checking - fix type errors before building
+- **Type Safety**: All builds include pyright type checking - fix type errors before building
 - **Dependencies**: `watchdog` is required for development file watching functionality
 - **VSCode Integration**: Use Ctrl+Shift+P → "Tasks: Run Task" for build operations
 
@@ -257,7 +243,7 @@ except ImportError:
 ```
 
 ### IDE Configuration
-- **Type Checking**: Configure your IDE to use mypy with `--ignore-missing-imports`
+- **Type Checking**: Configure your IDE to use pyright for enhanced type checking
 - **Tasks**: VSCode users can access build tasks via Command Palette
 - **Debugging**: Use "DG-LAB-VRCOSC" launch configuration for debugging with auto version generation
 
