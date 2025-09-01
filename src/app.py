@@ -10,7 +10,9 @@ from logger_config import setup_logging
 
 setup_logging()
 
-if __name__ == "__main__":
+
+def main():
+    """Main entry point for the application"""
     app = QApplication(sys.argv)
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
@@ -20,3 +22,7 @@ if __name__ == "__main__":
 
     with loop:
         loop.run_forever()
+
+
+if __name__ == "__main__":
+    main()
