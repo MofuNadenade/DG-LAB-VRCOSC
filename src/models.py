@@ -26,6 +26,12 @@ class ConnectionState(Enum):
     ERROR = "error"
 
 
+class ConnectionMode(Enum):
+    """连接模式枚举"""
+    WEBSOCKET = "websocket"
+    BLUETOOTH = "bluetooth"
+
+
 class UIFeature(Enum):
     """UI功能开关枚举"""
     PANEL_CONTROL = "panel_control"
@@ -191,12 +197,25 @@ class OSCBindingDict(TypedDict):
 
 # 配置设置类型定义
 class WebsocketSettingsDict(TypedDict, total=False):
-    """网络设置配置类型定义"""
+    """WebSocket设置配置类型定义"""
     interface: str
     ip: str
     port: int
     enable_remote: bool
     remote_address: str
+
+
+class BluetoothSettingsDict(TypedDict, total=False):
+    """蓝牙设置配置类型定义"""
+    # 蓝牙相关设置，暂时为空，后续扩展
+    pass
+
+
+class ConnectionSettingsDict(TypedDict, total=False):
+    """连接设置配置类型定义"""
+    mode: str  # ConnectionMode的值
+    websocket: WebsocketSettingsDict
+    bluetooth: BluetoothSettingsDict
 
 
 class ControllerSettingsDict(TypedDict, total=False):
@@ -217,8 +236,8 @@ class SettingsDict(TypedDict, total=False):
     osc_port: int
     language: str
     
-    # 网络设置
-    websocket: WebsocketSettingsDict
+    # 连接设置
+    connection: ConnectionSettingsDict
     
     # 控制器设置
     controller: ControllerSettingsDict

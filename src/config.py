@@ -8,7 +8,7 @@ import psutil
 from ruamel.yaml import YAML
 
 from core.defaults import DEFAULT_ADDRESSES, DEFAULT_PULSES, DEFAULT_TEMPLATES, DEFAULT_BINDINGS
-from models import SettingsDict
+from models import SettingsDict, ConnectionMode
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +20,19 @@ def get_default_settings() -> SettingsDict:
         'osc_port': 9001,
         'language': "zh",
 
-        # 网络设置
-        'websocket': {
-            'interface': "",
-            'ip': "",
-            'port': 5678,
-            'enable_remote': False,
-            'remote_address': "",
+        # 连接设置
+        'connection': {
+            'mode': ConnectionMode.WEBSOCKET.value,
+            'websocket': {
+                'interface': "",
+                'ip': "",
+                'port': 5678,
+                'enable_remote': False,
+                'remote_address': "",
+            },
+            'bluetooth': {
+                # 蓝牙设置，暂时为空
+            }
         },
 
         # 控制器设置

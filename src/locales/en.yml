@@ -213,6 +213,9 @@ pulse_dialogs:
 
 connection_tab:
   title: "Network Configuration"
+  connection_mode: "Connection Mode"
+  connection_mode_label: "Connection Type:"
+  use_bluetooth: "Use Bluetooth Connection"
   connection_settings: "Connection Settings"
   device_pairing: "Device Pairing"
   pairing_instruction: "After starting connection, use DG-Lab App to scan QR code for device pairing"
@@ -232,6 +235,8 @@ connection_tab:
   offline: "Disconnected, scan QR code after clicking connect"
   failed: "Connection failed, please retry"
   cancel: "Cancel"
+  bluetooth_settings: "Bluetooth Settings"
+  bluetooth_placeholder: "Bluetooth connection feature is under development, stay tuned..."
   save_settings: "Save Settings"
   settings_saved_successfully: "Settings saved successfully"
   save_settings_failed: "Failed to save settings: {0}"

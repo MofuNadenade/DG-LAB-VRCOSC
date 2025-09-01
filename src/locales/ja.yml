@@ -213,6 +213,9 @@ pulse_dialogs:
 
 connection_tab:
   title: "ネットワーク設定"
+  connection_mode: "接続モード"
+  connection_mode_label: "接続方式:"
+  use_bluetooth: "Bluetooth接続を使用"
   connection_settings: "接続設定"
   device_pairing: "デバイスペアリング"
   pairing_instruction: "接続開始後、DG-Lab Appで二次元コードをスキャンしてデバイスをペアリングしてください"
@@ -232,6 +235,8 @@ connection_tab:
   offline: "未接続、接続後にQRコードをスキャン"
   failed: "接続失敗、再試行してください"
   cancel: "キャンセル"
+  bluetooth_settings: "Bluetooth設定"
+  bluetooth_placeholder: "Bluetooth接続機能は開発中です。お楽しみに..."
   save_settings: "設定を保存"
   settings_saved_successfully: "設定が正常に保存されました"
   save_settings_failed: "設定の保存に失敗しました: {0}"
