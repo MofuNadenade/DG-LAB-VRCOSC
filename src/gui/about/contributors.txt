@@ -39,11 +39,12 @@
 - ruamel.yaml
 - psutil
 - pydantic
-- pydglab
 - pyright
 - requests
 - types-requests
 - watchdog
 - pyinstaller
 - reactivex
+- break
+
 

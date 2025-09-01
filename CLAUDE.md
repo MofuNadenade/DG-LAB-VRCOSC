@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DG-LAB-VRCOSC is a Python desktop application that controls DG-LAB 3.0 devices through VRChat OSC integration and Terrors of Nowhere game events. The application uses a PySide6 GUI with asyncio for handling WebSocket connections to both the DG-LAB hardware and external game integrations.
+DG-LAB-VRCOSC is a Python desktop application that controls DG-LAB 3.0 devices through VRChat OSC integration and Terrors of Nowhere game events. The application uses a PySide6 GUI with asyncio for handling both WebSocket and Bluetooth connections to DG-LAB hardware and external game integrations.
+
+### Connection Methods
+- **WebSocket**: Primary connection method via DG-LAB app's socket control
+- **Bluetooth (In Development)**: Direct Bluetooth Low Energy (BLE) connection to DG-LAB 3.0 devices
+
+### Development Branches
+- **master**: Stable release branch with WebSocket functionality
+- **dev-bluetooth**: Active development branch with Bluetooth LE implementation
 
 ## Development Commands
 
@@ -43,6 +51,21 @@ python scripts/build.py --clean
 **Version Generation Only:**
 ```bash
 python scripts/generate_version.py
+```
+
+### Testing and Development Utilities
+```bash
+# Test Bluetooth client (development/debugging)
+python src/test_bluetooth_client.py
+
+# Internationalization management
+python scripts/i18n_manager.py analyze      # Analyze localization key usage
+python scripts/i18n_manager.py check        # Check language file consistency
+python scripts/i18n_manager.py find-unused  # Find unused translation keys
+
+# Internationalization validation
+python scripts/i18n_checker.py              # Basic consistency check
+python scripts/i18n_checker.py --details    # Detailed key comparison
 ```
 
 ### Code Quality
@@ -98,7 +121,8 @@ The application uses a service-based architecture where the controller is a pure
 - **Unified Management**: Single point for starting/stopping all services
 
 #### Core Services (`src/services/`)
-- **DGLabService**: All DG-LAB hardware control (strength, channels, pulses, fire mode)
+- **DGLabWebSocketService**: WebSocket-based DG-LAB hardware control (strength, channels, pulses, fire mode)
+- **DGLabBluetoothService**: Direct Bluetooth LE communication with DG-LAB devices (in development)
 - **OSCService**: OSC message processing and VRChat communication
 - **ChatboxService**: VRChat ChatBox status display and periodic updates
 - **OSCActionService**: Business logic for all OSC actions, independent of device connection type
@@ -121,6 +145,22 @@ All interfaces use Abstract Base Classes (ABC) with `@abstractmethod` decorators
 - **IDGLabDeviceService**: Hardware abstraction for different connection types (WebSocket, Bluetooth)
 - **CoreInterface**: Core functionality interface for logging, state management
 - **UIInterface**: UI operations interface extending CoreInterface
+
+### Bluetooth Architecture (In Development)
+
+The Bluetooth subsystem (`src/core/bluetooth/`) provides direct communication with DG-LAB 3.0 devices:
+
+#### Core Components
+- **BluetoothController**: High-level interface for device management and communication
+- **BluetoothProtocol**: Handles DG-LAB V3 protocol implementation with command/response parsing
+- **BluetoothModels**: Strong-typed data models for all protocol structures and device states
+- **BluetoothUUIDs & ProtocolConstants**: Bluetooth LE service/characteristic definitions and protocol constants
+
+#### Key Features
+- **Type-Safe Protocol**: Complete Pydantic models for all DG-LAB V3 protocol messages
+- **Async BLE Communication**: Uses `bleak` library for cross-platform Bluetooth LE support
+- **Device State Management**: Real-time tracking of device connection, battery, and channel states
+- **Command Processing**: Handles B0 (control) and BF (data) commands with proper serialization
 
 ### OSC Parameter System
 
@@ -152,16 +192,19 @@ The application has full i18n support implemented in `src/i18n.py`:
 
 - **VRChat OSC**: Receives parameters via UDP for avatar interactions
 - **DG-LAB WebSocket**: Controls hardware via pydglab-ws library
+- **DG-LAB Bluetooth**: Direct BLE communication using bleak library
 - **Terrors of Nowhere**: Integrates with ToNSaveManager WebSocket API for game events (`src/ton_websocket_handler.py`)
 
 ### GUI Architecture
 
 The main window (`src/gui/main_window.py`) implements a tabbed interface:
-- **NetworkConfigTab**: Network settings and server management
-- **ControllerSettingsTab**: Device control and pulse configuration
-- **TonDamageSystemTab**: Terrors of Nowhere game integration
+- **ConnectionTab**: Device connection management (WebSocket and Bluetooth)
+- **PulseTab**: Pulse pattern creation and editing with visual waveform editor
+- **OSCTab**: OSC address and binding management
+- **SettingsTab**: Application settings and device control configuration
+- **TonTab**: Terrors of Nowhere game integration
 - **AboutTab**: Application information, version details, and feedback links
-- **LogViewerTab**: Application logging and debugging
+- **DebugTab**: Application logging and debugging
 
 Each tab is a separate component that communicates with services through the controller.
 
@@ -190,7 +233,9 @@ The project uses a comprehensive build system with automated version management:
 
 - `src/`: Main source code directory
   - `gui/`: PySide6 GUI components (main_window.py + tab modules)  
-  - `services/`: Service layer (dglab_service.py, osc_service.py, chatbox_service.py)
+  - `services/`: Service layer (dglab_websocket_service.py, dglab_bluetooth_service.py, osc_service.py, chatbox_service.py)
+  - `core/`: Core functionality including interfaces, registries, and Bluetooth protocol
+    - `bluetooth/`: Complete Bluetooth LE implementation for DG-LAB 3.0 devices
   - `locales/`: Translation files for internationalization (zh.yml, en.yml, ja.yml)
   - `version.py`: Auto-generated version information (DO NOT EDIT)
 - `scripts/`: Build and development scripts
@@ -220,6 +265,8 @@ The project uses a comprehensive build system with automated version management:
 - **Logging**: Configured in `logger_config.py` with file + UI output
 - **Chinese Parameters**: VRChat integration uses Chinese parameter names by default
 - **Async Operations**: Heavy use of asyncio - ensure proper await usage
+- **Bluetooth Development**: Use strong typing with Pydantic models for all protocol messages
+- **Device Abstraction**: All device services must implement IDGLabDeviceService interface
 
 ### Build System Guidelines
 - **Version Management**: Never edit `src/version.py` manually - it's auto-generated
