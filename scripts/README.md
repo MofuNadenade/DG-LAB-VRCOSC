@@ -195,7 +195,7 @@ BUILD_INFO = {
 - Single-file executable generation
 
 ### Included Resources
-- Application icon (`docs/images/fish-cake.ico`)
+- Application icon (`src/icon/fish-cake.ico`)
 - Translation files (`src/locales/`)
 - Version information
 - Build metadata

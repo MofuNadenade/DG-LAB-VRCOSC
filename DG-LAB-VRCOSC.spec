@@ -17,7 +17,9 @@ a = Analysis(
         (os.path.join(project_root, 'src', 'locales', 'en.yml'), 'locales'),
         (os.path.join(project_root, 'src', 'locales', 'ja.yml'), 'locales'),
         # 添加图标文件
-        (os.path.join(project_root, 'docs', 'images', 'fish-cake.ico'), 'docs/images'),
+        (os.path.join(project_root, 'src', 'icon', 'fish-cake.ico'), 'icon'),
+        # 添加贡献者信息文件
+        (os.path.join(project_root, 'src', 'gui', 'about', 'contributors.txt'), 'gui/about'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -52,5 +54,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=os.path.join(project_root, 'docs', 'images', 'fish-cake.ico'),
+    icon=os.path.join(project_root, 'src', 'icon', 'fish-cake.ico'),
 )

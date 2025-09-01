@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Dict
 
 from PySide6.QtCore import QLocale, QUrl
@@ -9,6 +8,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushBu
 from i18n import translate, language_signals
 from models import SettingsDict
 from gui.ui_interface import UIInterface
+from util import resource_path
 
 try:
     from version import get_version, get_build_info
@@ -78,7 +78,7 @@ class AboutTab(QWidget):
         
         # 从文件中读取贡献者信息
         try:
-            contributors_file = os.path.join(os.path.dirname(__file__), "contributors.txt")
+            contributors_file = resource_path("gui/about/contributors.txt")
             with open(contributors_file, 'r', encoding='utf-8') as f:
                 contributors_content = f.read()
             self.contributors_text.setText(contributors_content)

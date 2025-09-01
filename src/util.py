@@ -11,8 +11,8 @@ def resource_path(relative_path: str) -> str:
     """ 获取资源的绝对路径，确保开发和打包后都能正常使用。 """
     if hasattr(sys, '_MEIPASS'):  # PyInstaller 打包后的路径
         return os.path.join(getattr(sys, '_MEIPASS', ''), relative_path)
-    # 对于开发环境下，从 src 跳到项目根目录，再进入 docs/images
-    return os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), relative_path)
+    # 开发环境下，从 src 目录开始构建路径
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
 
 
 def generate_qrcode(data: str) -> QPixmap:

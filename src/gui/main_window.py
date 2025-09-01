@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
     def _init_ui(self) -> None:
         """初始化用户界面"""
         self.setWindowTitle(translate("main.title"))
-        self.setWindowIcon(QIcon(resource_path("docs/images/fish-cake.ico")))
+        self.setWindowIcon(QIcon(resource_path("icon/fish-cake.ico")))
         self.resize(800, 600)
 
         # 创建标签页

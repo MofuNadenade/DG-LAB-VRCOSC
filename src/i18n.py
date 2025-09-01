@@ -1,20 +1,13 @@
 import logging
 import os
-import sys
 from typing import Dict, Any, Optional
 
 from PySide6.QtCore import QObject, Signal
 from ruamel.yaml import YAML
 
+from util import resource_path
+
 logger = logging.getLogger(__name__)
-
-
-def resource_path(relative_path: str) -> str:
-    """获取资源的绝对路径，确保开发和打包后都能正常使用"""
-    if hasattr(sys, '_MEIPASS'):  # PyInstaller 打包后的路径
-        return os.path.join(sys._MEIPASS, relative_path)  # type: ignore
-    # 开发环境下的路径
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
 
 
 # 语言变更信号类
