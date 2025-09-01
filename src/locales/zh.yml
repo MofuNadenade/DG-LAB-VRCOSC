@@ -213,6 +213,7 @@ pulse_dialogs:
 
 connection_tab:
   title: "网络配置"
+  global_settings: "全局设置"
   interface_label: "网卡选择:"
   websocket_port_label: "WebSocket端口:"
   osc_port_label: "OSC端口:"

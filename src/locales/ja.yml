@@ -213,6 +213,7 @@ pulse_dialogs:
 
 connection_tab:
   title: "ネットワーク設定"
+  global_settings: "グローバル設定"
   interface_label: "ネットワークインターフェース:"
   websocket_port_label: "WebSocketポート:"
   osc_port_label: "OSCポート:"

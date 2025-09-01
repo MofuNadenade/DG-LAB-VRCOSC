@@ -195,8 +195,6 @@ class WebsocketSettingsDict(TypedDict, total=False):
     interface: str
     ip: str
     port: int
-    osc_port: int
-    language: str
     enable_remote: bool
     remote_address: str
 
@@ -215,6 +213,10 @@ class ControllerSettingsDict(TypedDict, total=False):
 
 class SettingsDict(TypedDict, total=False):
     """应用程序设置配置类型定义"""
+    # 全局设置
+    osc_port: int
+    language: str
+    
     # 网络设置
     websocket: WebsocketSettingsDict
     

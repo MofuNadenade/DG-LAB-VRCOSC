@@ -29,7 +29,7 @@ class UIController(UIInterface):
         self.settings: SettingsDict = default_load_settings()
 
         # 设置语言
-        language: str = self.settings.get('websocket', {}).get('language', 'zh')
+        language: str = self.settings.get('language', 'zh')
         set_language(language)
 
         # 初始化控制器相关组件

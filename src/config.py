@@ -16,13 +16,15 @@ logger = logging.getLogger(__name__)
 def get_default_settings() -> SettingsDict:
     """获取默认设置，包含所有默认配置"""
     return {
+        # 全局设置
+        'osc_port': 9001,
+        'language': "zh",
+
         # 网络设置
         'websocket': {
             'interface': "",
             'ip': "",
             'port': 5678,
-            'osc_port': 9001,
-            'language': "zh",
             'enable_remote': False,
             'remote_address': "",
         },

@@ -31,6 +31,8 @@ class ConnectionTab(QWidget):
         self.server_task: Optional[asyncio.Task[None]] = None
 
         # UI组件类型注解
+        self.global_settings_group: QGroupBox
+        self.global_settings_layout: QFormLayout
         self.conection_group: QGroupBox
         self.form_layout: QFormLayout
         self.ip_combobox: QComboBox
@@ -73,6 +75,49 @@ class ConnectionTab(QWidget):
         """初始化连接设置选项卡UI"""
         layout = QVBoxLayout()
 
+        # 创建全局设置组
+        self.global_settings_group = QGroupBox(translate("connection_tab.global_settings"))
+        self.global_settings_layout = QFormLayout()
+
+        # OSC端口选择
+        self.osc_port_spinbox = QSpinBox()
+        # 强制使用英文区域设置，避免数字显示为繁体中文
+        self.osc_port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.osc_port_spinbox.setRange(1024, 65535)
+        self.osc_port_spinbox.setValue(self.settings.get('osc_port', 9001))
+        self.osc_port_label = QLabel(translate("connection_tab.osc_port_label"))
+        self.global_settings_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
+
+        # 语言选择
+        self.language_layout = QHBoxLayout()
+        self.language_label = QLabel(translate("main.settings.language_label"))
+
+        language_options = list(LANGUAGES.values())
+        self.language_combo = EditableComboBox(language_options)
+
+        # 设置语言数据
+        for i, (lang_code, _) in enumerate(LANGUAGES.items()):
+            self.language_combo.setItemData(i, lang_code)
+
+        # 设置当前语言
+        current_language = self.settings.get('language') or get_current_language()
+        for i in range(self.language_combo.count()):
+            if self.language_combo.itemData(i) == current_language:
+                self.language_combo.setCurrentIndex(i)
+                break
+
+        # 连接语言选择变更信号
+        self.language_combo.currentTextChanged.connect(self.on_language_changed)
+
+        self.language_layout.addWidget(self.language_label)
+        self.language_layout.addWidget(self.language_combo)
+        self.language_layout.addStretch()
+
+        self.global_settings_layout.addRow(self.language_layout)
+
+        self.global_settings_group.setLayout(self.global_settings_layout)
+        layout.addWidget(self.global_settings_group)
+
         # 创建一个水平布局，用于放置网络配置和二维码
         network_layout = QHBoxLayout()
 
@@ -98,15 +143,6 @@ class ConnectionTab(QWidget):
         self.port_spinbox.setValue(self.settings.get('websocket', {}).get('port', 8080))
         self.websocket_port_label = QLabel(translate("connection_tab.websocket_port_label"))
         self.form_layout.addRow(self.websocket_port_label, self.port_spinbox)
-
-        # OSC端口选择
-        self.osc_port_spinbox = QSpinBox()
-        # 强制使用英文区域设置，避免数字显示为繁体中文
-        self.osc_port_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.osc_port_spinbox.setRange(1024, 65535)
-        self.osc_port_spinbox.setValue(self.settings.get('websocket', {}).get('osc_port', 9000))
-        self.osc_port_label = QLabel(translate("connection_tab.osc_port_label"))
-        self.form_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
 
         # 创建远程地址控制布局
         self.remote_address_layout = QHBoxLayout()
@@ -159,33 +195,6 @@ class ConnectionTab(QWidget):
         self.start_button.clicked.connect(self.start_button_clicked)
         self.form_layout.addRow(self.start_button)
 
-        # 语言选择
-        self.language_layout = QHBoxLayout()
-        self.language_label = QLabel(translate("main.settings.language_label"))
-
-        language_options = list(LANGUAGES.values())
-        self.language_combo = EditableComboBox(language_options)
-
-        # 设置语言数据
-        for i, (lang_code, _) in enumerate(LANGUAGES.items()):
-            self.language_combo.setItemData(i, lang_code)
-
-        # 设置当前语言
-        current_language = self.settings.get('websocket', {}).get('language') or get_current_language()
-        for i in range(self.language_combo.count()):
-            if self.language_combo.itemData(i) == current_language:
-                self.language_combo.setCurrentIndex(i)
-                break
-
-        # 连接语言选择变更信号
-        self.language_combo.currentTextChanged.connect(self.on_language_changed)
-
-        self.language_layout.addWidget(self.language_label)
-        self.language_layout.addWidget(self.language_combo)
-        self.language_layout.addStretch()
-
-        self.form_layout.addRow(self.language_layout)
-
         self.conection_group.setLayout(self.form_layout)
         network_layout.addWidget(self.conection_group)
 
@@ -227,8 +236,8 @@ class ConnectionTab(QWidget):
         if 'websocket' not in self.settings:
             self.settings['websocket'] = {}
         self.settings['websocket']['port'] = self.port_spinbox.value()
-        self.settings['websocket']['osc_port'] = self.osc_port_spinbox.value()
-        self.settings['websocket']['language'] = self.language_combo.currentData()
+        self.settings['osc_port'] = self.osc_port_spinbox.value()
+        self.settings['language'] = self.language_combo.currentData()
         self.settings['websocket']['enable_remote'] = self.enable_remote_checkbox.isChecked()
         self.settings['websocket']['remote_address'] = self.remote_address_edit.text()
 
@@ -364,7 +373,7 @@ class ConnectionTab(QWidget):
             if not self.service_controller:
                 # 初始化服务
                 dglab_device_service: IDGLabDeviceService = DGLabWebSocketService(self.ui_interface, selected_ip, selected_port, remote_address)
-                osc_service: OSCService = OSCService(self.ui_interface)
+                osc_service: OSCService = OSCService(self.ui_interface, osc_port)
                 osc_action_service: OSCActionService = OSCActionService(dglab_device_service, self.ui_interface)
                 chatbox_service: ChatboxService = ChatboxService(self.ui_interface, osc_service, osc_action_service)
 
@@ -550,7 +559,7 @@ class ConnectionTab(QWidget):
                 # 保存语言设置到配置文件
                 if 'websocket' not in self.settings:
                     self.settings['websocket'] = {}
-                self.settings['websocket']['language'] = selected_language
+                self.settings['language'] = selected_language
                 save_settings(self.settings)
                 logger.info(
                     f"Language changed to {LANGUAGES.get(selected_language, selected_language)} ({selected_language})")
