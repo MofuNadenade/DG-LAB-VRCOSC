@@ -213,6 +213,10 @@ pulse_dialogs:
 
 connection_tab:
   title: "Network Configuration"
+  connection_settings: "Connection Settings"
+  device_pairing: "Device Pairing"
+  pairing_instruction: "After starting connection, use DG-Lab App to scan QR code for device pairing"
+  qrcode_placeholder: "QR code will appear after connection starts"
   global_settings: "Global Settings"
   interface_label: "Network Interface:"
   websocket_port_label: "WebSocket Port:"

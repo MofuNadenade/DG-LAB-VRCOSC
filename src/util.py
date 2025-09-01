@@ -17,7 +17,7 @@ def resource_path(relative_path: str) -> str:
 
 def generate_qrcode(data: str) -> QPixmap:
     """生成二维码并转换为PySide6可显示的QPixmap"""
-    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=6, border=2)
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=16, border=0)
     qr.add_data(data)
     qr.make(fit=True)
     img = qr.make_image(fill='black', back_color='white')

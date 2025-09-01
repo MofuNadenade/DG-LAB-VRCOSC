@@ -213,6 +213,10 @@ pulse_dialogs:
 
 connection_tab:
   title: "网络配置"
+  connection_settings: "连接设置"
+  device_pairing: "设备配对"
+  pairing_instruction: "启动连接后，使用DG-Lab App扫描二维码进行设备配对"
+  qrcode_placeholder: "启动连接后显示配对二维码"
   global_settings: "全局设置"
   interface_label: "网卡选择:"
   websocket_port_label: "WebSocket端口:"

@@ -213,6 +213,10 @@ pulse_dialogs:
 
 connection_tab:
   title: "ネットワーク設定"
+  connection_settings: "接続設定"
+  device_pairing: "デバイスペアリング"
+  pairing_instruction: "接続開始後、DG-Lab Appで二次元コードをスキャンしてデバイスをペアリングしてください"
+  qrcode_placeholder: "接続開始後にペアリング用二次元コードが表示されます"
   global_settings: "グローバル設定"
   interface_label: "ネットワークインターフェース:"
   websocket_port_label: "WebSocketポート:"

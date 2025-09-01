@@ -30,8 +30,11 @@ class ConnectionTab(QWidget):
         # UI组件类型注解
         self.global_settings_group: QGroupBox
         self.global_settings_layout: QFormLayout
-        self.conection_group: QGroupBox
-        self.form_layout: QFormLayout
+        self.connection_settings_group: QGroupBox
+        self.connection_settings_layout: QFormLayout
+        self.device_pairing_group: QGroupBox
+        self.device_pairing_layout: QVBoxLayout
+        self.network_group_layout: QHBoxLayout
         self.ip_combobox: QComboBox
         self.port_spinbox: QSpinBox
         self.osc_port_spinbox: QSpinBox
@@ -81,12 +84,12 @@ class ConnectionTab(QWidget):
         """初始化连接设置选项卡UI"""
         layout = QVBoxLayout()
 
-        # 创建一个水平布局，用于放置网络配置和二维码
-        network_layout = QHBoxLayout()
+        # 创建网络配置区域的水平布局
+        self.network_group_layout = QHBoxLayout()
 
-        # 创建网络配置组
-        self.conection_group = QGroupBox(translate("connection_tab.title"))
-        self.form_layout = QFormLayout()
+        # =================== 左侧：连接设置组 ===================
+        self.connection_settings_group = QGroupBox(translate("connection_tab.connection_settings"))
+        self.connection_settings_layout = QFormLayout()
 
         # 网卡选择
         active_ips = get_active_ip_addresses()
@@ -96,7 +99,7 @@ class ConnectionTab(QWidget):
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.ip_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.interface_label = QLabel(translate("connection_tab.interface_label"))
-        self.form_layout.addRow(self.interface_label, self.ip_combobox)
+        self.connection_settings_layout.addRow(self.interface_label, self.ip_combobox)
 
         # 端口选择
         self.port_spinbox = QSpinBox()
@@ -105,7 +108,7 @@ class ConnectionTab(QWidget):
         self.port_spinbox.setRange(1024, 65535)
         self.port_spinbox.setValue(self.settings.get('websocket', {}).get('port', 8080))
         self.websocket_port_label = QLabel(translate("connection_tab.websocket_port_label"))
-        self.form_layout.addRow(self.websocket_port_label, self.port_spinbox)
+        self.connection_settings_layout.addRow(self.websocket_port_label, self.port_spinbox)
 
         # 创建远程地址控制布局
         self.remote_address_layout = QHBoxLayout()
@@ -135,7 +138,7 @@ class ConnectionTab(QWidget):
         self.remote_address_layout.addWidget(self.get_public_ip_button)
 
         self.remote_address_label = QLabel(translate("connection_tab.remote_address_label"))
-        self.form_layout.addRow(self.remote_address_label, self.remote_address_layout)
+        self.connection_settings_layout.addRow(self.remote_address_label, self.remote_address_layout)
 
         # 添加客户端连接状态标签
         self.connection_status_label = QLabel(translate("connection_tab.offline"))
@@ -150,26 +153,53 @@ class ConnectionTab(QWidget):
         """)
         self.connection_status_label.adjustSize()
         self.status_label = QLabel(translate("connection_tab.status_label"))
-        self.form_layout.addRow(self.status_label, self.connection_status_label)
+        self.connection_settings_layout.addRow(self.status_label, self.connection_status_label)
 
         # 启动按钮
         self.start_button = QPushButton(translate("connection_tab.connect"))
         self.start_button.setStyleSheet("background-color: green; color: white;")
         self.start_button.clicked.connect(self.start_button_clicked)
-        self.form_layout.addRow(self.start_button)
+        self.connection_settings_layout.addRow(self.start_button)
 
-        self.conection_group.setLayout(self.form_layout)
-        network_layout.addWidget(self.conection_group)
+        # 设置连接设置组布局
+        self.connection_settings_group.setLayout(self.connection_settings_layout)
+        self.connection_settings_group.setMinimumWidth(350)  # 设置最小宽度
+        self.network_group_layout.addWidget(self.connection_settings_group)
 
-        # 二维码显示
+        # =================== 右侧：设备配对组 ===================
+        self.device_pairing_group = QGroupBox(translate("connection_tab.device_pairing"))
+        self.device_pairing_layout = QVBoxLayout()
+
+        # 说明文字
+        pairing_instruction = QLabel(translate("connection_tab.pairing_instruction"))
+        pairing_instruction.setWordWrap(True)
+        pairing_instruction.setStyleSheet("color: #666; margin-bottom: 10px;")
+        self.device_pairing_layout.addWidget(pairing_instruction)
+
+        # 二维码显示区域
         self.qrcode_label = QLabel()
-        # 设置QR码自适应尺寸策略
-        self.qrcode_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # 设置QR码固定尺寸策略，保持正方形
+        self.qrcode_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.qrcode_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.qrcode_label.setMinimumSize(300, 300)  # 设置最小可显示尺寸
-        network_layout.addWidget(self.qrcode_label, 1)  # stretch=1占据剩余空间
+        self.qrcode_label.setFixedSize(280, 280)  # 固定为正方形
+        # 设置初始样式和占位文字
+        self.qrcode_label.setText(translate("connection_tab.qrcode_placeholder"))
+        self._set_qrcode_style(has_qrcode=False)
+        
+        self.device_pairing_layout.addWidget(self.qrcode_label)
 
-        layout.addLayout(network_layout)
+        # 设置设备配对组布局
+        self.device_pairing_layout.setContentsMargins(10, 10, 10, 10)  # 减少内边距
+        self.device_pairing_group.setLayout(self.device_pairing_layout)
+        # 移除固定最小宽度，让组大小完全由QR码决定
+        self.network_group_layout.addWidget(self.device_pairing_group)
+
+        # 让连接设置组占用剩余空间，设备配对组最小化
+        self.network_group_layout.setStretch(0, 1)  # 连接设置组可扩展
+        self.network_group_layout.setStretch(1, 0)  # 设备配对组固定最小尺寸
+
+        # 添加网络配置区域到主布局
+        layout.addLayout(self.network_group_layout)
         layout.addStretch()  # 添加弹性空间
 
         # 创建全局设置组 - 放在底部
@@ -271,25 +301,87 @@ class ConnectionTab(QWidget):
     def update_qrcode(self, qrcode_pixmap: QPixmap) -> None:
         """更新二维码并保存原始图像"""
         self.original_qrcode_pixmap = qrcode_pixmap
+        self._set_qrcode_style(has_qrcode=True)
         self.scale_qrcode()
         logger.info("二维码已更新")
 
+    def _set_qrcode_style(self, has_qrcode: bool = False) -> None:
+        """设置QR码标签样式"""
+        if has_qrcode:
+            self.qrcode_label.setStyleSheet("""
+                QLabel {
+                    border: 2px solid #4CAF50;
+                    border-radius: 10px;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.qrcode_label.setStyleSheet("""
+                QLabel {
+                    border: 2px dashed #ccc;
+                    border-radius: 10px;
+                    background-color: #f9f9f9;
+                    color: #999;
+                    font-size: 14px;
+                }
+            """)
+
+    def _calculate_proportional_qr_size(self) -> int:
+        """基于窗口比例计算QR码尺寸"""
+        # 获取窗口尺寸
+        window = self.window()
+        if window:
+            window_size = window.size()
+        else:
+            window_size = self.size()
+        
+        # 计算基于窗口较大边的比例
+        base_size = max(window_size.width(), window_size.height())
+        # QR码占窗口的固定比例
+        qr_size = int(base_size * 0.4)
+        
+        return qr_size
+
+    def _update_qr_label_size(self) -> None:
+        """更新QR码标签的尺寸"""
+        new_size = self._calculate_proportional_qr_size()
+        self.qrcode_label.setFixedSize(new_size, new_size)
+
+    def _update_qr_size_and_scale(self) -> None:
+        """更新QR码尺寸并重新缩放内容"""
+        self._update_qr_label_size()
+        self.scale_qrcode()
+
     def scale_qrcode(self) -> None:
-        """根据当前标签尺寸缩放二维码"""
+        """根据标签当前尺寸按比例缩放QR码"""
         if self.original_qrcode_pixmap and not self.original_qrcode_pixmap.isNull():
+            # 获取当前标签尺寸
+            label_size = self.qrcode_label.size()
+            # QR码内容占标签的90%，留出10%作为边距
+            qr_size = int(min(label_size.width(), label_size.height()) * 0.9)
+            
             scaled_pixmap = self.original_qrcode_pixmap.scaled(
-                self.qrcode_label.size(),
+                qr_size, qr_size,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation
             )
             self.qrcode_label.setPixmap(scaled_pixmap)
 
+    def clear_qrcode(self) -> None:
+        """清理二维码显示"""
+        self.qrcode_label.clear()
+        self.original_qrcode_pixmap = None
+        # 恢复占位文字和样式
+        self.qrcode_label.setText(translate("connection_tab.qrcode_placeholder"))
+        self._set_qrcode_style(has_qrcode=False)
+        logger.info("二维码已清理")
+
     def resizeEvent(self, event: QResizeEvent) -> None:
-        """优化窗口缩放处理"""
+        """窗口大小改变时按比例调整QR码尺寸"""
         # 先执行父类的resize事件处理
         super().resizeEvent(event)
-        # 延迟执行二维码缩放以保证尺寸计算准确
-        QTimer.singleShot(0, self.scale_qrcode)
+        # 延迟更新QR码尺寸以保证布局完成
+        QTimer.singleShot(0, self._update_qr_size_and_scale)
 
     def update_connection_state(self, state: ConnectionState, message: str = "") -> None:
         text: str
@@ -326,6 +418,10 @@ class ConnectionTab(QWidget):
         self.start_button.setEnabled(enabled)
 
         self.update_client_state(state == ConnectionState.CONNECTED)
+
+        # 在连接断开时清理二维码
+        if state == ConnectionState.DISCONNECTED:
+            self.clear_qrcode()
 
         # 记录错误日志
         if state in [ConnectionState.FAILED, ConnectionState.ERROR] and message:
@@ -444,7 +540,9 @@ class ConnectionTab(QWidget):
         """更新UI上的文本为当前语言"""
         
         # 更新组标题和标签
-        self.conection_group.setTitle(translate("connection_tab.title"))
+        self.connection_settings_group.setTitle(translate("connection_tab.connection_settings"))
+        self.device_pairing_group.setTitle(translate("connection_tab.device_pairing"))
+        self.global_settings_group.setTitle(translate("connection_tab.global_settings"))
         self.language_label.setText(translate("main.settings.language_label"))
         
         # 更新表单标签
