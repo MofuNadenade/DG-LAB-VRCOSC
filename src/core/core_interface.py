@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from PySide6.QtGui import QPixmap
+
 
 from core.dglab_pulse import Pulse
 from core.registries import Registries
@@ -47,10 +47,6 @@ class CoreInterface(ABC):
 
     @abstractmethod
     def update_status(self, strength_data: StrengthData) -> None: ...
-
-    # WebSocket连接管理
-    @abstractmethod
-    def update_qrcode(self, qrcode_pixmap: QPixmap) -> None: ...
 
     # 配置文件管理
     @abstractmethod

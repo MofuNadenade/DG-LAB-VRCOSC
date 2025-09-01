@@ -72,8 +72,9 @@ class ConnectionTab(QWidget):
 
     def _connect_manager_signals(self) -> None:
         """连接ConnectionManager的信号"""
-        self.connection_manager.public_ip_received.connect(self._on_public_ip_received)
-        self.connection_manager.validation_error.connect(self._on_validation_error)
+        self.connection_manager.signals.public_ip_received.connect(self._on_public_ip_received)
+        self.connection_manager.signals.validation_error.connect(self._on_validation_error)
+        self.connection_manager.signals.qrcode_updated.connect(self.update_qrcode)
     
     @property
     def service_controller(self) -> Optional[ServiceController]:

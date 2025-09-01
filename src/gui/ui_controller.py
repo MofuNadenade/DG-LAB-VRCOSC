@@ -2,7 +2,7 @@ import functools
 import logging
 from typing import Optional, List
 
-from PySide6.QtGui import QPixmap
+
 
 from config import default_load_settings, save_settings
 from core import ServiceController, OSCOptionsProvider, OSCActionType, Pulse
@@ -379,10 +379,6 @@ class UIController(UIInterface):
     def update_current_channel(self, channel: Channel) -> None:
         """更新当前选择通道显示"""
         self.main_window.settings_tab.update_current_channel(channel)
-
-    def update_qrcode(self, qrcode_pixmap: QPixmap) -> None:
-        """更新二维码并调整QLabel的大小"""
-        self.main_window.connection_tab.update_qrcode(qrcode_pixmap)
 
     def update_status(self, strength_data: StrengthData) -> None:
         """更新通道强度和波形"""

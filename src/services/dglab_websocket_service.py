@@ -10,6 +10,7 @@ import logging
 from typing import Optional, List, Dict, Union
 
 import pydglab_ws
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QPixmap
 from pydglab_ws import DGLabLocalClient, DGLabWSServer, PulseDataTooLong
 
@@ -20,6 +21,10 @@ from services.dglab_service_interface import IDGLabDeviceService
 from util import generate_qrcode
 
 logger = logging.getLogger(__name__)
+
+
+class WebSocketSignals(QObject):
+    qrcode_updated = Signal(QPixmap)  # QR码更新信号
 
 
 class DGLabWebSocketService(IDGLabDeviceService):
@@ -130,7 +135,7 @@ class DGLabWebSocketService(IDGLabDeviceService):
                     return False
 
                 qrcode_image: QPixmap = generate_qrcode(url)
-                self._service._core_interface.update_qrcode(qrcode_image)
+                self._service.signals.qrcode_updated.emit(qrcode_image)
 
                 # 更新服务引用
                 self._service._update_channel_pulse_tasks()
@@ -225,6 +230,9 @@ class DGLabWebSocketService(IDGLabDeviceService):
         super().__init__()
 
         self._core_interface = core_interface
+
+        # 信号组件 - 使用组合模式
+        self.signals: WebSocketSignals = WebSocketSignals()
 
         # 服务器管理器
         self._server_manager: DGLabWebSocketService._ServerManager = self._ServerManager(self, ip, port, remote_address)

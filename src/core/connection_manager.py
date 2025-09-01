@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 import requests
 from PySide6.QtCore import QObject, Signal
+from PySide6.QtGui import QPixmap
 
 from config import save_settings, validate_ip
 from core.service_controller import ServiceController
@@ -16,21 +17,27 @@ from services.chatbox_service import ChatboxService
 logger = logging.getLogger(__name__)
 
 
-class ConnectionManager(QObject):
+class ConnectionSignals(QObject):
+    """ConnectionManager的信号类"""
+    public_ip_received = Signal(str)  # 公网IP获取成功
+    validation_error = Signal(str)    # 验证错误
+    qrcode_updated = Signal(QPixmap)  # QR码更新信号
+
+
+class ConnectionManager:
     """
     连接管理器 - ConnectionTab的业务逻辑组件
     使用组合模式，处理所有连接相关的业务逻辑
     """
-    
-    # 信号定义 - 通知UI状态变更
-    public_ip_received = Signal(str)  # 公网IP获取成功
-    validation_error = Signal(str)    # 验证错误
     
     def __init__(self, ui_interface: UIInterface):
         super().__init__()
         self.ui_interface = ui_interface
         self.settings: SettingsDict = ui_interface.settings
         self.server_task: Optional[asyncio.Task[None]] = None
+        
+        # 信号组件 - 使用组合模式
+        self.signals: ConnectionSignals = ConnectionSignals()
     
     @property
     def service_controller(self) -> Optional[ServiceController]:
@@ -79,18 +86,18 @@ class ConnectionManager(QObject):
             logger.info(f"获取到公网IP: {public_ip}")
             
             # 发送信号通知UI
-            self.public_ip_received.emit(public_ip)
+            self.signals.public_ip_received.emit(public_ip)
             
         except Exception as e:
             logger.error(f"获取公网IP失败: {str(e)}")
-            self.validation_error.emit(f"获取公网IP失败: {str(e)}")
+            self.signals.validation_error.emit(f"获取公网IP失败: {str(e)}")
     
     def start_connection(self, selected_ip: str, websocket_port: int, osc_port: int,
                         enable_remote: bool, remote_address: Optional[str] = None) -> None:
         """启动连接"""
         # 验证远程地址
         if enable_remote and remote_address and not self.validate_remote_address(remote_address):
-            self.validation_error.emit("无效的远程IP地址")
+            self.signals.validation_error.emit("无效的远程IP地址")
             return
         
         logger.info(f"正在启动连接: {selected_ip}:{websocket_port}, OSC端口: {osc_port}")
@@ -116,6 +123,9 @@ class ConnectionManager(QObject):
             # 创建服务控制器(如果不存在)
             if not self.service_controller:
                 dglab_service = DGLabWebSocketService(self.ui_interface, ip, websocket_port, remote_address)
+                # 连接DGLabWebSocketService的QR码更新信号
+                dglab_service.signals.qrcode_updated.connect(self.signals.qrcode_updated.emit)
+                
                 osc_service = OSCService(self.ui_interface, osc_port)
                 osc_action_service = OSCActionService(dglab_service, self.ui_interface)
                 chatbox_service = ChatboxService(self.ui_interface, osc_service, osc_action_service)
