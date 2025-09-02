@@ -305,6 +305,7 @@ controller_tab:
   no_waveform: "无波形"
   disable_fire_mode: "禁用一键开火"
   enable_panel_control: "允许 avatar 控制设备"
+  disable_panel_pulse_setting: "禁止面板设置波形"
   enable_chatbox: "启用ChatBox状态显示"
   interaction_mode: "交互模式"
   current_panel_channel: "面板当前控制通道"

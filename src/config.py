@@ -46,6 +46,7 @@ def get_default_settings() -> SettingsDict:
             'fire_mode_strength_step': 30,
             'fire_mode_disabled': False,
             'enable_panel_control': True,
+            'disable_panel_pulse_setting': False,
             'dynamic_bone_mode_a': False,
             'dynamic_bone_mode_b': False,
             'current_pulse_a': "无波形",

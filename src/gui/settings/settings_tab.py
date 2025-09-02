@@ -35,6 +35,7 @@ class SettingsTab(QWidget):
         self.b_channel_slider: QSlider
         self.fire_mode_disabled_checkbox: QCheckBox
         self.enable_panel_control_checkbox: QCheckBox
+        self.disable_panel_pulse_setting_checkbox: QCheckBox
         self.enable_chatbox_status_checkbox: QCheckBox
         self.dynamic_bone_mode_a_checkbox: QCheckBox
         self.dynamic_bone_mode_b_checkbox: QCheckBox
@@ -106,6 +107,10 @@ class SettingsTab(QWidget):
         self.enable_panel_control_checkbox = QCheckBox(translate("controller_tab.enable_panel_control"))
         self.enable_panel_control_checkbox.setChecked(True)
         controller_form.addRow(self.enable_panel_control_checkbox)
+
+        self.disable_panel_pulse_setting_checkbox = QCheckBox(translate("controller_tab.disable_panel_pulse_setting"))
+        self.disable_panel_pulse_setting_checkbox.setChecked(False)
+        controller_form.addRow(self.disable_panel_pulse_setting_checkbox)
 
         self.enable_chatbox_status_checkbox = QCheckBox(translate("controller_tab.enable_chatbox"))
         self.enable_chatbox_status_checkbox.setChecked(False)  # 默认关闭ChatBox
@@ -332,6 +337,7 @@ class SettingsTab(QWidget):
 
             self.fire_mode_disabled_checkbox.toggled.connect(self.on_fire_mode_disabled_changed)
             self.enable_panel_control_checkbox.toggled.connect(self.on_panel_control_enabled_changed)
+            self.disable_panel_pulse_setting_checkbox.toggled.connect(self.on_disable_panel_pulse_setting_changed)
             self.dynamic_bone_mode_a_checkbox.toggled.connect(self.on_dynamic_bone_mode_a_changed)
             self.dynamic_bone_mode_b_checkbox.toggled.connect(self.on_dynamic_bone_mode_b_changed)
             self.current_pulse_a_combobox.currentIndexChanged.connect(self.on_current_pulse_a_changed)
@@ -370,6 +376,12 @@ class SettingsTab(QWidget):
             self.service_controller.osc_action_service.enable_panel_control = state
             logger.info(f"Panel control enabled: {self.service_controller.osc_action_service.enable_panel_control}")
             self.service_controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/PanelControl", bool(state))
+
+    def on_disable_panel_pulse_setting_changed(self, state: bool) -> None:
+        """当禁止面板设置波形复选框状态改变时"""
+        if self.service_controller:
+            self.service_controller.osc_action_service.disable_panel_pulse_setting = state
+            logger.info(f"Panel pulse setting disabled: {self.service_controller.osc_action_service.disable_panel_pulse_setting}")
 
     def on_dynamic_bone_mode_a_changed(self, state: bool) -> None:
         """当动骨模式A复选框状态改变时"""
@@ -505,6 +517,7 @@ class SettingsTab(QWidget):
             # 保存其他可配置的设置
             self.settings['controller']['fire_mode_disabled'] = self.fire_mode_disabled_checkbox.isChecked()
             self.settings['controller']['enable_panel_control'] = self.enable_panel_control_checkbox.isChecked()
+            self.settings['controller']['disable_panel_pulse_setting'] = self.disable_panel_pulse_setting_checkbox.isChecked()
             self.settings['controller']['dynamic_bone_mode_a'] = self.dynamic_bone_mode_a_checkbox.isChecked()
             self.settings['controller']['dynamic_bone_mode_b'] = self.dynamic_bone_mode_b_checkbox.isChecked()
 
@@ -599,6 +612,7 @@ class SettingsTab(QWidget):
         self.controller_group.setTitle(translate("controller_tab.title"))
         self.fire_mode_disabled_checkbox.setText(translate("controller_tab.disable_fire_mode"))
         self.enable_panel_control_checkbox.setText(translate("controller_tab.enable_panel_control"))
+        self.disable_panel_pulse_setting_checkbox.setText(translate("controller_tab.disable_panel_pulse_setting"))
         self.enable_chatbox_status_checkbox.setText(translate("controller_tab.enable_chatbox"))
         self.dynamic_bone_mode_a_checkbox.setText(f"A{translate('controller_tab.interaction_mode')}")
         self.dynamic_bone_mode_b_checkbox.setText(f"B{translate('controller_tab.interaction_mode')}")

@@ -80,6 +80,7 @@ class UIController(UIInterface):
         # 其他设置
         fire_mode_disabled = self.settings.get('controller', {}).get('fire_mode_disabled', False)
         enable_panel_control = self.settings.get('controller', {}).get('enable_panel_control', True)
+        disable_panel_pulse_setting = self.settings.get('controller', {}).get('disable_panel_pulse_setting', False)
         dynamic_bone_mode_a = self.settings.get('controller', {}).get('dynamic_bone_mode_a', False)
         dynamic_bone_mode_b = self.settings.get('controller', {}).get('dynamic_bone_mode_b', False)
 
@@ -91,6 +92,10 @@ class UIController(UIInterface):
         self.main_window.settings_tab.enable_panel_control_checkbox.blockSignals(True)
         self.main_window.settings_tab.enable_panel_control_checkbox.setChecked(enable_panel_control)
         self.main_window.settings_tab.enable_panel_control_checkbox.blockSignals(False)
+
+        self.main_window.settings_tab.disable_panel_pulse_setting_checkbox.blockSignals(True)
+        self.main_window.settings_tab.disable_panel_pulse_setting_checkbox.setChecked(disable_panel_pulse_setting)
+        self.main_window.settings_tab.disable_panel_pulse_setting_checkbox.blockSignals(False)
 
         self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.blockSignals(True)
         self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.setChecked(dynamic_bone_mode_a)
@@ -154,6 +159,7 @@ class UIController(UIInterface):
         if self.service_controller is not None:
             self.service_controller.osc_action_service.fire_mode_disabled = fire_mode_disabled
             self.service_controller.osc_action_service.enable_panel_control = enable_panel_control
+            self.service_controller.osc_action_service.disable_panel_pulse_setting = disable_panel_pulse_setting
             self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
             self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
             

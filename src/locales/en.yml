@@ -305,6 +305,7 @@ controller_tab:
   no_waveform: "No Waveform"
   disable_fire_mode: "Disable One-Click Fire"
   enable_panel_control: "Allow avatar to control device"
+  disable_panel_pulse_setting: "Disable Panel Pulse Setting"
   enable_chatbox: "Enable ChatBox Status Display"
   interaction_mode: "Interaction Mode"
   current_panel_channel: "Current Panel Control Channel"

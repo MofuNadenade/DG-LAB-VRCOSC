@@ -68,6 +68,7 @@ class OSCActionService(IService):
         
         # 面板控制
         self._enable_panel_control: bool = True
+        self._disable_panel_pulse_setting: bool = False
         
         # 服务状态
         self._is_running: bool = False
@@ -105,6 +106,15 @@ class OSCActionService(IService):
     @enable_panel_control.setter
     def enable_panel_control(self, value: bool) -> None:
         self._enable_panel_control = value
+    
+    @property
+    def disable_panel_pulse_setting(self) -> bool:
+        """禁止面板设置波形"""
+        return self._disable_panel_pulse_setting
+    
+    @disable_panel_pulse_setting.setter
+    def disable_panel_pulse_setting(self, value: bool) -> None:
+        self._disable_panel_pulse_setting = value
     
     @property
     def strength_debounce_interval(self) -> float:
@@ -157,6 +167,10 @@ class OSCActionService(IService):
 
     async def set_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """设置指定通道的波形，并发送波形到设备"""
+        if self._disable_panel_pulse_setting:
+            logger.info(f"Panel pulse setting is disabled, ignoring pulse setting for channel {channel.name}")
+            return
+        
         self.set_current_pulse(channel, pulse)
         await self.send_pulse(channel, pulse)
 

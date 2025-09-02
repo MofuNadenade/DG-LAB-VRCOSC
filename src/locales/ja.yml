@@ -305,6 +305,7 @@ controller_tab:
   no_waveform: "波形なし"
   disable_fire_mode: "ワンクリック発火を無効化"
   enable_panel_control: "アバターによるデバイス制御を許可"
+  disable_panel_pulse_setting: "パネル波形設定を無効化"
   enable_chatbox: "ChatBoxステータス表示を有効化"
   interaction_mode: "インタラクションモード"
   current_panel_channel: "現在のパネル制御チャンネル"

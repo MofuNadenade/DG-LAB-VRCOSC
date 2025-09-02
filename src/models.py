@@ -228,6 +228,7 @@ class ControllerSettingsDict(TypedDict, total=False):
     fire_mode_strength_step: int
     fire_mode_disabled: bool
     enable_panel_control: bool
+    disable_panel_pulse_setting: bool
     dynamic_bone_mode_a: bool
     dynamic_bone_mode_b: bool
     current_pulse_a: str
