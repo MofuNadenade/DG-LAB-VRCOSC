@@ -258,6 +258,7 @@ bluetooth:
   connected: "Connected"
   disconnected: "Disconnected"
   connecting: "Connecting..."
+  waiting: "Waiting..."
   connection_failed: "Connection Failed"
   no_device: "No Device"
   device_not_connected: "Device Not Connected"

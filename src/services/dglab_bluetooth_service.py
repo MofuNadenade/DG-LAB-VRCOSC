@@ -9,6 +9,8 @@ import asyncio
 import logging
 from typing import Optional, List, Dict, TypedDict
 
+from PySide6.QtCore import QObject, Signal
+
 from core import bluetooth
 from core.core_interface import CoreInterface
 from core.dglab_pulse import Pulse
@@ -16,6 +18,11 @@ from models import Channel, ConnectionState, StrengthData, StrengthOperationType
 from services.dglab_service_interface import IDGLabDeviceService
 
 logger = logging.getLogger(__name__)
+
+
+class BluetoothSignals(QObject):
+    """蓝牙信号"""
+    battery_level_updated = Signal(int)  # 电量更新信号
 
 
 class DGLabDevice(TypedDict):
@@ -43,6 +50,9 @@ class DGLabBluetoothService(IDGLabDeviceService):
         
         # 核心接口
         self._core_interface: CoreInterface = core_interface
+        
+        # 信号组件 - 使用组合模式
+        self.signals: BluetoothSignals = BluetoothSignals()
         
         # 蓝牙控制器（新架构只需要Controller）
         self._bluetooth_controller: bluetooth.BluetoothController = bluetooth.BluetoothController()
@@ -119,6 +129,9 @@ class DGLabBluetoothService(IDGLabDeviceService):
     async def _on_battery_changed(self, battery_level: int) -> None:
         """处理电量变化"""
         logger.debug(f"电量变化: {battery_level}%")
+        
+        # 通过信号发送电量更新
+        self.signals.battery_level_updated.emit(battery_level)
 
     # ============ 连接管理 ============
 
@@ -464,6 +477,9 @@ class DGLabBluetoothService(IDGLabDeviceService):
                     "strength": self._current_strengths.copy(),
                     "strength_limit": self._strength_limits.copy()
                 }
+                
+                # 查询电量
+                await self._bluetooth_controller.query_battery_level()
                 
                 logger.info(f"设备初始化完成")
             else:

@@ -122,20 +122,19 @@ class WebSocketConnectionManager:
         try:
             # 创建服务控制器(如果不存在)
             if not self.service_controller:
-                dglab_service = DGLabWebSocketService(self.ui_interface, ip, websocket_port, remote_address)
+                dglab_device_service = DGLabWebSocketService(self.ui_interface, ip, websocket_port, remote_address)
                 # 连接DGLabWebSocketService的QR码更新信号
-                dglab_service.signals.qrcode_updated.connect(self.signals.qrcode_updated.emit)
+                dglab_device_service.signals.qrcode_updated.connect(self.signals.qrcode_updated.emit)
 
                 osc_service = OSCService(self.ui_interface, osc_port)
-                osc_action_service = OSCActionService(dglab_service, self.ui_interface)
+                osc_action_service = OSCActionService(dglab_device_service, self.ui_interface)
                 chatbox_service = ChatboxService(self.ui_interface, osc_service, osc_action_service)
 
-                controller = ServiceController(dglab_service, osc_service, osc_action_service, chatbox_service)
-                self.ui_interface.set_service_controller(controller)
+                service_controller = ServiceController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
+                self.ui_interface.set_service_controller(service_controller)
 
-            # 启动所有服务
-            if self.service_controller:
-                success = await self.service_controller.start_all_services()
+                # 启动所有服务
+                success = await service_controller.start_all_services()
                 if success:
                     logger.info("所有WebSocket服务启动成功")
                     self.ui_interface.set_connection_state(ConnectionState.WAITING)
@@ -146,9 +145,6 @@ class WebSocketConnectionManager:
                 else:
                     logger.error("WebSocket服务启动失败")
                     self.ui_interface.set_connection_state(ConnectionState.FAILED, "WebSocket服务启动失败")
-            else:
-                logger.error("服务控制器未初始化")
-                self.ui_interface.set_connection_state(ConnectionState.FAILED, "服务控制器未初始化")
 
         except asyncio.CancelledError:
             logger.info("WebSocket连接任务被取消")
@@ -164,3 +160,4 @@ class WebSocketConnectionManager:
 
         finally:
             self.server_task = None
+            self.ui_interface.set_service_controller(None)

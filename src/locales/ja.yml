@@ -258,6 +258,7 @@ bluetooth:
   connected: "接続済み"
   disconnected: "切断済み"
   connecting: "接続中..."
+  waiting: "待機中..."
   connection_failed: "接続失敗"
   no_device: "デバイスなし"
   device_not_connected: "デバイスが未接続"

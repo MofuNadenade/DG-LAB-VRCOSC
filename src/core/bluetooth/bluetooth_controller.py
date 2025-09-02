@@ -67,8 +67,10 @@ class BluetoothController:
         # 定时任务
         self._data_send_task: Optional[asyncio.Task[None]] = None
         self._connection_monitor_task: Optional[asyncio.Task[None]] = None
+        self._battery_polling_task: Optional[asyncio.Task[None]] = None
         self._is_running = False
         self._monitor_interval = 5.0
+        self._battery_polling_interval = 5.0
         
         # 回调函数
         self._on_notification: Optional[Callable[[bytes], Awaitable[None]]] = None
@@ -110,6 +112,14 @@ class BluetoothController:
         """获取设备状态"""
         return self._device_state
     
+    def get_battery_level(self) -> int:
+        """获取当前电量
+        
+        Returns:
+            电量百分比 (0-100)
+        """
+        return self._device_state['battery_level']
+    
     # ============ 设备管理 ============
     
     async def scan_devices(self, scan_time: float = 5.0) -> List[DeviceInfo]:
@@ -118,7 +128,7 @@ class BluetoothController:
             logger.info(f"开始扫描DG-LAB V3设备，扫描时间: {scan_time}秒")
             
             # 执行蓝牙扫描
-            devices = await BleakScanner.discover(timeout=scan_time, return_adv=True) # type: ignore
+            devices = await BleakScanner.discover(timeout=scan_time, return_adv=True)
             
             # 筛选DG-LAB V3设备
             dglab_devices: List[DeviceInfo] = []
@@ -171,7 +181,7 @@ class BluetoothController:
             
             # 创建BleakClient并连接
             self._client = BleakClient(target_device['address'], timeout=timeout)
-            await self._client.connect() # type: ignore
+            await self._client.connect()
             
             # 等待服务发现完成
             await asyncio.sleep(1.0)
@@ -210,8 +220,6 @@ class BluetoothController:
             return True
             
         except Exception as e:
-            import traceback
-            traceback.print_exc()
             logger.error(f"连接设备失败: {e}")
             await self._cleanup_connection()
             return False
@@ -346,6 +354,54 @@ class BluetoothController:
     async def reset_strength(self, channel: Channel) -> bool:
         """重置通道强度为0"""
         return await self.set_strength_absolute(channel, 0)
+    
+    # ============ 电量管理 ============
+    
+    async def query_battery_level(self) -> Optional[int]:
+        """手动查询电量
+        
+        Returns:
+            电量百分比 (0-100)，如果查询失败返回None
+        """
+        try:
+            if not self.is_connected:
+                logger.warning("设备未连接，无法查询电量")
+                return None
+            
+            if not self._battery_characteristic:
+                logger.warning("电量特性不可用，无法查询电量")
+                return None
+            
+            # 读取电量特性值
+            if self._client:
+                battery_data = await self._client.read_gatt_char(self._battery_characteristic)
+                
+                if not battery_data:
+                    logger.warning("读取电量数据为空")
+                    return None
+                
+                battery_level = int.from_bytes(battery_data, byteorder='little')
+                
+                # 验证电量值范围
+                if not (0 <= battery_level <= 100):
+                    logger.warning(f"读取到异常电量值: {battery_level}%")
+                    return None
+                
+                # 更新设备状态
+                self._device_state['battery_level'] = battery_level
+                
+                # 触发电量变化回调
+                if self._on_battery_changed:
+                    await self._on_battery_changed(battery_level)
+                
+                logger.info(f"手动查询电量: {battery_level}%")
+                return battery_level
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"手动查询电量失败: {e}")
+            return None
     
     # ============ 波形控制 ============
     
@@ -534,17 +590,8 @@ class BluetoothController:
             
             # 启动通知
             if self._client:
-                await self._client.start_notify(self._notify_characteristic, self._on_notification_received) # type: ignore
+                await self._client.start_notify(self._notify_characteristic, self._on_notification_received)
             logger.debug("已启动通知")
-            
-            # 如果有电量特性，也启动电量通知
-            if self._battery_characteristic:
-                try:
-                    if self._client:
-                        await self._client.start_notify(self._battery_characteristic, self._on_battery_notification) # type: ignore
-                    logger.debug("已启动电量通知")
-                except Exception as e:
-                    logger.warning(f"启动电量通知失败: {e}")
             
             return True
             
@@ -567,20 +614,6 @@ class BluetoothController:
                 
         except Exception as e:
             logger.error(f"处理通知失败: {e}")
-    
-    async def _on_battery_notification(self, sender: BleakGATTCharacteristic, data: bytearray) -> None:
-        """处理电量通知"""
-        try:
-            battery_level = int.from_bytes(data, byteorder='little')
-            logger.debug(f"电量通知: {battery_level}%")
-            
-            self._device_state['battery_level'] = battery_level
-            
-            if self._on_battery_changed:
-                await self._on_battery_changed(battery_level)
-                
-        except Exception as e:
-            logger.error(f"处理电量通知失败: {e}")
     
     async def _handle_b1_response(self, data: bytes) -> None:
         """处理B1回应消息"""
@@ -629,6 +662,9 @@ class BluetoothController:
         # 启动连接监控任务
         self._connection_monitor_task = asyncio.create_task(self._connection_monitor_loop())
         
+        # 启动电量轮询任务
+        self._battery_polling_task = asyncio.create_task(self._battery_polling_loop())
+        
         logger.debug("控制器服务已启动")
     
     async def _stop_services(self) -> None:
@@ -655,6 +691,15 @@ class BluetoothController:
             except asyncio.CancelledError:
                 pass
             self._connection_monitor_task = None
+        
+        # 停止电量轮询任务
+        if self._battery_polling_task:
+            self._battery_polling_task.cancel()
+            try:
+                await self._battery_polling_task
+            except asyncio.CancelledError:
+                pass
+            self._battery_polling_task = None
         
         logger.debug("控制器服务已停止")
     
@@ -794,6 +839,26 @@ class BluetoothController:
             except Exception as e:
                 logger.error(f"连接监控错误: {e}")
                 await asyncio.sleep(self._monitor_interval)
+    
+    async def _battery_polling_loop(self) -> None:
+        """电量轮询循环"""
+        while self._is_running:
+            try:
+                # 等待轮询间隔
+                await asyncio.sleep(self._battery_polling_interval)
+                
+                # 检查连接状态
+                if not self.is_connected:
+                    continue
+                
+                # 执行电量查询
+                await self.query_battery_level()
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"电量轮询错误: {e}")
+                await asyncio.sleep(5.0)  # 出错时等待5秒再重试
     
     async def _handle_connection_lost(self) -> None:
         """处理连接丢失"""
