@@ -14,7 +14,7 @@ from .osc_address import OSCAddressRegistry
 # 绑定管理
 from .osc_binding import OSCBindingRegistry
 # 通用类型和枚举
-from .osc_common import OSCAction, OSCAddress, OSCActionType, OSCRegistryObserver, OSCAddressValidator
+from .osc_common import OSCAction, OSCAddress, OSCActionType, OSCAddressValidator
 # 选项提供
 from .osc_provider import OSCOptionsProvider
 # 模板管理
@@ -25,7 +25,6 @@ __all__ = [
     'OSCAction',
     'OSCAddress',
     'OSCActionType',
-    'OSCRegistryObserver',
     'OSCAddressValidator',
 
     # 地址

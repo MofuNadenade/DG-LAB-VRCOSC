@@ -5,7 +5,7 @@ OSC通用模块
 """
 
 from enum import Enum
-from typing import Awaitable, List, Protocol, Optional, Set
+from typing import Awaitable, List, Protocol, Optional, Set, Callable
 
 from models import OSCValue, PulseOperation
 
@@ -195,20 +195,7 @@ class OSCAddressValidator:
         # 自定义动作
         return True, ""
 
-
-class OSCRegistryObserver(Protocol):
-    """注册表观察者接口"""
-
-    def on_address_added(self, address: OSCAddress) -> None: ...
-
-    def on_address_removed(self, address: OSCAddress) -> None: ...
-
-    def on_action_added(self, action: OSCAction) -> None: ...
-
-    def on_action_removed(self, action: OSCAction) -> None: ...
-
-    def on_binding_changed(self, address: OSCAddress, action: Optional[OSCAction]) -> None: ...
-
-    def on_pulse_added(self, pulse: Pulse) -> None: ...
-
-    def on_pulse_removed(self, pulse: Pulse) -> None: ...
+AddressCallback = Callable[[OSCAddress], None]
+ActionCallback = Callable[[OSCAction], None] 
+BindingCallback = Callable[[OSCAddress, Optional[OSCAction]], None]
+PulseCallback = Callable[[Pulse], None]

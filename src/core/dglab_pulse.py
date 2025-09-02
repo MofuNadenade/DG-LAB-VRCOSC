@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List, Optional
 
-from core.osc_common import OSCRegistryObserver, Pulse
+from core.osc_common import Pulse, PulseCallback
 from models import PulseOperation
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,8 @@ class PulseRegistry:
         self._pulses: List[Pulse] = []
         self._pulses_by_name: Dict[str, Pulse] = {}
         self._pulses_by_id: Dict[int, Pulse] = {}
-        self._observers: List[OSCRegistryObserver] = []
+        self._pulse_added_callbacks: List[PulseCallback] = []
+        self._pulse_removed_callbacks: List[PulseCallback] = []
 
     @property
     def pulses(self) -> List[Pulse]:
@@ -93,41 +94,29 @@ class PulseRegistry:
         """
         return pulse_id in self._pulses_by_id
 
-    def add_observer(self, observer: OSCRegistryObserver) -> None:
-        """添加观察者
-        
-        Args:
-            observer: 要添加的观察者实例
-        """
-        if observer not in self._observers:
-            self._observers.append(observer)
+    def add_pulse_added_callback(self, callback: PulseCallback) -> None:
+        if callback not in self._pulse_added_callbacks:
+            self._pulse_added_callbacks.append(callback)
 
-    def remove_observer(self, observer: OSCRegistryObserver) -> None:
-        """移除观察者
-        
-        Args:
-            observer: 要移除的观察者实例
-        """
-        if observer in self._observers:
-            self._observers.remove(observer)
+    def remove_pulse_added_callback(self, callback: PulseCallback) -> None:
+        if callback in self._pulse_added_callbacks:
+            self._pulse_added_callbacks.remove(callback)
+
+    def add_pulse_removed_callback(self, callback: PulseCallback) -> None:
+        if callback not in self._pulse_removed_callbacks:
+            self._pulse_removed_callbacks.append(callback)
+
+    def remove_pulse_removed_callback(self, callback: PulseCallback) -> None:
+        if callback in self._pulse_removed_callbacks:
+            self._pulse_removed_callbacks.remove(callback)
 
     def notify_pulse_added(self, pulse: Pulse) -> None:
-        """通知观察者波形已添加
-        
-        Args:
-            pulse: 新添加的波形实例
-        """
-        for observer in self._observers:
-            observer.on_pulse_added(pulse)
+        for callback in self._pulse_added_callbacks:
+            callback(pulse)
 
     def notify_pulse_removed(self, pulse: Pulse) -> None:
-        """通知观察者波形已移除
-        
-        Args:
-            pulse: 被移除的波形实例
-        """
-        for observer in self._observers:
-            observer.on_pulse_removed(pulse)
+        for callback in self._pulse_removed_callbacks:
+            callback(pulse)
 
     def register_pulse(self, name: str, data: List[PulseOperation]) -> Pulse:
         """注册波形

@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFo
 
 from core.service_controller import ServiceController
 from core.dglab_pulse import PulseRegistry
+from core.osc_common import Pulse
 from i18n import translate, language_signals
 from models import Channel, StrengthData, StrengthOperationType, SettingsDict
 from gui.ui_interface import UIInterface
@@ -50,6 +51,10 @@ class SettingsTab(QWidget):
 
         # 连接语言变更信号
         language_signals.language_changed.connect(self.update_ui_texts)
+        
+        # 注册波形事件回调
+        self.pulse_registry.add_pulse_added_callback(self._on_pulse_added)
+        self.pulse_registry.add_pulse_removed_callback(self._on_pulse_removed)
 
     @property
     def service_controller(self) -> Optional[ServiceController]:
@@ -453,3 +458,9 @@ class SettingsTab(QWidget):
 
         # 更新工具提示
         self.save_settings_btn.setToolTip(translate("controller_tab.save_settings_tooltip"))
+
+    def _on_pulse_added(self, pulse: Pulse) -> None:
+        self.update_pulse_comboboxes()
+
+    def _on_pulse_removed(self, pulse: Pulse) -> None:
+        self.update_pulse_comboboxes()

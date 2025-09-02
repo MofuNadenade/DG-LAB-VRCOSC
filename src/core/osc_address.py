@@ -8,7 +8,7 @@ import logging
 from typing import Optional, List, Dict
 
 from models import OSCAddressDict
-from .osc_common import OSCAddress, OSCRegistryObserver
+from .osc_common import OSCAddress, AddressCallback
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,9 @@ class OSCAddressRegistry:
         self._addresses_by_name: Dict[str, OSCAddress] = {}
         self._addresses_by_code: Dict[str, OSCAddress] = {}
         self._addresses_by_id: Dict[int, OSCAddress] = {}  # 按ID索引
-        self._observers: List[OSCRegistryObserver] = []
-        self._next_address_id: int = 1  # 下一个可用的地址ID
+        self._next_address_id: int = 1
+        self._address_added_callbacks: List[AddressCallback] = []
+        self._address_removed_callbacks: List[AddressCallback] = []
 
     @property
     def addresses(self) -> List[OSCAddress]:
@@ -79,25 +80,29 @@ class OSCAddressRegistry:
         self._next_address_id += 1
         return current_id
 
-    def add_observer(self, observer: OSCRegistryObserver) -> None:
-        """添加观察者"""
-        if observer not in self._observers:
-            self._observers.append(observer)
+    def add_address_added_callback(self, callback: AddressCallback) -> None:
+        if callback not in self._address_added_callbacks:
+            self._address_added_callbacks.append(callback)
 
-    def remove_observer(self, observer: OSCRegistryObserver) -> None:
-        """移除观察者"""
-        if observer in self._observers:
-            self._observers.remove(observer)
+    def remove_address_added_callback(self, callback: AddressCallback) -> None:
+        if callback in self._address_added_callbacks:
+            self._address_added_callbacks.remove(callback)
+
+    def add_address_removed_callback(self, callback: AddressCallback) -> None:
+        if callback not in self._address_removed_callbacks:
+            self._address_removed_callbacks.append(callback)
+
+    def remove_address_removed_callback(self, callback: AddressCallback) -> None:
+        if callback in self._address_removed_callbacks:
+            self._address_removed_callbacks.remove(callback)
 
     def notify_address_added(self, address: OSCAddress) -> None:
-        """通知观察者地址已添加"""
-        for observer in self._observers:
-            observer.on_address_added(address)
+        for callback in self._address_added_callbacks:
+            callback(address)
 
     def notify_address_removed(self, address: OSCAddress) -> None:
-        """通知观察者地址已移除"""
-        for observer in self._observers:
-            observer.on_address_removed(address)
+        for callback in self._address_removed_callbacks:
+            callback(address)
 
     def register_address(self, name: str, code: str) -> OSCAddress:
         """注册地址"""

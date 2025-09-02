@@ -6,7 +6,7 @@ OSC动作管理模块
 
 from typing import Set, Optional, List, Dict
 
-from .osc_common import OSCAction, OSCActionCallback, OSCActionType, OSCRegistryObserver
+from .osc_common import OSCAction, OSCActionCallback, OSCActionType, ActionCallback
 
 
 class OSCActionRegistry:
@@ -18,8 +18,9 @@ class OSCActionRegistry:
         self._actions_by_name: Dict[str, OSCAction] = {}
         self._actions_by_type: Dict[OSCActionType, List[OSCAction]] = {}
         self._actions_by_id: Dict[int, OSCAction] = {}  # 按ID索引
-        self._observers: List[OSCRegistryObserver] = []
         self._next_action_id: int = 1  # 下一个可用的动作ID
+        self._action_added_callbacks: List[ActionCallback] = []
+        self._action_removed_callbacks: List[ActionCallback] = []
 
         # 初始化类型字典
         for action_type in OSCActionType:
@@ -81,25 +82,29 @@ class OSCActionRegistry:
         for action_type in OSCActionType:
             self._actions_by_type[action_type] = []
 
-    def add_observer(self, observer: OSCRegistryObserver) -> None:
-        """添加观察者"""
-        if observer not in self._observers:
-            self._observers.append(observer)
+    def add_action_added_callback(self, callback: ActionCallback) -> None:
+        if callback not in self._action_added_callbacks:
+            self._action_added_callbacks.append(callback)
 
-    def remove_observer(self, observer: OSCRegistryObserver) -> None:
-        """移除观察者"""
-        if observer in self._observers:
-            self._observers.remove(observer)
+    def remove_action_added_callback(self, callback: ActionCallback) -> None:
+        if callback in self._action_added_callbacks:
+            self._action_added_callbacks.remove(callback)
+
+    def add_action_removed_callback(self, callback: ActionCallback) -> None:
+        if callback not in self._action_removed_callbacks:
+            self._action_removed_callbacks.append(callback)
+
+    def remove_action_removed_callback(self, callback: ActionCallback) -> None:
+        if callback in self._action_removed_callbacks:
+            self._action_removed_callbacks.remove(callback)
 
     def notify_action_added(self, action: OSCAction) -> None:
-        """通知观察者动作已添加"""
-        for observer in self._observers:
-            observer.on_action_added(action)
+        for callback in self._action_added_callbacks:
+            callback(action)
 
     def notify_action_removed(self, action: OSCAction) -> None:
-        """通知观察者动作已移除"""
-        for observer in self._observers:
-            observer.on_action_removed(action)
+        for callback in self._action_removed_callbacks:
+            callback(action)
 
     def register_action(self, name: str, callback: OSCActionCallback,
                         action_type: OSCActionType = OSCActionType.CUSTOM,

@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Union
 from models import OSCBindingDict, OSCValue
 from .osc_action import OSCAction
 from .osc_address import OSCAddress
-from .osc_common import OSCRegistryObserver, OSCBinding
+from .osc_common import OSCBinding, BindingCallback
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class OSCBindingRegistry:
         self._bindings_by_address: Dict[OSCAddress, OSCBinding] = {}
         self._bindings_by_action: Dict[OSCAction, List[OSCBinding]] = {}
         self._bindings_by_id: Dict[int, OSCBinding] = {}
-        self._observers: List[OSCRegistryObserver] = []
+        self._binding_changed_callbacks: List[BindingCallback] = []
         self._next_binding_id: int = 1
 
     @property
@@ -84,20 +84,17 @@ class OSCBindingRegistry:
         """检查指定动作是否已被绑定（别名方法）"""
         return self.has_action_binding(action)
 
-    def add_observer(self, observer: OSCRegistryObserver) -> None:
-        """添加观察者"""
-        if observer not in self._observers:
-            self._observers.append(observer)
+    def add_binding_changed_callback(self, callback: BindingCallback) -> None:
+        if callback not in self._binding_changed_callbacks:
+            self._binding_changed_callbacks.append(callback)
 
-    def remove_observer(self, observer: OSCRegistryObserver) -> None:
-        """移除观察者"""
-        if observer in self._observers:
-            self._observers.remove(observer)
+    def remove_binding_changed_callback(self, callback: BindingCallback) -> None:
+        if callback in self._binding_changed_callbacks:
+            self._binding_changed_callbacks.remove(callback)
 
     def notify_binding_changed(self, address: OSCAddress, action: Optional[OSCAction]) -> None:
-        """通知观察者绑定已变化"""
-        for observer in self._observers:
-            observer.on_binding_changed(address, action)
+        for callback in self._binding_changed_callbacks:
+            callback(address, action)
 
     def _get_next_binding_id(self) -> int:
         """获取下一个可用的绑定ID"""
