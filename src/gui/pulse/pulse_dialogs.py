@@ -758,7 +758,7 @@ class PulseInfoDialog(QDialog):
         form_layout = QFormLayout()
 
         # 基本信息
-        form_layout.addRow(translate("pulse_dialogs.pulse_info.index_label"), QLabel(str(self.pulse.index)))
+        form_layout.addRow(translate("pulse_dialogs.pulse_info.index_label"), QLabel(str(self.pulse.id)))
         form_layout.addRow(translate("pulse_dialogs.pulse_info.steps_label"), QLabel(str(len(self.pulse.data))))
 
         # 强度统计

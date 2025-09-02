@@ -5,9 +5,9 @@ OSC通用模块
 """
 
 from enum import Enum
-from typing import Awaitable, Protocol, Optional, Set
+from typing import Awaitable, List, Protocol, Optional, Set
 
-from models import OSCValue
+from models import OSCValue, PulseOperation
 
 
 class OSCActionType(Enum):
@@ -120,6 +120,28 @@ class OSCBinding:
         return self.id
 
 
+class Pulse:
+    def __init__(self, pulse_id: int, name: str, data: List[PulseOperation]) -> None:
+        super().__init__()
+        self.id: int = pulse_id
+        self.name: str = name
+        self.data: List[PulseOperation] = data
+    
+    def __str__(self) -> str:
+        return f"Pulse(id={self.id}, name={self.name}, data={self.data})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Pulse):
+            return False
+        return self.id == other.id
+    
+    def __hash__(self) -> int:
+        return self.id
+
+
 class OSCAddressValidator:
     """OSC地址验证器"""
 
@@ -186,3 +208,7 @@ class OSCRegistryObserver(Protocol):
     def on_action_removed(self, action: OSCAction) -> None: ...
 
     def on_binding_changed(self, address: OSCAddress, action: Optional[OSCAction]) -> None: ...
+
+    def on_pulse_added(self, pulse: Pulse) -> None: ...
+
+    def on_pulse_removed(self, pulse: Pulse) -> None: ...

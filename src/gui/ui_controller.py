@@ -137,21 +137,21 @@ class UIController(UIInterface):
             # 同步波形设置并更新设备
             pulse_registry = self.registries.pulse_registry
             if a_index >= 0:
-                pulse_index_a = self.main_window.settings_tab.current_pulse_a_combobox.itemData(a_index)
-                if pulse_index_a is not None:
-                    if pulse_index_a == -1:
+                pulse_id_a = self.main_window.settings_tab.current_pulse_a_combobox.itemData(a_index)
+                if pulse_id_a is not None:
+                    if pulse_id_a == -1:
                         self.service_controller.osc_action_service.set_current_pulse(Channel.A, None)
-                    elif pulse_registry.is_valid_index(pulse_index_a):
-                        pulse_a = pulse_registry.get_pulse_by_index(pulse_index_a)
+                    elif pulse_registry.is_valid_id(pulse_id_a):
+                        pulse_a = pulse_registry.get_pulse_by_id(pulse_id_a)
                         if pulse_a is not None:
                             self.service_controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
             if b_index >= 0:
-                pulse_index_b = self.main_window.settings_tab.current_pulse_b_combobox.itemData(b_index)
-                if pulse_index_b is not None:
-                    if pulse_index_b == -1:
+                pulse_id_b = self.main_window.settings_tab.current_pulse_b_combobox.itemData(b_index)
+                if pulse_id_b is not None:
+                    if pulse_id_b == -1:
                         self.service_controller.osc_action_service.set_current_pulse(Channel.B, None)
-                    elif pulse_registry.is_valid_index(pulse_index_b):
-                        pulse_b = pulse_registry.get_pulse_by_index(pulse_index_b)
+                    elif pulse_registry.is_valid_id(pulse_id_b):
+                        pulse_b = pulse_registry.get_pulse_by_id(pulse_id_b)
                         if pulse_b is not None:
                             self.service_controller.osc_action_service.set_current_pulse(Channel.B, pulse_b)
 
@@ -405,7 +405,7 @@ class UIController(UIInterface):
         combo.blockSignals(True)
 
         # 根据pulse确定目标UserData值
-        target_user_data = pulse.index if pulse else -1
+        target_user_data = pulse.id if pulse else -1
 
         # 查找匹配UserData的项目
         found_index = -1

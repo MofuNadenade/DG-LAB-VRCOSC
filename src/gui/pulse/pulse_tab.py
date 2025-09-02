@@ -660,7 +660,7 @@ class PulseTab(QWidget):
 
                 # 从注册表中移除
                 if self.ui_interface.registries.pulse_registry:
-                    self.ui_interface.registries.pulse_registry.unregister_pulse(pulse)
+                    self.ui_interface.registries.pulse_registry.unregister_pulse_by_instance(pulse)
 
                 self.load_pulses()
                 self.pulse_deleted.emit(pulse.name)

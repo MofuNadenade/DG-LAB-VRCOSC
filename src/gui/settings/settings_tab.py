@@ -184,8 +184,8 @@ class SettingsTab(QWidget):
 
         # 重新添加所有波形选项（包括自定义波形），UserData为pulse的index
         for pulse in self.pulse_registry.pulses:
-            self.current_pulse_a_combobox.addItem(pulse.name, pulse.index)
-            self.current_pulse_b_combobox.addItem(pulse.name, pulse.index)
+            self.current_pulse_a_combobox.addItem(pulse.name, pulse.id)
+            self.current_pulse_b_combobox.addItem(pulse.name, pulse.id)
 
         self.current_pulse_a_combobox.blockSignals(False)
         self.current_pulse_b_combobox.blockSignals(False)
@@ -251,27 +251,27 @@ class SettingsTab(QWidget):
             return
 
         # 获取UserData（pulse的真实index）
-        pulse_index = self.current_pulse_a_combobox.currentData()
-        if pulse_index is None:
+        pulse_id = self.current_pulse_a_combobox.currentData()
+        if pulse_id is None:
             logger.warning("A通道波形索引为空")
             return
 
         # 如果是"无波形"选项（UserData为-1）
-        if pulse_index == -1:
+        if pulse_id == -1:
             # 设置为None表示无波形
             asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.A, None))
             logger.info("A通道波形模式已更新为 无波形")
             return
 
         # 验证索引有效性
-        if not self.pulse_registry.is_valid_index(pulse_index):
-            logger.warning(f"A通道波形索引无效: {pulse_index}")
+        if not self.pulse_registry.is_valid_id(pulse_id):
+            logger.warning(f"A通道波形索引无效: {pulse_id}")
             return
 
         # 获取 Pulse 对象
-        pulse = self.pulse_registry.get_pulse_by_index(pulse_index)
+        pulse = self.pulse_registry.get_pulse_by_id(pulse_id)
         if pulse is None:
-            logger.warning(f"A通道未找到索引为{pulse_index}的波形")
+            logger.warning(f"A通道未找到索引为{pulse_id}的波形")
             return
 
         asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.A, pulse))
@@ -283,27 +283,27 @@ class SettingsTab(QWidget):
             return
 
         # 获取UserData（pulse的真实index）
-        pulse_index = self.current_pulse_b_combobox.currentData()
-        if pulse_index is None:
+        pulse_id = self.current_pulse_b_combobox.currentData()
+        if pulse_id is None:
             logger.warning("B通道波形索引为空")
             return
 
         # 如果是"无波形"选项（UserData为-1）
-        if pulse_index == -1:
+        if pulse_id == -1:
             # 设置为None表示无波形
             asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.B, None))
             logger.info("B通道波形模式已更新为 无波形")
             return
 
         # 验证索引有效性
-        if not self.pulse_registry.is_valid_index(pulse_index):
-            logger.warning(f"B通道波形索引无效: {pulse_index}")
+        if not self.pulse_registry.is_valid_id(pulse_id):
+            logger.warning(f"B通道波形索引无效: {pulse_id}")
             return
 
         # 获取 Pulse 对象
-        pulse = self.pulse_registry.get_pulse_by_index(pulse_index)
+        pulse = self.pulse_registry.get_pulse_by_id(pulse_id)
         if pulse is None:
-            logger.warning(f"B通道未找到索引为{pulse_index}的波形")
+            logger.warning(f"B通道未找到索引为{pulse_id}的波形")
             return
 
         asyncio.create_task(self.service_controller.osc_action_service.set_pulse(Channel.B, pulse))
