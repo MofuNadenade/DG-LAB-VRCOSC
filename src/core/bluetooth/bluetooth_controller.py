@@ -112,7 +112,7 @@ class BluetoothController:
     
     # ============ 设备管理 ============
     
-    async def scan_devices(self, scan_time: float = 10.0) -> List[DeviceInfo]:
+    async def scan_devices(self, scan_time: float = 5.0) -> List[DeviceInfo]:
         """扫描可用的DG-LAB V3设备"""
         try:
             logger.info(f"开始扫描DG-LAB V3设备，扫描时间: {scan_time}秒")
@@ -210,6 +210,8 @@ class BluetoothController:
             return True
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             logger.error(f"连接设备失败: {e}")
             await self._cleanup_connection()
             return False
@@ -617,6 +619,9 @@ class BluetoothController:
             return
         
         self._is_running = True
+        
+        # 让出控制权到事件循环，避免在当前任务执行期间创建新任务导致冲突
+        await asyncio.sleep(0)
         
         # 启动数据发送任务
         self._data_send_task = asyncio.create_task(self._data_send_loop())

@@ -207,8 +207,12 @@ class WebsocketSettingsDict(TypedDict, total=False):
 
 class BluetoothSettingsDict(TypedDict, total=False):
     """蓝牙设置配置类型定义"""
-    # 蓝牙相关设置，暂时为空，后续扩展
-    pass
+    strength_limit_a: int
+    strength_limit_b: int
+    freq_balance_a: int
+    freq_balance_b: int
+    strength_balance_a: int
+    strength_balance_b: int
 
 
 class ConnectionSettingsDict(TypedDict, total=False):
