@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QSlider, QMessageBox
 )
 
-from core.bluetooth.bluetooth_models import DeviceInfo
+from services.dglab_bluetooth_service import DGLabDevice
 from gui.connection.bluetooth.bluetooth_manager import BluetoothConnectionManager
 from gui.ui_interface import UIInterface
 from i18n import translate
@@ -469,11 +469,21 @@ class BluetoothConnectionWidget(QWidget):
     
     def on_connect_button_clicked(self) -> None:
         """连接按钮点击事件"""
-        asyncio.create_task(self.connection_manager.connect_to_device())
+        # 获取选中的设备
+        selected_device = self.connection_manager.selected_device
+        if not selected_device:
+            QMessageBox.warning(self, translate("bluetooth.error"), translate("bluetooth.no_device_selected"))
+            return
+            
+        # 获取OSC端口
+        osc_port = self.settings.get('osc_port', 9001)
+        
+        # 启动连接
+        self.connection_manager.start_connection(selected_device, osc_port)
     
     def on_disconnect_button_clicked(self) -> None:
         """断开连接按钮点击事件"""
-        asyncio.create_task(self.connection_manager.disconnect_from_device())
+        self.connection_manager.stop_connection()
     
     def on_apply_params_clicked(self) -> None:
         """应用参数按钮点击事件"""
@@ -503,7 +513,7 @@ class BluetoothConnectionWidget(QWidget):
         
         logger.info("蓝牙设备扫描完成")
     
-    def on_devices_found(self, devices: List[DeviceInfo]) -> None:
+    def on_devices_found(self, devices: List[DGLabDevice]) -> None:
         """设备发现回调"""
         self.device_list.clear()
         
@@ -534,7 +544,7 @@ class BluetoothConnectionWidget(QWidget):
         except ValueError:
             logger.error(f"无效的连接状态值: {state_value}")
     
-    def on_device_connected(self, device: DeviceInfo) -> None:
+    def on_device_connected(self, device: DGLabDevice) -> None:
         """设备连接成功"""
         device_text = f"{device['name']} ({device['address'][:8]}...)"
         self.device_info_label.setText(device_text)
@@ -578,16 +588,33 @@ class BluetoothConnectionWidget(QWidget):
             QMessageBox.warning(self, translate("common.error"), translate("bluetooth.device_not_connected"))
             return
         
-        asyncio.create_task(
-            self.connection_manager.apply_device_parameters(
-                strength_limit_a=self.strength_limit_a_slider.value(),
-                strength_limit_b=self.strength_limit_b_slider.value(),
-                freq_balance_a=self.freq_balance_a_slider.value(),
-                freq_balance_b=self.freq_balance_b_slider.value(),
-                strength_balance_a=self.strength_balance_a_slider.value(),
-                strength_balance_b=self.strength_balance_b_slider.value()
-            )
-        )
+        # 通过服务控制器访问蓝牙服务
+        service_controller = self.connection_manager.service_controller
+        if not service_controller:
+            QMessageBox.warning(self, translate("common.error"), "服务控制器未初始化")
+            return
+            
+        # 获取蓝牙设备服务并检查类型
+        from services.dglab_bluetooth_service import DGLabBluetoothService
+        from models import Channel
+        
+        bluetooth_service = service_controller.dglab_device_service
+        if not isinstance(bluetooth_service, DGLabBluetoothService):
+            QMessageBox.warning(self, translate("common.error"), "当前服务不支持蓝牙设备参数设置")
+            return
+            
+        # 应用设备参数
+        try:
+            bluetooth_service.set_strength_limit(Channel.A, self.strength_limit_a_slider.value())
+            bluetooth_service.set_strength_limit(Channel.B, self.strength_limit_b_slider.value())
+            bluetooth_service.set_freq_balance(Channel.A, self.freq_balance_a_slider.value())
+            bluetooth_service.set_freq_balance(Channel.B, self.freq_balance_b_slider.value())
+            bluetooth_service.set_strength_balance(Channel.A, self.strength_balance_a_slider.value())
+            bluetooth_service.set_strength_balance(Channel.B, self.strength_balance_b_slider.value())
+            
+            QMessageBox.information(self, translate("common.success"), "设备参数已应用")
+        except Exception as e:
+            QMessageBox.warning(self, translate("common.error"), f"应用参数失败: {e}")
     
     
     # =================== 资源清理 ===================

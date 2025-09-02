@@ -341,18 +341,21 @@ class DGLabBluetoothService(IDGLabDeviceService):
 
     # ============ 公共设备管理方法 ============
 
-    async def scan_devices(self) -> List[DGLabDevice]:
+    async def scan_devices(self, scan_time: float = 5.0) -> List[DGLabDevice]:
         """
         扫描可用的DG-LAB v3.0设备
         
+        Args:
+            scan_time: 扫描时间，单位为秒，默认5.0秒
+        
         Returns:
-            List[DGLabDevice]: 设备信息列表，包含address和rssi字段
+            List[DGLabDevice]: 设备信息列表，包含address、rssi和name字段
         """
         try:
-            logger.info("开始扫描可用的DG-LAB v3.0设备...")
+            logger.info(f"开始扫描可用的DG-LAB v3.0设备，扫描时间: {scan_time}秒...")
             
             # 使用蓝牙控制器扫描设备
-            devices: List[bluetooth.DeviceInfo] = await self._bluetooth_controller.scan_devices()
+            devices: List[bluetooth.DeviceInfo] = await self._bluetooth_controller.scan_devices(scan_time)
             
             # 转换为DGLabDevice格式
             device_list: List[DGLabDevice] = []
@@ -497,6 +500,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
         except Exception as e:
             logger.error(f"更新设备参数失败: {e}")
             return False
+
     def _convert_channel(self, channel: Channel) -> bluetooth.Channel:
         """转换模型通道到蓝牙通道"""
         if channel == Channel.A:
