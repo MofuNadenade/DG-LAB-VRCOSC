@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Optional, Dict
+from typing import Optional
 
 from PySide6.QtCore import Qt, QPoint, QLocale
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout,
@@ -22,9 +22,6 @@ class SettingsTab(QWidget):
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
         self.settings: SettingsDict = ui_interface.settings
-
-        # 控制滑动条外部更新的状态标志
-        self.allow_channel_updates: Dict[Channel, bool] = {Channel.A: True, Channel.B: True}
 
         # 防止重复绑定的标志
         self._signals_connected: bool = False
@@ -78,8 +75,6 @@ class SettingsTab(QWidget):
         self.a_channel_label = QLabel(f"A {translate('controller_tab.channel_intensity')}: 0 / 100")
         self.a_channel_slider = QSlider(Qt.Orientation.Horizontal)
         self.a_channel_slider.setRange(0, 100)
-        self.a_channel_slider.sliderPressed.connect(lambda: self.set_channel_update_state(Channel.A, False))
-        self.a_channel_slider.sliderReleased.connect(lambda: self.set_channel_update_state(Channel.A, True))
         self.a_channel_slider.valueChanged.connect(self.set_a_channel_strength)
         self.a_channel_slider.valueChanged.connect(lambda: self.show_tooltip(self.a_channel_slider))
         controller_form.addRow(self.a_channel_label)
@@ -89,8 +84,6 @@ class SettingsTab(QWidget):
         self.b_channel_label = QLabel(f"B {translate('controller_tab.channel_intensity')}: 0 / 100")
         self.b_channel_slider = QSlider(Qt.Orientation.Horizontal)
         self.b_channel_slider.setRange(0, 100)
-        self.b_channel_slider.sliderPressed.connect(lambda: self.set_channel_update_state(Channel.B, False))
-        self.b_channel_slider.sliderReleased.connect(lambda: self.set_channel_update_state(Channel.B, True))
         self.b_channel_slider.valueChanged.connect(self.set_b_channel_strength)
         self.b_channel_slider.valueChanged.connect(lambda: self.show_tooltip(self.b_channel_slider))
         controller_form.addRow(self.b_channel_label)
@@ -392,15 +385,6 @@ class SettingsTab(QWidget):
 
             QToolTip.showText(tooltip_pos, f"{value}", slider)
 
-    def set_channel_update_state(self, channel: Channel, enabled: bool) -> None:
-        """设置指定通道的外部更新状态
-        
-        Args:
-            channel: 要设置的通道 (Channel.A 或 Channel.B)
-            enabled: 是否启用外部更新 (True 启用, False 禁用)
-        """
-        self.allow_channel_updates[channel] = enabled
-
     def on_current_channel_updated(self, channel: Channel) -> None:
         """更新当前选择通道显示"""
         channel_name = "A" if channel == Channel.A else "B"
@@ -412,27 +396,23 @@ class SettingsTab(QWidget):
 
         last_strength = self.service_controller.osc_action_service.get_last_strength() if self.service_controller else None
         if self.service_controller and last_strength:
-            # 仅当允许外部更新时更新 A 通道滑动条
-            if self.allow_channel_updates[Channel.A]:
-                self.a_channel_slider.blockSignals(True)
-                self.a_channel_slider.setRange(0, last_strength['strength_limit'][Channel.A])  # 根据限制更新范围
-                self.a_channel_slider.setValue(last_strength['strength'][Channel.A])
-                self.a_channel_slider.blockSignals(False)
-                pulse_a = self.service_controller.osc_action_service.get_current_pulse(Channel.A)
-                pulse_a_name = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
-                self.a_channel_label.setText(
-                    f"A {translate('channel.strength_display')}: {last_strength['strength'][Channel.A]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.A]}  {translate('channel.pulse')}: {pulse_a_name}")
+            self.a_channel_slider.blockSignals(True)
+            self.a_channel_slider.setRange(0, last_strength['strength_limit'][Channel.A])  # 根据限制更新范围
+            self.a_channel_slider.setValue(last_strength['strength'][Channel.A])
+            self.a_channel_slider.blockSignals(False)
+            pulse_a = self.service_controller.osc_action_service.get_current_pulse(Channel.A)
+            pulse_a_name = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
+            self.a_channel_label.setText(
+                f"A {translate('channel.strength_display')}: {last_strength['strength'][Channel.A]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.A]}  {translate('channel.pulse')}: {pulse_a_name}")
 
-            # 仅当允许外部更新时更新 B 通道滑动条
-            if self.allow_channel_updates[Channel.B]:
-                self.b_channel_slider.blockSignals(True)
-                self.b_channel_slider.setRange(0, last_strength['strength_limit'][Channel.B])  # 根据限制更新范围
-                self.b_channel_slider.setValue(last_strength['strength'][Channel.B])
-                self.b_channel_slider.blockSignals(False)
-                pulse_b = self.service_controller.osc_action_service.get_current_pulse(Channel.B)
-                pulse_b_name = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
-                self.b_channel_label.setText(
-                    f"B {translate('channel.strength_display')}: {last_strength['strength'][Channel.B]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.B]}  {translate('channel.pulse')}: {pulse_b_name}")
+            self.b_channel_slider.blockSignals(True)
+            self.b_channel_slider.setRange(0, last_strength['strength_limit'][Channel.B])  # 根据限制更新范围
+            self.b_channel_slider.setValue(last_strength['strength'][Channel.B])
+            self.b_channel_slider.blockSignals(False)
+            pulse_b = self.service_controller.osc_action_service.get_current_pulse(Channel.B)
+            pulse_b_name = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
+            self.b_channel_label.setText(
+                f"B {translate('channel.strength_display')}: {last_strength['strength'][Channel.B]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.B]}  {translate('channel.pulse')}: {pulse_b_name}")
 
     def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""

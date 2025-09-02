@@ -57,9 +57,6 @@ class DGLabBluetoothService(IDGLabDeviceService):
         # 蓝牙控制器（新架构只需要Controller）
         self._bluetooth_controller: bluetooth.BluetoothController = bluetooth.BluetoothController()
         
-        # 连接状态
-        self._is_connected: bool = False
-        
         # 服务状态
         self._server_running: bool = False
         self._stop_event: asyncio.Event = asyncio.Event()
@@ -80,25 +77,38 @@ class DGLabBluetoothService(IDGLabDeviceService):
 
     def _setup_callbacks(self) -> None:
         """设置回调函数"""
-        self._bluetooth_controller.set_connection_callback(self._on_connection_changed)
+        self._bluetooth_controller.set_connected_callback(self._on_connected)
+        self._bluetooth_controller.set_disconnected_callback(self._on_disconnected)
+        self._bluetooth_controller.set_connection_lost_callback(self._on_connection_lost)
         self._bluetooth_controller.set_strength_changed_callback(self._on_strength_changed)
         self._bluetooth_controller.set_battery_callback(self._on_battery_changed)
 
-    async def _on_connection_changed(self, connected: bool) -> None:
+    async def _on_connected(self) -> None:
         """处理连接状态变化"""
-        logger.info(f"蓝牙连接状态变化: {'已连接' if connected else '已断开'}")
+        logger.info(f"蓝牙连接状态变化: 已连接")
         
-        self._is_connected = connected
-        
-        if connected:
-            # 连接成功后初始化设备
-            await self._initialize_device()
-            # 通知核心接口连接成功
-            self._core_interface.on_client_connected()
-        else:
-            # 尝试重连
-            logger.info("开始尝试重连设备")
-            asyncio.create_task(self._attempt_reconnect())
+        # 连接成功后初始化设备
+        await self._initialize_device()
+        # 通知核心接口连接成功
+        self._core_interface.on_client_connected()
+
+    async def _on_disconnected(self) -> None:
+        """处理连接状态变化"""
+        logger.info(f"蓝牙连接状态变化: 已断开")
+
+        # 断开连接后清理状态
+        self._current_strengths = {Channel.A: 0, Channel.B: 0}
+        self._last_strength = None
+        # 通知核心接口连接断开
+        self._core_interface.on_client_disconnected()
+
+    async def _on_connection_lost(self) -> None:
+        """处理连接丢失"""
+        logger.info(f"蓝牙连接状态变化: 连接丢失")
+
+        # 尝试重连
+        logger.info("开始尝试重连设备")
+        await self._attempt_reconnect()
 
     async def _on_strength_changed(self, strengths: Dict[bluetooth.Channel, int]) -> None:
         """处理强度变化"""
@@ -156,7 +166,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
             self._stop_event.set()
             
             # 断开蓝牙连接
-            if self._is_connected:
+            if self.is_device_connected():
                 await self._disconnect_device()
             
             logger.info("蓝牙服务已停止")
@@ -264,7 +274,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
         self._strength_limits[channel] = limit
         
         # 如果设备已连接，立即更新到设备
-        if self._is_connected:
+        if self.is_device_connected():
             asyncio.create_task(self._update_device_params())
         
         logger.debug(f"设置通道{channel}强度上限: {limit}")
@@ -287,7 +297,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
         self._freq_balances[channel] = balance
         
         # 如果设备已连接，立即更新到设备
-        if self._is_connected:
+        if self.is_device_connected():
             asyncio.create_task(self._update_device_params())
         
         logger.debug(f"设置通道{channel}频率平衡: {balance}")
@@ -309,7 +319,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
         self._strength_balances[channel] = balance
         
         # 如果设备已连接，立即更新到设备
-        if self._is_connected:
+        if self.is_device_connected():
             asyncio.create_task(self._update_device_params())
         
         logger.debug(f"设置通道{channel}强度平衡: {balance}")
@@ -350,16 +360,33 @@ class DGLabBluetoothService(IDGLabDeviceService):
             return []
 
     async def connect_device(self, device: Optional[DGLabDevice] = None) -> bool:
-        """
-        连接到DG-LAB设备
-        
-        Args:
-            device (DGLabDevice, optional): 指定设备信息，如果为None则扫描并连接第一个可用设备
-            
-        Returns:
-            bool: 连接是否成功
-        """
+        """连接到DG-LAB设备"""
+        return await self._connect_device(device)
+
+    async def disconnect_device(self) -> bool:
+        """断开设备连接"""
+        return await self._disconnect_device()
+
+    def is_device_connected(self) -> bool:
+        """检查设备是否已连接"""
+        return self._bluetooth_controller.is_connected
+    
+    def is_device_connecting(self) -> bool:
+        """检查设备是否正在连接"""
+        return self._bluetooth_controller.is_connecting
+    
+    def is_device_disconnecting(self) -> bool:
+        """检查设备是否正在断开"""
+        return self._bluetooth_controller.is_disconnecting
+
+    # ============ 内部实现方法 ============
+
+    async def _connect_device(self, device: Optional[DGLabDevice] = None) -> bool:
         try:
+            # 判断是否正在连接
+            if self.is_device_connecting():
+                return False
+            
             # 设置等待连接状态
             self._core_interface.set_connection_state(ConnectionState.WAITING)
             
@@ -368,7 +395,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
             if device:
                 logger.info(f"尝试连接到指定设备: {device['address']}")
                 # 断开现有连接
-                if self._is_connected:
+                if self.is_device_connected():
                     await self._disconnect_device()
                 
                 # 创建设备信息并连接
@@ -394,19 +421,13 @@ class DGLabBluetoothService(IDGLabDeviceService):
             logger.error(f"连接设备失败: {e}")
             return False
 
-    async def disconnect_device(self) -> bool:
-        """断开设备连接"""
-        return await self._disconnect_device()
-
-    def is_device_connected(self) -> bool:
-        """检查设备是否已连接"""
-        return self._is_connected and self._bluetooth_controller.is_connected
-
-    # ============ 内部实现方法 ============
-
     async def _disconnect_device(self) -> bool:
         """内部断开设备连接方法"""
         try:
+            # 判断是否正在断开
+            if self.is_device_disconnecting():
+                return False
+            
             success: bool = await self._bluetooth_controller.disconnect_device()
             
             if success:
@@ -423,7 +444,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
     async def _attempt_reconnect(self) -> None:
         """无限尝试重连设备（不等待）"""
         attempt = 1
-        while True:
+        while self._server_running:
             try:
                 logger.info(f"重连尝试 {attempt}")
                 # 立即尝试重连到上次连接的设备
@@ -473,7 +494,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
     async def _update_device_params(self) -> bool:
         """更新设备参数到硬件"""
         try:
-            if not self._is_connected:
+            if not self.is_device_connected():
                 logger.warning("设备未连接，无法更新设备参数")
                 return False
             

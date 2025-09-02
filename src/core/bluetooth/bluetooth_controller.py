@@ -46,6 +46,8 @@ class BluetoothController:
         # 蓝牙连接
         self._client: Optional[BleakClient] = None
         self._is_connected = False
+        self._is_connecting = False
+        self._is_disconnecting = False
         self._current_device: Optional[DeviceInfo] = None
         
         # GATT特性对象缓存
@@ -74,7 +76,10 @@ class BluetoothController:
         
         # 回调函数
         self._on_notification: Optional[Callable[[bytes], Awaitable[None]]] = None
-        self._on_connection_changed: Optional[Callable[[bool], Awaitable[None]]] = None
+        self._on_connecting: Optional[Callable[[], Awaitable[None]]] = None
+        self._on_connected: Optional[Callable[[], Awaitable[None]]] = None
+        self._on_disconnected: Optional[Callable[[], Awaitable[None]]] = None
+        self._on_connection_lost: Optional[Callable[[], Awaitable[None]]] = None
         self._on_strength_changed: Optional[Callable[[Dict[Channel, int]], Awaitable[None]]] = None
         self._on_battery_changed: Optional[Callable[[int], Awaitable[None]]] = None
         
@@ -86,9 +91,21 @@ class BluetoothController:
         """设置通知回调"""
         self._on_notification = callback
     
-    def set_connection_callback(self, callback: Callable[[bool], Awaitable[None]]) -> None:
-        """设置连接状态变化回调"""
-        self._on_connection_changed = callback
+    def set_connecting_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+        """设置连接中状态回调"""
+        self._on_connecting = callback
+    
+    def set_connected_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+        """设置连接成功回调"""
+        self._on_connected = callback
+    
+    def set_disconnected_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+        """设置断开连接回调"""
+        self._on_disconnected = callback
+    
+    def set_connection_lost_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+        """设置连接丢失回调"""
+        self._on_connection_lost = callback
     
     def set_strength_changed_callback(self, callback: Callable[[Dict[Channel, int]], Awaitable[None]]) -> None:
         """设置强度变化回调"""
@@ -101,7 +118,17 @@ class BluetoothController:
     @property
     def is_connected(self) -> bool:
         """检查是否已连接"""
-        return self._is_connected and self._client is not None and self._client.is_connected
+        return self._is_connected
+    
+    @property
+    def is_connecting(self) -> bool:
+        """检查是否正在连接"""
+        return self._is_connecting
+
+    @property
+    def is_disconnecting(self) -> bool:
+        """检查是否正在断开"""
+        return self._is_disconnecting
     
     @property
     def current_device(self) -> Optional[DeviceInfo]:
@@ -163,9 +190,20 @@ class BluetoothController:
     async def connect_device(self, device: Optional[DeviceInfo] = None, timeout: float = 20.0) -> bool:
         """连接到DG-LAB V3设备"""
         try:
+            # 判断是否正在连接
+            if self.is_connecting:
+                return False
+
             # 断开现有连接
             if self.is_connected:
                 await self.disconnect_device()
+            
+            # 设置连接中状态
+            self._is_connecting = True
+            
+            # 触发连接中状态回调
+            if self._on_connecting:
+                await self._on_connecting()
             
             # 获取目标设备
             target_device = device
@@ -213,8 +251,8 @@ class BluetoothController:
             await self._start_services()
             
             # 触发连接状态回调
-            if self._on_connection_changed:
-                await self._on_connection_changed(True)
+            if self._on_connected:
+                await self._on_connected()
             
             # 触发连接状态事件信号
             self._connected_event.set()
@@ -226,14 +264,24 @@ class BluetoothController:
             logger.error(f"连接设备失败: {e}")
             await self._cleanup_connection()
             return False
+        
+        finally:
+            self._is_connecting = False
     
     async def disconnect_device(self) -> bool:
         """断开设备连接"""
         try:
+            # 判断是否正在断开
+            if self._is_disconnecting:
+                return False
+
+            # 判断是否已连接
             if not self._is_connected:
                 return True
             
             logger.info("正在断开设备连接...")
+
+            self._is_disconnecting = True
             
             # 停止服务
             await self._stop_services()
@@ -242,12 +290,9 @@ class BluetoothController:
             if self._client and self._client.is_connected:
                 await self._client.disconnect()
             
-            # 清理连接状态
-            await self._cleanup_connection()
-            
             # 触发连接状态回调
-            if self._on_connection_changed:
-                await self._on_connection_changed(False)
+            if self._on_disconnected:
+                await self._on_disconnected()
             
             logger.info("设备连接已断开")
             return True
@@ -256,6 +301,9 @@ class BluetoothController:
             logger.error(f"断开连接失败: {e}")
             await self._cleanup_connection()
             return False
+        
+        finally:
+            self._is_disconnecting = False
     
     # ============ 设备参数控制 ============
     
@@ -790,6 +838,7 @@ class BluetoothController:
     async def _cleanup_connection(self) -> None:
         """清理连接状态"""
         self._is_connected = False
+        self._is_connecting = False  # 清除连接中状态
         self._current_device = None
         self._device_state['is_connected'] = False
         self._write_characteristic = None
@@ -799,14 +848,7 @@ class BluetoothController:
         # 清除连接状态事件信号
         self._connected_event.clear()
         
-        if self._client:
-            try:
-                if self._client.is_connected:
-                    await self._client.disconnect()
-            except Exception:
-                pass
-            finally:
-                self._client = None
+        self._client = None
     
     def _on_disconnect_callback(self, client: BleakClient) -> None:
         """断开连接回调"""
@@ -817,9 +859,7 @@ class BluetoothController:
         logger.info("设备连接已断开")
         await self._cleanup_connection()
         
-        # 触发连接状态回调
-        if self._on_connection_changed:
-            try:
-                await self._on_connection_changed(False)
-            except Exception as e:
-                logger.error(f"触发连接状态回调失败: {e}")
+        if not self._is_disconnecting:
+            # 触发连接状态回调
+            if self._on_connection_lost:
+                await self._on_connection_lost()
