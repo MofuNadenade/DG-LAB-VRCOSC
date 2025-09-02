@@ -96,7 +96,6 @@ class DownloadDialog(QDialog):
         self.updater.download_error.connect(self._on_download_error)
         self.updater.install_complete.connect(self._on_install_complete)
         self.updater.install_error.connect(self._on_install_error)
-        self.updater.restart_required.connect(self._on_restart_required)
 
     async def _start_download(self) -> None:
         """启动下载"""
@@ -142,27 +141,6 @@ class DownloadDialog(QDialog):
 
     def _on_install_complete(self) -> None:
         """处理安装完成信号"""
-        self._update_status(translate('download_dialog.install_complete'))
-        self.cancel_button.setText(translate('download_dialog.close'))
-        self.install_button.setEnabled(False)
-        self._log_message(translate('download_dialog.install_success'))
-        
-        # 询问是否重启程序
-        reply = QMessageBox.question(
-            self,
-            translate('download_dialog.restart_confirm_title'),
-            translate('download_dialog.restart_confirm_message'),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            self.updater.restart_application()
-        else:
-            self._log_message(translate('download_dialog.restart_cancelled'))
-
-    def _on_restart_required(self) -> None:
-        """处理需要重启信号"""
         self._update_status(translate('download_dialog.install_complete'))
         self.cancel_button.setText(translate('download_dialog.close'))
         self.install_button.setEnabled(False)

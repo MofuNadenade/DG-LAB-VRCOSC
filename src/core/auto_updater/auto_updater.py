@@ -17,7 +17,9 @@ from urllib.parse import urlparse
 import aiohttp
 from packaging import version
 from PySide6.QtCore import QObject, Signal
-from PySide6.QtWidgets import QFileDialog, QWidget
+from PySide6.QtWidgets import QFileDialog, QWidget, QMessageBox
+
+from i18n import translate
 
 from .models import ReleaseInfo
 from models import SettingsDict
@@ -56,7 +58,6 @@ class AutoUpdater(QObject):
     download_error = Signal(str)
     install_complete = Signal()
     install_error = Signal(str)
-    restart_required = Signal()  # 需要重启的信号
     
     def __init__(self, repo: str, current_version: str, settings: SettingsDict) -> None:
         super().__init__()
@@ -539,6 +540,19 @@ class AutoUpdater(QObject):
                 str(backup_path)
             ]
             
+            # 询问用户是否重启程序
+            reply = QMessageBox.question(
+                None,  # 没有父窗口
+                translate('download_dialog.restart_confirm_title'),
+                translate('download_dialog.restart_confirm_message'),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+            
+            if not reply == QMessageBox.StandardButton.Yes:
+                logger.info("用户取消了重启")
+                return False
+
             # 在后台启动批处理脚本
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
@@ -552,9 +566,8 @@ class AutoUpdater(QObject):
                 )
             )
 
-            # 发出重启信号，让UI层处理重启确认
-            self.restart_required.emit()
-            return True
+            # 退出当前进程
+            sys.exit(0)
             
         except Exception as e:
             logger.error(f"Windows安装失败: {e}")
