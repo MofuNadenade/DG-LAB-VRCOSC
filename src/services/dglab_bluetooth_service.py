@@ -478,6 +478,9 @@ class DGLabBluetoothService(IDGLabDeviceService):
                     "strength_limit": self._strength_limits.copy()
                 }
                 
+                # 通知UI更新强度上限和当前强度
+                self._core_interface.on_strength_data_updated(self._last_strength)
+                
                 # 查询电量
                 await self._bluetooth_controller.query_battery_level()
                 

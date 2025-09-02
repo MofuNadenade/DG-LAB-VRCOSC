@@ -31,7 +31,12 @@ def get_default_settings() -> SettingsDict:
                 'remote_address': "",
             },
             'bluetooth': {
-                # 蓝牙设置，暂时为空
+                'strength_limit_a': 200,
+                'strength_limit_b': 200,
+                'freq_balance_a': 160,
+                'freq_balance_b': 160,
+                'strength_balance_a': 0,
+                'strength_balance_b': 0
             }
         },
 

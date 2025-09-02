@@ -10,14 +10,14 @@
 
 import asyncio
 import logging
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 from PySide6.QtCore import QObject, Signal
 
 from config import save_settings
 from core import ServiceController
 from gui.ui_interface import UIInterface
-from models import SettingsDict, ConnectionState
+from models import Channel, SettingsDict, ConnectionState
 from services.chatbox_service import ChatboxService
 from services.dglab_bluetooth_service import DGLabBluetoothService, DGLabDevice
 from services.osc_action_service import OSCActionService
@@ -190,7 +190,54 @@ class BluetoothConnectionManager:
             self.connected_device = None
             self.ui_interface.set_service_controller(None)
 
-    def save_settings(self, **bluetooth_params: int) -> None:
+    def apply_device_params(self, strength_limit_a: int, strength_limit_b: int,
+                           freq_balance_a: int, freq_balance_b: int,
+                           strength_balance_a: int, strength_balance_b: int) -> bool:
+        """
+        应用设备参数
+        
+        Args:
+            strength_limit_a: A通道强度上限
+            strength_limit_b: B通道强度上限
+            freq_balance_a: A通道频率平衡
+            freq_balance_b: B通道频率平衡
+            strength_balance_a: A通道强度平衡
+            strength_balance_b: B通道强度平衡
+            
+        Returns:
+            bool: 是否成功应用参数
+        """
+        try:
+            # 检查服务控制器
+            service_controller = self.service_controller
+            if not service_controller:
+                logger.error("服务控制器未初始化")
+                return False
+                
+            # 获取蓝牙服务并应用参数
+            bluetooth_service = service_controller.dglab_device_service
+            if not isinstance(bluetooth_service, DGLabBluetoothService):
+                logger.error("当前服务不支持蓝牙设备参数设置")
+                return False
+                
+            # 应用设备参数
+            bluetooth_service.set_strength_limit(Channel.A, strength_limit_a)
+            bluetooth_service.set_strength_limit(Channel.B, strength_limit_b)
+            bluetooth_service.set_freq_balance(Channel.A, freq_balance_a)
+            bluetooth_service.set_freq_balance(Channel.B, freq_balance_b)
+            bluetooth_service.set_strength_balance(Channel.A, strength_balance_a)
+            bluetooth_service.set_strength_balance(Channel.B, strength_balance_b)
+            
+            logger.info("设备参数已应用")
+            return True
+            
+        except Exception as e:
+            logger.error(f"应用设备参数失败: {e}")
+            return False
+
+    def save_settings(self, strength_limit_a: int, strength_limit_b: int, 
+                     freq_balance_a: int, freq_balance_b: int,
+                     strength_balance_a: int, strength_balance_b: int) -> None:
         """保存蓝牙设置"""
         try:
             # 确保设置结构存在
@@ -201,8 +248,12 @@ class BluetoothConnectionManager:
 
             # 更新蓝牙参数
             bluetooth_settings = self.settings['connection']['bluetooth']
-            for key, value in bluetooth_params.items():
-                bluetooth_settings[key] = value
+            bluetooth_settings['strength_limit_a'] = strength_limit_a
+            bluetooth_settings['strength_limit_b'] = strength_limit_b
+            bluetooth_settings['freq_balance_a'] = freq_balance_a
+            bluetooth_settings['freq_balance_b'] = freq_balance_b
+            bluetooth_settings['strength_balance_a'] = strength_balance_a
+            bluetooth_settings['strength_balance_b'] = strength_balance_b
 
             save_settings(self.settings)
             logger.info("蓝牙设置已保存")
@@ -210,22 +261,3 @@ class BluetoothConnectionManager:
         except Exception as e:
             logger.error(f"保存蓝牙设置失败: {e}")
             raise
-
-    def load_default_settings(self) -> Dict[str, int]:
-        """加载默认蓝牙设置"""
-        default_settings = {
-            'strength_limit_a': 200,
-            'strength_limit_b': 200,
-            'freq_balance_a': 160,
-            'freq_balance_b': 160,
-            'strength_balance_a': 0,
-            'strength_balance_b': 0
-        }
-        
-        # 从配置中加载已保存的设置
-        bluetooth_config = self.settings.get('connection', {}).get('bluetooth', {})
-        for key in default_settings:
-            if key in bluetooth_config:
-                default_settings[key] = bluetooth_config[key]
-                
-        return default_settings

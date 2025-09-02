@@ -70,6 +70,9 @@ class BluetoothConnectionWidget(QWidget):
         self.load_settings()
         self.setup_tooltips()
         
+        # 初始状态：禁用设备控制组
+        self.set_device_control_enabled(False)
+        
         # 连接蓝牙连接管理器的信号
         self._connect_manager_signals()
 
@@ -247,10 +250,9 @@ class BluetoothConnectionWidget(QWidget):
         # A通道
         self.strength_limit_a_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_limit_a_slider.setRange(0, 200)
-        self.strength_limit_a_slider.setValue(200)
         self.strength_limit_a_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_limit_a_slider.setTickInterval(20)
-        self.strength_limit_a_label = QLabel("200")
+        self.strength_limit_a_label = QLabel()
         self.strength_limit_a_label.setMinimumWidth(50)
         self.strength_limit_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_limit_a_slider.valueChanged.connect(self._update_strength_limit_a_label)
@@ -263,10 +265,9 @@ class BluetoothConnectionWidget(QWidget):
         # B通道
         self.strength_limit_b_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_limit_b_slider.setRange(0, 200)
-        self.strength_limit_b_slider.setValue(200)
         self.strength_limit_b_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_limit_b_slider.setTickInterval(20)
-        self.strength_limit_b_label = QLabel("200")
+        self.strength_limit_b_label = QLabel()
         self.strength_limit_b_label.setMinimumWidth(50)
         self.strength_limit_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_limit_b_slider.valueChanged.connect(self._update_strength_limit_b_label)
@@ -286,10 +287,9 @@ class BluetoothConnectionWidget(QWidget):
         # A通道
         self.freq_balance_a_slider = QSlider(Qt.Orientation.Horizontal)
         self.freq_balance_a_slider.setRange(0, 255)
-        self.freq_balance_a_slider.setValue(160)
         self.freq_balance_a_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.freq_balance_a_slider.setTickInterval(25)
-        self.freq_balance_a_label = QLabel("160")
+        self.freq_balance_a_label = QLabel()
         self.freq_balance_a_label.setMinimumWidth(50)
         self.freq_balance_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.freq_balance_a_slider.valueChanged.connect(self._update_freq_balance_a_label)
@@ -302,10 +302,9 @@ class BluetoothConnectionWidget(QWidget):
         # B通道
         self.freq_balance_b_slider = QSlider(Qt.Orientation.Horizontal)
         self.freq_balance_b_slider.setRange(0, 255)
-        self.freq_balance_b_slider.setValue(160)
         self.freq_balance_b_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.freq_balance_b_slider.setTickInterval(25)
-        self.freq_balance_b_label = QLabel("160")
+        self.freq_balance_b_label = QLabel()
         self.freq_balance_b_label.setMinimumWidth(50)
         self.freq_balance_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.freq_balance_b_slider.valueChanged.connect(self._update_freq_balance_b_label)
@@ -325,10 +324,9 @@ class BluetoothConnectionWidget(QWidget):
         # A通道
         self.strength_balance_a_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_balance_a_slider.setRange(0, 255)
-        self.strength_balance_a_slider.setValue(0)
         self.strength_balance_a_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_balance_a_slider.setTickInterval(25)
-        self.strength_balance_a_label = QLabel("0")
+        self.strength_balance_a_label = QLabel()
         self.strength_balance_a_label.setMinimumWidth(50)
         self.strength_balance_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_balance_a_slider.valueChanged.connect(self._update_strength_balance_a_label)
@@ -341,10 +339,9 @@ class BluetoothConnectionWidget(QWidget):
         # B通道
         self.strength_balance_b_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_balance_b_slider.setRange(0, 255)
-        self.strength_balance_b_slider.setValue(0)
         self.strength_balance_b_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_balance_b_slider.setTickInterval(25)
-        self.strength_balance_b_label = QLabel("0")
+        self.strength_balance_b_label = QLabel()
         self.strength_balance_b_label.setMinimumWidth(50)
         self.strength_balance_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_balance_b_slider.valueChanged.connect(self._update_strength_balance_b_label)
@@ -374,34 +371,26 @@ class BluetoothConnectionWidget(QWidget):
 
     def load_settings(self) -> None:
         """加载设置"""
-        settings = self.connection_manager.load_default_settings()
-        
         # 加载滑块值
-        self.strength_limit_a_slider.setValue(settings['strength_limit_a'])
-        self.strength_limit_b_slider.setValue(settings['strength_limit_b'])
-        self.freq_balance_a_slider.setValue(settings['freq_balance_a'])
-        self.freq_balance_b_slider.setValue(settings['freq_balance_b'])
-        self.strength_balance_a_slider.setValue(settings['strength_balance_a'])
-        self.strength_balance_b_slider.setValue(settings['strength_balance_b'])
-        
-        # 更新标签
-        self.strength_limit_a_label.setText(str(settings['strength_limit_a']))
-        self.strength_limit_b_label.setText(str(settings['strength_limit_b']))
-        self.freq_balance_a_label.setText(str(settings['freq_balance_a']))
-        self.freq_balance_b_label.setText(str(settings['freq_balance_b']))
-        self.strength_balance_a_label.setText(str(settings['strength_balance_a']))
-        self.strength_balance_b_label.setText(str(settings['strength_balance_b']))
+        bluetooth_settings = self.settings.get('connection', {}).get('bluetooth', {})
+
+        self.strength_limit_a_slider.setValue(bluetooth_settings.get('strength_limit_a', 200))
+        self.strength_limit_b_slider.setValue(bluetooth_settings.get('strength_limit_b', 200))
+        self.freq_balance_a_slider.setValue(bluetooth_settings.get('freq_balance_a', 160))
+        self.freq_balance_b_slider.setValue(bluetooth_settings.get('freq_balance_b', 160))
+        self.strength_balance_a_slider.setValue(bluetooth_settings.get('strength_balance_a', 0))
+        self.strength_balance_b_slider.setValue(bluetooth_settings.get('strength_balance_b', 0))
 
     def save_settings(self, osc_port: int, language: str) -> None:
         """保存设置"""
         # 保存蓝牙参数
         self.connection_manager.save_settings(
-            strength_limit_a=self.strength_limit_a_slider.value(),
-            strength_limit_b=self.strength_limit_b_slider.value(),
-            freq_balance_a=self.freq_balance_a_slider.value(),
-            freq_balance_b=self.freq_balance_b_slider.value(),
-            strength_balance_a=self.strength_balance_a_slider.value(),
-            strength_balance_b=self.strength_balance_b_slider.value()
+            self.strength_limit_a_slider.value(),
+            self.strength_limit_b_slider.value(),
+            self.freq_balance_a_slider.value(),
+            self.freq_balance_b_slider.value(),
+            self.strength_balance_a_slider.value(),
+            self.strength_balance_b_slider.value()
         )
         
         # 保存全局设置
@@ -412,6 +401,27 @@ class BluetoothConnectionWidget(QWidget):
     def is_connected(self) -> bool:
         """检查连接状态"""
         return self.connection_manager.is_connected()
+
+    def set_device_control_enabled(self, enabled: bool) -> None:
+        """设置设备控制组启用状态
+        
+        Args:
+            enabled: 是否启用设备控制组
+        """
+        # 强度上限滑块
+        self.strength_limit_a_slider.setEnabled(enabled)
+        self.strength_limit_b_slider.setEnabled(enabled)
+        
+        # 频率平衡滑块
+        self.freq_balance_a_slider.setEnabled(enabled)
+        self.freq_balance_b_slider.setEnabled(enabled)
+        
+        # 强度平衡滑块
+        self.strength_balance_a_slider.setEnabled(enabled)
+        self.strength_balance_b_slider.setEnabled(enabled)
+        
+        # 应用参数按钮
+        self.apply_params_button.setEnabled(enabled)
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
@@ -440,6 +450,9 @@ class BluetoothConnectionWidget(QWidget):
             self.disconnect_button.setEnabled(False)
             self.scan_button.setEnabled(True)
             
+            # 禁用设备控制组
+            self.set_device_control_enabled(False)
+            
             # 如果有选中设备，启用连接按钮
             if self.connection_manager.get_selected_device():
                 self.connect_button.setEnabled(True)
@@ -453,12 +466,18 @@ class BluetoothConnectionWidget(QWidget):
             self.disconnect_button.setEnabled(True)
             self.apply_params_button.setEnabled(False)
             
+            # 禁用设备控制组
+            self.set_device_control_enabled(False)
+            
         elif state == ConnectionState.WAITING:
             self.connection_status_label.setText(translate("bluetooth.waiting"))
             self.scan_button.setEnabled(False)
             self.connect_button.setEnabled(False)
             self.disconnect_button.setEnabled(True)
             self.apply_params_button.setEnabled(False)
+            
+            # 禁用设备控制组
+            self.set_device_control_enabled(False)
             
         elif state == ConnectionState.CONNECTED:
             self.connection_status_label.setText(translate("bluetooth.connected"))
@@ -474,6 +493,9 @@ class BluetoothConnectionWidget(QWidget):
             self.disconnect_button.setEnabled(True)
             self.scan_button.setEnabled(False)
             self.connect_button.setEnabled(False)
+            
+            # 启用设备控制组
+            self.set_device_control_enabled(True)
 
         elif state == ConnectionState.FAILED:
             status_text = message or translate("bluetooth.connection_failed")
@@ -486,6 +508,10 @@ class BluetoothConnectionWidget(QWidget):
             self.apply_params_button.setEnabled(False)
             self.disconnect_button.setEnabled(False)
             self.scan_button.setEnabled(True)
+            
+            # 禁用设备控制组
+            self.set_device_control_enabled(False)
+            
             if self.connection_manager.get_selected_device():
                 self.connect_button.setEnabled(True)
             else:
@@ -502,6 +528,10 @@ class BluetoothConnectionWidget(QWidget):
             self.apply_params_button.setEnabled(False)
             self.disconnect_button.setEnabled(False)
             self.scan_button.setEnabled(True)
+            
+            # 禁用设备控制组
+            self.set_device_control_enabled(False)
+            
             if self.connection_manager.get_selected_device():
                 self.connect_button.setEnabled(True)
             else:
@@ -565,30 +595,20 @@ class BluetoothConnectionWidget(QWidget):
             return
             
         try:
-            # 通过服务控制器应用参数
-            service_controller = self.connection_manager.service_controller
-            if not service_controller:
-                QMessageBox.warning(self, translate("common.error"), "服务控制器未初始化")
-                return
-                
-            # 获取蓝牙服务并应用参数
-            from services.dglab_bluetooth_service import DGLabBluetoothService
-            from models import Channel
+            # 通过管理器应用参数
+            success = self.connection_manager.apply_device_params(
+                strength_limit_a=self.strength_limit_a_slider.value(),
+                strength_limit_b=self.strength_limit_b_slider.value(),
+                freq_balance_a=self.freq_balance_a_slider.value(),
+                freq_balance_b=self.freq_balance_b_slider.value(),
+                strength_balance_a=self.strength_balance_a_slider.value(),
+                strength_balance_b=self.strength_balance_b_slider.value()
+            )
             
-            bluetooth_service = service_controller.dglab_device_service
-            if not isinstance(bluetooth_service, DGLabBluetoothService):
-                QMessageBox.warning(self, translate("common.error"), "当前服务不支持蓝牙设备参数设置")
-                return
-                
-            # 应用设备参数
-            bluetooth_service.set_strength_limit(Channel.A, self.strength_limit_a_slider.value())
-            bluetooth_service.set_strength_limit(Channel.B, self.strength_limit_b_slider.value())
-            bluetooth_service.set_freq_balance(Channel.A, self.freq_balance_a_slider.value())
-            bluetooth_service.set_freq_balance(Channel.B, self.freq_balance_b_slider.value())
-            bluetooth_service.set_strength_balance(Channel.A, self.strength_balance_a_slider.value())
-            bluetooth_service.set_strength_balance(Channel.B, self.strength_balance_b_slider.value())
-            
-            QMessageBox.information(self, translate("common.success"), "设备参数已应用")
+            if success:
+                QMessageBox.information(self, translate("common.success"), "设备参数已应用")
+            else:
+                QMessageBox.warning(self, translate("common.error"), "应用参数失败")
             
         except Exception as e:
             QMessageBox.warning(self, translate("common.error"), f"应用参数失败: {e}")
