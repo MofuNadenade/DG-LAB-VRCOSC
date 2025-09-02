@@ -182,52 +182,29 @@ class DGLabBluetoothService(IDGLabDeviceService):
 
     async def set_float_output(self, value: float, channel: Channel) -> None:
         """设置浮点输出强度（原始设备操作）"""
-        if not self._is_connected:
-            logger.warning("设备未连接，无法设置浮点输出强度")
-            return
-        
-        try:
-            # 将浮点值转换为强度值（0-强度上限范围）
-            strength_limit: int = self._strength_limits[channel]
-            strength: int = int(value * strength_limit)
-            strength = max(0, min(strength_limit, strength))
-            
-            # 转换通道类型
-            bluetooth_channel: bluetooth.Channel = self._convert_channel(channel)
-            success: bool = await self._bluetooth_controller.set_strength_absolute(bluetooth_channel, strength)
-            
-            if success:
-                logger.debug(f"蓝牙浮点输出: 通道{channel}强度设置为{strength}")
-            else:
-                logger.warning(f"蓝牙浮点输出失败: 通道{channel}")
-            
-        except Exception as e:
-            logger.error(f"设置浮点输出强度失败: {e}")
+        # 转换通道类型
+        await self._bluetooth_controller.set_strength_absolute(
+            self._convert_channel(channel),
+            int(value)
+        )
 
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度（原始设备操作）"""
-        if not self._is_connected:
-            logger.warning("设备未连接，无法调整强度")
-            return
-        
-        try:
-            bluetooth_channel: bluetooth.Channel = self._convert_channel(channel)
-            success: bool = False
-            
-            if operation_type == StrengthOperationType.SET_TO:
-                success = await self._bluetooth_controller.set_strength_absolute(bluetooth_channel, value)
-            elif operation_type == StrengthOperationType.INCREASE:
-                success = await self._bluetooth_controller.set_strength_relative(bluetooth_channel, value)
-            elif operation_type == StrengthOperationType.DECREASE:
-                success = await self._bluetooth_controller.set_strength_relative(bluetooth_channel, -value)
-            
-            if success:
-                logger.debug(f"蓝牙调整强度: 通道{channel} {operation_type} {value}")
-            else:
-                logger.warning(f"蓝牙调整强度失败: 通道{channel} {operation_type} {value}")
-            
-        except Exception as e:
-            logger.error(f"调整通道强度失败: {e}")
+        if operation_type == StrengthOperationType.SET_TO:
+            await self._bluetooth_controller.set_strength_absolute(
+                self._convert_channel(channel),
+                value
+            )
+        elif operation_type == StrengthOperationType.INCREASE:
+            await self._bluetooth_controller.set_strength_relative(
+                self._convert_channel(channel),
+                value
+            )
+        elif operation_type == StrengthOperationType.DECREASE:
+            await self._bluetooth_controller.set_strength_relative(
+                self._convert_channel(channel),
+                -value
+            )
 
     async def reset_strength(self, value: bool, channel: Channel) -> None:
         """重置通道强度为0（原始设备操作）"""
@@ -248,32 +225,15 @@ class DGLabBluetoothService(IDGLabDeviceService):
 
     async def set_pulse_data(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """设置指定通道的波形数据"""
-        if not self._is_connected:
-            logger.warning("设备未连接，无法设置波形数据")
-            return
-        
-        try:
-            bluetooth_channel: bluetooth.Channel = self._convert_channel(channel)
-            
-            if pulse and pulse.data:
-                # 转换PulseOperation到频率和强度数组
-                pulses = self._convert_pulse_operations(pulse.data)
-                
-                success: bool = await self._bluetooth_controller.set_pulse_data(bluetooth_channel, pulses)
-                if success:
-                    logger.debug(f"设置通道{channel}波形数据: {len(pulse.data)}个操作")
-                else:
-                    logger.warning(f"设置通道{channel}波形数据失败")
-            else:
-                # 清除波形数据
-                success = await self._bluetooth_controller.clear_pulse_data(bluetooth_channel)
-                if success:
-                    logger.debug(f"清除通道{channel}波形数据")
-                else:
-                    logger.warning(f"清除通道{channel}波形数据失败")
-                
-        except Exception as e:
-            logger.error(f"设置波形数据失败: {e}")
+        if pulse:
+            await self._bluetooth_controller.set_pulse_data(
+                self._convert_channel(channel),
+                self._convert_pulse_operations(pulse.data)
+            )
+        else:
+            await self._bluetooth_controller.clear_pulse_data(
+                self._convert_channel(channel)
+            )
 
     # ============ 数据访问 ============
 
@@ -301,7 +261,8 @@ class DGLabBluetoothService(IDGLabDeviceService):
             limit: 强度上限值 (0-200)
         """
         if not (0 <= limit <= 200):
-            raise ValueError(f"强度上限必须在0-200范围内，当前值: {limit}")
+            logger.warning(f"强度上限必须在0-200范围内，当前值: {limit}")
+            return
         self._strength_limits[channel] = limit
         
         # 如果设备已连接，立即更新到设备
@@ -322,7 +283,9 @@ class DGLabBluetoothService(IDGLabDeviceService):
             balance: 频率平衡参数 (0-255)
         """
         if not (0 <= balance <= 255):
-            raise ValueError(f"频率平衡参数必须在0-255范围内，当前值: {balance}")
+            logger.warning(f"频率平衡参数必须在0-255范围内，当前值: {balance}")
+            return
+
         self._freq_balances[channel] = balance
         
         # 如果设备已连接，立即更新到设备
@@ -343,7 +306,8 @@ class DGLabBluetoothService(IDGLabDeviceService):
             balance: 强度平衡参数 (0-255)
         """
         if not (0 <= balance <= 255):
-            raise ValueError(f"强度平衡参数必须在0-255范围内，当前值: {balance}")
+            logger.warning(f"强度平衡参数必须在0-255范围内，当前值: {balance}")
+            return
         self._strength_balances[channel] = balance
         
         # 如果设备已连接，立即更新到设备
