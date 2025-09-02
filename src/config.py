@@ -57,8 +57,8 @@ def get_default_settings() -> SettingsDict:
             'enabled': True,
             'check_on_startup': True,
             'github_repo': "MofuNadenade/DG-LAB-VRCOSC",
-            'auto_download': False,
-            'auto_install': False,
+            'auto_download': True,
+            'auto_install': True,
         },
 
         # 默认配置数据

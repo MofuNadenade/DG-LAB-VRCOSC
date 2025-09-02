@@ -12,6 +12,7 @@ qasync
 websockets
 requests
 types-requests
+aiohttp
 watchdog
 pyinstaller
 reactivex

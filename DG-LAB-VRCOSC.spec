@@ -20,6 +20,8 @@ a = Analysis(
         (os.path.join(project_root, 'src', 'icon', 'fish-cake.ico'), 'icon'),
         # 添加贡献者信息文件
         (os.path.join(project_root, 'src', 'gui', 'about', 'contributors.txt'), 'gui/about'),
+        # 添加安装助手脚本
+        (os.path.join(project_root, 'src', 'resources', 'install_helper.bat'), 'resources'),
     ],
     hiddenimports=[],
     hookspath=[],
