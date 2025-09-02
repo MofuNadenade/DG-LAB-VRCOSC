@@ -169,6 +169,9 @@ class BluetoothConnectionManager:
                     self.connected_device = None  # 连接失败时清除设备信息
                     await service_controller.stop_all_services()
                     return
+                
+                # 设置初始波形
+                asyncio.create_task(service_controller.osc_action_service.update_pulse())
 
                 # 保持服务运行
                 while self.server_task and not self.server_task.cancelled():

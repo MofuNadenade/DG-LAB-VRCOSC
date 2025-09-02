@@ -145,6 +145,9 @@ class WebSocketConnectionManager:
                 else:
                     logger.error("WebSocket服务启动失败")
                     self.ui_interface.set_connection_state(ConnectionState.FAILED, "WebSocket服务启动失败")
+                
+                # 设置初始波形
+                asyncio.create_task(service_controller.osc_action_service.update_pulse())
 
         except asyncio.CancelledError:
             logger.info("WebSocket连接任务被取消")

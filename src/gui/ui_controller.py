@@ -146,7 +146,7 @@ class UIController(UIInterface):
                         if pulse_a is not None:
                             self.service_controller.osc_action_service.set_current_pulse(Channel.A, pulse_a)
             if b_index >= 0:
-                pulse_index_b = self.main_window.settings_tab.current_pulse_a_combobox.itemData(a_index)
+                pulse_index_b = self.main_window.settings_tab.current_pulse_b_combobox.itemData(b_index)
                 if pulse_index_b is not None:
                     if pulse_index_b == -1:
                         self.service_controller.osc_action_service.set_current_pulse(Channel.B, None)
