@@ -50,6 +50,11 @@ def get_default_settings() -> SettingsDict:
             'dynamic_bone_mode_b': False,
             'current_pulse_a': "无波形",
             'current_pulse_b': "无波形",
+            # 动骨模式范围设置
+            'dynamic_bone_min_value_a': 0,
+            'dynamic_bone_max_value_a': 100,
+            'dynamic_bone_min_value_b': 0,
+            'dynamic_bone_max_value_b': 100,
         },
 
         # 自动更新设置

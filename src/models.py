@@ -232,6 +232,11 @@ class ControllerSettingsDict(TypedDict, total=False):
     dynamic_bone_mode_b: bool
     current_pulse_a: str
     current_pulse_b: str
+    # 动骨模式范围设置
+    dynamic_bone_min_value_a: int
+    dynamic_bone_max_value_a: int
+    dynamic_bone_min_value_b: int
+    dynamic_bone_max_value_b: int
 
 
 class AutoUpdaterSettingsDict(TypedDict, total=False):

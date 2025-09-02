@@ -51,6 +51,10 @@ class OSCActionService(IService):
         # 动骨模式管理
         self._dynamic_bone_modes: Dict[Channel, bool] = {Channel.A: False, Channel.B: False}
         
+        # 动骨模式范围配置
+        self._dynamic_bone_min_values: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
+        self._dynamic_bone_max_values: Dict[Channel, int] = {Channel.A: 100, Channel.B: 100}
+        
         # 开火模式管理
         self._fire_mode_disabled: bool = False
         self._fire_mode_strength_step: int = 30
@@ -139,8 +143,10 @@ class OSCActionService(IService):
         if value >= 0.0 and last_strength:
             # 计算最终输出值
             if self._dynamic_bone_modes.get(channel):
+                min_val = self._dynamic_bone_min_values[channel]
+                max_val = self._dynamic_bone_max_values[channel]
                 limit = last_strength['strength_limit'][channel]
-                final_output = math.ceil(self._map_unit_value(value, 0, limit))
+                final_output = min(self._map_unit_value(value, min_val, max_val), limit)
             else:
                 final_output = value
             
@@ -204,6 +210,26 @@ class OSCActionService(IService):
     def set_dynamic_bone_mode(self, channel: Channel, enabled: bool) -> None:
         """设置指定通道的动骨模式"""
         self._dynamic_bone_modes[channel] = enabled
+
+    def get_dynamic_bone_min_value(self, channel: Channel) -> int:
+        """获取指定通道动骨模式的最小值"""
+        return self._dynamic_bone_min_values[channel]
+
+    def set_dynamic_bone_min_value(self, channel: Channel, min_value: int) -> None:
+        """设置指定通道动骨模式的最小值"""
+        if min_value >= 0:
+            self._dynamic_bone_min_values[channel] = min_value
+            logger.info(f"通道 {self._get_channel_name(channel)} 动骨模式最小值设置为: {min_value}")
+
+    def get_dynamic_bone_max_value(self, channel: Channel) -> int:
+        """获取指定通道动骨模式的最大值"""
+        return self._dynamic_bone_max_values[channel]
+
+    def set_dynamic_bone_max_value(self, channel: Channel, max_value: int) -> None:
+        """设置指定通道动骨模式的最大值"""
+        if max_value > 0:
+            self._dynamic_bone_max_values[channel] = max_value
+            logger.info(f"通道 {self._get_channel_name(channel)} 动骨模式最大值设置为: {max_value}")
 
     async def set_dynamic_bone_mode_timer(self, value: int, channel: Channel) -> None:
         """切换工作模式（延时触发动骨模式切换）"""

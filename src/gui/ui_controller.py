@@ -100,6 +100,29 @@ class UIController(UIInterface):
         self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.setChecked(dynamic_bone_mode_b)
         self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.blockSignals(False)
 
+        # 动骨模式范围设置
+        dynamic_bone_min_value_a = self.settings.get('controller', {}).get('dynamic_bone_min_value_a', 0)
+        dynamic_bone_max_value_a = self.settings.get('controller', {}).get('dynamic_bone_max_value_a', 100)
+        dynamic_bone_min_value_b = self.settings.get('controller', {}).get('dynamic_bone_min_value_b', 0)
+        dynamic_bone_max_value_b = self.settings.get('controller', {}).get('dynamic_bone_max_value_b', 100)
+
+        # 设置UI状态（静默方式，不触发事件）
+        self.main_window.settings_tab.dynamic_bone_range_a_min_spinbox.blockSignals(True)
+        self.main_window.settings_tab.dynamic_bone_range_a_min_spinbox.setValue(dynamic_bone_min_value_a)
+        self.main_window.settings_tab.dynamic_bone_range_a_min_spinbox.blockSignals(False)
+
+        self.main_window.settings_tab.dynamic_bone_range_a_max_spinbox.blockSignals(True)
+        self.main_window.settings_tab.dynamic_bone_range_a_max_spinbox.setValue(dynamic_bone_max_value_a)
+        self.main_window.settings_tab.dynamic_bone_range_a_max_spinbox.blockSignals(False)
+
+        self.main_window.settings_tab.dynamic_bone_range_b_min_spinbox.blockSignals(True)
+        self.main_window.settings_tab.dynamic_bone_range_b_min_spinbox.setValue(dynamic_bone_min_value_b)
+        self.main_window.settings_tab.dynamic_bone_range_b_min_spinbox.blockSignals(False)
+
+        self.main_window.settings_tab.dynamic_bone_range_b_max_spinbox.blockSignals(True)
+        self.main_window.settings_tab.dynamic_bone_range_b_max_spinbox.setValue(dynamic_bone_max_value_b)
+        self.main_window.settings_tab.dynamic_bone_range_b_max_spinbox.blockSignals(False)
+
         # 波形选择
         current_pulse_a = self.settings.get('controller', {}).get('current_pulse_a', '无波形')
         current_pulse_b = self.settings.get('controller', {}).get('current_pulse_b', '无波形')
@@ -133,6 +156,12 @@ class UIController(UIInterface):
             self.service_controller.osc_action_service.enable_panel_control = enable_panel_control
             self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
             self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
+            
+            # 同步动骨模式范围设置
+            self.service_controller.osc_action_service.set_dynamic_bone_min_value(Channel.A, dynamic_bone_min_value_a)
+            self.service_controller.osc_action_service.set_dynamic_bone_max_value(Channel.A, dynamic_bone_max_value_a)
+            self.service_controller.osc_action_service.set_dynamic_bone_min_value(Channel.B, dynamic_bone_min_value_b)
+            self.service_controller.osc_action_service.set_dynamic_bone_max_value(Channel.B, dynamic_bone_max_value_b)
 
             # 同步波形设置并更新设备
             pulse_registry = self.registries.pulse_registry

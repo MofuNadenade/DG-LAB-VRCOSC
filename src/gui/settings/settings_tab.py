@@ -39,6 +39,10 @@ class SettingsTab(QWidget):
         self.dynamic_bone_mode_a_checkbox: QCheckBox
         self.dynamic_bone_mode_b_checkbox: QCheckBox
         self.current_channel_label: QLabel
+        self.dynamic_bone_range_a_min_spinbox: QSpinBox
+        self.dynamic_bone_range_a_max_spinbox: QSpinBox
+        self.dynamic_bone_range_b_min_spinbox: QSpinBox
+        self.dynamic_bone_range_b_max_spinbox: QSpinBox
         self.current_pulse_a_combobox: QComboBox
         self.current_pulse_b_combobox: QComboBox
         self.fire_mode_strength_step_spinbox: QSpinBox
@@ -107,18 +111,141 @@ class SettingsTab(QWidget):
         self.enable_chatbox_status_checkbox.setChecked(False)  # 默认关闭ChatBox
         controller_form.addRow(self.enable_chatbox_status_checkbox)
 
-        # 动骨模式和当前通道显示
+        # 交互设置GroupBox - 包含所有交互相关控件
+        interaction_group = QGroupBox(translate("controller_tab.interaction_settings_label"))
+        interaction_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #cccccc;
+                border-radius: 5px;
+                margin-top: 1ex;
+                padding-top: 5px;
+                padding-bottom: 3px;
+                padding-left: 6px;
+                padding-right: 6px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 8px;
+                padding: 0 3px 0 3px;
+            }
+        """)
+        interaction_layout = QFormLayout()
+        interaction_layout.setVerticalSpacing(5)  # 进一步减少垂直间距
+        interaction_layout.setHorizontalSpacing(8)  # 减少水平间距
+        interaction_layout.setContentsMargins(2, 2, 2, 2)  # 减少布局的内边距
+        
+        # 1. 动骨模式开关
         dynamic_bone_layout = QHBoxLayout()
-        self.dynamic_bone_mode_a_checkbox = QCheckBox(f"A{translate('controller_tab.interaction_mode')}")
-        self.dynamic_bone_mode_b_checkbox = QCheckBox(f"B{translate('controller_tab.interaction_mode')}")
-        self.current_channel_label = QLabel(
-            f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}")
-
+        dynamic_bone_layout.setSpacing(15)  # 设置复选框之间的间距
+        self.dynamic_bone_mode_a_checkbox = QCheckBox(f"A {translate('controller_tab.interaction_mode')}")
+        self.dynamic_bone_mode_a_checkbox.setStyleSheet("QCheckBox { color: #2E5BBA; font-weight: bold; }")
+        self.dynamic_bone_mode_b_checkbox = QCheckBox(f"B {translate('controller_tab.interaction_mode')}")
+        self.dynamic_bone_mode_b_checkbox.setStyleSheet("QCheckBox { color: #BA2E5B; font-weight: bold; }")
+        
         dynamic_bone_layout.addWidget(self.dynamic_bone_mode_a_checkbox)
         dynamic_bone_layout.addWidget(self.dynamic_bone_mode_b_checkbox)
-        dynamic_bone_layout.addWidget(self.current_channel_label)
-
-        controller_form.addRow(dynamic_bone_layout)
+        dynamic_bone_layout.addStretch()
+        
+        dynamic_bone_widget = QWidget()
+        dynamic_bone_widget.setLayout(dynamic_bone_layout)
+        interaction_layout.addRow(dynamic_bone_widget)
+        
+        # 2. 当前通道显示
+        self.current_channel_label = QLabel(
+            f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}")
+        self.current_channel_label.setStyleSheet("QLabel { font-weight: bold; color: #666666; margin-bottom: 2px; }")
+        interaction_layout.addRow(self.current_channel_label)
+        
+        # 3. 交互模式范围设置
+        range_title_label = QLabel(translate("controller_tab.dynamic_bone_range_label"))
+        range_title_label.setStyleSheet("QLabel { font-weight: bold; color: #333333; margin-top: 2px; margin-bottom: 1px; }")
+        interaction_layout.addRow(range_title_label)
+        
+        # A通道和B通道范围设置 - 使用更紧凑的垂直布局
+        range_container_layout = QVBoxLayout()
+        range_container_layout.setSpacing(2)  # 进一步减少A/B通道之间的间距
+        range_container_layout.setContentsMargins(0, 0, 0, 0)  # 去除容器边距
+        
+        # A通道范围设置
+        range_a_layout = QHBoxLayout()
+        range_a_layout.setSpacing(6)  # 进一步减少控件间距
+        range_a_layout.setContentsMargins(0, 0, 0, 0)  # 去除内边距
+        
+        range_a_channel_label = QLabel("A:")
+        range_a_channel_label.setFixedWidth(15)
+        range_a_channel_label.setStyleSheet("font-weight: bold; color: #2E5BBA;")
+        
+        range_a_min_label = QLabel(translate('controller_tab.min_value_label'))
+        range_a_min_label.setFixedWidth(45)
+        self.dynamic_bone_range_a_min_spinbox = QSpinBox()
+        self.dynamic_bone_range_a_min_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.dynamic_bone_range_a_min_spinbox.setRange(0, 100)
+        self.dynamic_bone_range_a_min_spinbox.setValue(0)
+        self.dynamic_bone_range_a_min_spinbox.setFixedWidth(70)
+        
+        range_a_max_label = QLabel(translate('controller_tab.max_value_label'))
+        range_a_max_label.setFixedWidth(45)
+        self.dynamic_bone_range_a_max_spinbox = QSpinBox()
+        self.dynamic_bone_range_a_max_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.dynamic_bone_range_a_max_spinbox.setRange(1, 100)
+        self.dynamic_bone_range_a_max_spinbox.setValue(100)
+        self.dynamic_bone_range_a_max_spinbox.setFixedWidth(70)
+        
+        range_a_layout.addWidget(range_a_channel_label)
+        range_a_layout.addWidget(range_a_min_label)
+        range_a_layout.addWidget(self.dynamic_bone_range_a_min_spinbox)
+        range_a_layout.addWidget(range_a_max_label)
+        range_a_layout.addWidget(self.dynamic_bone_range_a_max_spinbox)
+        range_a_layout.addStretch()
+        
+        # B通道范围设置
+        range_b_layout = QHBoxLayout()
+        range_b_layout.setSpacing(6)  # 进一步减少控件间距
+        range_b_layout.setContentsMargins(0, 0, 0, 0)  # 去除内边距
+        
+        range_b_channel_label = QLabel("B:")
+        range_b_channel_label.setFixedWidth(15)
+        range_b_channel_label.setStyleSheet("font-weight: bold; color: #BA2E5B;")
+        
+        range_b_min_label = QLabel(translate('controller_tab.min_value_label'))
+        range_b_min_label.setFixedWidth(45)
+        self.dynamic_bone_range_b_min_spinbox = QSpinBox()
+        self.dynamic_bone_range_b_min_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.dynamic_bone_range_b_min_spinbox.setRange(0, 100)
+        self.dynamic_bone_range_b_min_spinbox.setValue(0)
+        self.dynamic_bone_range_b_min_spinbox.setFixedWidth(70)
+        
+        range_b_max_label = QLabel(translate('controller_tab.max_value_label'))
+        range_b_max_label.setFixedWidth(45)
+        self.dynamic_bone_range_b_max_spinbox = QSpinBox()
+        self.dynamic_bone_range_b_max_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        self.dynamic_bone_range_b_max_spinbox.setRange(1, 100)
+        self.dynamic_bone_range_b_max_spinbox.setValue(100)
+        self.dynamic_bone_range_b_max_spinbox.setFixedWidth(70)
+        
+        range_b_layout.addWidget(range_b_channel_label)
+        range_b_layout.addWidget(range_b_min_label)
+        range_b_layout.addWidget(self.dynamic_bone_range_b_min_spinbox)
+        range_b_layout.addWidget(range_b_max_label)
+        range_b_layout.addWidget(self.dynamic_bone_range_b_max_spinbox)
+        range_b_layout.addStretch()
+        
+        # 创建范围设置容器并添加到垂直布局
+        range_a_widget = QWidget()
+        range_a_widget.setLayout(range_a_layout)
+        range_b_widget = QWidget()
+        range_b_widget.setLayout(range_b_layout)
+        
+        range_container_layout.addWidget(range_a_widget)
+        range_container_layout.addWidget(range_b_widget)
+        
+        range_container_widget = QWidget()
+        range_container_widget.setLayout(range_container_layout)
+        interaction_layout.addRow(range_container_widget)
+        
+        interaction_group.setLayout(interaction_layout)
+        controller_form.addRow(interaction_group)
 
         # 波形模式选择
         pulse_options = list(self.pulse_registry.pulses_by_name.keys())
@@ -211,6 +338,12 @@ class SettingsTab(QWidget):
             self.current_pulse_b_combobox.currentIndexChanged.connect(self.on_current_pulse_b_changed)
             self.enable_chatbox_status_checkbox.toggled.connect(self.on_chatbox_status_enabled_changed)
             self.fire_mode_strength_step_spinbox.valueChanged.connect(self.on_strength_step_changed)
+            
+            # 绑定动骨模式范围控件
+            self.dynamic_bone_range_a_min_spinbox.valueChanged.connect(self.on_dynamic_bone_range_a_min_changed)
+            self.dynamic_bone_range_a_max_spinbox.valueChanged.connect(self.on_dynamic_bone_range_a_max_changed)
+            self.dynamic_bone_range_b_min_spinbox.valueChanged.connect(self.on_dynamic_bone_range_b_min_changed)
+            self.dynamic_bone_range_b_max_spinbox.valueChanged.connect(self.on_dynamic_bone_range_b_max_changed)
 
             # 标记信号槽已连接
             self._signals_connected = True
@@ -320,6 +453,42 @@ class SettingsTab(QWidget):
             self.service_controller.chatbox_service.set_enabled(state)
             logger.info(f"ChatBox status enabled: {self.service_controller.chatbox_service.is_enabled}")
 
+    def on_dynamic_bone_range_a_min_changed(self, value: int) -> None:
+        """当A通道动骨模式最小值改变时"""
+        if self.service_controller:
+            # 确保最小值不大于最大值
+            if value >= self.dynamic_bone_range_a_max_spinbox.value():
+                self.dynamic_bone_range_a_max_spinbox.setValue(value + 1)
+            self.service_controller.osc_action_service.set_dynamic_bone_min_value(Channel.A, value)
+            logger.info(f"A通道动骨模式最小值设置为: {value}")
+
+    def on_dynamic_bone_range_a_max_changed(self, value: int) -> None:
+        """当A通道动骨模式最大值改变时"""
+        if self.service_controller:
+            # 确保最大值不小于最小值
+            if value <= self.dynamic_bone_range_a_min_spinbox.value():
+                self.dynamic_bone_range_a_min_spinbox.setValue(value - 1)
+            self.service_controller.osc_action_service.set_dynamic_bone_max_value(Channel.A, value)
+            logger.info(f"A通道动骨模式最大值设置为: {value}")
+
+    def on_dynamic_bone_range_b_min_changed(self, value: int) -> None:
+        """当B通道动骨模式最小值改变时"""
+        if self.service_controller:
+            # 确保最小值不大于最大值
+            if value >= self.dynamic_bone_range_b_max_spinbox.value():
+                self.dynamic_bone_range_b_max_spinbox.setValue(value + 1)
+            self.service_controller.osc_action_service.set_dynamic_bone_min_value(Channel.B, value)
+            logger.info(f"B通道动骨模式最小值设置为: {value}")
+
+    def on_dynamic_bone_range_b_max_changed(self, value: int) -> None:
+        """当B通道动骨模式最大值改变时"""
+        if self.service_controller:
+            # 确保最大值不小于最小值
+            if value <= self.dynamic_bone_range_b_min_spinbox.value():
+                self.dynamic_bone_range_b_min_spinbox.setValue(value - 1)
+            self.service_controller.osc_action_service.set_dynamic_bone_max_value(Channel.B, value)
+            logger.info(f"B通道动骨模式最大值设置为: {value}")
+
     def save_settings(self) -> None:
         """保存设备控制器设置到配置文件"""
         try:
@@ -342,6 +511,12 @@ class SettingsTab(QWidget):
             # 保存波形选择
             self.settings['controller']['current_pulse_a'] = self.current_pulse_a_combobox.currentText()
             self.settings['controller']['current_pulse_b'] = self.current_pulse_b_combobox.currentText()
+
+            # 保存动骨模式范围设置
+            self.settings['controller']['dynamic_bone_min_value_a'] = self.dynamic_bone_range_a_min_spinbox.value()
+            self.settings['controller']['dynamic_bone_max_value_a'] = self.dynamic_bone_range_a_max_spinbox.value()
+            self.settings['controller']['dynamic_bone_min_value_b'] = self.dynamic_bone_range_b_min_spinbox.value()
+            self.settings['controller']['dynamic_bone_max_value_b'] = self.dynamic_bone_range_b_max_spinbox.value()
 
             # 调用UIInterface的保存方法
             self.ui_interface.save_settings()
