@@ -349,6 +349,18 @@ websocket:
 about_tab:
   current_version_label: "Current Version: {0}"
   feedback: "Feedback"
+  check_updates: "Check for Updates"
+  checking_updates: "Checking..."
+  update_check_title: "Check for Updates"
+  no_repo_configured: "GitHub repository not configured, cannot check for updates"
+  update_available_title: "New Version Available"
+  update_available_message: "New version {0} found: {1}\n\nDownload update now?"
+  no_update_title: "Up to Date"
+  no_update_message: "You are already using the latest version"
+  check_error_title: "Update Check Failed"
+  check_error_message: "Error occurred while checking for updates:\n{0}"
+  download_info_title: "Download Update"
+  download_info_message: "Download page will open in browser. Please manually download and install the new version"
 
 osc_address_tab:
   address_list: "Address List"

@@ -1,22 +1,26 @@
+import asyncio
 import logging
 from typing import Dict
 
 from PySide6.QtCore import QLocale, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QMessageBox
 
 from i18n import translate, language_signals
 from models import SettingsDict
 from gui.ui_interface import UIInterface
 from util import resource_path
+from core.auto_updater import AutoUpdater, ReleaseInfo
 
 try:
-    from version import get_version, get_build_info
+    from version import get_version, get_version_short, get_build_info
 except ImportError:
     # Fallback if version.py doesn't exist
     def get_version() -> str:
         return "v0.0.0-dev"
 
+    def get_version_short() -> str:
+        return "v0.0.0-dev"
 
     def get_build_info() -> Dict[str, str]:
         return {"commit_short": "unknown", "build_time": "unknown"}
@@ -33,6 +37,7 @@ class AboutTab(QWidget):
         # UI组件类型注解
         self.version_label: QLabel
         self.feedback_btn: QPushButton
+        self.check_update_btn: QPushButton
         self.contributors_text: QTextEdit
 
         self.init_ui()
@@ -66,6 +71,11 @@ class AboutTab(QWidget):
         self.feedback_btn = QPushButton(translate('about_tab.feedback'))
         self.feedback_btn.clicked.connect(self.open_feedback)
         buttons_layout.addWidget(self.feedback_btn)
+        
+        # 检查更新按钮
+        self.check_update_btn = QPushButton(translate('about_tab.check_updates'))
+        self.check_update_btn.clicked.connect(self.check_for_updates)
+        buttons_layout.addWidget(self.check_update_btn)
 
         version_layout.addLayout(buttons_layout)
         layout.addLayout(version_layout)
@@ -95,8 +105,84 @@ class AboutTab(QWidget):
         QDesktopServices.openUrl(url)
         logger.info("已打开问题反馈页面")
 
+    def check_for_updates(self) -> None:
+        """检查更新"""
+        auto_updater_settings = self.settings.get('auto_updater', {})
+        github_repo = auto_updater_settings.get('github_repo', '')
+        
+        if not github_repo:
+            QMessageBox.warning(
+                self, 
+                translate('about_tab.update_check_title'),
+                translate('about_tab.no_repo_configured')
+            )
+            return
+            
+        # 禁用按钮防止重复点击
+        self.check_update_btn.setEnabled(False)
+        self.check_update_btn.setText(translate('about_tab.checking_updates'))
+        
+        # 使用async方法检查更新
+        asyncio.create_task(self._check_updates_async(github_repo))
+        
+    async def _check_updates_async(self, github_repo: str) -> None:
+        """异步检查更新"""
+        try:
+            updater = AutoUpdater(github_repo, get_version_short())
+            release_info = await updater.check_for_updates()
+            
+            # 恢复按钮状态
+            self.check_update_btn.setEnabled(True)
+            self.check_update_btn.setText(translate('about_tab.check_updates'))
+            
+            if release_info:
+                # 发现新版本
+                reply = QMessageBox.question(
+                    self,
+                    translate('about_tab.update_available_title'),
+                    translate('about_tab.update_available_message').format(
+                        release_info.version, release_info.name
+                    ),
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes
+                )
+                
+                if reply == QMessageBox.StandardButton.Yes and release_info.download_url:
+                    self.download_update(release_info)
+            else:
+                # 无更新
+                QMessageBox.information(
+                    self,
+                    translate('about_tab.no_update_title'),
+                    translate('about_tab.no_update_message')
+                )
+                
+        except Exception as e:
+            # 检查错误
+            logger.error(f"Check for updates failed: {e}")
+            
+            self.check_update_btn.setEnabled(True)
+            self.check_update_btn.setText(translate('about_tab.check_updates'))
+            
+            QMessageBox.critical(
+                self,
+                translate('about_tab.check_error_title'),
+                translate('about_tab.check_error_message').format(str(e))
+            )
+    
+    def download_update(self, release_info: ReleaseInfo) -> None:
+        """下载并安装更新"""
+        # 这里可以实现下载进度对话框
+        # 暂时显示简单的信息对话框
+        QMessageBox.information(
+            self,
+            translate('about_tab.download_info_title'),
+            translate('about_tab.download_info_message')
+        )
+
     def update_ui_texts(self) -> None:
         """更新UI上的所有文本为当前语言"""
         self.feedback_btn.setText(translate('about_tab.feedback'))
+        self.check_update_btn.setText(translate('about_tab.check_updates'))
         current_version = get_version()
         self.version_label.setText(translate("about_tab.current_version_label").format(current_version))

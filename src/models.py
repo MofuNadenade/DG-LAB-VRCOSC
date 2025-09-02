@@ -234,6 +234,15 @@ class ControllerSettingsDict(TypedDict, total=False):
     current_pulse_b: str
 
 
+class AutoUpdaterSettingsDict(TypedDict, total=False):
+    """自动更新设置配置类型定义"""
+    enabled: bool
+    check_on_startup: bool
+    github_repo: str
+    auto_download: bool
+    auto_install: bool
+
+
 class SettingsDict(TypedDict, total=False):
     """应用程序设置配置类型定义"""
     # 全局设置
@@ -245,6 +254,9 @@ class SettingsDict(TypedDict, total=False):
     
     # 控制器设置
     controller: ControllerSettingsDict
+
+    # 自动更新设置
+    auto_updater: AutoUpdaterSettingsDict
 
     # 配置数据 - 使用具体的TypedDict类型
     addresses: List[OSCAddressDict]

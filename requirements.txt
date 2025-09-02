@@ -17,3 +17,4 @@ pyinstaller
 reactivex
 bleak
 bleak-winrt
+packaging

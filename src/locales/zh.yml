@@ -349,6 +349,18 @@ websocket:
 about_tab:
   current_version_label: "当前版本: {0}"
   feedback: "问题反馈"
+  check_updates: "检查更新"
+  checking_updates: "检查中..."
+  update_check_title: "检查更新"
+  no_repo_configured: "未配置GitHub仓库，无法检查更新"
+  update_available_title: "发现新版本"
+  update_available_message: "发现新版本 {0}: {1}\n\n是否立即下载更新？"
+  no_update_title: "已是最新版本"
+  no_update_message: "当前版本已是最新版本"
+  check_error_title: "检查更新失败"
+  check_error_message: "检查更新时出现错误:\n{0}"
+  download_info_title: "下载更新"
+  download_info_message: "将在浏览器中打开下载页面，请手动下载安装新版本"
 
 osc_address_tab:
   address_list: "地址列表"
