@@ -205,6 +205,12 @@ class PulseBar(QWidget):
     def set_height_percent(self, percent: float) -> None:
         """设置高度百分比"""
         self.height_percent = max(0.0, min(100.0, percent))
+        self.intensity = int(self.height_percent)
+        
+        # 同步更新pulse_operation数据，保持频率不变
+        frequency_tuple, _ = self.pulse_operation
+        self.pulse_operation = (frequency_tuple, (self.intensity, self.intensity, self.intensity, self.intensity))
+        
         self.update()
         self.update_tooltip()
 
@@ -472,7 +478,14 @@ class PulseBar(QWidget):
 
         if abs(percent - self.height_percent) > 1:  # 避免频繁更新
             self.height_percent = percent
+            self.intensity = int(percent)
+            
+            # 同步更新pulse_operation数据，保持频率不变
+            frequency_tuple, _ = self.pulse_operation
+            self.pulse_operation = (frequency_tuple, (self.intensity, self.intensity, self.intensity, self.intensity))
+            
             self.update()
+            self.update_tooltip()  # 更新工具提示以反映新数据
             self.value_changed.emit(self.position, int(percent))
 
 
@@ -613,6 +626,9 @@ class PulseStepEditor(QWidget):
         """更新所有条形的频率（固定模式用）"""
         for bar in self.pulse_bars:
             bar.frequency = frequency
+            # 同步更新pulse_operation数据，保持强度不变
+            _, strength_tuple = bar.pulse_operation
+            bar.pulse_operation = ((frequency, frequency, frequency, frequency), strength_tuple)
             bar.update()  # 重绘条形
             bar.update_tooltip()  # 更新工具提示
         self.current_frequency = frequency
