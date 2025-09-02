@@ -96,11 +96,9 @@ class DGLabBluetoothService(IDGLabDeviceService):
             # 通知核心接口连接成功
             self._core_interface.on_client_connected()
         else:
-            # 断开连接后清理状态
-            self._current_strengths = {Channel.A: 0, Channel.B: 0}
-            self._last_strength = None
-            # 通知核心接口连接断开
-            self._core_interface.on_client_disconnected()
+            # 尝试重连
+            logger.info("开始尝试重连设备")
+            asyncio.create_task(self._attempt_reconnect())
 
     async def _on_strength_changed(self, strengths: Dict[bluetooth.Channel, int]) -> None:
         """处理强度变化"""
@@ -421,6 +419,23 @@ class DGLabBluetoothService(IDGLabDeviceService):
         except Exception as e:
             logger.error(f"断开蓝牙设备失败: {e}")
             return False
+
+    async def _attempt_reconnect(self) -> None:
+        """无限尝试重连设备（不等待）"""
+        attempt = 1
+        while True:
+            try:
+                logger.info(f"重连尝试 {attempt}")
+                # 立即尝试重连到上次连接的设备
+                success = await self._bluetooth_controller.connect_device(None)
+                if success:
+                    logger.info("重连成功")
+                    return
+                else:
+                    logger.warning(f"重连尝试 {attempt} 失败")
+            except Exception as e:
+                logger.error(f"重连尝试 {attempt} 异常: {e}")
+            attempt += 1
 
     async def _initialize_device(self) -> None:
         """初始化设备设置"""

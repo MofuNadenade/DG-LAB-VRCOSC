@@ -270,7 +270,6 @@ class BluetoothTestClient:
             # 清理资源
             logger.info("🧹 清理资源...")
             await self.controller.disconnect_device()
-            await self.controller.cleanup()
             logger.info("✅ 资源清理完成")
 
 async def main():

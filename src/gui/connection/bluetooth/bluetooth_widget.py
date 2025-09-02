@@ -433,102 +433,96 @@ class BluetoothConnectionWidget(QWidget):
     def update_connection_state(self, state: ConnectionState, message: str = "") -> None:
         """更新连接状态"""
         if state == ConnectionState.DISCONNECTED:
-            self.connection_status_label.setText(translate("bluetooth.disconnected"))
-            self.device_info_label.setText(translate("bluetooth.no_device"))
-            self.battery_label.setText("--")
-            self.battery_progress.setVisible(False)
-            
-            # 更新按钮状态
-            self.apply_params_button.setEnabled(False)
-            self.disconnect_button.setEnabled(False)
-            self.scan_button.setEnabled(True)
-            
-            # 禁用设备控制组
-            self.set_device_control_enabled(False)
-            
-            # 如果有选中设备，启用连接按钮
-            if self.connection_manager.get_selected_device():
-                self.connect_button.setEnabled(True)
-            else:
-                self.connect_button.setEnabled(False)
-                
+            self._update_disconnected_state()
         elif state == ConnectionState.CONNECTING:
-            self.connection_status_label.setText(translate("bluetooth.connecting"))
-            self.scan_button.setEnabled(False)
-            self.connect_button.setEnabled(False)
-            self.disconnect_button.setEnabled(True)
-            self.apply_params_button.setEnabled(False)
-            
-            # 禁用设备控制组
-            self.set_device_control_enabled(False)
-            
+            self._update_connecting_state()
         elif state == ConnectionState.WAITING:
-            self.connection_status_label.setText(translate("bluetooth.waiting"))
-            self.scan_button.setEnabled(False)
-            self.connect_button.setEnabled(False)
-            self.disconnect_button.setEnabled(True)
-            self.apply_params_button.setEnabled(False)
-            
-            # 禁用设备控制组
-            self.set_device_control_enabled(False)
-            
+            self._update_waiting_state()
         elif state == ConnectionState.CONNECTED:
-            self.connection_status_label.setText(translate("bluetooth.connected"))
-
-            # 获取连接的设备信息并显示
-            connected_device = self.connection_manager.get_connected_device()
-            if connected_device:
-                device_text = f"{connected_device['name']} ({connected_device['address']})"
-                self.device_info_label.setText(device_text)
-
-            # 启用控制功能
-            self.apply_params_button.setEnabled(True)
-            self.disconnect_button.setEnabled(True)
-            self.scan_button.setEnabled(False)
-            self.connect_button.setEnabled(False)
-            
-            # 启用设备控制组
-            self.set_device_control_enabled(True)
-
+            self._update_connected_state()
         elif state == ConnectionState.FAILED:
-            status_text = message or translate("bluetooth.connection_failed")
-            self.connection_status_label.setText(status_text)
-            self.device_info_label.setText(translate("bluetooth.no_device"))
-            self.battery_label.setText("--")
-            self.battery_progress.setVisible(False)
-            
-            # 恢复按钮状态
-            self.apply_params_button.setEnabled(False)
-            self.disconnect_button.setEnabled(False)
-            self.scan_button.setEnabled(True)
-            
-            # 禁用设备控制组
-            self.set_device_control_enabled(False)
-            
-            if self.connection_manager.get_selected_device():
-                self.connect_button.setEnabled(True)
-            else:
-                self.connect_button.setEnabled(False)
-                
+            self._update_failed_state(message)
         elif state == ConnectionState.ERROR:
-            status_text = message or translate("common.error")
-            self.connection_status_label.setText(status_text)
+            self._update_error_state(message)
+
+    def _update_status_labels(self, status_key: str, device_info: str = "", battery_visible: bool = True) -> None:
+        """更新状态标签"""
+        self.connection_status_label.setText(translate(status_key))
+        if device_info:
+            self.device_info_label.setText(device_info)
+        else:
             self.device_info_label.setText(translate("bluetooth.no_device"))
+        
+        if not battery_visible:
             self.battery_label.setText("--")
             self.battery_progress.setVisible(False)
-            
-            # 恢复按钮状态
-            self.apply_params_button.setEnabled(False)
-            self.disconnect_button.setEnabled(False)
-            self.scan_button.setEnabled(True)
-            
-            # 禁用设备控制组
-            self.set_device_control_enabled(False)
-            
-            if self.connection_manager.get_selected_device():
-                self.connect_button.setEnabled(True)
-            else:
-                self.connect_button.setEnabled(False)
+
+    def _update_button_states(self, scan_enabled: bool, connect_enabled: bool, 
+                            disconnect_enabled: bool, apply_enabled: bool) -> None:
+        """更新按钮状态"""
+        self.scan_button.setEnabled(scan_enabled)
+        self.disconnect_button.setEnabled(disconnect_enabled)
+        self.apply_params_button.setEnabled(apply_enabled)
+        
+        # 连接按钮的状态需要特殊处理
+        if connect_enabled and self.connection_manager.get_selected_device():
+            self.connect_button.setEnabled(True)
+        else:
+            self.connect_button.setEnabled(False)
+
+    def _update_disconnected_state(self) -> None:
+        """更新断开连接状态"""
+        self._update_status_labels("bluetooth.disconnected", battery_visible=False)
+        self._update_button_states(scan_enabled=True, connect_enabled=True, 
+                                 disconnect_enabled=False, apply_enabled=False)
+        self.set_device_control_enabled(False)
+
+    def _update_connecting_state(self) -> None:
+        """更新连接中状态"""
+        self._update_status_labels("bluetooth.connecting")
+        self._update_button_states(scan_enabled=False, connect_enabled=False, 
+                                 disconnect_enabled=True, apply_enabled=False)
+        self.set_device_control_enabled(False)
+
+    def _update_waiting_state(self) -> None:
+        """更新等待状态"""
+        self._update_status_labels("bluetooth.waiting")
+        self._update_button_states(scan_enabled=False, connect_enabled=False, 
+                                 disconnect_enabled=True, apply_enabled=False)
+        self.set_device_control_enabled(False)
+
+    def _update_connected_state(self) -> None:
+        """更新已连接状态"""
+        # 获取连接的设备信息
+        device_info = ""
+        connected_device = self.connection_manager.get_connected_device()
+        if connected_device:
+            device_info = f"{connected_device['name']} ({connected_device['address']})"
+        
+        self._update_status_labels("bluetooth.connected", device_info)
+        self._update_button_states(scan_enabled=False, connect_enabled=False, 
+                                 disconnect_enabled=True, apply_enabled=True)
+        self.set_device_control_enabled(True)
+
+    def _update_failed_state(self, message: str = "") -> None:
+        """更新连接失败状态"""
+        status_text = message or translate("bluetooth.connection_failed")
+        self.connection_status_label.setText(status_text)
+        self._update_status_labels("bluetooth.connection_failed", battery_visible=False)
+        self._update_button_states(scan_enabled=True, connect_enabled=True, 
+                                 disconnect_enabled=False, apply_enabled=False)
+        self.set_device_control_enabled(False)
+
+    def _update_error_state(self, message: str = "") -> None:
+        """更新错误状态"""
+        status_text = message or translate("common.error")
+        self.connection_status_label.setText(status_text)
+        self.device_info_label.setText(translate("bluetooth.no_device"))
+        self.battery_label.setText("--")
+        self.battery_progress.setVisible(False)
+        self._update_button_states(scan_enabled=True, connect_enabled=True, 
+                                 disconnect_enabled=False, apply_enabled=False)
+        self.set_device_control_enabled(False)
 
     def get_device_params(self) -> WebsocketDeviceParamsDict:
         """获取设备参数"""

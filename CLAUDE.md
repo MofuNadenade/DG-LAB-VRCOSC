@@ -303,3 +303,40 @@ except ImportError:
    - `load_custom_pulses()` - Load and register custom pulse actions
    - `_register_osc_actions_with_controller()` - Register OSC actions
    - `load_osc_parameter_bindings()` - Bind parameters to actions (must be last)
+
+## Connection and Pulse Synchronization
+
+### Initial Pulse State Management
+
+**Critical**: After successful connection (both WebSocket and Bluetooth), the system must ensure UI pulse state is synchronized with the service layer:
+
+#### Connection Flow
+1. **Connection Established**: WebSocket or Bluetooth connection succeeds
+2. **Service Controller Created**: ServiceController instance with all services initialized  
+3. **UI Controller Registration**: `ui_interface.set_service_controller(service_controller)` called
+4. **Pulse State Sync**: `asyncio.create_task(service_controller.osc_action_service.update_pulse())` **MUST** be called
+
+#### Required Implementation Pattern
+Both connection managers must include pulse synchronization after successful connection:
+
+```python
+# In WebSocketConnectionManager and BluetoothConnectionManager
+service_controller = ServiceController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
+self.ui_interface.set_service_controller(service_controller)
+
+# CRITICAL: Synchronize initial pulse state
+asyncio.create_task(service_controller.osc_action_service.update_pulse())
+```
+
+#### Why This Is Required
+- **UI State**: Settings tab may show saved pulse configuration
+- **Service State**: Newly created services have no pulse data applied
+- **Sync Gap**: Without explicit synchronization, UI displays one state while services run with empty/null pulse data
+- **Solution**: `update_pulse()` reads current UI pulse selection and applies it to the service layer
+
+#### Common Bug Pattern
+**Symptom**: "Connection successful but initial pulse invalid, task not set"
+
+**Root Cause**: Missing `update_pulse()` call after connection establishment
+
+**Fix**: Always call `service_controller.osc_action_service.update_pulse()` after `set_service_controller()`

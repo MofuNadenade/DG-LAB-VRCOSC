@@ -64,12 +64,13 @@ class BluetoothController:
         
         # 定时任务
         self._data_send_task: Optional[asyncio.Task[None]] = None
-        self._connection_monitor_task: Optional[asyncio.Task[None]] = None
         self._battery_polling_task: Optional[asyncio.Task[None]] = None
         self._is_running = False
-        self._monitor_interval = 5.0
         self._battery_polling_interval = 5.0
         self._pulse_buffer = 1
+        
+        # 连接状态事件信号
+        self._connected_event = asyncio.Event()
         
         # 回调函数
         self._on_notification: Optional[Callable[[bytes], Awaitable[None]]] = None
@@ -179,7 +180,7 @@ class BluetoothController:
             logger.info(f"尝试连接设备: {target_device['name']} ({target_device['address']})")
             
             # 创建BleakClient并连接
-            self._client = BleakClient(target_device['address'], timeout=timeout)
+            self._client = BleakClient(target_device['address'], timeout=timeout, disconnected_callback=self._on_disconnect_callback)
             await self._client.connect()
             
             # 等待服务发现完成
@@ -214,6 +215,9 @@ class BluetoothController:
             # 触发连接状态回调
             if self._on_connection_changed:
                 await self._on_connection_changed(True)
+            
+            # 触发连接状态事件信号
+            self._connected_event.set()
             
             logger.info(f"成功连接到设备: {target_device['name']} ({target_device['address']})")
             return True
@@ -636,15 +640,9 @@ class BluetoothController:
             return
         
         self._is_running = True
-        
-        # 让出控制权到事件循环，避免在当前任务执行期间创建新任务导致冲突
-        await asyncio.sleep(0)
-        
+
         # 启动数据发送任务
         self._data_send_task = asyncio.create_task(self._data_send_loop())
-        
-        # 启动连接监控任务
-        self._connection_monitor_task = asyncio.create_task(self._connection_monitor_loop())
         
         # 启动电量轮询任务
         self._battery_polling_task = asyncio.create_task(self._battery_polling_loop())
@@ -668,13 +666,6 @@ class BluetoothController:
             self._data_send_task = None
         
         # 停止连接监控任务
-        if self._connection_monitor_task:
-            self._connection_monitor_task.cancel()
-            try:
-                await self._connection_monitor_task
-            except asyncio.CancelledError:
-                pass
-            self._connection_monitor_task = None
         
         # 停止电量轮询任务
         if self._battery_polling_task:
@@ -691,13 +682,22 @@ class BluetoothController:
         """数据发送循环（每100ms发送一次B0指令）"""
         while self._is_running:
             try:
+                # 等待连接状态变化信号
+                if not self.is_connected:
+                    # 清除事件状态，等待连接成功
+                    await self._connected_event.wait()
+                    continue
+
                 # 发送脉冲缓冲区
                 for _ in range(self._pulse_buffer):
                     await self._process_and_send_b0_command()
+
                 # 发送B0指令
                 await self._process_and_send_b0_command()
+
                 # 等待100ms
-                await asyncio.sleep(0.1)  # 100ms
+                await asyncio.sleep(0.1)
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -766,57 +766,26 @@ class BluetoothController:
         except Exception as e:
             logger.error(f"处理B0指令失败: {e}")
     
-    async def _connection_monitor_loop(self) -> None:
-        """连接监控循环"""
-        while self._is_running:
-            try:
-                # 检查连接状态
-                if not self._client or not self._client.is_connected:
-                    logger.warning("检测到连接断开")
-                    await self._handle_connection_lost()
-                    break
-                
-                await asyncio.sleep(self._monitor_interval)
-                
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"连接监控错误: {e}")
-                await asyncio.sleep(self._monitor_interval)
-    
     async def _battery_polling_loop(self) -> None:
         """电量轮询循环"""
         while self._is_running:
             try:
-                # 等待轮询间隔
-                await asyncio.sleep(self._battery_polling_interval)
-                
-                # 检查连接状态
+                # 等待连接状态变化信号
                 if not self.is_connected:
+                    # 清除事件状态，等待连接成功
+                    await self._connected_event.wait()
                     continue
                 
                 # 执行电量查询
                 await self.query_battery_level()
-                
+
+                # 等待轮询间隔
+                await asyncio.sleep(self._battery_polling_interval)
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"电量轮询错误: {e}")
                 await asyncio.sleep(5.0)  # 出错时等待5秒再重试
-    
-    async def _handle_connection_lost(self) -> None:
-        """处理连接丢失"""
-        logger.warning("连接已丢失")
-        
-        # 清理状态
-        await self._cleanup_connection()
-        
-        # 触发连接状态回调
-        if self._on_connection_changed:
-            try:
-                await self._on_connection_changed(False)
-            except Exception as e:
-                logger.error(f"触发连接状态回调失败: {e}")
     
     async def _cleanup_connection(self) -> None:
         """清理连接状态"""
@@ -827,6 +796,9 @@ class BluetoothController:
         self._notify_characteristic = None
         self._battery_characteristic = None
         
+        # 清除连接状态事件信号
+        self._connected_event.clear()
+        
         if self._client:
             try:
                 if self._client.is_connected:
@@ -836,12 +808,18 @@ class BluetoothController:
             finally:
                 self._client = None
     
-    # ============ 资源清理 ============
-    
-    async def cleanup(self) -> None:
-        """清理资源"""
-        try:
-            await self.disconnect_device()
-            logger.info("V3蓝牙控制器资源已清理")
-        except Exception as e:
-            logger.error(f"清理资源失败: {e}")
+    def _on_disconnect_callback(self, client: BleakClient) -> None:
+        """断开连接回调"""
+        asyncio.create_task(self._on_disconnected_async())
+
+    async def _on_disconnected_async(self) -> None:
+        """断开连接回调"""
+        logger.info("设备连接已断开")
+        await self._cleanup_connection()
+        
+        # 触发连接状态回调
+        if self._on_connection_changed:
+            try:
+                await self._on_connection_changed(False)
+            except Exception as e:
+                logger.error(f"触发连接状态回调失败: {e}")
