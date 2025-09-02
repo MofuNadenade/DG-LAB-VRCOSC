@@ -69,6 +69,7 @@ class BluetoothController:
         self._is_running = False
         self._monitor_interval = 5.0
         self._battery_polling_interval = 5.0
+        self._pulse_buffer = 1
         
         # 回调函数
         self._on_notification: Optional[Callable[[bytes], Awaitable[None]]] = None
@@ -690,7 +691,12 @@ class BluetoothController:
         """数据发送循环（每100ms发送一次B0指令）"""
         while self._is_running:
             try:
+                # 发送脉冲缓冲区
+                for _ in range(self._pulse_buffer):
+                    await self._process_and_send_b0_command()
+                # 发送B0指令
                 await self._process_and_send_b0_command()
+                # 等待100ms
                 await asyncio.sleep(0.1)  # 100ms
             except asyncio.CancelledError:
                 break
