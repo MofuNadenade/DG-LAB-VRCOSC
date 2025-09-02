@@ -67,6 +67,11 @@ class OSCActionService(IService):
         
         # 服务状态
         self._is_running: bool = False
+        
+        # 强度缓存和防抖机制
+        self._pending_strength_updates: Dict[Channel, float] = {}
+        self._strength_update_task: Optional[asyncio.Task[None]] = None
+        self._strength_debounce_interval: float = 0.1  # 防抖间隔，单位秒，默认100ms
 
     # ============ 属性访问 ============
     
@@ -96,6 +101,17 @@ class OSCActionService(IService):
     @enable_panel_control.setter
     def enable_panel_control(self, value: bool) -> None:
         self._enable_panel_control = value
+    
+    @property
+    def strength_debounce_interval(self) -> float:
+        """强度防抖间隔（秒）"""
+        return self._strength_debounce_interval
+    
+    @strength_debounce_interval.setter
+    def strength_debounce_interval(self, value: float) -> None:
+        """设置强度防抖间隔（秒）"""
+        if value > 0:
+            self._strength_debounce_interval = value
 
     # ============ 通道控制业务逻辑 ============
 
@@ -115,19 +131,21 @@ class OSCActionService(IService):
     # ============ 强度控制业务逻辑 ============
 
     async def set_float_output(self, value: float, channel: Channel) -> None:
-        """设置浮点输出强度（自动处理动骨模式映射）"""
+        """设置浮点输出强度（自动处理动骨模式映射，带防抖机制）"""
         if not self._enable_panel_control:
             return
 
         last_strength = self.get_last_strength()
         if value >= 0.0 and last_strength:
-            # 简化动骨模式和非动骨模式的强度设置逻辑
+            # 计算最终输出值
             if self._dynamic_bone_modes.get(channel):
                 limit = last_strength['strength_limit'][channel]
-                final_output = math.ceil(self._map_value(value, limit * 0.2, limit))
-                await self._dglab_device_service.set_float_output(final_output, channel)
+                final_output = math.ceil(self._map_unit_value(value, 0, limit))
             else:
-                await self._dglab_device_service.set_float_output(value, channel)
+                final_output = value
+            
+            # 缓存强度更新
+            self._pending_strength_updates[channel] = final_output
 
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度（委托给设备服务）"""
@@ -210,7 +228,7 @@ class OSCActionService(IService):
 
     async def set_fire_mode_strength_step(self, value: float) -> None:
         """设置开火模式步进值"""
-        self._fire_mode_strength_step = math.floor(self._map_value(value, 0, 100))
+        self._fire_mode_strength_step = math.floor(self._map_unit_value(value, 0, 100))
         logger.info(f"当前强度步进值: {self._fire_mode_strength_step}")
         # 更新 UI 组件
         self._core_interface.set_fire_mode_strength_step(self._fire_mode_strength_step)
@@ -288,6 +306,10 @@ class OSCActionService(IService):
         try:
             # 初始化服务状态
             self._is_running = True
+            
+            # 启动防抖强度更新任务
+            self._strength_update_task = asyncio.create_task(self._debounced_strength_update())
+            
             logger.info("OSC动作服务已启动")
             return True
         except Exception as e:
@@ -314,9 +336,43 @@ class OSCActionService(IService):
             self._set_dynamic_bone_mode_timer.cancel()
             self._set_dynamic_bone_mode_timer = None
         
+        # 取消强度更新任务
+        if self._strength_update_task and not self._strength_update_task.done():
+            self._strength_update_task.cancel()
+            self._strength_update_task = None
+        
         logger.debug("OSC动作服务资源已清理")
 
     # ============ 私有辅助方法 ============
+
+    async def _debounced_strength_update(self) -> None:
+        """防抖强度更新后台任务（持续运行，可配置间隔）"""
+        logger.debug(f"防抖强度更新任务已启动，间隔: {self._strength_debounce_interval}s")
+        try:
+            while self._is_running:
+                # 等待配置的防抖间隔
+                await asyncio.sleep(self._strength_debounce_interval)
+                
+                # 如果有待处理的更新，处理它们
+                if self._pending_strength_updates:
+                    pending_updates = self._pending_strength_updates.copy()
+                    self._pending_strength_updates.clear()
+                    
+                    # 发送缓存的强度更新
+                    for channel, strength_value in pending_updates.items():
+                        try:
+                            await self._dglab_device_service.set_float_output(strength_value, channel)
+                            logger.debug(f"防抖强度更新完成: 通道{self._get_channel_name(channel)} = {strength_value}")
+                        except Exception as e:
+                            logger.error(f"防抖强度更新失败: 通道{self._get_channel_name(channel)}, 错误: {e}")
+                            
+        except asyncio.CancelledError:
+            logger.debug("防抖强度更新任务已取消")
+            raise
+        except Exception as e:
+            logger.error(f"防抖强度更新任务异常: {e}")
+        finally:
+            logger.debug("防抖强度更新任务已结束")
 
     async def _set_dynamic_bone_mode_timer_handle(self, channel: Channel) -> None:
         """模式切换计时器处理"""
@@ -342,6 +398,6 @@ class OSCActionService(IService):
         """获取动骨模式对应的UI特性"""
         return UIFeature.DYNAMIC_BONE_A if channel == Channel.A else UIFeature.DYNAMIC_BONE_B
 
-    def _map_value(self, value: float, min_value: float, max_value: float) -> float:
-        """将值映射到指定范围"""
-        return min_value + value * (max_value - min_value)
+    def _map_unit_value(self, value: float, min_value: float, max_value: float) -> float:
+        """将单位值映射到指定范围"""
+        return min_value + max(0, min(1, value)) * (max_value - min_value)
