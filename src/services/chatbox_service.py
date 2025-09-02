@@ -94,7 +94,7 @@ class ChatboxService(IService):
         self.set_enabled(not self._enable_chatbox_status)
         self._chatbox_toggle_timer = None
 
-    async def toggle_chatbox(self, value: int) -> None:
+    async def osc_toggle_chatbox(self, value: int) -> None:
         """开关 ChatBox 内容发送"""
         if value == 1:  # 按下按键
             if self._chatbox_toggle_timer is not None:
