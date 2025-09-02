@@ -12,14 +12,13 @@ DG-LAB V3蓝牙控制器
 
 import asyncio
 import logging
-import time
-from typing import Optional, Callable, Awaitable, Dict, List, Tuple
+from typing import Optional, Callable, Awaitable, Dict, List
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from .bluetooth_models import (
     DeviceInfo, Channel, DeviceState, BluetoothUUIDs, PulseOperation, StrengthParsingMethod,
-    SequenceState, WaveformFrequencyOperation, WaveformStrengthOperation 
+    WaveformFrequencyOperation, WaveformStrengthOperation 
 )
 from .bluetooth_protocol import BluetoothProtocol
 
@@ -56,7 +55,6 @@ class BluetoothController:
         
         # 设备状态
         self._device_state: DeviceState = self._create_device_state()
-        self._sequence_state: SequenceState = self._create_sequence_state()
         
         # 波形数据管理 - 强类型标记
         self._pulse_data_a: List[PulseOperation] = []
@@ -310,19 +308,13 @@ class BluetoothController:
                 logger.error(f"强度值超出范围: {strength}")
                 return False
             
-            # 检查是否允许输入
-            if not self._sequence_state['is_input_allowed']:
-                logger.warning("当前不允许强度输入，等待设备回应")
-                return False
+            # 直接更新设备状态中的强度值
+            if channel == Channel.A:
+                self._device_state['channel_a']['strength'] = strength
+            else:
+                self._device_state['channel_b']['strength'] = strength
             
-            # 计算强度变化
-            current_strength = self._get_current_strength(channel)
-            delta = strength - current_strength
-            
-            # 累积强度变化
-            self._sequence_state['accumulated_changes'][channel] = delta
-            
-            logger.debug(f"设置{channel}通道绝对强度: {current_strength} -> {strength} (变化: {delta})")
+            logger.debug(f"设置{channel}通道绝对强度: {strength}")
             return True
             
         except Exception as e:
@@ -336,15 +328,24 @@ class BluetoothController:
                 logger.warning("设备未连接，无法调整强度")
                 return False
             
-            # 检查是否允许输入
-            if not self._sequence_state['is_input_allowed']:
-                logger.warning("当前不允许强度输入，等待设备回应")
+            # 获取当前强度值
+            current_strength = self._get_current_strength(channel)
+            
+            # 计算新的绝对强度值
+            new_strength = current_strength + delta
+            
+            # 验证强度值范围
+            if not self._protocol.validate_strength(new_strength):
+                logger.error(f"调整后强度值超出范围: {new_strength}")
                 return False
             
-            # 累积强度变化
-            self._sequence_state['accumulated_changes'][channel] += delta
+            # 直接更新设备状态中的强度值
+            if channel == Channel.A:
+                self._device_state['channel_a']['strength'] = new_strength
+            else:
+                self._device_state['channel_b']['strength'] = new_strength
             
-            logger.debug(f"调整{channel}通道相对强度: {delta} (累积: {self._sequence_state['accumulated_changes'][channel]})")
+            logger.debug(f"调整{channel}通道相对强度: {current_strength} -> {new_strength} (变化: {delta})")
             return True
             
         except Exception as e:
@@ -489,17 +490,6 @@ class BluetoothController:
             'battery_level': 0
         }
 
-    def _create_sequence_state(self) -> SequenceState:
-        """创建序列号状态"""
-        return {
-            'current_no': 0,
-            'pending_no': None,
-            'is_input_allowed': True,
-            'accumulated_changes': {Channel.A: 0, Channel.B: 0},
-            'response_timeout': 1.0,
-            'last_send_time': None
-        }
-
     def _create_device_info(self, address: str, rssi: int, name: str) -> DeviceInfo:
         """创建设备信息"""
         return {
@@ -524,7 +514,6 @@ class BluetoothController:
             
             if self._client:
                 await self._client.write_gatt_char(self._write_characteristic, data)
-            logger.debug(f"发送数据: {data.hex().upper()}")
             return True
             
         except Exception as e:
@@ -630,17 +619,7 @@ class BluetoothController:
             self._device_state['channel_a']['strength'] = response['strength_a']
             self._device_state['channel_b']['strength'] = response['strength_b']
             
-            # 处理序列号回应
-            if response['sequence_no'] == self._sequence_state['pending_no']:
-                # 收到期待的回应，允许下次输入
-                self._sequence_state['is_input_allowed'] = True
-                self._sequence_state['pending_no'] = None
-                logger.debug(f"收到B1回应: 序列号={response['sequence_no']}, 强度A={response['strength_a']}, B={response['strength_b']}")
-            elif response['sequence_no'] == 0:
-                # 设备主动报告强度变化（如通过拨轮调节）
-                logger.debug(f"设备主动报告强度变化: A={response['strength_a']}, B={response['strength_b']}")
-            else:
-                logger.warning(f"收到意外的B1回应序列号: {response['sequence_no']}, 期待: {self._sequence_state['pending_no']}")
+            logger.debug(f"收到B1回应: 强度A={response['strength_a']}, B={response['strength_b']}")
             
             # 触发强度变化回调
             if self._on_strength_changed:
@@ -746,22 +725,23 @@ class BluetoothController:
             self._pulse_index_b = (self._pulse_index_b + 1) % len(self._pulse_data_b)
             return current_pulse
 
-        # 默认返回静止状态
-        return ((10, 10, 10, 10), (0, 0, 0, 0))
-
     async def _process_and_send_b0_command(self) -> None:
         """处理并发送B0指令"""
         try:
-            # 处理强度数据
-            strength_parsing_method, strength_a, strength_b, sequence_no = self._process_strength_data()
+            # 获取当前强度值
+            strength_a = self._device_state['channel_a']['strength']
+            strength_b = self._device_state['channel_b']['strength']
             
             # 获取当前脉冲数据（循环播放）
             pulse_freq_a, pulse_strength_a = self._next_pulse_data(Channel.A)
             pulse_freq_b, pulse_strength_b = self._next_pulse_data(Channel.B)
+
+            # 构建强度解读方式
+            strength_parsing_method = self._protocol.build_strength_parsing_method(StrengthParsingMethod.ABSOLUTE, StrengthParsingMethod.ABSOLUTE)
             
             # 构建B0指令
             b0_data = self._protocol.build_b0_command(
-                sequence_no=sequence_no,
+                sequence_no=0,  # 序列号设为0
                 strength_parsing_method=strength_parsing_method,
                 strength_a=strength_a,
                 strength_b=strength_b,
@@ -777,54 +757,8 @@ class BluetoothController:
             else:
                 logger.error("B0指令参数验证失败，跳过发送")
             
-            self._sequence_state['last_send_time'] = time.time()
-            
         except Exception as e:
             logger.error(f"处理B0指令失败: {e}")
-    
-    def _process_strength_data(self) -> Tuple[int, int, int, int]:
-        """处理强度数据并返回B0指令参数"""
-        if not self._sequence_state['is_input_allowed']:
-            # 不允许输入时，发送无变化数据
-            return 0b0000, 0, 0, 0
-        
-        # 检查是否有累积的强度变化
-        change_a = self._sequence_state['accumulated_changes'][Channel.A]
-        change_b = self._sequence_state['accumulated_changes'][Channel.B]
-        
-        if change_a == 0 and change_b == 0:
-            # 无强度变化
-            return 0b0000, 0, 0, 0
-        
-        # 有强度变化，生成序列号并处理
-        self._sequence_state['current_no'] = (self._sequence_state['current_no'] % 15) + 1
-        sequence_no = self._sequence_state['current_no']
-        self._sequence_state['pending_no'] = sequence_no
-        self._sequence_state['is_input_allowed'] = False
-        
-        # 确定强度解读方式和强度值
-        method_a = self._get_strength_parsing_method(change_a)
-        method_b = self._get_strength_parsing_method(change_b)
-        strength_parsing_method = self._protocol.build_strength_parsing_method(method_a, method_b)
-        
-        strength_a = abs(change_a)
-        strength_b = abs(change_b)
-        
-        # 清除累积变化
-        self._sequence_state['accumulated_changes'][Channel.A] = 0
-        self._sequence_state['accumulated_changes'][Channel.B] = 0
-        
-        logger.debug(f"处理强度数据: 方式={strength_parsing_method:04b}, A={strength_a}, B={strength_b}, 序列号={sequence_no}")
-        return strength_parsing_method, strength_a, strength_b, sequence_no
-    
-    def _get_strength_parsing_method(self, change: int) -> StrengthParsingMethod:
-        """根据强度变化值确定解读方式"""
-        if change > 0:
-            return StrengthParsingMethod.INCREASE
-        elif change < 0:
-            return StrengthParsingMethod.DECREASE
-        else:
-            return StrengthParsingMethod.NO_CHANGE
     
     async def _connection_monitor_loop(self) -> None:
         """连接监控循环"""
@@ -886,12 +820,6 @@ class BluetoothController:
         self._write_characteristic = None
         self._notify_characteristic = None
         self._battery_characteristic = None
-        
-        # 重置序列号状态
-        self._sequence_state['current_no'] = 0
-        self._sequence_state['pending_no'] = None
-        self._sequence_state['is_input_allowed'] = True
-        self._sequence_state['accumulated_changes'] = {Channel.A: 0, Channel.B: 0}
         
         if self._client:
             try:

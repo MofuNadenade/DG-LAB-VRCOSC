@@ -12,7 +12,6 @@ from .bluetooth_models import (
     Channel, StrengthParsingMethod,
     # 数据模型
     DeviceInfo, ChannelState, DeviceState, B0Command, BFCommand, B1Response, 
-    SequenceState,
     # 工具类
     FrequencyConverter, BluetoothUUIDs, ProtocolConstants
 )
@@ -31,7 +30,6 @@ __all__ = [
     
     # 数据模型
     'DeviceInfo', 'ChannelState', 'DeviceState', 'B0Command', 'BFCommand', 'B1Response', 
-    'SequenceState',
     
     # 工具类
     'FrequencyConverter', 'BluetoothUUIDs', 'ProtocolConstants',

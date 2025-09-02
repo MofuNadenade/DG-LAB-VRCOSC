@@ -5,7 +5,7 @@ DG-LAB V3协议数据模型
 """
 
 from enum import Enum, IntEnum
-from typing import List, Optional, TypedDict, Dict, Tuple
+from typing import List, TypedDict, Tuple
 
 
 # 基础类型定义
@@ -96,16 +96,6 @@ class B1Response(TypedDict):
     sequence_no: int                     # 序列号 (1byte)
     strength_a: int                      # A通道当前实际强度 (1byte)
     strength_b: int                      # B通道当前实际强度 (1byte)
-
-
-class SequenceState(TypedDict):
-    """序列号状态管理"""
-    current_no: int                         # 当前序列号 (1-15)
-    pending_no: Optional[int]               # 等待回应的序列号
-    is_input_allowed: bool                  # 是否允许输入强度
-    accumulated_changes: Dict[Channel, int] # 累积的强度变化
-    response_timeout: float                 # 回应超时时间(秒)
-    last_send_time: Optional[float]         # 上次发送时间
 
 
 class FrequencyConverter:
