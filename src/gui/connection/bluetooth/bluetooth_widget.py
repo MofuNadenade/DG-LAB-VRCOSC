@@ -70,6 +70,18 @@ class BluetoothConnectionWidget(QWidget):
         self.load_settings()
         self.setup_tooltips()
         
+        # 连接蓝牙连接管理器的信号
+        self._connect_manager_signals()
+
+    def _connect_manager_signals(self) -> None:
+        """连接蓝牙连接管理器的信号"""
+        self.connection_manager.signals.battery_level_updated.connect(self.update_battery_level)
+
+    def update_battery_level(self, battery_level: int) -> None:
+        """更新电量显示"""
+        self.battery_label.setText(f"{battery_level}%")
+        self.battery_progress.setValue(battery_level)
+        self.battery_progress.setVisible(True)
 
     def init_ui(self) -> None:
         """初始化UI"""
