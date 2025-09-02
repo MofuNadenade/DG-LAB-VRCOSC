@@ -6,7 +6,7 @@ common:
   success: "Success"
 
 main:
-  title: "DG-Lab WebSocket Controller for VRChat"
+  title: "DG-Lab Universal Controller for VRChat"
   tabs:
     connection: "Connection"
     settings: "Device Control"
