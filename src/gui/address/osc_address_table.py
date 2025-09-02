@@ -356,12 +356,12 @@ class OSCAddressTableTab(QWidget):
             self.refresh_address_table()
             
             # 显示成功消息
-            QMessageBox.information(self, translate("osc_address_tab.success"),
+            QMessageBox.information(self, translate("common.success"),
                                     translate("osc_address_tab.config_saved"))
                                     
         except Exception as e:
             logger.error(f"Failed to save addresses: {e}")
-            QMessageBox.critical(self, translate("osc_address_tab.error"),
+            QMessageBox.critical(self, translate("common.error"),
                                  translate("osc_address_tab.save_config_failed").format(str(e)))
 
     def _handle_new_address(self, row: int) -> None:
@@ -460,13 +460,13 @@ class OSCAddressTableTab(QWidget):
 
                 # 检查表格中是否已存在相同名称
                 if self.has_address_name_in_table(name):
-                    QMessageBox.warning(self, translate("osc_address_tab.error"),
+                    QMessageBox.warning(self, translate("common.error"),
                                         translate("osc_address_tab.address_exists"))
                     return
 
                 # 检查表格中是否已存在相同代码
                 if self.has_address_code_in_table(code):
-                    QMessageBox.warning(self, translate("osc_address_tab.error"),
+                    QMessageBox.warning(self, translate("common.error"),
                                         translate("osc_address_tab.code_exists"))
                     return
                 
@@ -512,7 +512,7 @@ class OSCAddressTableTab(QWidget):
                 logger.info(f"Added OSC address to table: {name} -> {code}")
 
                 # 显示成功消息
-                QMessageBox.information(self, translate("osc_address_tab.success"),
+                QMessageBox.information(self, translate("common.success"),
                                         translate("osc_address_tab.address_added").format(name))
 
     def delete_address(self) -> None:
@@ -553,7 +553,7 @@ class OSCAddressTableTab(QWidget):
             self.update_address_status_label()
 
             # 显示成功消息
-            QMessageBox.information(self, translate("osc_address_tab.success"),
+            QMessageBox.information(self, translate("common.success"),
                                     translate("osc_address_tab.address_deleted").format(address_name))
 
     def has_address_name_in_table(self, name: str, exclude_row: int = -1) -> bool:
@@ -722,12 +722,12 @@ class OSCAddressTableDelegate(QStyledItemDelegate):
             if new_text != original_value:
                 if column == 1:  # 地址名称列
                     if self.address_tab.has_address_name_in_table(new_text, row):
-                        QMessageBox.warning(self.address_tab, translate("osc_address_tab.error"),
+                        QMessageBox.warning(self.address_tab, translate("common.error"),
                                             translate("osc_address_tab.address_exists"))
                     return
                 elif column == 2:  # OSC代码列
                     if self.address_tab.has_address_code_in_table(new_text, row):
-                        QMessageBox.warning(self.address_tab, translate("osc_address_tab.error"),
+                        QMessageBox.warning(self.address_tab, translate("common.error"),
                                             translate("osc_address_tab.code_exists"))
                     return
             

@@ -26,7 +26,7 @@ class BluetoothConnectionSignals(QObject):
     
     # 连接状态信号
     connection_state_changed = Signal(ConnectionState, str)
-    device_connected = Signal(object)  # DGLabDevice
+    device_connected = Signal(DGLabDevice)
     device_disconnected = Signal()
     
     # 设备状态信号

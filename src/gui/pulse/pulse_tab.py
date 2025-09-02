@@ -693,11 +693,11 @@ class PulseTab(QWidget):
             self.pulse_saved.emit(self.current_pulse.name)
 
             logger.info(f"Saved pulse: {self.current_pulse.name}")
-            QMessageBox.information(self, translate("pulse_editor.save_success"),
+            QMessageBox.information(self, translate("common.save_success"),
                                     translate("pulse_editor.save_success_msg").format(self.current_pulse.name))
 
         except Exception as e:
-            QMessageBox.critical(self, translate("pulse_editor.save_failed"),
+            QMessageBox.critical(self, translate("common.save_failed"),
                                  translate("pulse_editor.save_failed_msg").format(str(e)))
 
     def save_pulses_to_config(self) -> None:

@@ -351,7 +351,7 @@ class WebSocketConnectionWidget(QWidget):
             style = 'background-color: red; color: white;'
             enabled = True
         elif state == ConnectionState.ERROR:
-            text = message or translate('connection_tab.error')
+            text = message or translate('common.error')
             style = 'background-color: darkred; color: white;'
             enabled = True
 

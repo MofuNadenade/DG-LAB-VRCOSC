@@ -341,12 +341,12 @@ class OSCBindingTableTab(QWidget):
             self.refresh_binding_table()
             
             # 显示成功消息
-            QMessageBox.information(self, translate("osc_address_tab.success"),
+            QMessageBox.information(self, translate("common.success"),
                                     translate("osc_address_tab.config_saved"))
                                     
         except Exception as e:
             logger.error(f"Failed to save bindings: {e}")
-            QMessageBox.critical(self, translate("osc_address_tab.error"),
+            QMessageBox.critical(self, translate("common.error"),
                                  translate("osc_address_tab.save_config_failed").format(str(e)))
 
     def _handle_new_binding(self, row: int) -> None:
@@ -515,14 +515,14 @@ class OSCBindingTableTab(QWidget):
                 action = self.registries.action_registry.get_action_by_name(action_name)
 
                 if not address or not action:
-                    QMessageBox.critical(self, translate("osc_address_tab.error"),
+                    QMessageBox.critical(self, translate("common.error"),
                                          translate("osc_address_tab.address_action_not_found").format(address_name,
                                                                                                       action_name))
                     return
 
                 # 检查表格中是否已存在相同地址的绑定
                 if self.has_binding_in_table(address_name):
-                    QMessageBox.warning(self, translate("osc_address_tab.error"),
+                    QMessageBox.warning(self, translate("common.error"),
                                         translate("osc_address_tab.binding_exists"))
                     return
                 
@@ -586,7 +586,7 @@ class OSCBindingTableTab(QWidget):
                 logger.info(f"Added binding to table: {address_name} -> {action_name}")
 
                 # 显示成功消息
-                QMessageBox.information(self, translate("osc_address_tab.success"),
+                QMessageBox.information(self, translate("common.success"),
                                         translate("osc_address_tab.binding_added").format(address_name,
                                                                                           action_name))
 
@@ -631,7 +631,7 @@ class OSCBindingTableTab(QWidget):
             self.update_binding_status_label()
 
             # 显示成功消息
-            QMessageBox.information(self, translate("osc_address_tab.success"),
+            QMessageBox.information(self, translate("common.success"),
                                     translate("osc_address_tab.binding_deleted").format(address_name, action_name))
 
     def has_binding_in_table(self, address_name: str, exclude_row: int = -1) -> bool:
@@ -825,7 +825,7 @@ class OSCBindingTableDelegate(QStyledItemDelegate):
                 if column == 1:
                     # 检查冲突 - 直接调用主类的方法
                     if self.binding_tab.has_binding_in_table(new_text, row):
-                        QMessageBox.warning(self.binding_tab, translate("osc_address_tab.error"),
+                        QMessageBox.warning(self.binding_tab, translate("common.error"),
                                             translate("osc_address_tab.binding_exists"))
                         return
             
