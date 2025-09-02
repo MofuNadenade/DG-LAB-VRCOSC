@@ -277,6 +277,16 @@ class BluetoothProtocol:
         """验证波形强度"""
         return ProtocolConstants.WAVE_STRENGTH_MIN <= strength <= ProtocolConstants.WAVE_STRENGTH_MAX
     
+    def clamp_pulse_frequency(self, frequency: int) -> int:
+        """限制波形频率在有效范围内"""
+        return max(ProtocolConstants.WAVE_FREQUENCY_MIN, 
+                  min(ProtocolConstants.WAVE_FREQUENCY_MAX, frequency))
+    
+    def clamp_pulse_strength(self, strength: int) -> int:
+        """限制波形强度在有效范围内"""
+        return max(ProtocolConstants.WAVE_STRENGTH_MIN, 
+                  min(ProtocolConstants.WAVE_STRENGTH_MAX, strength))
+    
     def validate_sequence_no(self, sequence_no: int) -> bool:
         """验证序列号"""
         return ProtocolConstants.SEQUENCE_NO_MIN <= sequence_no <= ProtocolConstants.SEQUENCE_NO_MAX

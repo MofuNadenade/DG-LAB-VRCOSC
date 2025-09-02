@@ -275,3 +275,13 @@ class PulseDict(TypedDict):
     name: str
     data: List[PulseOperation]
     integrity: IntegrityReport
+
+
+class WebsocketDeviceParamsDict(TypedDict):
+    """WebSocket设备参数数据结构"""
+    strength_limit_a: int
+    strength_limit_b: int
+    freq_balance_a: int
+    freq_balance_b: int
+    strength_balance_a: int
+    strength_balance_b: int

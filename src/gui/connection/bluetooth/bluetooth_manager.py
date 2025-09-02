@@ -17,7 +17,7 @@ from PySide6.QtCore import QObject, Signal
 from config import save_settings
 from core import ServiceController
 from gui.ui_interface import UIInterface
-from models import Channel, SettingsDict, ConnectionState
+from models import Channel, SettingsDict, ConnectionState, WebsocketDeviceParamsDict
 from services.chatbox_service import ChatboxService
 from services.dglab_bluetooth_service import DGLabBluetoothService, DGLabDevice
 from services.osc_action_service import OSCActionService
@@ -104,7 +104,7 @@ class BluetoothConnectionManager:
             self.discovered_devices = []
             return []
 
-    def start_connection(self, device: DGLabDevice, osc_port: int) -> None:
+    def start_connection(self, device: DGLabDevice, osc_port: int, device_params: WebsocketDeviceParamsDict) -> None:
         """启动蓝牙连接"""
         logger.info(f"正在启动蓝牙连接: {device['name']} ({device['address']}), OSC端口: {osc_port}")
         
@@ -114,7 +114,7 @@ class BluetoothConnectionManager:
 
         # 启动服务器
         self.server_task = asyncio.create_task(
-            self._run_server(device, osc_port)
+            self._run_server(device, osc_port, device_params)
         )
 
     def stop_connection(self) -> None:
@@ -123,7 +123,7 @@ class BluetoothConnectionManager:
         if self.server_task and not self.server_task.done():
             self.server_task.cancel()
 
-    async def _run_server(self, device: DGLabDevice, osc_port: int) -> None:
+    async def _run_server(self, device: DGLabDevice, osc_port: int, device_params: WebsocketDeviceParamsDict) -> None:
         """运行蓝牙服务器 - 内部方法"""
         try:
             # 创建服务控制器（如果不存在）
@@ -138,6 +138,9 @@ class BluetoothConnectionManager:
 
                 service_controller = ServiceController(dglab_device_service, osc_service, osc_action_service, chatbox_service)
                 self.ui_interface.set_service_controller(service_controller)
+
+                # 设置设备参数
+                self.apply_device_params_to_service(dglab_device_service, device_params)
 
                 # 启动所有服务
                 success = await service_controller.start_all_services()
@@ -190,19 +193,12 @@ class BluetoothConnectionManager:
             self.connected_device = None
             self.ui_interface.set_service_controller(None)
 
-    def apply_device_params(self, strength_limit_a: int, strength_limit_b: int,
-                           freq_balance_a: int, freq_balance_b: int,
-                           strength_balance_a: int, strength_balance_b: int) -> bool:
+    def apply_device_params(self, device_params: WebsocketDeviceParamsDict) -> bool:
         """
         应用设备参数
         
         Args:
-            strength_limit_a: A通道强度上限
-            strength_limit_b: B通道强度上限
-            freq_balance_a: A通道频率平衡
-            freq_balance_b: B通道频率平衡
-            strength_balance_a: A通道强度平衡
-            strength_balance_b: B通道强度平衡
+            device_params: 设备参数
             
         Returns:
             bool: 是否成功应用参数
@@ -221,12 +217,7 @@ class BluetoothConnectionManager:
                 return False
                 
             # 应用设备参数
-            bluetooth_service.set_strength_limit(Channel.A, strength_limit_a)
-            bluetooth_service.set_strength_limit(Channel.B, strength_limit_b)
-            bluetooth_service.set_freq_balance(Channel.A, freq_balance_a)
-            bluetooth_service.set_freq_balance(Channel.B, freq_balance_b)
-            bluetooth_service.set_strength_balance(Channel.A, strength_balance_a)
-            bluetooth_service.set_strength_balance(Channel.B, strength_balance_b)
+            self.apply_device_params_to_service(bluetooth_service, device_params)
             
             logger.info("设备参数已应用")
             return True
@@ -235,9 +226,22 @@ class BluetoothConnectionManager:
             logger.error(f"应用设备参数失败: {e}")
             return False
 
-    def save_settings(self, strength_limit_a: int, strength_limit_b: int, 
-                     freq_balance_a: int, freq_balance_b: int,
-                     strength_balance_a: int, strength_balance_b: int) -> None:
+    def apply_device_params_to_service(self,bluetooth_service: DGLabBluetoothService, device_params: WebsocketDeviceParamsDict) -> None:
+        """
+        将设备参数应用到蓝牙服务
+        
+        Args:
+            bluetooth_service: 蓝牙服务实例
+            device_params: 设备参数字典
+        """
+        bluetooth_service.set_strength_limit(Channel.A, device_params['strength_limit_a'])
+        bluetooth_service.set_strength_limit(Channel.B, device_params['strength_limit_b'])
+        bluetooth_service.set_freq_balance(Channel.A, device_params['freq_balance_a'])
+        bluetooth_service.set_freq_balance(Channel.B, device_params['freq_balance_b'])
+        bluetooth_service.set_strength_balance(Channel.A, device_params['strength_balance_a'])
+        bluetooth_service.set_strength_balance(Channel.B, device_params['strength_balance_b'])
+
+    def save_settings(self, device_params: WebsocketDeviceParamsDict) -> None:
         """保存蓝牙设置"""
         try:
             # 确保设置结构存在
@@ -248,12 +252,12 @@ class BluetoothConnectionManager:
 
             # 更新蓝牙参数
             bluetooth_settings = self.settings['connection']['bluetooth']
-            bluetooth_settings['strength_limit_a'] = strength_limit_a
-            bluetooth_settings['strength_limit_b'] = strength_limit_b
-            bluetooth_settings['freq_balance_a'] = freq_balance_a
-            bluetooth_settings['freq_balance_b'] = freq_balance_b
-            bluetooth_settings['strength_balance_a'] = strength_balance_a
-            bluetooth_settings['strength_balance_b'] = strength_balance_b
+            bluetooth_settings['strength_limit_a'] = device_params['strength_limit_a']
+            bluetooth_settings['strength_limit_b'] = device_params['strength_limit_b']
+            bluetooth_settings['freq_balance_a'] = device_params['freq_balance_a']
+            bluetooth_settings['freq_balance_b'] = device_params['freq_balance_b']
+            bluetooth_settings['strength_balance_a'] = device_params['strength_balance_a']
+            bluetooth_settings['strength_balance_b'] = device_params['strength_balance_b']
 
             save_settings(self.settings)
             logger.info("蓝牙设置已保存")

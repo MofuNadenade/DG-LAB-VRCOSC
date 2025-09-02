@@ -22,7 +22,7 @@ from config import save_settings
 from gui.connection.bluetooth.bluetooth_manager import BluetoothConnectionManager
 from gui.ui_interface import UIInterface
 from i18n import translate
-from models import SettingsDict, ConnectionState
+from models import SettingsDict, ConnectionState, WebsocketDeviceParamsDict
 
 logger = logging.getLogger(__name__)
 
@@ -384,14 +384,7 @@ class BluetoothConnectionWidget(QWidget):
     def save_settings(self, osc_port: int, language: str) -> None:
         """保存设置"""
         # 保存蓝牙参数
-        self.connection_manager.save_settings(
-            self.strength_limit_a_slider.value(),
-            self.strength_limit_b_slider.value(),
-            self.freq_balance_a_slider.value(),
-            self.freq_balance_b_slider.value(),
-            self.strength_balance_a_slider.value(),
-            self.strength_balance_b_slider.value()
-        )
+        self.connection_manager.save_settings(self.get_device_params())
         
         # 保存全局设置
         self.settings['osc_port'] = osc_port
@@ -537,6 +530,16 @@ class BluetoothConnectionWidget(QWidget):
             else:
                 self.connect_button.setEnabled(False)
 
+    def get_device_params(self) -> WebsocketDeviceParamsDict:
+        """获取设备参数"""
+        return {
+            "strength_limit_a": self.strength_limit_a_slider.value(),
+            "strength_limit_b": self.strength_limit_b_slider.value(),
+            "freq_balance_a": self.freq_balance_a_slider.value(),
+            "freq_balance_b": self.freq_balance_b_slider.value(),
+            "strength_balance_a": self.strength_balance_a_slider.value(),
+            "strength_balance_b": self.strength_balance_b_slider.value(),
+        }
 
     # =================== 事件处理 ===================
 
@@ -582,7 +585,8 @@ class BluetoothConnectionWidget(QWidget):
             return
             
         osc_port = self.settings.get('osc_port', 9001)
-        self.connection_manager.start_connection(selected_device, osc_port)
+        device_params = self.get_device_params()
+        self.connection_manager.start_connection(selected_device, osc_port, device_params)
 
     def on_disconnect_clicked(self) -> None:
         """断开连接按钮点击"""
@@ -596,14 +600,7 @@ class BluetoothConnectionWidget(QWidget):
             
         try:
             # 通过管理器应用参数
-            success = self.connection_manager.apply_device_params(
-                strength_limit_a=self.strength_limit_a_slider.value(),
-                strength_limit_b=self.strength_limit_b_slider.value(),
-                freq_balance_a=self.freq_balance_a_slider.value(),
-                freq_balance_b=self.freq_balance_b_slider.value(),
-                strength_balance_a=self.strength_balance_a_slider.value(),
-                strength_balance_b=self.strength_balance_b_slider.value()
-            )
+            success = self.connection_manager.apply_device_params(self.get_device_params())
             
             if success:
                 QMessageBox.information(self, translate("common.success"), "设备参数已应用")

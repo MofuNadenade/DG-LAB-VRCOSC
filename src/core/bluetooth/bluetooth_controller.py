@@ -19,7 +19,7 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from .bluetooth_models import (
     DeviceInfo, Channel, DeviceState, BluetoothUUIDs, PulseOperation, StrengthParsingMethod,
-    SequenceState 
+    SequenceState, WaveformFrequencyOperation, WaveformStrengthOperation 
 )
 from .bluetooth_protocol import BluetoothProtocol
 
@@ -417,31 +417,35 @@ class BluetoothController:
                 logger.warning("设备未连接，无法设置波形数据")
                 return False
 
-            # 验证所有脉冲操作的频率和强度范围
+            # 限制波形频率和强度在有效范围内
+            clamped_pulses: List[PulseOperation] = []
             for pulse in pulses:
-                # 验证频率范围
-                for freq in pulse[0]:
-                    if not self._protocol.validate_pulse_frequency(freq):
-                        logger.error(f"波形频率超出范围 (10-240): {freq}")
-                        return False
-                
-                # 验证强度范围  
-                for strength in pulse[1]:
-                    if not self._protocol.validate_pulse_strength(strength):
-                        logger.error(f"波形强度超出范围 (0-100): {strength}")
-                        return False
+                freq: WaveformFrequencyOperation = (
+                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][0])),
+                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][1])),
+                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][2])),
+                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][3]))
+                )
+                strength: WaveformStrengthOperation = (
+                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][0])),
+                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][1])),
+                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][2])),
+                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][3]))
+                )
+                clamped_pulse: PulseOperation = (freq, strength)
+                clamped_pulses.append(clamped_pulse)
             
             # 存储波形数据到对应通道
             if channel == Channel.A:
-                self._pulse_data_a = pulses.copy()
+                self._pulse_data_a = clamped_pulses.copy()
                 self._pulse_index_a = 0
-                self._device_state['channel_a']['pulses'] = pulses.copy()
+                self._device_state['channel_a']['pulses'] = clamped_pulses.copy()
             elif channel == Channel.B:
-                self._pulse_data_b = pulses.copy()
+                self._pulse_data_b = clamped_pulses.copy()
                 self._pulse_index_b = 0
-                self._device_state['channel_b']['pulses'] = pulses.copy()
+                self._device_state['channel_b']['pulses'] = clamped_pulses.copy()
             
-            logger.debug(f"设置{channel}通道波形数据，共{len(pulses)}个脉冲操作")
+            logger.debug(f"设置{channel}通道波形数据，共{len(clamped_pulses)}个脉冲操作")
             return True
             
         except Exception as e:
