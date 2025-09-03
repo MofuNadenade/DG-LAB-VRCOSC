@@ -15,8 +15,8 @@ from models import OSCBool, OSCFloat, OSCInt, SettingsDict, ConnectionState, UIF
 logger = logging.getLogger(__name__)
 
 
-class UIController(UIInterface):
-    """UI控制器类，实现UIInterface接口"""
+class AppController(UIInterface):
+    """应用控制器类，实现UIInterface接口"""
 
     def __init__(self) -> None:
         """初始化UI控制器

@@ -4,7 +4,7 @@ import sys
 from PySide6.QtWidgets import (QApplication)
 from qasync import QEventLoop
 
-from gui.ui_controller import UIController
+from core.app_controller import AppController
 # 配置日志记录器
 from logger_config import setup_logging
 
@@ -17,7 +17,7 @@ def main():
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    ui_controller = UIController()
+    ui_controller = AppController()
     ui_controller.show()
 
     with loop:
