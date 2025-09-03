@@ -138,27 +138,30 @@ class OSCBindingTableTab(QWidget):
         group = self.binding_list_group
         layout = QVBoxLayout(group)
 
-        # 绑定表格 - 5列：ID(隐藏)、地址名、动作名、状态、编辑状态(隐藏)
+        # 绑定表格 - 6列：ID(隐藏)、地址名、动作名、动作类型、状态、编辑状态(隐藏)
         self.binding_table = QTableWidget()
-        self.binding_table.setColumnCount(5)
+        self.binding_table.setColumnCount(6)
         self.binding_table.setHorizontalHeaderLabels([
             translate("osc_address_tab.id"),
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.action_name"),
+            translate("osc_address_tab.action_types"),
             translate("osc_address_tab.status"),
             translate("osc_address_tab.edit_state")
         ])
 
         # 隐藏ID列和编辑状态列
         self.binding_table.setColumnHidden(0, True)
-        self.binding_table.setColumnHidden(4, True)
+        self.binding_table.setColumnHidden(5, True)
 
         # 设置表格属性
         header = self.binding_table.horizontalHeader()
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 地址名列拉伸
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # 动作名列拉伸
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)  # 状态列固定宽度
-        header.resizeSection(3, 100)  # 状态列宽度100px
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)   # 动作类型列固定宽度
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)   # 状态列固定宽度
+        header.resizeSection(3, 120)  # 动作类型列宽度120px
+        header.resizeSection(4, 70)  # 状态列宽度70px
 
         self.binding_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.binding_table.setAlternatingRowColors(True)
@@ -318,7 +321,7 @@ class OSCBindingTableTab(QWidget):
         """增量保存到registry"""
         try:
             for row in range(self.binding_table.rowCount()):
-                edit_state_item = self.binding_table.item(row, 4)
+                edit_state_item = self.binding_table.item(row, 5)
                 if not edit_state_item:
                     continue
                     
@@ -436,6 +439,12 @@ class OSCBindingTableTab(QWidget):
         action_item = QTableWidgetItem(binding.action.name)
         self.binding_table.setItem(row, 2, action_item)
         
+        # 动作类型列 - 显示OSC值类型，用逗号分隔
+        action_types_text = ", ".join([t.value_type().value for t in binding.action.types])
+        action_types_item = QTableWidgetItem(action_types_text)
+        action_types_item.setFlags(action_types_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.binding_table.setItem(row, 3, action_types_item)
+        
         # 状态列
         if is_valid:
             status_text = translate("osc_address_tab.available")
@@ -464,12 +473,12 @@ class OSCBindingTableTab(QWidget):
 
         # 状态列不可编辑
         status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-        self.binding_table.setItem(row, 3, status_item)
+        self.binding_table.setItem(row, 4, status_item)
         
         # 编辑状态列（隐藏）
         edit_state_item = QTableWidgetItem(EditState.NONE.value)
         edit_state_item.setFlags(edit_state_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-        self.binding_table.setItem(row, 4, edit_state_item)
+        self.binding_table.setItem(row, 5, edit_state_item)
 
     def validate_binding(self, address: OSCAddress, action: OSCAction) -> tuple[bool, str]:
         """验证绑定的有效性
@@ -557,6 +566,11 @@ class OSCBindingTableTab(QWidget):
                 # 状态列不可编辑
                 status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 
+                # 动作类型列 - 显示OSC值类型，用逗号分隔
+                action_types_text = ", ".join([t.value_type().value for t in action.types])
+                action_types_item = QTableWidgetItem(action_types_text)
+                action_types_item.setFlags(action_types_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                
                 # 编辑状态列设置为新增状态
                 edit_state_item = QTableWidgetItem(EditState.NEW.value)
                 edit_state_item.setFlags(edit_state_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -565,8 +579,9 @@ class OSCBindingTableTab(QWidget):
                 self.binding_table.setItem(row, 0, id_item)
                 self.binding_table.setItem(row, 1, addr_item)
                 self.binding_table.setItem(row, 2, action_item)
-                self.binding_table.setItem(row, 3, status_item)
-                self.binding_table.setItem(row, 4, edit_state_item)
+                self.binding_table.setItem(row, 3, action_types_item)
+                self.binding_table.setItem(row, 4, status_item)
+                self.binding_table.setItem(row, 5, edit_state_item)
 
                 # 高亮显示修改的行
                 self.update_highlight_row(row)
@@ -607,7 +622,7 @@ class OSCBindingTableTab(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             # 检查是否为新增状态的绑定
-            edit_state_item = self.binding_table.item(current_row, 4)
+            edit_state_item = self.binding_table.item(current_row, 5)
             if edit_state_item:
                 if edit_state_item.text() == EditState.NEW.value:
                     # 如果是新增的绑定，直接删除
@@ -640,7 +655,7 @@ class OSCBindingTableTab(QWidget):
                 continue
                 
             # 检查编辑状态，忽略已删除的行
-            edit_state_item = self.binding_table.item(row, 4)
+            edit_state_item = self.binding_table.item(row, 5)
             if edit_state_item and edit_state_item.text() == EditState.DELETED.value:
                 continue
                 
@@ -657,7 +672,7 @@ class OSCBindingTableTab(QWidget):
 
         for row in range(self.binding_table.rowCount()):
             # 检查编辑状态，忽略已删除的行
-            edit_state_item = self.binding_table.item(row, 4)
+            edit_state_item = self.binding_table.item(row, 5)
             if not edit_state_item or edit_state_item.text() == EditState.DELETED.value:
                 continue
                 
@@ -712,7 +727,7 @@ class OSCBindingTableTab(QWidget):
     def on_item_changed(self, item: QTableWidgetItem) -> None:
         """当表格项数据变化时自动标记"""
         # 设置编辑状态为修改
-        edit_state_item = self.binding_table.item(item.row(), 4)
+        edit_state_item = self.binding_table.item(item.row(), 5)
         if edit_state_item:
             # 获取当前行的编辑状态
             current_state = edit_state_item.text()
@@ -724,7 +739,7 @@ class OSCBindingTableTab(QWidget):
 
     def update_highlight_row(self, row: int) -> None:
         """高亮显示修改的行"""
-        edit_state_item = self.binding_table.item(row, 4)
+        edit_state_item = self.binding_table.item(row, 5)
         if not edit_state_item:
             return
         
@@ -748,6 +763,7 @@ class OSCBindingTableTab(QWidget):
             translate("osc_address_tab.id"),
             translate("osc_address_tab.address_name"),
             translate("osc_address_tab.action_name"),
+            translate("osc_address_tab.action_types"),
             translate("osc_address_tab.status"),
             translate("osc_address_tab.edit_state")
             

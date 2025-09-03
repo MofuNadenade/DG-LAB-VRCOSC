@@ -422,6 +422,7 @@ osc_address_tab:
   osc_code_label: "OSC地址:"
   action_name: "动作名称"
   action_name_label: "动作名称:"
+  action_types: "动作类型"
   add_address: "添加地址"
   delete_address: "删除地址"
   refresh: "刷新"

@@ -422,6 +422,7 @@ osc_address_tab:
   osc_code_label: "OSC Address:"
   action_name: "Action Name"
   action_name_label: "Action Name:"
+  action_types: "Action Types"
   add_address: "Add Address"
   delete_address: "Delete Address"
   refresh: "Refresh"

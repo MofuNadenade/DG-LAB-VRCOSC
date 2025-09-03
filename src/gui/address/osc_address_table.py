@@ -172,7 +172,7 @@ class OSCAddressTableTab(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # 名称列拉伸
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)  # 代码列拉伸
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)  # 状态列固定宽度
-        header.resizeSection(3, 100)  # 状态列宽度100px
+        header.resizeSection(3, 70)  # 状态列宽度70px
 
         self.address_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.address_table.setAlternatingRowColors(True)

@@ -422,6 +422,7 @@ osc_address_tab:
   osc_code_label: "OSCアドレス:"
   action_name: "アクション名"
   action_name_label: "アクション名:"
+  action_types: "アクションタイプ"
   add_address: "アドレス追加"
   delete_address: "アドレス削除"
   refresh: "更新"
