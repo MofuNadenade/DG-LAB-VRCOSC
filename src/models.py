@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, IntEnum
-from typing import Any, Awaitable, Protocol, Set, Tuple, Type, Union, Dict, List, TypedDict
+from typing import Any, Awaitable, Optional, Protocol, Set, Tuple, Type, Union, Dict, List, TypedDict
 
 
 class FrequencyMode(Enum):
@@ -371,7 +371,7 @@ class OSCActionTypedCallback[T: OSCValue](OSCActionCallback, Protocol):
 class OSCAddressInfo(TypedDict):
     address: str
     types: Set[OSCValueType]
-    last_value: OSCValue
+    last_value: Optional[OSCValue]
 
 
 # OSC相关的具体类型定义

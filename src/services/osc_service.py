@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 from pythonosc import dispatcher, osc_server, udp_client
 
 from core.core_interface import CoreInterface
+from core.osc_common import OSCAddress
 from models import ConnectionState, OSCAddressInfo, OSCPrimitive, OSCValue, OSCValueType, get_osc_value
 from i18n import translate
 from .service_interface import IService
@@ -138,16 +139,20 @@ class OSCService(IService):
         """
 
         # 更新地址信息
+        address_info: OSCAddressInfo
+        if address in self._address_infos:
+            address_info = self._address_infos[address]
+        else:
+            address_info = {
+                "address": address,
+                "types": set(),
+                "last_value": None
+            }
+            self._address_infos[address] = address_info
         for arg in args:
             value_type: OSCValueType = arg.value_type()
-            if address not in self._address_infos:
-                self._address_infos[address] = {
-                    "address": address,
-                    "types": set(),
-                    "last_value": arg
-                }
-            self._address_infos[address]["types"].add(value_type)
-            self._address_infos[address]["last_value"] = arg
+            address_info["types"].add(value_type)
+            address_info["last_value"] = arg
 
         # 注册到地址代码注册表
         if not self._core_interface.registries.code_registry.has_code(address):
@@ -157,7 +162,17 @@ class OSCService(IService):
         address_obj = self._core_interface.registries.address_registry.get_address_by_code(address)
         if address_obj:
             logger.debug(f"收到OSC消息: {address} 参数: {args}")
-            await self._core_interface.registries.binding_registry.handle(address_obj, *args)
+            await self._handle_osc_message(address_obj, *args)
+
+    async def _handle_osc_message(self, address: OSCAddress, *args: OSCValue) -> None:
+        """处理OSC消息"""
+        bindings = self._core_interface.registries.binding_registry.get_bindings_by_address(address)
+        for binding in bindings:
+            success = await binding.action.handle(*args)
+            if not success:
+                args_types = [arg.value_type() for arg in args]
+                action_types = [t.value_type() for t in binding.action.types]
+                logger.warning(f"绑定（{binding.action.name}）处理OSC消息失败，地址（{address.name}）类型不匹配，参数的类型有（{args_types}），支持的类型有（{action_types}）")
 
     def get_address_infos(self) -> Dict[str, OSCAddressInfo]:
         """

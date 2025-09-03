@@ -7,7 +7,7 @@ OSC绑定管理模块
 import logging
 from typing import Optional, List, Dict, Union
 
-from models import OSCBindingDict, OSCValue
+from models import OSCBindingDict
 from .osc_action import OSCAction
 from .osc_address import OSCAddress
 from .osc_common import OSCBinding, BindingCallback
@@ -160,16 +160,6 @@ class OSCBindingRegistry:
         self._bindings_by_address.clear()
         self._bindings_by_action.clear()
         self._bindings_by_id.clear()
-
-    async def handle(self, address: OSCAddress, *args: OSCValue) -> None:
-        """处理OSC消息"""
-        bindings = self._bindings_by_address.get(address, [])
-        for binding in bindings:
-            success = await binding.action.handle(*args)
-            if not success:
-                args_types = [arg.value_type() for arg in args]
-                action_types = [t.value_type() for t in binding.action.types]
-                logger.warning(f"绑定（{binding.action.name}）处理OSC消息失败，类型不匹配，参数的类型有（{args_types}），支持的类型有（{action_types}）")
 
     def export_to_config(self) -> List[OSCBindingDict]:
         """导出所有绑定到配置格式"""
