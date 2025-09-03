@@ -5,12 +5,12 @@ OSC服务 - 完全封装OSC功能
 
 import asyncio
 import logging
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from pythonosc import dispatcher, osc_server, udp_client
 
 from core.core_interface import CoreInterface
-from models import ConnectionState, OSCAddressInfo, OSCValue, OSCValueType
+from models import ConnectionState, OSCAddressInfo, OSCPrimitive, OSCValue, OSCValueType, get_osc_value
 from i18n import translate
 from .service_interface import IService
 
@@ -120,10 +120,13 @@ class OSCService(IService):
         """检查OSC服务器运行状态"""
         return self._is_running
 
-    def _handle_osc_message_internal(self, address: str, *args: OSCValue) -> None:
+    def _handle_osc_message_internal(self, address: str, *args: OSCPrimitive) -> None:
         """OSC消息内部处理方法（同步）"""
+        arguments: List[OSCValue] = []
+        for arg in args:
+            arguments.append(get_osc_value(arg))
         # 创建异步任务处理消息
-        asyncio.create_task(self.handle_osc_message(address, *args))
+        asyncio.create_task(self.handle_osc_message(address, *arguments))
 
     async def handle_osc_message(self, address: str, *args: OSCValue) -> None:
         """
@@ -136,7 +139,7 @@ class OSCService(IService):
 
         # 更新地址信息
         for arg in args:
-            value_type: OSCValueType = self._detect_osc_value_type(arg)
+            value_type: OSCValueType = arg.value_type()
             if address not in self._address_infos:
                 self._address_infos[address] = {
                     "address": address,
@@ -155,35 +158,6 @@ class OSCService(IService):
         if address_obj:
             logger.debug(f"收到OSC消息: {address} 参数: {args}")
             await self._core_interface.registries.binding_registry.handle(address_obj, *args)
-
-    def _detect_osc_value_type(self, arg: OSCValue) -> OSCValueType:
-        """
-        检测OSC值的类型
-        
-        Args:
-            arg: OSC值参数
-            
-        Returns:
-            OSCValueType: 检测到的OSC值类型
-        """
-        if arg is None:
-            return OSCValueType.NONE
-        elif isinstance(arg, bool):
-            return OSCValueType.BOOL
-        elif isinstance(arg, int):
-            return OSCValueType.INT
-        elif isinstance(arg, float):
-            return OSCValueType.FLOAT
-        elif isinstance(arg, str):
-            return OSCValueType.STRING
-        elif isinstance(arg, bytes):
-            return OSCValueType.BYTES
-        elif isinstance(arg, list):
-            return OSCValueType.LIST
-        elif len(arg) == 4:
-            return OSCValueType.MIDI_PACKET
-        elif len(arg) == 2:
-            return OSCValueType.TIME_TAG
 
     def get_address_infos(self) -> Dict[str, OSCAddressInfo]:
         """

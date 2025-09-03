@@ -165,7 +165,11 @@ class OSCBindingRegistry:
         """处理OSC消息"""
         bindings = self._bindings_by_address.get(address, [])
         for binding in bindings:
-            await binding.action.handle(*args)
+            success = await binding.action.handle(*args)
+            if not success:
+                args_types = [arg.value_type() for arg in args]
+                action_types = [t.value_type() for t in binding.action.types]
+                logger.warning(f"绑定{binding.action.name}处理OSC消息失败，类型不匹配，参数的类型有{args_types}，支持的类型有{action_types}")
 
     def export_to_config(self) -> List[OSCBindingDict]:
         """导出所有绑定到配置格式"""

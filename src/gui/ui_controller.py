@@ -5,12 +5,12 @@ from typing import Optional, List
 
 
 from config import default_load_settings, save_settings
-from core import ServiceController, OSCOptionsProvider, OSCActionType, Pulse
+from core import ServiceController, OSCOptionsProvider, Pulse
 from core.registries import Registries
 from gui.main_window import MainWindow
 from gui.ui_interface import UIInterface
 from i18n import set_language, translate
-from models import SettingsDict, ConnectionState, UIFeature, Channel, OSCValue, OSCBindingDict, StrengthData
+from models import OSCBool, OSCFloat, OSCInt, SettingsDict, ConnectionState, UIFeature, Channel, OSCBindingDict, StrengthData
 
 logger = logging.getLogger(__name__)
 
@@ -243,122 +243,63 @@ class UIController(UIInterface):
         chatbox_service = self.service_controller.chatbox_service
 
         # 注册通道控制操作
-        async def osc_set_strength_a(*args: OSCValue) -> None:
-            if isinstance(args[0], float):
-                await osc_action_service.osc_set_strength(args[0], Channel.A)
-        self.registries.action_registry.register_action(
-            "设置A通道强度",
-            osc_set_strength_a,
-            OSCActionType.CHANNEL_CONTROL, {"channel_a", "touch"}
-        )
+        async def osc_set_strength_a(*args: OSCFloat) -> None:
+            await osc_action_service.osc_set_strength(args[0].value, Channel.A)
+        self.registries.action_registry.register_action("设置A通道强度", osc_set_strength_a, OSCFloat)
 
-        async def osc_set_strength_b(*args: OSCValue) -> None:
-            if isinstance(args[0], float):
-                await osc_action_service.osc_set_strength(args[0], Channel.B)
-        self.registries.action_registry.register_action(
-            "设置B通道强度",
-            osc_set_strength_b,
-            OSCActionType.CHANNEL_CONTROL, {"channel_b", "touch"}
-        )
+        async def osc_set_strength_b(*args: OSCFloat) -> None:
+            await osc_action_service.osc_set_strength(args[0].value, Channel.B)
+        self.registries.action_registry.register_action("设置B通道强度", osc_set_strength_b, OSCFloat)
 
-        async def osc_set_strength_current(*args: OSCValue) -> None:
-            if isinstance(args[0], float):
-                current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.osc_set_strength(args[0], current_channel)
-        self.registries.action_registry.register_action(
-            "设置当前通道强度",
-            osc_set_strength_current,
-            OSCActionType.CHANNEL_CONTROL, {"current_channel", "touch"}
-        )
+        async def osc_set_strength_current(*args: OSCFloat) -> None:
+            current_channel = osc_action_service.get_current_channel()
+            await osc_action_service.osc_set_strength(args[0].value, current_channel)
+        self.registries.action_registry.register_action("设置当前通道强度", osc_set_strength_current, OSCFloat)
 
         # 注册面板控制操作
-        async def osc_set_panel_control(*args: OSCValue) -> None:
-            if isinstance(args[0], float):
-                await osc_action_service.osc_set_panel_control(args[0])
-        self.registries.action_registry.register_action(
-            "面板控制开关",
-            osc_set_panel_control,
-            OSCActionType.PANEL_CONTROL, {"panel"}
-        )
+        async def osc_set_panel_control(*args: OSCFloat) -> None:
+            await osc_action_service.osc_set_panel_control(args[0].value)
+        self.registries.action_registry.register_action("面板控制开关", osc_set_panel_control, OSCFloat)
 
-        async def osc_set_fire_mode_strength_step(*args: OSCValue) -> None:
-            if isinstance(args[0], float):
-                await osc_action_service.osc_set_fire_mode_strength_step(args[0])
-        self.registries.action_registry.register_action(
-            "设置开火强度步长",
-            osc_set_fire_mode_strength_step,
-            OSCActionType.PANEL_CONTROL, {"value_adjust"}
-        )
+        async def osc_set_fire_mode_strength_step(*args: OSCFloat) -> None:
+            await osc_action_service.osc_set_fire_mode_strength_step(args[0].value)
+        self.registries.action_registry.register_action("设置开火强度步长", osc_set_fire_mode_strength_step, OSCFloat)
 
-        async def osc_set_current_channel(*args: OSCValue) -> None:
-            if isinstance(args[0], (int, float)):
-                await osc_action_service.osc_set_current_channel(args[0])
-        self.registries.action_registry.register_action(
-            "设置当前通道",
-            osc_set_current_channel,
-            OSCActionType.PANEL_CONTROL, {"channel_adjust"}
-        )
+        async def osc_set_current_channel(*args: OSCInt | OSCFloat) -> None:
+            await osc_action_service.osc_set_current_channel(args[0].value)
+        self.registries.action_registry.register_action("设置当前通道", osc_set_current_channel, OSCInt, OSCFloat)
 
         # 注册强度控制操作
-        async def osc_set_dynamic_bone_mode(*args: OSCValue) -> None:
+        async def osc_set_dynamic_bone_mode(*args: OSCInt) -> None:
             if isinstance(args[0], int):
                 current_channel = osc_action_service.get_current_channel()
                 await osc_action_service.osc_set_dynamic_bone_mode(args[0], current_channel)
-        self.registries.action_registry.register_action(
-            "设置模式",
-            osc_set_dynamic_bone_mode,
-            OSCActionType.STRENGTH_CONTROL, {"mode"}
-        )
+        self.registries.action_registry.register_action("设置模式", osc_set_dynamic_bone_mode, OSCInt)
 
-        async def osc_reset_strength(*args: OSCValue) -> None:
-            if isinstance(args[0], bool):
-                current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.osc_reset_strength(args[0], current_channel)
-        self.registries.action_registry.register_action(
-            "重置强度",
-            osc_reset_strength,
-            OSCActionType.STRENGTH_CONTROL, {"reset"}
-        )
+        async def osc_reset_strength(*args: OSCBool) -> None:
+            current_channel = osc_action_service.get_current_channel()
+            await osc_action_service.osc_reset_strength(args[0].value, current_channel)
+        self.registries.action_registry.register_action("重置强度", osc_reset_strength, OSCBool)
 
-        async def osc_decrease_strength(*args: OSCValue) -> None:
-            if isinstance(args[0], bool):
-                current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.osc_decrease_strength(args[0], current_channel)
-        self.registries.action_registry.register_action(
-            "降低强度",
-            osc_decrease_strength,
-            OSCActionType.STRENGTH_CONTROL, {"decrease"}
-        )
+        async def osc_decrease_strength(*args: OSCBool) -> None:
+            current_channel = osc_action_service.get_current_channel()
+            await osc_action_service.osc_decrease_strength(args[0].value, current_channel)
+        self.registries.action_registry.register_action("降低强度", osc_decrease_strength, OSCBool)
 
-        async def osc_increase_strength(*args: OSCValue) -> None:
-            if isinstance(args[0], bool):
-                current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.osc_increase_strength(args[0], current_channel)
-        self.registries.action_registry.register_action(
-            "增加强度",
-            osc_increase_strength,
-            OSCActionType.STRENGTH_CONTROL, {"increase"}
-        )
+        async def osc_increase_strength(*args: OSCBool) -> None:
+            current_channel = osc_action_service.get_current_channel()
+            await osc_action_service.osc_increase_strength(args[0].value, current_channel)
+        self.registries.action_registry.register_action("增加强度", osc_increase_strength, OSCBool)
 
-        async def osc_activate_fire_mode(*args: OSCValue) -> None:
-            if isinstance(args[0], bool):
-                current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.osc_activate_fire_mode(args[0], current_channel)
-        self.registries.action_registry.register_action(
-            "一键开火",
-            osc_activate_fire_mode,
-            OSCActionType.STRENGTH_CONTROL, {"fire"}
-        )
+        async def osc_activate_fire_mode(*args: OSCBool) -> None:
+            current_channel = osc_action_service.get_current_channel()
+            await osc_action_service.osc_activate_fire_mode(args[0].value, current_channel)
+        self.registries.action_registry.register_action("一键开火", osc_activate_fire_mode, OSCBool)
 
         # 注册ChatBox控制操作
-        async def osc_toggle_chatbox(*args: OSCValue) -> None:
-            if isinstance(args[0], int):
-                await chatbox_service.osc_toggle_chatbox(args[0])
-        self.registries.action_registry.register_action(
-            "ChatBox状态开关",
-            osc_toggle_chatbox,
-            OSCActionType.CHATBOX_CONTROL, {"toggle"}
-        )
+        async def osc_toggle_chatbox(*args: OSCInt) -> None:
+            await chatbox_service.osc_toggle_chatbox(args[0].value)
+        self.registries.action_registry.register_action("ChatBox状态开关", osc_toggle_chatbox, OSCInt)
 
         logger.info("基础OSC动作注册完成")
 
@@ -372,13 +313,10 @@ class UIController(UIInterface):
 
         # 为所有波形注册OSC操作
         for pulse in self.registries.pulse_registry.pulses:
-            async def osc_set_pulse(pulse: Pulse, *args: OSCValue) -> None:
+            async def osc_set_pulse(pulse: Pulse, *args: OSCInt | OSCFloat | OSCBool) -> None:
                 current_channel = osc_action_service.get_current_channel()
                 await osc_action_service.osc_set_pulse(current_channel, pulse)
-            self.registries.action_registry.register_action(
-                translate("main.action.set_pulse").format(pulse.name),
-                functools.partial(osc_set_pulse, pulse),
-                OSCActionType.PULSE_CONTROL, {"pulse"})
+            self.registries.action_registry.register_action(translate("main.action.set_pulse").format(pulse.name), functools.partial(osc_set_pulse, pulse), OSCInt, OSCFloat, OSCBool)
 
         # 更新波形下拉框
         self.main_window.settings_tab.update_pulse_comboboxes()

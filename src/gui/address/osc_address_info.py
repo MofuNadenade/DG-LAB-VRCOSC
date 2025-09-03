@@ -156,8 +156,8 @@ class OSCAddressInfoTab(QWidget):
             self.address_info_table.setItem(row, 1, types_item)
 
             # 最后值
-            last_value = info.get("last_value", "")
-            last_value_text = str(last_value) if last_value is not None else ""
+            last_value = info["last_value"]
+            last_value_text = str(last_value.value)
             last_value_item = QTableWidgetItem(last_value_text)
             self.address_info_table.setItem(row, 2, last_value_item)
 

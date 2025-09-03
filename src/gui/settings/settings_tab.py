@@ -11,7 +11,7 @@ from core.service_controller import ServiceController
 from core.dglab_pulse import PulseRegistry
 from core.osc_common import Pulse
 from i18n import translate, language_signals
-from models import Channel, StrengthData, StrengthOperationType, SettingsDict
+from models import Channel, OSCBool, OSCFloat, StrengthData, StrengthOperationType, SettingsDict
 from gui.ui_interface import UIInterface
 from gui.widgets import EditableComboBox
 
@@ -362,7 +362,7 @@ class SettingsTab(QWidget):
         if self.service_controller:
             self.service_controller.osc_action_service.fire_mode_strength_step = value
             logger.info(f"Updated strength step to {value}")
-            self.service_controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/Volume", 0.01 * value)
+            self.service_controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/Volume", OSCFloat(0.01 * value))
 
     def on_fire_mode_disabled_changed(self, state: bool) -> None:
         """当禁用火力模式复选框状态改变时"""
@@ -375,7 +375,7 @@ class SettingsTab(QWidget):
         if self.service_controller:
             self.service_controller.osc_action_service.enable_panel_control = state
             logger.info(f"Panel control enabled: {self.service_controller.osc_action_service.enable_panel_control}")
-            self.service_controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/PanelControl", bool(state))
+            self.service_controller.osc_service.send_value_to_vrchat("/avatar/parameters/SoundPad/PanelControl", OSCBool(bool(state)))
 
     def on_disable_panel_pulse_setting_changed(self, state: bool) -> None:
         """当禁止面板设置波形复选框状态改变时"""

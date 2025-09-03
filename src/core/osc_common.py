@@ -4,35 +4,15 @@ OSC通用模块
 包含OSC系统的通用类型、枚举、协议和验证器。
 """
 
-from enum import Enum
-from typing import Awaitable, List, Protocol, Optional, Set, Callable
+from typing import List, Optional, Callable, Type
 
-from models import OSCValue, PulseOperation
-
-
-class OSCActionType(Enum):
-    """OSC动作类型枚举"""
-    CHANNEL_CONTROL = "channel_control"  # 通道控制
-    STRENGTH_CONTROL = "strength_control"  # 强度控制
-    PANEL_CONTROL = "panel_control"  # 面板控制
-    PULSE_CONTROL = "pulse_control"  # 波形控制
-    CHATBOX_CONTROL = "chatbox_control"  # ChatBox控制
-    CUSTOM = "custom"
-
-
-class OSCActionCallback(Protocol):
-    """OSC动作回调协议"""
-
-    def __call__(self, *args: OSCValue) -> Awaitable[None]:
-        ...
+from models import OSCActionCallback, OSCValue, PulseOperation
 
 
 class OSCAction:
     """OSC动作"""
 
-    def __init__(self, action_id: int, name: str, callback: OSCActionCallback,
-                 action_type: OSCActionType = OSCActionType.CUSTOM,
-                 tags: Optional[Set[str]] = None) -> None:
+    def __init__(self, action_id: int, name: str, callback: OSCActionCallback, types: List[Type[OSCValue]]) -> None:
         super().__init__()
         # 验证输入
         name_valid, name_error = OSCAddressValidator.validate_action_name(name)
@@ -42,14 +22,18 @@ class OSCAction:
         self.id: int = action_id
         self.name: str = name.strip()
         self.callback: OSCActionCallback = callback
-        self.action_type: OSCActionType = action_type
-        self.tags: Set[str] = tags or set()
+        self.types: List[Type[OSCValue]] = types
 
-    async def handle(self, *args: OSCValue) -> None:
+    async def handle(self, *args: OSCValue) -> bool:
+        for arg in args:
+            types = [t.value_type() for t in self.types]
+            if arg.value_type() not in types:
+                return False
         await self.callback(*args)
+        return True
 
     def __str__(self) -> str:
-        return f"OSCAction(id={self.id}, name='{self.name}', type='{self.action_type.value}')"
+        return f"OSCAction(id={self.id}, name='{self.name}')"
 
     def __repr__(self) -> str:
         return self.__str__()

@@ -7,7 +7,6 @@ OSC选项提供模块
 from typing import List
 
 from core.registries import Registries
-from .osc_common import OSCActionType
 
 
 class OSCOptionsProvider:
@@ -24,11 +23,6 @@ class OSCOptionsProvider:
     def get_action_name_options(self) -> List[str]:
         """获取动作名称选项"""
         return [action.name for action in self.registries.action_registry.actions]
-
-    def get_action_name_options_by_type(self, action_type: OSCActionType) -> List[str]:
-        """根据类型获取动作名称选项"""
-        actions = self.registries.action_registry.get_actions_by_type(action_type)
-        return [action.name for action in actions]
 
     def get_osc_code_options(self) -> List[str]:
         """获取OSC代码选项"""
