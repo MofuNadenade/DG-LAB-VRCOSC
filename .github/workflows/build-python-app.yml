@@ -29,10 +29,10 @@ jobs:
       with:
         fetch-depth: 0  # Fetch all history for version generation
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.13"
 
     - name: Install dependencies
       run: |

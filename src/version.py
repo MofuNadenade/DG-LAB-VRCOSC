@@ -19,7 +19,7 @@ BUILD_INFO = {
     "branch": "master",
     "commit_date": "2025-09-02 23:29:23 +0800",
     "build_time": "2025-09-02T23:31:50.561336",
-    "python_version": "3.11.4 (tags/v3.11.4:d2340ef, Jun  7 2023, 05:45:37) [MSC v.1934 64 bit (AMD64)]",
+    "python_version": "3.13.0 (tags/v3.13.0:d2340ef, Jun  7 2023, 05:45:37) [MSC v.1934 64 bit (AMD64)]",
     "platform": "win32"
 }
 

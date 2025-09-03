@@ -181,7 +181,7 @@ BUILD_INFO = {
     "branch": "master",
     "commit_date": "2025-08-20 11:48:48 +0800",
     "build_time": "2025-08-20T11:59:05.711136",
-    "python_version": "3.11.4 (...)",
+    "python_version": "3.13.0 (...)",
     "platform": "win32"
 }
 ```
@@ -217,7 +217,7 @@ The build system integrates with GitHub Actions for:
 
 ### Workflow Features
 - Fetch full git history for version generation
-- Python 3.11 support
+- Python 3.13 support
 - pyright type checking
 - Optimized PyInstaller builds
 - Build artifact collection
