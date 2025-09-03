@@ -154,7 +154,10 @@ class StrengthData(TypedDict):
 MidiPacket = Tuple[int, int, int, int]
 """MIDI消息包类型 - (port_id, status_byte, data1, data2)"""
 
-OSCValue = Union[int, float, str, bool, bytes, None, MidiPacket, Tuple[datetime, int], List['OSCValue']]
+TimeTag = Tuple[datetime, int]
+"""时间戳类型 - (datetime, int)"""
+
+OSCValue = Union[int, float, str, bool, bytes, None, MidiPacket, TimeTag, List['OSCValue']]
 """OSC 消息参数类型 - 支持所有OSC协议类型："""
 
 class OSCValueType(Enum):
