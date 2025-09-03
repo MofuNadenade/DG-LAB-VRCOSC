@@ -257,24 +257,23 @@ class UIController(UIInterface):
         self.registries.action_registry.register_action("设置当前通道强度", osc_set_strength_current, OSCFloat)
 
         # 注册面板控制操作
-        async def osc_set_panel_control(*args: OSCFloat) -> None:
+        async def osc_set_panel_control(*args: OSCBool) -> None:
             await osc_action_service.osc_set_panel_control(args[0].value)
-        self.registries.action_registry.register_action("面板控制开关", osc_set_panel_control, OSCFloat)
+        self.registries.action_registry.register_action("面板控制开关", osc_set_panel_control, OSCBool)
 
         async def osc_set_fire_mode_strength_step(*args: OSCFloat) -> None:
             await osc_action_service.osc_set_fire_mode_strength_step(args[0].value)
         self.registries.action_registry.register_action("设置开火强度步长", osc_set_fire_mode_strength_step, OSCFloat)
 
-        async def osc_set_current_channel(*args: OSCInt | OSCFloat) -> None:
+        async def osc_set_current_channel(*args: OSCInt) -> None:
             await osc_action_service.osc_set_current_channel(args[0].value)
-        self.registries.action_registry.register_action("设置当前通道", osc_set_current_channel, OSCInt, OSCFloat)
+        self.registries.action_registry.register_action("设置当前通道", osc_set_current_channel, OSCInt)
 
         # 注册强度控制操作
-        async def osc_set_dynamic_bone_mode(*args: OSCInt) -> None:
-            if isinstance(args[0], int):
-                current_channel = osc_action_service.get_current_channel()
-                await osc_action_service.osc_set_dynamic_bone_mode(args[0], current_channel)
-        self.registries.action_registry.register_action("设置模式", osc_set_dynamic_bone_mode, OSCInt)
+        async def osc_set_dynamic_bone_mode(*args: OSCBool) -> None:
+            current_channel = osc_action_service.get_current_channel()
+            await osc_action_service.osc_set_dynamic_bone_mode(args[0].value, current_channel)
+        self.registries.action_registry.register_action("设置模式", osc_set_dynamic_bone_mode, OSCBool)
 
         async def osc_reset_strength(*args: OSCBool) -> None:
             current_channel = osc_action_service.get_current_channel()
@@ -297,9 +296,9 @@ class UIController(UIInterface):
         self.registries.action_registry.register_action("一键开火", osc_activate_fire_mode, OSCBool)
 
         # 注册ChatBox控制操作
-        async def osc_toggle_chatbox(*args: OSCInt) -> None:
+        async def osc_toggle_chatbox(*args: OSCBool) -> None:
             await chatbox_service.osc_toggle_chatbox(args[0].value)
-        self.registries.action_registry.register_action("ChatBox状态开关", osc_toggle_chatbox, OSCInt)
+        self.registries.action_registry.register_action("ChatBox状态开关", osc_toggle_chatbox, OSCBool)
 
         logger.info("基础OSC动作注册完成")
 

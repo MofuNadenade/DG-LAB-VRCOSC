@@ -8,7 +8,7 @@ OSC动作服务
 import asyncio
 import logging
 import math
-from typing import Optional, Dict, Union
+from typing import Optional, Dict
 
 from core.core_interface import CoreInterface
 from core.dglab_pulse import Pulse
@@ -247,7 +247,7 @@ class OSCActionService(IService):
 
         await self._dglab_device_service.decrease_strength(value, channel)
 
-    async def osc_set_current_channel(self, value: Union[int, float]) -> Optional[Channel]:
+    async def osc_set_current_channel(self, value: int) -> Optional[Channel]:
         """设置当前活动通道"""
         if value >= 0:
             self._current_channel = Channel.A if value <= 1 else Channel.B
@@ -263,24 +263,24 @@ class OSCActionService(IService):
 
         await self.set_pulse(channel, pulse)
 
-    async def osc_set_panel_control(self, value: float) -> None:
+    async def osc_set_panel_control(self, value: bool) -> None:
         """设置面板控制功能开关"""
-        self._enable_panel_control = value > 0
+        self._enable_panel_control = value
         interaction_type = "开启面板控制" if self._enable_panel_control else "已禁用面板控制"
         logger.info(f"面板控制状态: {interaction_type}")
         # 更新 UI 组件
         self._core_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control)
 
-    async def osc_set_dynamic_bone_mode(self, value: int, channel: Channel) -> None:
+    async def osc_set_dynamic_bone_mode(self, value: bool, channel: Channel) -> None:
         """切换工作模式（延时触发动骨模式切换）"""
         if not self._enable_panel_control:
             return
 
-        if value == 1:  # 按下按键
+        if value:  # 按下按键
             if self._set_dynamic_bone_mode_timer is not None:
                 self._set_dynamic_bone_mode_timer.cancel()
             self._set_dynamic_bone_mode_timer = asyncio.create_task(self._set_dynamic_bone_mode_timer_handle(channel))
-        elif value == 0:  # 松开按键
+        else:  # 松开按键
             if self._set_dynamic_bone_mode_timer:
                 self._set_dynamic_bone_mode_timer.cancel()
                 self._set_dynamic_bone_mode_timer = None
