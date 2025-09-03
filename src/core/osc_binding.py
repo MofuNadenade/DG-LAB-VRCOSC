@@ -21,7 +21,7 @@ class OSCBindingRegistry:
     def __init__(self) -> None:
         super().__init__()
         self._bindings: List[OSCBinding] = []
-        self._bindings_by_address: Dict[OSCAddress, OSCBinding] = {}
+        self._bindings_by_address: Dict[OSCAddress, List[OSCBinding]] = {}
         self._bindings_by_action: Dict[OSCAction, List[OSCBinding]] = {}
         self._bindings_by_id: Dict[int, OSCBinding] = {}
         self._binding_changed_callbacks: List[BindingCallback] = []
@@ -33,9 +33,9 @@ class OSCBindingRegistry:
         return self._bindings.copy()
 
     @property
-    def bindings_by_address(self) -> Dict[OSCAddress, OSCBinding]:
+    def bindings_by_address(self) -> Dict[OSCAddress, List[OSCBinding]]:
         """获取按地址索引的绑定字典（只读）"""
-        return self._bindings_by_address.copy()
+        return {address: bindings.copy() for address, bindings in self._bindings_by_address.items()}
 
     @property
     def bindings_by_action(self) -> Dict[OSCAction, List[OSCBinding]]:
@@ -48,9 +48,9 @@ class OSCBindingRegistry:
         return self._bindings_by_id.copy()
 
     def get_binding(self, address: OSCAddress) -> Optional[OSCAction]:
-        """根据地址获取绑定的动作"""
-        binding = self._bindings_by_address.get(address)
-        return binding.action if binding else None
+        """根据地址获取绑定的动作（保持向下兼容，返回第一个绑定的动作）"""
+        bindings = self._bindings_by_address.get(address, [])
+        return bindings[0].action if bindings else None
 
     def get_binding_by_id(self, binding_id: int) -> Optional[OSCBinding]:
         """根据绑定ID获取绑定"""
@@ -59,6 +59,15 @@ class OSCBindingRegistry:
     def get_bindings_by_action(self, action: OSCAction) -> List[OSCBinding]:
         """根据动作获取所有相关的绑定"""
         return self._bindings_by_action.get(action, []).copy()
+    
+    def get_bindings_by_address(self, address: OSCAddress) -> List[OSCBinding]:
+        """根据地址获取所有相关的绑定"""
+        return self._bindings_by_address.get(address, []).copy()
+    
+    def get_actions_by_address(self, address: OSCAddress) -> List[OSCAction]:
+        """根据地址获取所有绑定的动作"""
+        bindings = self._bindings_by_address.get(address, [])
+        return [binding.action for binding in bindings]
 
     def get_binding_count(self) -> int:
         """获取绑定总数"""
@@ -66,7 +75,7 @@ class OSCBindingRegistry:
 
     def has_binding(self, address: OSCAddress) -> bool:
         """检查指定地址是否存在绑定"""
-        return address in self._bindings_by_address
+        return address in self._bindings_by_address and len(self._bindings_by_address[address]) > 0
 
     def has_binding_id(self, binding_id: int) -> bool:
         """检查指定ID的绑定是否存在"""
@@ -104,16 +113,16 @@ class OSCBindingRegistry:
 
     def register_binding(self, address: OSCAddress, action: OSCAction) -> OSCBinding:
         """注册绑定"""
-        # 如果地址已存在绑定，先移除
-        if address in self._bindings_by_address:
-            self.unregister_binding(address)
-        
         binding_id = self._get_next_binding_id()
         binding = OSCBinding(binding_id, address, action)
         
         self._bindings.append(binding)
-        self._bindings_by_address[address] = binding
         self._bindings_by_id[binding_id] = binding
+        
+        # 添加到地址索引（支持多个动作绑定到同一地址）
+        if address not in self._bindings_by_address:
+            self._bindings_by_address[address] = []
+        self._bindings_by_address[address].append(binding)
         
         # 添加到动作索引（支持一个动作被多个地址绑定）
         if action not in self._bindings_by_action:
@@ -126,11 +135,10 @@ class OSCBindingRegistry:
         return binding
 
     def unregister_binding(self, address: OSCAddress) -> None:
-        """取消注册绑定"""
-        binding = self._bindings_by_address.get(address)
-        if binding:
+        """取消注册绑定（移除该地址的所有绑定）"""
+        bindings = self._bindings_by_address.get(address, [])
+        for binding in bindings[:]:
             self._bindings.remove(binding)
-            self._bindings_by_address.pop(address, None)
             self._bindings_by_id.pop(binding.id, None)
             
             # 从动作索引中移除
@@ -138,6 +146,10 @@ class OSCBindingRegistry:
                 self._bindings_by_action[binding.action].remove(binding)
                 if not self._bindings_by_action[binding.action]:
                     del self._bindings_by_action[binding.action]
+        
+        # 从地址索引中移除
+        if address in self._bindings_by_address:
+            del self._bindings_by_address[address]
             
             # 通知观察者
             self.notify_binding_changed(address, None)
@@ -151,9 +163,9 @@ class OSCBindingRegistry:
 
     async def handle(self, address: OSCAddress, *args: OSCValue) -> None:
         """处理OSC消息"""
-        action = self.get_binding(address)
-        if action:
-            await action.handle(*args)
+        bindings = self._bindings_by_address.get(address, [])
+        for binding in bindings:
+            await binding.action.handle(*args)
 
     def export_to_config(self) -> List[OSCBindingDict]:
         """导出所有绑定到配置格式"""
@@ -193,9 +205,16 @@ class OSCBindingRegistry:
         old_address = binding.address
         binding.address = new_address
         
-        # 更新地址索引
-        self._bindings_by_address.pop(old_address, None)
-        self._bindings_by_address[new_address] = binding
+        # 从旧地址索引中移除
+        if old_address in self._bindings_by_address:
+            self._bindings_by_address[old_address].remove(binding)
+            if not self._bindings_by_address[old_address]:
+                del self._bindings_by_address[old_address]
+        
+        # 添加到新地址索引
+        if new_address not in self._bindings_by_address:
+            self._bindings_by_address[new_address] = []
+        self._bindings_by_address[new_address].append(binding)
         
         return True
 
@@ -225,5 +244,38 @@ class OSCBindingRegistry:
         if new_action not in self._bindings_by_action:
             self._bindings_by_action[new_action] = []
         self._bindings_by_action[new_action].append(binding)
+        
+        return True
+
+    def unregister_binding_by_id(self, binding_id: int) -> bool:
+        """通过绑定ID取消注册绑定
+        
+        Args:
+            binding_id: 要取消注册的绑定ID
+            
+        Returns:
+            bool: 取消注册成功返回True，如果ID不存在返回False
+        """
+        binding = self._bindings_by_id.get(binding_id)
+        if not binding:
+            return False
+            
+        self._bindings.remove(binding)
+        self._bindings_by_id.pop(binding_id, None)
+        
+        # 从地址索引中移除
+        if binding.address in self._bindings_by_address:
+            self._bindings_by_address[binding.address].remove(binding)
+            if not self._bindings_by_address[binding.address]:
+                del self._bindings_by_address[binding.address]
+        
+        # 从动作索引中移除
+        if binding.action in self._bindings_by_action:
+            self._bindings_by_action[binding.action].remove(binding)
+            if not self._bindings_by_action[binding.action]:
+                del self._bindings_by_action[binding.action]
+        
+        # 通知观察者
+        self.notify_binding_changed(binding.address, None)
         
         return True

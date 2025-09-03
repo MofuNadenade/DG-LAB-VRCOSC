@@ -519,12 +519,6 @@ class OSCBindingTableTab(QWidget):
                                          translate("osc_address_tab.address_action_not_found").format(address_name,
                                                                                                       action_name))
                     return
-
-                # 检查表格中是否已存在相同地址的绑定
-                if self.has_binding_in_table(address_name):
-                    QMessageBox.warning(self, translate("common.error"),
-                                        translate("osc_address_tab.binding_exists"))
-                    return
                 
                 # 阻塞信号避免在刷新时触发itemChanged
                 self.binding_table.blockSignals(True)
@@ -814,20 +808,6 @@ class OSCBindingTableDelegate(QStyledItemDelegate):
         """将编辑器数据设置到模型 - 在此处进行冲突验证"""
         if isinstance(editor, EditableComboBox):
             new_text = editor.currentText().strip()
-            row = index.row()
-            column = index.column()
-            
-            # 获取编辑前的原始值
-            original_value = index.model().data(index, Qt.ItemDataRole.DisplayRole) or ""
-            
-            # 只对地址名列进行冲突检查
-            if new_text != original_value:
-                if column == 1:
-                    # 检查冲突 - 直接调用主类的方法
-                    if self.binding_tab.has_binding_in_table(new_text, row):
-                        QMessageBox.warning(self.binding_tab, translate("common.error"),
-                                            translate("osc_address_tab.binding_exists"))
-                        return
             
             # 没有冲突，正常设置数据
             model.setData(index, new_text, Qt.ItemDataRole.EditRole)
