@@ -5,17 +5,29 @@ OSC服务 - 完全封装OSC功能
 
 import asyncio
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, TypedDict
 
 from pythonosc import dispatcher, osc_server, udp_client
 
 from core.core_interface import CoreInterface
-from core.osc_common import OSCAddress
-from models import ConnectionState, OSCAddressInfo, OSCPrimitive, OSCValue, OSCValueType, get_osc_value
+from core.osc_common import OSCAddress, OSCBinding
+from models import ConnectionState, OSCPrimitive, OSCValue, OSCValueType, get_osc_value
 from i18n import translate
 from .service_interface import IService
 
 logger = logging.getLogger(__name__)
+
+
+class OSCAddressInfo(TypedDict):
+    address: str
+    types: Set[OSCValueType]
+    last_value: List[OSCValue]
+
+
+class OSCBindingInfo(TypedDict):
+    binding: OSCBinding
+    last_address: Optional[OSCAddress]
+    last_value: List[OSCValue]
 
 
 class OSCService(IService):
@@ -51,6 +63,7 @@ class OSCService(IService):
         self._vrchat_port: int = vrchat_port
         
         self._address_infos: Dict[str, OSCAddressInfo] = {}
+        self._binding_infos: Dict[OSCBinding, OSCBindingInfo] = {}
 
     async def start_service(self) -> bool:
         """
@@ -139,20 +152,11 @@ class OSCService(IService):
         """
 
         # 更新地址信息
-        address_info: OSCAddressInfo
-        if address in self._address_infos:
-            address_info = self._address_infos[address]
-        else:
-            address_info = {
-                "address": address,
-                "types": set(),
-                "last_value": None
-            }
-            self._address_infos[address] = address_info
+        address_info = self.get_address_info(address)
         for arg in args:
             value_type: OSCValueType = arg.value_type()
             address_info["types"].add(value_type)
-            address_info["last_value"] = arg
+        address_info["last_value"] = list(args)
 
         # 注册到地址代码注册表
         if not self._core_interface.registries.code_registry.has_code(address):
@@ -168,17 +172,59 @@ class OSCService(IService):
         """处理OSC消息"""
         bindings = self._core_interface.registries.binding_registry.get_bindings_by_address(address)
         for binding in bindings:
+            binding_info = self.get_binding_info(binding)
+            binding_info["last_address"] = address
+            binding_info["last_value"] = list(args)
+
             success = await binding.action.handle(*args)
             if not success:
                 args_types = [arg.value_type() for arg in args]
                 action_types = [t.value_type() for t in binding.action.types]
                 logger.warning(f"绑定（{binding.action.name}）处理OSC消息失败，地址（{address.name}）类型不匹配，参数的类型有（{args_types}），支持的类型有（{action_types}）")
 
+    def get_address_info(self, address: str) -> OSCAddressInfo:
+        """
+        获取OSC地址信息
+        """
+        address_info: OSCAddressInfo
+        if address in self._address_infos:
+            address_info = self._address_infos[address]
+        else:
+            address_info = {
+                "address": address,
+                "types": set(),
+                "last_value": list()
+            }
+            self._address_infos[address] = address_info
+        return address_info
+
+    def get_binding_info(self, binding: OSCBinding) -> OSCBindingInfo:
+        """
+        获取OSC绑定信息
+        """
+        binding_info: OSCBindingInfo
+        if binding in self._binding_infos:
+            binding_info = self._binding_infos[binding]
+        else:
+            binding_info = {
+                "binding": binding,
+                "last_address": None,
+                "last_value": list()
+            }
+            self._binding_infos[binding] = binding_info
+        return binding_info
+
     def get_address_infos(self) -> Dict[str, OSCAddressInfo]:
         """
         获取检测到的OSC地址信息
         """
         return self._address_infos
+
+    def get_binding_infos(self) -> Dict[OSCBinding, OSCBindingInfo]:
+        """
+        获取检测到的OSC绑定信息
+        """
+        return self._binding_infos
 
     # ============ VRChat通信方法 ============
 
