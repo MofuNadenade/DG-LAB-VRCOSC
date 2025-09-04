@@ -123,35 +123,71 @@ class NewPulseDialog(QDialog):
         self.setStyleSheet("""
             QDialog {
                 background-color: #1a1a1a;
-                color: white;
+                color: #ffffff;
             }
             QLabel {
-                color: white;
+                color: #e0e0e0;
+                font-size: 13px;
+                font-weight: 500;
             }
-            QLineEdit, QTextEdit, QComboBox, QSpinBox {
-                background-color: #333;
-                color: white;
-                border: 1px solid #d4af37;
-                padding: 5px;
-                border-radius: 3px;
+            QLineEdit, QTextEdit {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 10px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 13px;
+            }
+            QLineEdit:focus, QTextEdit:focus {
+                border-color: #d4af37;
+                background-color: #2f2f2f;
+            }
+            QComboBox {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 8px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 13px;
+                min-width: 120px;
+            }
+            QComboBox:focus {
+                border-color: #d4af37;
             }
             QComboBox::drop-down {
                 border: none;
+                width: 20px;
             }
             QComboBox::down-arrow {
                 border: none;
                 background: #d4af37;
             }
+            QSpinBox {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 8px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 13px;
+            }
+            QSpinBox:focus {
+                border-color: #d4af37;
+            }
             QPushButton {
                 background-color: #d4af37;
-                color: black;
+                color: #000000;
                 border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
+                padding: 12px 24px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                min-height: 20px;
             }
             QPushButton:hover {
-                background-color: #f0c040;
+                background-color: #e6c547;
+            }
+            QPushButton:pressed {
+                background-color: #c4a030;
             }
         """)
 
@@ -197,7 +233,7 @@ class ImportPulseDialog(QDialog):
 
         self.setWindowTitle(translate("pulse_dialogs.import_pulse.title"))
         self.setModal(True)
-        self.resize(500, 400)
+        self.resize(800, 650)
         self.setup_ui()
         self.apply_style()
 
@@ -469,36 +505,108 @@ class ImportPulseDialog(QDialog):
         self.setStyleSheet("""
             QDialog {
                 background-color: #1a1a1a;
-                color: white;
+                color: #ffffff;
             }
             QLabel {
-                color: white;
+                color: #e0e0e0;
+                font-size: 13px;
+                font-weight: 500;
             }
-            QLineEdit, QTextEdit, QListWidget {
-                background-color: #333;
-                color: white;
-                border: 1px solid #d4af37;
-                padding: 5px;
-                border-radius: 3px;
+            QLineEdit {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 10px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 13px;
+            }
+            QLineEdit:focus {
+                border-color: #d4af37;
+                background-color: #2f2f2f;
+            }
+            QTextEdit, QPlainTextEdit {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 10px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 12px;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                line-height: 1.4;
+            }
+            QTextEdit:focus, QPlainTextEdit:focus {
+                border-color: #d4af37;
+                background-color: #2f2f2f;
+            }
+            QListWidget {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                border-radius: 6px;
+                color: #ffffff;
+                outline: none;
             }
             QListWidget::item {
-                padding: 5px;
-                border-bottom: 1px solid #555;
+                padding: 12px 15px;
+                border-bottom: 1px solid #333333;
+                border-radius: 4px;
+                margin: 1px;
             }
             QListWidget::item:selected {
                 background-color: #d4af37;
-                color: black;
+                color: #000000;
+                font-weight: 600;
+            }
+            QListWidget::item:hover {
+                background-color: #3a3a3a;
+            }
+            QListWidget::item:selected:hover {
+                background-color: #e6c547;
             }
             QPushButton {
                 background-color: #d4af37;
-                color: black;
+                color: #000000;
                 border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
+                padding: 12px 24px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                min-height: 20px;
             }
             QPushButton:hover {
-                background-color: #f0c040;
+                background-color: #e6c547;
+            }
+            QPushButton:pressed {
+                background-color: #c4a030;
+            }
+            QTabWidget::pane {
+                border: 2px solid #444444;
+                background-color: #2a2a2a;
+                border-radius: 8px;
+                margin-top: 8px;
+            }
+            QTabBar::tab {
+                background-color: #333333;
+                color: #cccccc;
+                border: 1px solid #555555;
+                padding: 14px 28px;
+                margin-right: 2px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                font-weight: 500;
+                min-width: 120px;
+            }
+            QTabBar::tab:selected {
+                background-color: #d4af37;
+                color: #000000;
+                border-bottom: 2px solid #d4af37;
+                font-weight: 600;
+            }
+            QTabBar::tab:hover {
+                background-color: #444444;
+                color: #ffffff;
+            }
+            QTabBar::tab:selected:hover {
+                background-color: #e6c547;
             }
         """)
 
@@ -707,10 +815,13 @@ class ExportPulseDialog(QDialog):
         self.pulse_list: QListWidget
         self.file_path_edit: QLineEdit
         self.copy_share_code_btn: QPushButton
+        self.tab_widget: QTabWidget
+        self.share_pulse_list: QListWidget
+        self.share_code_text: QTextEdit
 
         self.setWindowTitle(translate("pulse_dialogs.export_pulse.title"))
         self.setModal(True)
-        self.resize(450, 350)
+        self.resize(800, 650)
         self.setup_ui()
         self.apply_style()
 
@@ -727,6 +838,37 @@ class ExportPulseDialog(QDialog):
         title.setFont(font)
         layout.addWidget(title)
 
+        # 使用标签页来分离文件导出和分享码导出
+        self.tab_widget = QTabWidget()
+        
+        # 文件导出标签页
+        file_tab = self.create_file_export_tab()
+        self.tab_widget.addTab(file_tab, "导出到文件")
+        
+        # 分享码导出标签页
+        share_code_tab = self.create_share_code_export_tab()
+        self.tab_widget.addTab(share_code_tab, "生成分享码")
+        
+        layout.addWidget(self.tab_widget)
+
+        # 按钮区域
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(self.handle_export)
+        button_box.rejected.connect(self.reject)
+        button_layout.addWidget(button_box)
+
+        layout.addLayout(button_layout)
+    
+    def create_file_export_tab(self) -> QWidget:
+        """创建文件导出标签页"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        
         # 波形选择
         list_label = QLabel(translate("pulse_dialogs.export_pulse.select_pulses"))
         layout.addWidget(list_label)
@@ -755,7 +897,7 @@ class ExportPulseDialog(QDialog):
 
         layout.addLayout(file_layout)
 
-        # 按钮
+        # 选择按钮
         button_layout = QHBoxLayout()
 
         select_all_btn = QPushButton("全选")
@@ -765,62 +907,185 @@ class ExportPulseDialog(QDialog):
         clear_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_selection"))
         clear_btn.clicked.connect(self.clear_selection)
         button_layout.addWidget(clear_btn)
-
-        # 新增：复制分享码按钮
-        self.copy_share_code_btn = QPushButton("复制分享码")
-        self.copy_share_code_btn.clicked.connect(self.copy_share_code)
-        self.copy_share_code_btn.setEnabled(False)
-        button_layout.addWidget(self.copy_share_code_btn)
-
+        
         button_layout.addStretch()
-
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        button_box.accepted.connect(self.export_pulses)
-        button_box.rejected.connect(self.reject)
-        button_layout.addWidget(button_box)
-
         layout.addLayout(button_layout)
         
         # 连接选择变化事件
         self.pulse_list.itemSelectionChanged.connect(self.on_selection_changed)
+        
+        return tab
+    
+    def create_share_code_export_tab(self) -> QWidget:
+        """创建分享码导出标签页"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        
+        # 波形选择
+        list_label = QLabel("选择要生成分享码的波形：")
+        layout.addWidget(list_label)
+        
+        self.share_pulse_list = QListWidget()
+        self.share_pulse_list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        
+        for pulse in self.pulses:
+            item = QListWidgetItem(pulse.name)
+            item.setData(Qt.ItemDataRole.UserRole, pulse)
+            self.share_pulse_list.addItem(item)
+        
+        # 默认选中第一个
+        if self.pulses:
+            self.share_pulse_list.setCurrentRow(0)
+        
+        layout.addWidget(self.share_pulse_list)
+        
+        # 分享码显示区域
+        share_code_label = QLabel("分享码：")
+        layout.addWidget(share_code_label)
+        
+        self.share_code_text = QTextEdit()
+        self.share_code_text.setMaximumHeight(120)
+        self.share_code_text.setReadOnly(True)
+        layout.addWidget(self.share_code_text)
+        
+        # 复制按钮
+        copy_layout = QHBoxLayout()
+        copy_layout.addStretch()
+        
+        self.copy_share_code_btn = QPushButton("复制分享码")
+        self.copy_share_code_btn.clicked.connect(self.copy_share_code)
+        self.copy_share_code_btn.setEnabled(False)
+        copy_layout.addWidget(self.copy_share_code_btn)
+        
+        layout.addLayout(copy_layout)
+        
+        # 连接信号
+        self.share_pulse_list.itemSelectionChanged.connect(self.on_share_selection_changed)
+        
+        return tab
 
     def apply_style(self) -> None:
         """应用样式"""
         self.setStyleSheet("""
             QDialog {
                 background-color: #1a1a1a;
-                color: white;
+                color: #ffffff;
             }
             QLabel {
-                color: white;
+                color: #e0e0e0;
+                font-size: 13px;
+                font-weight: 500;
             }
-            QLineEdit, QListWidget, QComboBox {
-                background-color: #333;
-                color: white;
-                border: 1px solid #d4af37;
-                padding: 5px;
-                border-radius: 3px;
+            QLineEdit {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 10px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 13px;
+            }
+            QLineEdit:focus {
+                border-color: #d4af37;
+                background-color: #2f2f2f;
+            }
+            QComboBox {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 8px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 13px;
+                min-width: 120px;
+            }
+            QComboBox:focus {
+                border-color: #d4af37;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border: 2px solid #d4af37;
+                width: 8px;
+                height: 8px;
+                border-top: none;
+                border-right: none;
+                transform: rotate(-45deg);
+            }
+            QListWidget {
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                border-radius: 6px;
+                color: #ffffff;
+                outline: none;
             }
             QListWidget::item {
-                padding: 5px;
-                border-bottom: 1px solid #555;
+                padding: 12px 15px;
+                border-bottom: 1px solid #333333;
+                border-radius: 4px;
+                margin: 1px;
             }
             QListWidget::item:selected {
                 background-color: #d4af37;
-                color: black;
+                color: #000000;
+                font-weight: 600;
+            }
+            QListWidget::item:hover {
+                background-color: #3a3a3a;
+            }
+            QListWidget::item:selected:hover {
+                background-color: #e6c547;
             }
             QPushButton {
                 background-color: #d4af37;
-                color: black;
+                color: #000000;
                 border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
+                padding: 12px 24px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                min-height: 20px;
             }
             QPushButton:hover {
-                background-color: #f0c040;
+                background-color: #e6c547;
+            }
+            QPushButton:pressed {
+                background-color: #c4a030;
+            }
+            QPushButton:disabled {
+                background-color: #555555;
+                color: #888888;
+            }
+            QTabWidget::pane {
+                border: 2px solid #444444;
+                background-color: #2a2a2a;
+                border-radius: 8px;
+                margin-top: 8px;
+            }
+            QTabBar::tab {
+                background-color: #333333;
+                color: #cccccc;
+                border: 1px solid #555555;
+                padding: 14px 28px;
+                margin-right: 2px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                font-weight: 500;
+                min-width: 120px;
+            }
+            QTabBar::tab:selected {
+                background-color: #d4af37;
+                color: #000000;
+                border-bottom: 2px solid #d4af37;
+                font-weight: 600;
+            }
+            QTabBar::tab:hover {
+                background-color: #444444;
+                color: #ffffff;
+            }
+            QTabBar::tab:selected:hover {
+                background-color: #e6c547;
             }
         """)
 
@@ -856,12 +1121,22 @@ class ExportPulseDialog(QDialog):
     
     def copy_share_code(self) -> None:
         """复制选中波形的分享码到剪贴板"""
-        selected_items = self.pulse_list.selectedItems()
-        if len(selected_items) != 1:
-            QMessageBox.warning(self, "选择错误", "请选择一个波形生成分享码")
-            return
+        current_tab = self.tab_widget.currentIndex()
         
-        pulse = selected_items[0].data(Qt.ItemDataRole.UserRole)
+        if current_tab == 0:  # 文件导出标签页
+            selected_items = self.pulse_list.selectedItems()
+            if len(selected_items) != 1:
+                QMessageBox.warning(self, "选择错误", "请选择一个波形生成分享码")
+                return
+            pulse = selected_items[0].data(Qt.ItemDataRole.UserRole)
+        elif current_tab == 1:  # 分享码导出标签页
+            selected_items = self.share_pulse_list.selectedItems()
+            if not selected_items:
+                QMessageBox.warning(self, "选择错误", "请选择一个波形生成分享码")
+                return
+            pulse = selected_items[0].data(Qt.ItemDataRole.UserRole)
+        else:
+            return
         
         try:
             share_code = WaveformShareCodec.encode_pulse(pulse)
@@ -953,6 +1228,33 @@ class ExportPulseDialog(QDialog):
         except Exception as e:
             QMessageBox.critical(self, translate("pulse_dialogs.export_pulse.export_error"),
                                  translate("pulse_dialogs.export_pulse.save_failed").format(str(e)))
+    
+    def handle_export(self) -> None:
+        """处理导出操作"""
+        current_tab = self.tab_widget.currentIndex()
+        
+        if current_tab == 0:  # 文件导出
+            self.export_pulses()
+        elif current_tab == 1:  # 分享码导出
+            self.copy_share_code()
+            self.accept()  # 关闭对话框
+    
+    def on_share_selection_changed(self) -> None:
+        """分享码选择变化处理"""
+        selected_items = self.share_pulse_list.selectedItems()
+        
+        if selected_items:
+            pulse = selected_items[0].data(Qt.ItemDataRole.UserRole)
+            try:
+                share_code = WaveformShareCodec.encode_pulse(pulse)
+                self.share_code_text.setText(share_code)
+                self.copy_share_code_btn.setEnabled(True)
+            except Exception as e:
+                self.share_code_text.setText(f"生成分享码失败: {e}")
+                self.copy_share_code_btn.setEnabled(False)
+        else:
+            self.share_code_text.clear()
+            self.copy_share_code_btn.setEnabled(False)
 
 
 class PulseInfoDialog(QDialog):
@@ -967,7 +1269,8 @@ class PulseInfoDialog(QDialog):
 
         self.setWindowTitle(f"{translate('pulse_dialogs.pulse_info.title')} - {pulse.name}")
         self.setModal(True)
-        self.resize(400, 300)
+        self.resize(800, 650)
+        self.setMinimumSize(700, 500)
         self.setup_ui()
         self.apply_style()
 
@@ -1030,28 +1333,41 @@ class PulseInfoDialog(QDialog):
         self.setStyleSheet("""
             QDialog {
                 background-color: #1a1a1a;
-                color: white;
+                color: #ffffff;
             }
             QLabel {
-                color: white;
+                color: #e0e0e0;
+                font-size: 13px;
+                font-weight: 500;
             }
             QTextEdit {
-                background-color: #333;
-                color: white;
-                border: 1px solid #d4af37;
-                padding: 5px;
-                border-radius: 3px;
-                font-family: monospace;
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 10px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 12px;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                line-height: 1.4;
+            }
+            QTextEdit:focus {
+                border-color: #d4af37;
+                background-color: #2f2f2f;
             }
             QPushButton {
                 background-color: #d4af37;
-                color: black;
+                color: #000000;
                 border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
+                padding: 12px 24px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                min-height: 20px;
             }
             QPushButton:hover {
-                background-color: #f0c040;
+                background-color: #e6c547;
+            }
+            QPushButton:pressed {
+                background-color: #c4a030;
             }
         """)

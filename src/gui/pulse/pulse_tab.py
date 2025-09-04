@@ -87,29 +87,42 @@ class ShareCodeDisplayDialog(QDialog):
         self.setStyleSheet("""
             QDialog {
                 background-color: #1a1a1a;
-                color: white;
+                color: #ffffff;
             }
             QLabel {
-                color: white;
+                color: #e0e0e0;
+                font-size: 13px;
+                font-weight: 500;
             }
             QTextEdit {
-                background-color: #333;
-                color: white;
-                border: 1px solid #d4af37;
-                padding: 5px;
-                border-radius: 3px;
-                font-family: monospace;
+                background-color: #2a2a2a;
+                border: 2px solid #444444;
+                padding: 10px 12px;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 12px;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                line-height: 1.4;
+            }
+            QTextEdit:focus {
+                border-color: #d4af37;
+                background-color: #2f2f2f;
             }
             QPushButton {
                 background-color: #d4af37;
-                color: black;
+                color: #000000;
                 border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
+                padding: 12px 24px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                min-height: 20px;
             }
             QPushButton:hover {
-                background-color: #f0c040;
+                background-color: #e6c547;
+            }
+            QPushButton:pressed {
+                background-color: #c4a030;
             }
         """)
 
