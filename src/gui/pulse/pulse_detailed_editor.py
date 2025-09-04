@@ -1,6 +1,6 @@
 """
 精细波形编辑器
-支持4元组频率和强度的详细编辑，确保不丢失精度
+支持100ms波形步骤内部4个25ms子步骤的详细编辑，确保不丢失精度
 """
 
 import logging
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class DetailedPulseStepDialog(QDialog):
-    """单个波形步骤的详细编辑对话框"""
+    """单个100ms波形步骤内部4个25ms子步骤的详细编辑对话框"""
 
     def __init__(self, pulse_operation: PulseOperation, step_index: int, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -99,9 +99,9 @@ class DetailedPulseStepDialog(QDialog):
         self.frequency_sliders = []
         self.frequency_labels = []
         for i in range(4):
-            # 通道标签
-            channel_label = QLabel(translate("pulse_editor.frequency_channel").format(i + 1))
-            freq_layout.addWidget(channel_label, i, 0)
+            # 子步骤标签
+            substep_label = QLabel(translate("pulse_editor.frequency_substep").format(i + 1))
+            freq_layout.addWidget(substep_label, i, 0)
 
             # 数值显示标签
             value_label = QLabel("10")
@@ -189,9 +189,9 @@ class DetailedPulseStepDialog(QDialog):
         self.strength_sliders = []
         self.strength_labels = []
         for i in range(4):
-            # 通道标签
-            channel_label = QLabel(translate("pulse_editor.strength_channel").format(i + 1))
-            strength_layout.addWidget(channel_label, i, 0)
+            # 子步骤标签
+            substep_label = QLabel(translate("pulse_editor.strength_substep").format(i + 1))
+            strength_layout.addWidget(substep_label, i, 0)
 
             # 数值显示标签
             value_label = QLabel("0%")
@@ -304,15 +304,15 @@ class DetailedPulseStepDialog(QDialog):
         self.update_preview()
 
     def load_data(self) -> None:
-        """加载数据到编辑器"""
+        """加载100ms波形步骤的4个25ms子步骤数据到编辑器"""
         frequency_tuple, strength_tuple = self.pulse_operation
 
-        # 加载频率数据
+        # 加载4个25ms子步骤的频率数据
         for i, freq in enumerate(frequency_tuple):
             self.frequency_sliders[i].setValue(freq)
             self.frequency_labels[i].setText(str(freq))
 
-        # 加载强度数据
+        # 加载4个25ms子步骤的强度数据
         for i, strength in enumerate(strength_tuple):
             self.strength_sliders[i].setValue(strength)
             self.strength_labels[i].setText(f"{strength}%")
@@ -340,7 +340,7 @@ class DetailedPulseStepDialog(QDialog):
         self.preview_label.setText(preview_text)
 
     def get_pulse_operation(self) -> PulseOperation:
-        """获取编辑后的波形操作数据"""
+        """获取编辑后的100ms波形步骤的4个25ms子步骤数据"""
         frequency_values = (
             self.frequency_sliders[0].value(),
             self.frequency_sliders[1].value(),
@@ -358,9 +358,12 @@ class DetailedPulseStepDialog(QDialog):
     def set_uniform_frequency(self) -> None:
         """设置统一频率"""
         if self.frequency_sliders:
-            first_value = self.frequency_sliders[0].value()
-            for slider in self.frequency_sliders[1:]:
-                slider.setValue(first_value)
+            # 计算所有频率值的平均值
+            total_value = sum(slider.value() for slider in self.frequency_sliders)
+            average_value = total_value // len(self.frequency_sliders)
+            # 将所有滑动条设置为平均值
+            for slider in self.frequency_sliders:
+                slider.setValue(average_value)
 
     def set_gradient_frequency(self) -> None:
         """设置渐变频率"""
@@ -376,14 +379,20 @@ class DetailedPulseStepDialog(QDialog):
 
     def copy_first_frequency(self) -> None:
         """复制第一个频率值到所有位置"""
-        self.set_uniform_frequency()
+        if self.frequency_sliders:
+            first_value = self.frequency_sliders[0].value()
+            for slider in self.frequency_sliders[1:]:
+                slider.setValue(first_value)
 
     def set_uniform_strength(self) -> None:
         """设置统一强度"""
         if self.strength_sliders:
-            first_value = self.strength_sliders[0].value()
-            for slider in self.strength_sliders[1:]:
-                slider.setValue(first_value)
+            # 计算所有强度值的平均值
+            total_value = sum(slider.value() for slider in self.strength_sliders)
+            average_value = total_value // len(self.strength_sliders)
+            # 将所有滑动条设置为平均值
+            for slider in self.strength_sliders:
+                slider.setValue(average_value)
 
     def set_gradient_strength(self) -> None:
         """设置渐变强度"""
@@ -399,7 +408,10 @@ class DetailedPulseStepDialog(QDialog):
 
     def copy_first_strength(self) -> None:
         """复制第一个强度值到所有位置"""
-        self.set_uniform_strength()
+        if self.strength_sliders:
+            first_value = self.strength_sliders[0].value()
+            for slider in self.strength_sliders[1:]:
+                slider.setValue(first_value)
 
     def apply_theme(self) -> None:
         """应用主题"""
