@@ -16,12 +16,14 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QTextEdit, QFileDialog, QMessageBox, QFormLayout,
     QDialogButtonBox, QComboBox, QSpinBox, QListWidget, QListWidgetItem,
-    QWidget
+    QWidget, QApplication, QTabWidget, QPlainTextEdit
 )
 
 from core.dglab_pulse import Pulse
+from core.waveform_share_codec import WaveformShareCodec
 from i18n import translate
 from models import PulseOperation, PulseDict, IntegrityReport
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +190,10 @@ class ImportPulseDialog(QDialog):
         self.file_path_edit: QLineEdit
         self.pulse_list: QListWidget
         self.preview_text: QTextEdit
+        self.tab_widget: QTabWidget
+        self.share_code_edit: QPlainTextEdit
+        self.share_code_info: QLabel
+        self.share_code_preview: QTextEdit
 
         self.setWindowTitle(translate("pulse_dialogs.import_pulse.title"))
         self.setModal(True)
@@ -208,6 +214,37 @@ class ImportPulseDialog(QDialog):
         title.setFont(font)
         layout.addWidget(title)
 
+        # 使用标签页来分离文件导入和分享码导入
+        self.tab_widget = QTabWidget()
+        
+        # 文件导入标签页
+        file_tab = self.create_file_import_tab()
+        self.tab_widget.addTab(file_tab, "从文件导入")
+        
+        # 分享码导入标签页
+        share_code_tab = self.create_share_code_import_tab()
+        self.tab_widget.addTab(share_code_tab, "从分享码导入")
+        
+        layout.addWidget(self.tab_widget)
+
+        # 按钮区域
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        button_layout.addWidget(button_box)
+        
+        layout.addLayout(button_layout)
+    
+    def create_file_import_tab(self) -> QWidget:
+        """创建文件导入标签页"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        
         # 文件选择
         file_layout = QHBoxLayout()
 
@@ -239,30 +276,124 @@ class ImportPulseDialog(QDialog):
         self.preview_text.setReadOnly(True)
         layout.addWidget(self.preview_text)
 
-        # 按钮
-        button_layout = QHBoxLayout()
+        # 文件导入按钮
+        file_button_layout = QHBoxLayout()
 
         select_all_btn = QPushButton(translate("pulse_dialogs.import_pulse.select_all"))
         select_all_btn.clicked.connect(self.select_all)
-        button_layout.addWidget(select_all_btn)
+        file_button_layout.addWidget(select_all_btn)
 
         clear_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_selection"))
         clear_btn.clicked.connect(self.clear_selection)
-        button_layout.addWidget(clear_btn)
+        file_button_layout.addWidget(clear_btn)
 
-        button_layout.addStretch()
-
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        button_layout.addWidget(button_box)
-
-        layout.addLayout(button_layout)
-
+        file_button_layout.addStretch()
+        layout.addLayout(file_button_layout)
+        
         # 连接信号
         self.pulse_list.itemSelectionChanged.connect(self.update_preview)
+        
+        return tab
+    
+    def create_share_code_import_tab(self) -> QWidget:
+        """创建分享码导入标签页"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        
+        # 说明文本
+        info_label = QLabel("粘贴波形分享码进行导入:")
+        layout.addWidget(info_label)
+        
+        # 分享码输入框
+        self.share_code_edit = QPlainTextEdit()
+        self.share_code_edit.setPlaceholderText("请粘贴分享码，格式: DGLAB-PULSE-V1|名称|数据|哈希")
+        self.share_code_edit.setMaximumHeight(80)
+        self.share_code_edit.textChanged.connect(self.on_share_code_changed)
+        layout.addWidget(self.share_code_edit)
+        
+        # 解析结果显示
+        self.share_code_info = QLabel("等待输入分享码...")
+        self.share_code_info.setStyleSheet("color: #888; font-style: italic;")
+        layout.addWidget(self.share_code_info)
+        
+        # 预览区域
+        preview_label = QLabel("波形预览:")
+        layout.addWidget(preview_label)
+        
+        self.share_code_preview = QTextEdit()
+        self.share_code_preview.setMaximumHeight(200)
+        self.share_code_preview.setReadOnly(True)
+        layout.addWidget(self.share_code_preview)
+        
+        return tab
+
+    def on_share_code_changed(self) -> None:
+        """分享码输入变化处理 (Pydantic版本)"""
+        share_code = self.share_code_edit.toPlainText().strip()
+        
+        if not share_code:
+            self.share_code_info.setText("等待输入分享码...")
+            self.share_code_info.setStyleSheet("color: #888; font-style: italic;")
+            self.share_code_preview.clear()
+            return
+        
+        try:
+            parsed = WaveformShareCodec.decode_share_code(share_code)
+            validation = parsed.validation
+            
+            if validation.is_valid:
+                pulse_data = parsed.pulse_data
+                self.share_code_info.setText(f"✓ 解析成功: {pulse_data.name}")
+                self.share_code_info.setStyleSheet("color: green; font-weight: bold;")
+                
+                # 更新预览 - 使用Pydantic模型的丰富信息
+                preview_text = f"波形名称: {pulse_data.name}\n"
+                preview_text += f"版本: {pulse_data.version}\n"
+                preview_text += f"步数: {pulse_data.metadata.steps}\n"
+                preview_text += f"创建时间: {pulse_data.metadata.created.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                preview_text += f"持续时间: {pulse_data.metadata.duration_ms}ms\n"
+                preview_text += f"最大强度: {pulse_data.metadata.max_intensity}\n"
+                preview_text += f"最大频率: {pulse_data.metadata.max_frequency}\n"
+                
+                if validation.warnings:
+                    preview_text += f"\n⚠️ 警告:\n" + "\n".join(f"• {w}" for w in validation.warnings)
+                
+                # 显示前3步数据示例
+                if pulse_data.data:
+                    preview_text += f"\n\n前3步数据示例:\n"
+                    for i, step in enumerate(pulse_data.data[:3]):
+                        freq, intensity = step
+                        preview_text += f"步骤{i+1}: 频率{freq[0]}Hz, 强度{intensity[0]}%\n"
+                
+                self.share_code_preview.setText(preview_text)
+                
+            else:
+                error_text = "; ".join(validation.errors[:3])  # 只显示前3个错误
+                if len(validation.errors) > 3:
+                    error_text += f" (还有{len(validation.errors)-3}个错误)"
+                    
+                self.share_code_info.setText(f"✗ 解析失败: {error_text}")
+                self.share_code_info.setStyleSheet("color: red; font-weight: bold;")
+                
+                # 显示详细错误
+                error_message = "解析错误详情:\n" + "\n".join(f"• {e}" for e in validation.errors)
+                self.share_code_preview.setText(error_message)
+                
+        except ValidationError as e:
+            # Pydantic验证错误的详细显示
+            error_details: List[str] = []
+            for error in e.errors():
+                field = " -> ".join(str(x) for x in error['loc'])
+                error_details.append(f"{field}: {error['msg']}")
+            
+            self.share_code_info.setText("✗ 数据验证失败")
+            self.share_code_info.setStyleSheet("color: red; font-weight: bold;")
+            self.share_code_preview.setText("验证错误:\n" + "\n".join(error_details))
+            
+        except Exception as e:
+            self.share_code_info.setText(f"✗ 解析错误: {e}")
+            self.share_code_info.setStyleSheet("color: red; font-weight: bold;")
+            self.share_code_preview.clear()
 
     def validate_pulse_operation(self, data: List[PulseOperation]) -> Tuple[bool, List[str]]:
         """验证PulseOperation格式"""
@@ -515,11 +646,54 @@ class ImportPulseDialog(QDialog):
 
     def get_selected_pulses(self) -> List[PulseDict]:
         """获取选中的波形"""
-        selected_pulses: List[PulseDict] = []
-        for item in self.pulse_list.selectedItems():
-            index: int = item.data(Qt.ItemDataRole.UserRole)
-            selected_pulses.append(self.imported_pulses[index])
-        return selected_pulses
+        # 检查当前是哪个标签页
+        current_index = self.tab_widget.currentIndex()
+        
+        if current_index == 0:  # 文件导入
+            # 现有文件导入逻辑
+            selected_pulses: List[PulseDict] = []
+            for item in self.pulse_list.selectedItems():
+                index: int = item.data(Qt.ItemDataRole.UserRole)
+                selected_pulses.append(self.imported_pulses[index])
+            return selected_pulses
+        elif current_index == 1:  # 分享码导入
+            return self.get_share_code_pulses()
+        
+        return []
+    
+    def get_share_code_pulses(self) -> List[PulseDict]:
+        """获取分享码解析的波形 (Pydantic版本)"""
+        share_code = self.share_code_edit.toPlainText().strip()
+        
+        if not share_code:
+            return []
+        
+        try:
+            parsed = WaveformShareCodec.decode_share_code(share_code)
+            
+            if parsed.validation.is_valid:
+                pulse_data = parsed.pulse_data
+                
+                return [{
+                    'name': pulse_data.name,
+                    'data': pulse_data.data,
+                    'integrity': {
+                        'valid': True,
+                        'issues': [],
+                        'warnings': parsed.validation.warnings,
+                        'stats': {
+                            'steps': pulse_data.metadata.steps,
+                            'max_frequency': pulse_data.metadata.max_frequency,
+                            'max_intensity': pulse_data.metadata.max_intensity,
+                            'duration_ms': pulse_data.metadata.duration_ms
+                        }
+                    }
+                }]
+            
+        except Exception as e:
+            logger.error(f"Failed to get share code pulses: {e}")
+        
+        return []
 
 
 class ExportPulseDialog(QDialog):
@@ -532,6 +706,7 @@ class ExportPulseDialog(QDialog):
         # UI组件类型注解
         self.pulse_list: QListWidget
         self.file_path_edit: QLineEdit
+        self.copy_share_code_btn: QPushButton
 
         self.setWindowTitle(translate("pulse_dialogs.export_pulse.title"))
         self.setModal(True)
@@ -591,6 +766,12 @@ class ExportPulseDialog(QDialog):
         clear_btn.clicked.connect(self.clear_selection)
         button_layout.addWidget(clear_btn)
 
+        # 新增：复制分享码按钮
+        self.copy_share_code_btn = QPushButton("复制分享码")
+        self.copy_share_code_btn.clicked.connect(self.copy_share_code)
+        self.copy_share_code_btn.setEnabled(False)
+        button_layout.addWidget(self.copy_share_code_btn)
+
         button_layout.addStretch()
 
         button_box = QDialogButtonBox(
@@ -601,6 +782,9 @@ class ExportPulseDialog(QDialog):
         button_layout.addWidget(button_box)
 
         layout.addLayout(button_layout)
+        
+        # 连接选择变化事件
+        self.pulse_list.itemSelectionChanged.connect(self.on_selection_changed)
 
     def apply_style(self) -> None:
         """应用样式"""
@@ -663,6 +847,52 @@ class ExportPulseDialog(QDialog):
     def clear_selection(self) -> None:
         """清除选择"""
         self.pulse_list.clearSelection()
+    
+    def on_selection_changed(self) -> None:
+        """选择变化处理"""
+        selected_items = self.pulse_list.selectedItems()
+        # 分享码功能只支持单选
+        self.copy_share_code_btn.setEnabled(len(selected_items) == 1)
+    
+    def copy_share_code(self) -> None:
+        """复制选中波形的分享码到剪贴板"""
+        selected_items = self.pulse_list.selectedItems()
+        if len(selected_items) != 1:
+            QMessageBox.warning(self, "选择错误", "请选择一个波形生成分享码")
+            return
+        
+        pulse = selected_items[0].data(Qt.ItemDataRole.UserRole)
+        
+        try:
+            share_code = WaveformShareCodec.encode_pulse(pulse)
+            
+            # 复制到剪贴板
+            clipboard = QApplication.clipboard()
+            clipboard.setText(share_code)
+            
+            # 显示详细信息
+            info_text = (
+                f"波形 '{pulse.name}' 的分享码已复制到剪贴板\n\n"
+                f"分享码长度: {len(share_code)} 字符\n"
+                f"数据完整性: SHA256 校验\n"
+                f"波形步数: {len(pulse.data)} 步\n"
+                f"预估持续时间: {len(pulse.data) * 100}ms"
+            )
+            
+            QMessageBox.information(self, "分享成功", info_text)
+            logger.info(f"Share code copied for pulse: {pulse.name}")
+            
+        except ValidationError as e:
+            error_details: List[str] = []
+            for error in e.errors():
+                field = " -> ".join(str(x) for x in error['loc'])
+                error_details.append(f"{field}: {error['msg']}")
+            
+            QMessageBox.critical(self, "数据验证失败", 
+                               f"波形数据不符合要求:\n" + "\n".join(error_details))
+            
+        except Exception as e:
+            QMessageBox.critical(self, "生成失败", f"生成分享码失败: {e}")
 
     def export_pulses(self) -> None:
         """导出波形"""

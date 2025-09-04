@@ -108,6 +108,10 @@ pulse_editor:
   registry_unavailable: "Pulse registry unavailable"
   no_pulses_available: "No Pulses Available"
   no_pulses_available_msg: "No pulses available for export"
+  share_success: "Share Success"
+  share_success_msg: "Share code for waveform '{0}' copied to clipboard"
+  share_failed: "Share Failed"
+  share_failed_msg: "Failed to generate share code: {0}"
 
 pulse_dialogs:
   new_pulse:

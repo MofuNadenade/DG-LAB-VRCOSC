@@ -108,6 +108,10 @@ pulse_editor:
   registry_unavailable: "パルスレジストリが利用できません"
   no_pulses_available: "利用可能なパルスなし"
   no_pulses_available_msg: "書出可能なパルスがありません"
+  share_success: "シェア成功"
+  share_success_msg: "波形 '{0}' のシェアコードをクリップボードにコピーしました"
+  share_failed: "シェア失敗"
+  share_failed_msg: "シェアコードの生成に失敗しました: {0}"
 
 pulse_dialogs:
   new_pulse:

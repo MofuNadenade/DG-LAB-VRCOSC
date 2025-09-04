@@ -8,23 +8,110 @@ import asyncio
 import logging
 from typing import Optional, List
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QPoint
 from PySide6.QtGui import QFont, QCloseEvent
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QMessageBox, QInputDialog,
-    QSplitter, QGroupBox, QButtonGroup, QFrame, QDialog
+    QSplitter, QGroupBox, QButtonGroup, QFrame, QDialog,
+    QMenu, QApplication, QTextEdit
 )
 
 from core.dglab_pulse import Pulse
+from core.waveform_share_codec import WaveformShareCodec
 from i18n import translate, language_signals
 from models import PulseOperation, Channel, FrequencyMode
+from pydantic import ValidationError
 from .pulse_detailed_editor import DetailedPulseStepDialog
 from .pulse_dialogs import NewPulseDialog, ImportPulseDialog, ExportPulseDialog, PulseInfoDialog
 from .pulse_widgets import PulsePreviewWidget, PulseStepEditor, ParameterControlPanel
 from gui.ui_interface import UIInterface
 
 logger = logging.getLogger(__name__)
+
+
+class ShareCodeDisplayDialog(QDialog):
+    """分享码显示对话框"""
+    
+    def __init__(self, pulse_name: str, share_code: str, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.setWindowTitle(f"分享码 - {pulse_name}")
+        self.setModal(True)
+        self.resize(600, 400)
+        
+        layout = QVBoxLayout(self)
+        
+        # 说明文本
+        info_label = QLabel(f"波形 '{pulse_name}' 的分享码:")
+        layout.addWidget(info_label)
+        
+        # 分享码显示
+        self.share_code_text = QTextEdit()
+        self.share_code_text.setPlainText(share_code)
+        self.share_code_text.setReadOnly(True)
+        self.share_code_text.setFont(QFont("Consolas", 10))
+        layout.addWidget(self.share_code_text)
+        
+        # 统计信息
+        stats_text = f"分享码长度: {len(share_code)} 字符\n"
+        stats_text += f"包含数据完整性校验 (SHA256)"
+        stats_label = QLabel(stats_text)
+        stats_label.setStyleSheet("color: #666; font-size: 11px;")
+        layout.addWidget(stats_label)
+        
+        # 按钮
+        button_layout = QHBoxLayout()
+        
+        copy_btn = QPushButton("复制到剪贴板")
+        copy_btn.clicked.connect(self.copy_to_clipboard)
+        button_layout.addWidget(copy_btn)
+        
+        close_btn = QPushButton("关闭")
+        close_btn.clicked.connect(self.accept)
+        button_layout.addWidget(close_btn)
+        
+        layout.addLayout(button_layout)
+        
+        self.share_code = share_code
+        
+        # 应用样式
+        self.apply_style()
+    
+    def copy_to_clipboard(self):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.share_code)
+        QMessageBox.information(self, "复制成功", "分享码已复制到剪贴板")
+    
+    def apply_style(self):
+        """应用样式"""
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #1a1a1a;
+                color: white;
+            }
+            QLabel {
+                color: white;
+            }
+            QTextEdit {
+                background-color: #333;
+                color: white;
+                border: 1px solid #d4af37;
+                padding: 5px;
+                border-radius: 3px;
+                font-family: monospace;
+            }
+            QPushButton {
+                background-color: #d4af37;
+                color: black;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #f0c040;
+            }
+        """)
 
 
 class PulseTab(QWidget):
@@ -267,6 +354,10 @@ class PulseTab(QWidget):
         # 参数面板
         self.param_panel.frequency_changed.connect(self.on_frequency_changed)
         self.param_panel.frequency_mode_changed.connect(self.on_frequency_mode_changed)
+        
+        # 波形列表右键菜单
+        self.pulse_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.pulse_list.customContextMenuRequested.connect(self.show_context_menu)
 
     def apply_theme(self) -> None:
         """应用深色主题"""
@@ -919,3 +1010,43 @@ class PulseTab(QWidget):
                 event.ignore()
         else:
             event.accept()
+    
+    def show_context_menu(self, position: QPoint) -> None:
+        """显示右键菜单"""
+        item = self.pulse_list.itemAt(position)
+        if not item:
+            return
+        
+        pulse = item.data(Qt.ItemDataRole.UserRole)
+        menu = QMenu(self)
+        
+        # 快速分享
+        share_action = menu.addAction("快速分享")
+        share_action.triggered.connect(lambda: self.quick_share_pulse(pulse))
+        
+        menu.exec(self.pulse_list.mapToGlobal(position))
+    
+    def quick_share_pulse(self, pulse: Pulse) -> None:
+        """快速分享波形 (Pydantic版本)"""
+        try:
+            share_code = WaveformShareCodec.encode_pulse(pulse)
+            
+            # 显示分享码对话框
+            dialog = ShareCodeDisplayDialog(pulse.name, share_code, self)
+            dialog.exec()
+            
+            logger.info(f"Quick shared pulse: {pulse.name}")
+            
+        except ValidationError as e:
+            # 显示详细的验证错误
+            error_details: List[str] = []
+            for error in e.errors():
+                field = " -> ".join(str(x) for x in error['loc'])
+                error_details.append(f"{field}: {error['msg']}")
+            
+            error_text = "波形数据验证失败:\n" + "\n".join(error_details)
+            QMessageBox.critical(self, translate("pulse_editor.share_failed"), error_text)
+            
+        except Exception as e:
+            QMessageBox.critical(self, translate("pulse_editor.share_failed"),
+                               translate("pulse_editor.share_failed_msg").format(str(e)))

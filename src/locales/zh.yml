@@ -108,6 +108,10 @@ pulse_editor:
   registry_unavailable: "波形注册表不可用"
   no_pulses_available: "无可用波形"
   no_pulses_available_msg: "没有可导出的波形"
+  share_success: "分享成功"
+  share_success_msg: "波形 '{0}' 的分享码已复制到剪贴板"
+  share_failed: "分享失败"
+  share_failed_msg: "生成分享码失败: {0}"
 
 pulse_dialogs:
   new_pulse:
