@@ -120,6 +120,7 @@ class OSCAddressTableTab(QWidget):
         self.save_addresses_btn: QPushButton
         self.status_label: QLabel
         self.address_list_group: QGroupBox
+        self.description_label: QLabel
 
         self.init_ui()
 
@@ -143,8 +144,28 @@ class OSCAddressTableTab(QWidget):
         # 地址列表组
         self.create_address_list_group(layout)
 
+        # 描述标签
+        self.create_description_label(layout)
+
         # 操作按钮组
         self.create_action_buttons_group(layout)
+
+    def create_description_label(self, parent_layout: QVBoxLayout) -> None:
+        """创建描述标签"""
+        self.description_label = QLabel(translate("osc_address_tab.description"))
+        self.description_label.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 11px;
+                padding: 6px 8px;
+                font-style: italic;
+                background-color: #f5f5f5;
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                margin: 8px 0px;
+            }
+        """)
+        parent_layout.addWidget(self.description_label)
 
     def create_address_list_group(self, parent_layout: QVBoxLayout) -> None:
         """创建地址列表组"""
@@ -647,6 +668,9 @@ class OSCAddressTableTab(QWidget):
         """更新UI文本"""
         # 更新分组框标题
         self.address_list_group.setTitle(translate("osc_address_tab.address_list"))
+        
+        # 更新描述标签
+        self.description_label.setText(translate("osc_address_tab.description"))
 
         # 更新表格标题
         self.address_table.setHorizontalHeaderLabels([

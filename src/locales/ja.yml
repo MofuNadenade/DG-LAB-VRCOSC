@@ -415,6 +415,9 @@ download_dialog:
 osc_address_tab:
   address_list: "アドレスリスト"
   binding_list: "バインディングリスト"
+  description: "OSCアドレス別名 - VRChatパラメータアドレスに覚えやすい名前を設定"
+  binding_description: "OSCアドレスバインディング - VRChatパラメータとデバイスアクションのマッピングを確立"
+  info_description: "OSCアドレス監視 - VRChatで検出されたパラメータ情報をリアルタイム表示"
   id: "ID"
   address_name: "アドレス名"
   address_name_label: "アドレス名:"

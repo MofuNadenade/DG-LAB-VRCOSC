@@ -415,6 +415,9 @@ download_dialog:
 osc_address_tab:
   address_list: "地址列表"
   binding_list: "绑定列表"
+  description: "OSC地址别名 - 为VRChat参数地址设置易记的名称"
+  binding_description: "OSC地址绑定 - 建立VRChat参数与设备动作的映射关系"
+  info_description: "OSC地址监控 - 实时显示VRChat检测到的参数信息"
   id: "ID"
   address_name: "地址名称"
   address_name_label: "地址名称:"

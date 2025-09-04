@@ -415,6 +415,9 @@ download_dialog:
 osc_address_tab:
   address_list: "Address List"
   binding_list: "Binding List"
+  description: "OSC Address Aliases - Set memorable names for VRChat parameter addresses"
+  binding_description: "OSC Address Binding - Establish mapping between VRChat parameters and device actions"
+  info_description: "OSC Address Monitor - Real-time display of VRChat detected parameter information"
   id: "ID"
   address_name: "Address Name"
   address_name_label: "Address Name:"
