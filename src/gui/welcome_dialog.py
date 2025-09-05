@@ -6,7 +6,7 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QPushButton, 
                                QTextBrowser, QCheckBox, QLabel, QWidget)
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtGui import QFont
 import os
 from typing import Optional
 
@@ -20,12 +20,11 @@ class WelcomeDialog(QDialog):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle(translate("welcome_dialog.title"))
-        self.setWindowIcon(QIcon(resource_path("icon.ico")))  # 如果有图标
         self.setModal(True)
         self.setMinimumSize(800, 600)
         self.resize(900, 700)
         
-        # Initialize instance variables
+        # UI组件类型注解
         self.content_browser: QTextBrowser
         self.dont_show_again_checkbox: QCheckBox
         self.help_button: QPushButton
