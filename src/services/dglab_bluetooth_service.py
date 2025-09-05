@@ -13,7 +13,9 @@ from PySide6.QtCore import QObject, Signal
 
 from core import bluetooth
 from core.core_interface import CoreInterface
-from core.dglab_pulse import Pulse
+from core.osc_common import Pulse
+from core.recording import IPulseRecordHandler, BaseRecordHandler, IPulsePlaybackHandler, BasePlaybackHandler
+from core.recording.recording_models import ChannelSnapshot
 from models import Channel, ConnectionState, StrengthData, StrengthOperationType, PulseOperation
 from services.dglab_service_interface import IDGLabDeviceService
 
@@ -70,6 +72,12 @@ class DGLabBluetoothService(IDGLabDeviceService):
         self._freq_balances: Dict[Channel, int] = {Channel.A: 160, Channel.B: 160}
         self._strength_balances: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
         
+        # 录制处理器实例
+        self._record_handler: DGLabBluetoothService._BluetoothRecordHandler = self._BluetoothRecordHandler(self)
+        
+        # 回放处理器实例
+        self._playback_handler: DGLabBluetoothService._BluetoothPlaybackHandler = self._BluetoothPlaybackHandler(self)
+        
         # 设置回调
         self._setup_callbacks()
         
@@ -82,6 +90,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
         self._bluetooth_controller.set_connection_lost_callback(self._on_connection_lost)
         self._bluetooth_controller.set_strength_changed_callback(self._on_strength_changed)
         self._bluetooth_controller.set_battery_callback(self._on_battery_changed)
+        self._bluetooth_controller.set_data_sync_callback(self._on_data_sync)
 
     async def _on_connected(self) -> None:
         """处理连接状态变化"""
@@ -140,6 +149,11 @@ class DGLabBluetoothService(IDGLabDeviceService):
         
         # 通过信号发送电量更新
         self.signals.battery_level_updated.emit(battery_level)
+
+    def _on_data_sync(self) -> None:
+        """处理数据同步通知（用于录制）"""
+        if self._record_handler:
+            self._record_handler.on_data_sync()
 
     # ============ 连接管理 ============
 
@@ -530,3 +544,106 @@ class DGLabBluetoothService(IDGLabDeviceService):
     def _convert_pulse_operations(self, operations: List[PulseOperation]) -> List[bluetooth.PulseOperation]:
         """将PulseOperation转换为频率和强度数组"""
         return operations
+
+    # ============ 录制功能 ============
+
+    def get_record_handler(self) -> IPulseRecordHandler:
+        """创建脉冲录制处理器"""
+        return self._record_handler
+    
+    def get_playback_handler(self) -> IPulsePlaybackHandler:
+        """创建脉冲回放处理器"""
+        return self._playback_handler
+
+    class _BluetoothRecordHandler(BaseRecordHandler):
+        """蓝牙录制处理器"""
+
+        def __init__(self, bluetooth_service: 'DGLabBluetoothService') -> None:
+            super().__init__()
+            self._bluetooth_service = bluetooth_service
+
+        def _get_current_pulse_data(self, channel: Channel) -> Optional[PulseOperation]:
+            """获取指定通道当前的脉冲操作数据"""
+            try:
+                bluetooth_controller = self._bluetooth_service._bluetooth_controller
+                bt_channel = self._bluetooth_service._convert_channel(channel)
+
+                # 使用公共方法获取当前脉冲数据
+                return bluetooth_controller.get_current_pulse_data(bt_channel)
+
+            except Exception as e:
+                logger.error(f"获取蓝牙通道{channel}脉冲操作失败: {e}")
+                return None
+
+        def _get_current_strength(self, channel: Channel) -> int:
+            """获取指定通道当前的强度值"""
+            try:
+                # 方法1: 从蓝牙服务的缓存获取
+                current_strength = self._bluetooth_service._current_strengths.get(channel, 0)
+                if current_strength > 0:
+                    return current_strength
+
+                # 方法2: 从蓝牙控制器的设备状态获取
+                bluetooth_controller = self._bluetooth_service._bluetooth_controller
+                bt_channel = self._bluetooth_service._convert_channel(channel)
+                return bluetooth_controller.get_current_strength(bt_channel)
+
+            except Exception as e:
+                logger.error(f"获取蓝牙通道{channel}强度失败: {e}")
+                return 0
+
+    class _BluetoothPlaybackHandler(BasePlaybackHandler):
+        """蓝牙回放处理器"""
+        
+        def __init__(self, bluetooth_service: 'DGLabBluetoothService') -> None:
+            super().__init__()
+            self._bluetooth_service = bluetooth_service
+        
+        async def _apply_channel_data(self, channel: Channel, data: ChannelSnapshot) -> None:
+            """应用通道数据到蓝牙设备"""
+            try:
+                # 1. 设置强度
+                await self._bluetooth_service.adjust_strength(
+                    operation_type=StrengthOperationType.SET_TO,
+                    value=data.current_strength,
+                    channel=channel
+                )
+                
+                # 2. 设置波形数据
+                # 将单个PulseOperation转换为Pulse对象
+                if data.pulse_operation:
+                    # 创建临时波形（只包含一个操作）
+                    temp_pulse = Pulse(
+                        pulse_id=-1,  # 临时ID
+                        name="playback_temp", 
+                        data=[data.pulse_operation]
+                    )
+                    await self._bluetooth_service.set_pulse_data(channel, temp_pulse)
+                else:
+                    # 清空波形数据
+                    await self._bluetooth_service.set_pulse_data(channel, None)
+                    
+            except Exception as e:
+                logger.error(f"应用蓝牙通道{channel}数据失败: {e}")
+
+        async def _cleanup_device_state(self) -> None:
+            """清理设备状态"""
+            try:
+                # 重置所有通道强度为0
+                await self._bluetooth_service.adjust_strength(
+                    operation_type=StrengthOperationType.SET_TO,
+                    value=0,
+                    channel=Channel.A
+                )
+                await self._bluetooth_service.adjust_strength(
+                    operation_type=StrengthOperationType.SET_TO,
+                    value=0,
+                    channel=Channel.B
+                )
+                
+                # 清空波形数据
+                await self._bluetooth_service.set_pulse_data(Channel.A, None)
+                await self._bluetooth_service.set_pulse_data(Channel.B, None)
+                
+            except Exception as e:
+                logger.error(f"清理设备状态失败: {e}")

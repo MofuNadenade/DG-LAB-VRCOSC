@@ -12,13 +12,14 @@ DG-LAB V3蓝牙控制器
 
 import asyncio
 import logging
+import time
 from typing import Optional, Callable, Awaitable, Dict, List
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from .bluetooth_models import (
     DeviceInfo, Channel, DeviceState, BluetoothUUIDs, PulseOperation, StrengthParsingMethod,
-    WaveformFrequencyOperation, WaveformStrengthOperation 
+    WaveformFrequencyOperation, WaveformStrengthOperation, BluetoothChannelState
 )
 from .bluetooth_protocol import BluetoothProtocol
 
@@ -58,18 +59,20 @@ class BluetoothController:
         # 设备状态
         self._device_state: DeviceState = self._create_device_state()
         
-        # 波形数据管理 - 强类型标记
-        self._pulse_data_a: List[PulseOperation] = []
-        self._pulse_data_b: List[PulseOperation] = []
-        self._pulse_index_a: int = 0
-        self._pulse_index_b: int = 0
+        # 通道状态管理
+        self._channel_state: Dict[Channel, BluetoothChannelState] = {
+            Channel.A: BluetoothChannelState(),
+            Channel.B: BluetoothChannelState()
+        }
         
         # 定时任务
         self._data_send_task: Optional[asyncio.Task[None]] = None
         self._battery_polling_task: Optional[asyncio.Task[None]] = None
         self._is_running = False
         self._battery_polling_interval = 5.0
-        self._pulse_buffer = 1
+        self._pulse_buffer_count = 0
+        self._pulse_buffer_min = 10
+        self._pulse_buffer_max = 20
         
         # 连接状态事件信号
         self._connected_event = asyncio.Event()
@@ -82,6 +85,7 @@ class BluetoothController:
         self._on_connection_lost: Optional[Callable[[], Awaitable[None]]] = None
         self._on_strength_changed: Optional[Callable[[Dict[Channel, int]], Awaitable[None]]] = None
         self._on_battery_changed: Optional[Callable[[int], Awaitable[None]]] = None
+        self._on_data_sync: Optional[Callable[[], None]] = None
         
         logger.info("V3蓝牙控制器已初始化")
     
@@ -114,6 +118,10 @@ class BluetoothController:
     def set_battery_callback(self, callback: Callable[[int], Awaitable[None]]) -> None:
         """设置电量变化回调"""
         self._on_battery_changed = callback
+    
+    def set_data_sync_callback(self, callback: Callable[[], None]) -> None:
+        """设置数据同步回调"""
+        self._on_data_sync = callback
     
     @property
     def is_connected(self) -> bool:
@@ -460,12 +468,7 @@ class BluetoothController:
     # ============ 波形控制 ============
     
     async def set_pulse_data(self, channel: Channel, pulses: List[PulseOperation]) -> bool:
-        """设置通道波形数据
-        
-        Args:
-            channel: 目标通道
-            pulses: 波形操作数据
-        """
+        """设置通道波形数据"""
         try:
             if not self.is_connected:
                 logger.warning("设备未连接，无法设置波形数据")
@@ -475,28 +478,27 @@ class BluetoothController:
             clamped_pulses: List[PulseOperation] = []
             for pulse in pulses:
                 freq: WaveformFrequencyOperation = (
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][0])),
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][1])),
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][2])),
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][3]))
+                    self._protocol.clamp_pulse_frequency(pulse[0][0]),
+                    self._protocol.clamp_pulse_frequency(pulse[0][1]),
+                    self._protocol.clamp_pulse_frequency(pulse[0][2]),
+                    self._protocol.clamp_pulse_frequency(pulse[0][3])
                 )
                 strength: WaveformStrengthOperation = (
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][0])),
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][1])),
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][2])),
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][3]))
+                    self._protocol.clamp_pulse_strength(pulse[1][0]),
+                    self._protocol.clamp_pulse_strength(pulse[1][1]),
+                    self._protocol.clamp_pulse_strength(pulse[1][2]),
+                    self._protocol.clamp_pulse_strength(pulse[1][3])
                 )
                 clamped_pulse: PulseOperation = (freq, strength)
                 clamped_pulses.append(clamped_pulse)
             
-            # 存储波形数据到对应通道
+            # 使用ChannelState管理波形数据
+            self._channel_state[channel].set_pulse_data(clamped_pulses)
+            
+            # 同步到设备状态
             if channel == Channel.A:
-                self._pulse_data_a = clamped_pulses.copy()
-                self._pulse_index_a = 0
                 self._device_state['channel_a']['pulses'] = clamped_pulses.copy()
-            elif channel == Channel.B:
-                self._pulse_data_b = clamped_pulses.copy()
-                self._pulse_index_b = 0
+            else:
                 self._device_state['channel_b']['pulses'] = clamped_pulses.copy()
             
             logger.debug(f"设置{channel}通道波形数据，共{len(clamped_pulses)}个脉冲操作")
@@ -508,18 +510,27 @@ class BluetoothController:
     
     async def clear_pulse_data(self, channel: Channel) -> bool:
         """清除通道波形数据（设置为静止状态）"""
+        self._channel_state[channel].clear_pulse_data()
+        
+        # 同步到设备状态
         if channel == Channel.A:
-            self._pulse_data_a.clear()
-            self._pulse_index_a = 0
             self._device_state['channel_a']['pulses'].clear()
-        elif channel == Channel.B:
-            self._pulse_data_b.clear()
-            self._pulse_index_b = 0
+        else:
             self._device_state['channel_b']['pulses'].clear()
         
         logger.debug(f"清除{channel}通道波形数据")
         return True
     
+    # ============ 公共数据访问方法 ============
+    
+    def get_current_pulse_data(self, channel: Channel) -> Optional[PulseOperation]:
+        """获取指定通道当前播放的脉冲操作数据（用于录制）"""
+        return self._channel_state[channel].get_current_playing_pulse()
+    
+    def get_current_strength(self, channel: Channel) -> int:
+        """获取指定通道当前的强度值（用于录制）"""
+        return self._get_current_strength(channel)
+
     # ============ 内部实现 ============
 
     def _create_device_state(self) -> DeviceState:
@@ -727,57 +738,42 @@ class BluetoothController:
         logger.debug("控制器服务已停止")
     
     async def _data_send_loop(self) -> None:
-        """数据发送循环（每100ms发送一次B0指令）"""
-        while self._is_running:
-            try:
-                # 等待连接状态变化信号
+        """数据发送循环"""
+        try:
+            next_time = time.time()
+            while self._is_running:
                 if not self.is_connected:
-                    # 清除事件状态，等待连接成功
                     await self._connected_event.wait()
+                    self._pulse_buffer_count = 0
+                    next_time = time.time()
                     continue
 
-                # 发送脉冲缓冲区
-                for _ in range(self._pulse_buffer):
-                    await self._process_and_send_b0_command()
+                if self._pulse_buffer_count < self._pulse_buffer_min:
+                    for _ in range(self._pulse_buffer_max - self._pulse_buffer_count):
+                        await self._process_and_send_b0_command()
+                        self._pulse_buffer_count += 1
 
-                # 发送B0指令
-                await self._process_and_send_b0_command()
+                if self._pulse_buffer_count > 0:
+                    self._pulse_buffer_count -= 1
 
-                # 等待100ms
-                await asyncio.sleep(0.1)
+                # 推进逻辑播放位置（模拟设备播放进度）
+                for channel in Channel:
+                    self._channel_state[channel].advance_logical_playback()
+                
+                self._notify_data_sync()
 
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"数据发送循环错误: {e}")
-                await asyncio.sleep(0.1)
+                next_time += (0.1 - 0.01)  # 时间补偿，减少累积误差
+                sleep_time = max(0, next_time - time.time())
+                await asyncio.sleep(sleep_time)
+
+        except asyncio.CancelledError:
+            logger.debug("波形发送任务被取消")
+        except Exception as e:
+            logger.error(f"数据发送循环错误: {e}")
 
     def _next_pulse_data(self, channel: Channel) -> PulseOperation:
-        """获取当前波形数据（循环播放）
-
-        Args:
-            channel: 目标通道
-
-        Returns:
-            当前波形的频率和强度操作数据
-        """
-        if channel == Channel.A:
-            if not self._pulse_data_a:
-                # 返回静止状态的默认波形数据
-                return ((10, 10, 10, 10), (0, 0, 0, 0))
-
-            current_pulse = self._pulse_data_a[self._pulse_index_a]
-            self._pulse_index_a = (self._pulse_index_a + 1) % len(self._pulse_data_a)
-            return current_pulse
-
-        elif channel == Channel.B:
-            if not self._pulse_data_b:
-                # 返回静止状态的默认波形数据
-                return ((10, 10, 10, 10), (0, 0, 0, 0))
-
-            current_pulse = self._pulse_data_b[self._pulse_index_b]
-            self._pulse_index_b = (self._pulse_index_b + 1) % len(self._pulse_data_b)
-            return current_pulse
+        """获取当前波形数据（循环播放）"""
+        return self._channel_state[channel].advance_buffer_for_send()
 
     async def _process_and_send_b0_command(self) -> None:
         """处理并发送B0指令"""
@@ -813,6 +809,11 @@ class BluetoothController:
             
         except Exception as e:
             logger.error(f"处理B0指令失败: {e}")
+    
+    def _notify_data_sync(self) -> None:
+        """通知数据同步"""
+        if self._on_data_sync:
+            self._on_data_sync()
     
     async def _battery_polling_loop(self) -> None:
         """电量轮询循环"""

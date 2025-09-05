@@ -9,6 +9,8 @@ from abc import abstractmethod
 from typing import Optional
 
 from core.dglab_pulse import Pulse
+from core.recording import IPulseRecordHandler
+from core.recording.playback_handler import IPulsePlaybackHandler
 from models import Channel, StrengthData, StrengthOperationType
 from services.service_interface import IService
 
@@ -104,4 +106,34 @@ class IDGLabDeviceService(IService):
     @abstractmethod
     def update_strength_data(self, strength_data: StrengthData) -> None:
         """更新强度数据（通常由连接层调用）"""
+        ...
+
+    # ============ 录制功能 ============
+
+    @abstractmethod
+    def get_record_handler(self) -> IPulseRecordHandler:
+        """获取脉冲录制处理器
+        
+        获取一个录制处理器实例，用于录制设备的原始波形数据。
+        
+        Returns:
+            IPulseRecordHandler: 录制处理器实例
+            
+        Raises:
+            RuntimeError: 如果设备未连接或不支持录制功能
+        """
+        ...
+    
+    @abstractmethod
+    def get_playback_handler(self) -> IPulsePlaybackHandler:
+        """获取脉冲回放处理器
+        
+        获取一个回放处理器实例，用于回放录制的波形数据。
+        
+        Returns:
+            IPulsePlaybackHandler: 回放处理器实例
+            
+        Raises:
+            RuntimeError: 如果设备未连接或不支持回放功能
+        """
         ...
