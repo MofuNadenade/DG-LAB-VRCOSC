@@ -19,9 +19,11 @@ a = Analysis(
         # 添加图标文件
         (os.path.join(project_root, 'src', 'icon', 'fish-cake.ico'), 'icon'),
         # 添加贡献者信息文件
-        (os.path.join(project_root, 'src', 'gui', 'about', 'contributors.txt'), 'gui/about'),
+        (os.path.join(project_root, 'src', 'resources', 'contributors.txt'), 'resources'),
         # 添加安装助手脚本
         (os.path.join(project_root, 'src', 'resources', 'install_helper.bat'), 'resources'),
+        # 添加功能介绍文档
+        (os.path.join(project_root, 'src', 'resources', 'feature_introduction.md'), 'resources'),
     ],
     hiddenimports=[],
     hookspath=[],

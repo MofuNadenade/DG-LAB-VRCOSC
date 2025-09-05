@@ -10,6 +10,7 @@ from core.registries import Registries
 from gui.main_window import MainWindow
 from gui.ui_interface import UIInterface
 from gui.address.osc_debug_display import OSCDebugDisplayManager
+from gui.welcome_dialog import WelcomeDialog
 from i18n import set_language, translate
 from models import OSCBool, OSCFloat, OSCInt, SettingsDict, ConnectionState, UIFeature, Channel, OSCBindingDict, StrengthData, OSCValue
 
@@ -50,6 +51,9 @@ class AppController(UIInterface):
     def show(self) -> None:
         self.main_window = MainWindow(self)
         self.main_window.show()
+        
+        # 检查是否为首次启动，如果是则显示欢迎对话框
+        self._check_and_show_welcome_dialog()
 
     def _load_all_settings(self) -> None:
         """从配置加载所有数据"""
@@ -511,3 +515,25 @@ class AppController(UIInterface):
     def osc_debug_get_fadeout_duration(self) -> float:
         """获取OSC调试淡出时长"""
         return self.debug_display_manager.fadeout_duration
+
+    # ============ 首次启动欢迎对话框 ============
+
+    def _check_and_show_welcome_dialog(self) -> None:
+        """检查并显示首次启动欢迎对话框"""
+        # 检查设置中是否标记为不再显示
+        show_welcome = self.settings.get('app', {}).get('show_welcome_dialog', True)
+        
+        if show_welcome:
+            # 显示欢迎对话框
+            welcome_dialog = WelcomeDialog(self.main_window)
+            result = welcome_dialog.exec()
+            
+            # 如果用户选择了"不再显示"，保存到设置
+            if welcome_dialog.is_dont_show_again_checked():
+                if 'app' not in self.settings:
+                    self.settings['app'] = {}
+                self.settings['app']['show_welcome_dialog'] = False
+                self.save_settings()
+                logger.info("用户选择不再显示欢迎对话框")
+            
+            logger.info(f"欢迎对话框已显示，用户操作: {'确认' if result else '取消'}")

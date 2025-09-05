@@ -442,11 +442,19 @@ class AutoUpdaterSettingsDict(TypedDict, total=False):
     auto_install: bool
 
 
+class AppSettingsDict(TypedDict, total=False):
+    """应用程序特定设置"""
+    show_welcome_dialog: bool
+
+
 class SettingsDict(TypedDict, total=False):
     """应用程序设置配置类型定义"""
     # 全局设置
     osc_port: int
     language: str
+    
+    # 应用程序设置
+    app: AppSettingsDict
     
     # 连接设置
     connection: ConnectionSettingsDict

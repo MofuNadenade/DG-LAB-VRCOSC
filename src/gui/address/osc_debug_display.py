@@ -35,6 +35,16 @@ class OSCDebugOverlay(QWidget):
     
     def __init__(self) -> None:
         super().__init__()
+
+        self.label_pool: List[QLabel] = []
+        self.address_max_widths: Dict[str, int] = {}
+        self._item_update_times: Dict[str, float] = {}
+        self._current_items_with_opacity: List[Tuple[str, float]] = []
+        
+        # UI组件类型注解
+        self.content_layout: QVBoxLayout
+        self.animation_timer: QTimer
+        
         self._setup_window()
         self._setup_ui()
         
@@ -88,17 +98,10 @@ class OSCDebugOverlay(QWidget):
         self.content_layout.setSpacing(4)
         self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
-        self.label_pool: List[QLabel] = []  # 标签池，避免频繁创建销毁
-        self.address_max_widths: Dict[str, int] = {}  # 记录每个OSC地址的最大宽度，防止缩小
-        self._item_update_times: Dict[str, float] = {}  # 记录每个OSC地址的最后更新时间
-        
         # 创建高频更新定时器，用于渐变动画
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._update_animation)
         self.animation_timer.setInterval(50)  # 50ms更新一次，实现流畅渐变
-        
-        # 保存当前显示状态，供动画更新使用
-        self._current_items_with_opacity: List[Tuple[str, float]] = []
         
     def update_debug_items(self, items_with_opacity: List[Tuple[str, float]], update_times: Optional[Dict[str, float]] = None) -> None:
         """更新调试信息显示

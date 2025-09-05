@@ -103,7 +103,7 @@ class AboutTab(QWidget):
         
         # 从文件中读取贡献者信息
         try:
-            contributors_file = resource_path("gui/about/contributors.txt")
+            contributors_file = resource_path("resources/contributors.txt")
             with open(contributors_file, 'r', encoding='utf-8') as f:
                 contributors_content = f.read()
             self.contributors_text.setText(contributors_content)
