@@ -1,11 +1,14 @@
 # **DG-LAB-VRCOSC**
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/MofuNadenade/DG-LAB-VRCOSC)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/releases)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/MofuNadenade/DG-LAB-VRCOSC/build-python-app.yml)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/actions)
 [![GitHub downloads](https://img.shields.io/github/downloads/MofuNadenade/DG-LAB-VRCOSC/total)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/releases)
-[![GitHub stars](https://img.shields.io/github/stars/MofuNadenade/DG-LAB-VRCOSC)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/stargazers)
-[![GitHub license](https://img.shields.io/github/license/MofuNadenade/DG-LAB-VRCOSC)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/blob/master/LICENSE)
+[![VRChat OSC](https://img.shields.io/badge/VRChat-OSC-purple)](https://docs.vrchat.com/docs/osc-overview)
 [![Python](https://img.shields.io/badge/Python-3.13+-blue)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)](https://github.com/MofuNadenade/DG-LAB-VRCOSC)
+[![i18n](https://img.shields.io/badge/i18n-Chinese%20|%20English%20|%20Japanese-brightgreen)](https://github.com/MofuNadenade/DG-LAB-VRCOSC)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/MofuNadenade/DG-LAB-VRCOSC)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/stargazers)
 
 > 与 **VRChat** 游戏联动的郊狼 (DG-LAB) **3.0** 设备控制程序
 
