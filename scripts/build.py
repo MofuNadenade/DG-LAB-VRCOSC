@@ -156,10 +156,7 @@ def clean_build_artifacts(project_root: Path) -> None:
     
     cleanup_paths = [
         'build',
-        '__pycache__',
-        '*.pyc',
-        '*.pyo',
-        '*.pyd'
+        "dist"
     ]
     
     for pattern in cleanup_paths:
