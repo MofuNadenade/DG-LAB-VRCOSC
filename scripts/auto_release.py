@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 自动发布脚本
-从git获取上一个版本标签，增加版本号，生成版本文件，创建发布提交和标签
+从git获取上一个版本标签，增加版本号，生成版本文件，创建发布提交和标签，并创建GitHub Release
 """
 
 import argparse
@@ -138,12 +138,71 @@ def push_to_remote(push_tags: bool = True) -> None:
         run_command(['git', 'push', '--tags'])
 
 
+def build_application() -> bool:
+    """构建应用程序"""
+    print("构建应用程序 (使用 --clean)...")
+    build_script = get_project_root() / 'scripts' / 'build.py'
+    try:
+        result = subprocess.run(
+            [sys.executable, str(build_script), '--clean'],
+            cwd=get_project_root(),
+            text=True
+        )
+        if result.returncode == 0:
+            print("✅ 应用程序构建成功")
+            return True
+        else:
+            print(f"❌ 应用程序构建失败，退出码: {result.returncode}")
+            return False
+    except Exception as e:
+        print(f"❌ 应用程序构建失败: {e}")
+        return False
+
+
+def create_github_release(version: str, previous_version: Optional[str] = None) -> bool:
+    """使用GitHub CLI创建Release"""
+    print(f"创建GitHub Release: {version}")
+    
+    # 构建变更日志URL
+    if previous_version:
+        changelog_url = f"**Full Changelog**: https://github.com/MofuNadenade/DG-LAB-VRCOSC/compare/{previous_version}...{version}"
+    else:
+        changelog_url = f"**Full Changelog**: https://github.com/MofuNadenade/DG-LAB-VRCOSC/commits/{version}"
+    
+    # 检查构建产物是否存在
+    project_root = get_project_root()
+    exe_path = project_root / 'dist' / 'DG-LAB-VRCOSC.exe'
+    
+    if not exe_path.exists():
+        print(f"❌ 构建产物不存在: {exe_path}")
+        return False
+    
+    try:
+        # 创建Release
+        cmd = [
+            'gh', 'release', 'create', version,
+            '--title', version,
+            '--notes', changelog_url,
+            str(exe_path)
+        ]
+        
+        run_command(cmd, capture_output=False)
+        print(f"✅ GitHub Release {version} 创建成功")
+        return True
+        
+    except Exception as e:
+        print(f"❌ GitHub Release创建失败: {e}")
+        return False
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description='自动发布脚本')
     parser.add_argument('bump_type', choices=['major', 'minor', 'patch'], 
                        help='版本增量类型 (major/minor/patch)')
     parser.add_argument('-m', '--message', help='发布提交信息')
     parser.add_argument('--no-push', action='store_true', help='不推送到远程仓库')
+    parser.add_argument('--no-build', action='store_true', help='跳过应用程序构建')
+    parser.add_argument('--no-release', action='store_true', help='不创建GitHub Release')
     parser.add_argument('--dry-run', action='store_true', help='模拟运行，不执行实际操作')
     
     args = parser.parse_args()
@@ -179,6 +238,12 @@ def main() -> None:
         # 生成版本文件
         generate_version_file()
         
+        # 构建应用程序
+        if not args.no_build:
+            if not build_application():
+                print("❌ 构建失败，发布中止")
+                sys.exit(1)
+        
         # 创建发布提交
         create_release_commit(new_version, args.message)
         
@@ -189,12 +254,20 @@ def main() -> None:
         if not args.no_push:
             push_to_remote()
         
+        # 创建GitHub Release
+        if not args.no_release:
+            if not create_github_release(new_version, current_tag):
+                print("⚠️ GitHub Release创建失败，但版本发布已完成")
+        
         print(f"✅ 发布 {new_version} 完成!")
         
         if args.no_push:
             print("注意: 使用了 --no-push 选项，请手动推送:")
             print("  git push")
             print("  git push --tags")
+        
+        if args.no_release:
+            print("注意: 使用了 --no-release 选项，请手动创建GitHub Release")
         
     except Exception as e:
         print(f"❌ 发布失败: {e}")
