@@ -1,6 +1,11 @@
 # **DG-LAB-VRCOSC**
 
----
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/MofuNadenade/DG-LAB-VRCOSC)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/releases)
+[![GitHub downloads](https://img.shields.io/github/downloads/MofuNadenade/DG-LAB-VRCOSC/total)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/releases)
+[![GitHub stars](https://img.shields.io/github/stars/MofuNadenade/DG-LAB-VRCOSC)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/stargazers)
+[![GitHub license](https://img.shields.io/github/license/MofuNadenade/DG-LAB-VRCOSC)](https://github.com/MofuNadenade/DG-LAB-VRCOSC/blob/master/LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.13+-blue)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)](https://github.com/MofuNadenade/DG-LAB-VRCOSC)
 
 > 与 **VRChat** 游戏联动的郊狼 (DG-LAB) **3.0** 设备控制程序
 
@@ -9,8 +14,6 @@
 ![](https://count.getloli.com/get/@MofuNadenade-DG-LAB-VRCOSC?theme=rule34)
 
 通过 VRChat 游戏内的 avatars 互动和其他事件来控制 DG-LAB 设备的输出，实现沉浸式的触觉反馈体验。
-
----
 
 ## ✨ 主要功能
 
