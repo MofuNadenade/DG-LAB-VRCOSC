@@ -36,6 +36,27 @@
 
 > **注意**: 需要在游玩 ToN 时运行 ToNSaveManager 存档软件，并打开设置中的 WebSocket API 服务器
 
+## 🖥️ 界面预览
+
+### 应用程序界面
+![DG-LAB-VRCOSC-APP-1.png](docs/assets/DG-LAB-VRCOSC-APP-1.png)
+
+![DG-LAB-VRCOSC-APP-2.png](docs/assets/DG-LAB-VRCOSC-APP-2.png)
+
+![DG-LAB-VRCOSC-APP-3.png](docs/assets/DG-LAB-VRCOSC-APP-3.png)
+
+![DG-LAB-VRCOSC-APP-4.png](docs/assets/DG-LAB-VRCOSC-APP-4.png)
+
+![DG-LAB-VRCOSC-APP-5.png](docs/assets/DG-LAB-VRCOSC-APP-5.png)
+
+![DG-LAB-VRCOSC-APP-6.png](docs/assets/DG-LAB-VRCOSC-APP-6.png)
+
+### SoundPad 控制面板
+![DG-LAB-VRCOSC-SoundPad-CN.png](docs%2Fassets%2FDG-LAB-VRCOSC-SoundPad-CN.png)
+
+### VRChat 游戏内轮盘菜单
+![DG-LAB-VRCOSC-VRChatMenu-CN.png](docs%2Fassets%2FDG-LAB-VRCOSC-VRChatMenu-CN.png)
+
 ## 🆕 新增功能特性
 
 ### 📱 蓝牙直连支持
@@ -114,14 +135,6 @@
 > 📝 **模型修改**: 你需要修改你使用的模型，才能让此程序与游戏中的 avatar 联动（模型修改文档编写中 WIP）
 > 
 > 🎮 **ToN 支持**: ToN 游戏支持不需要修改模型，只需按上面的说明启用 ToNSaveManager 的 WebSocket API 接口即可
-
-## 🖥️ 界面预览
-
-### SoundPad 控制面板
-![DG-LAB-VRCOSC-SoundPad-CN.png](docs%2Fassets%2FDG-LAB-VRCOSC-SoundPad-CN.png)
-
-### VRChat 游戏内轮盘菜单
-![DG-LAB-VRCOSC-VRChatMenu-CN.png](docs%2Fassets%2FDG-LAB-VRCOSC-VRChatMenu-CN.png)
 
 ## ⚠️ 注意事项
 
