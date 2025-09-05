@@ -2,7 +2,7 @@ import logging
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QGroupBox, QLabel, QHeaderView
+    QPushButton, QGroupBox, QLabel, QHeaderView, QCheckBox
 )
 
 from core import OSCOptionsProvider
@@ -28,6 +28,7 @@ class OSCAddressInfoTab(QWidget):
         self.address_info_status_label: QLabel
         self.address_info_group: QGroupBox
         self.description_label: QLabel
+        self.debug_display_checkbox: QCheckBox
 
         self.init_ui()
 
@@ -46,6 +47,9 @@ class OSCAddressInfoTab(QWidget):
 
         # 描述标签
         self.create_description_label(layout)
+
+        # 调试选项组
+        self.create_debug_options_group(layout)
 
         # 操作按钮组
         self.create_action_buttons_group(layout)
@@ -118,6 +122,30 @@ class OSCAddressInfoTab(QWidget):
         layout.addWidget(self.address_info_status_label)
 
         parent_layout.addWidget(group)
+
+    def create_debug_options_group(self, parent_layout: QVBoxLayout) -> None:
+        """创建调试选项组"""
+        debug_group = QGroupBox(translate("osc_address_tab.debug_options"))
+        debug_layout = QVBoxLayout(debug_group)
+        
+        # OSC调试显示开关
+        self.debug_display_checkbox = QCheckBox(translate("osc_address_tab.enable_debug_display"))
+        self.debug_display_checkbox.setToolTip(translate("osc_address_tab.enable_debug_display_tooltip"))
+        self.debug_display_checkbox.toggled.connect(self.on_debug_display_toggled)
+        self.debug_display_checkbox.setStyleSheet("""
+            QCheckBox {
+                font-weight: bold;
+                color: #333333;
+                padding: 4px;
+            }
+            QCheckBox:hover {
+                background-color: #f0f0f0;
+                border-radius: 4px;
+            }
+        """)
+        debug_layout.addWidget(self.debug_display_checkbox)
+        
+        parent_layout.addWidget(debug_group)
 
     def create_action_buttons_group(self, parent_layout: QVBoxLayout) -> None:
         """创建操作按钮组"""
@@ -210,5 +238,23 @@ class OSCAddressInfoTab(QWidget):
         # 更新工具提示
         self.refresh_address_info_btn.setToolTip(translate("osc_address_tab.refresh_address_info_tooltip"))
 
+        # 更新调试选项文本
+        debug_group_widget = self.debug_display_checkbox.parent()
+        if debug_group_widget and isinstance(debug_group_widget, QGroupBox):
+            debug_group_widget.setTitle(translate("osc_address_tab.debug_options"))
+        self.debug_display_checkbox.setText(translate("osc_address_tab.enable_debug_display"))
+        self.debug_display_checkbox.setToolTip(translate("osc_address_tab.enable_debug_display_tooltip"))
+
         # 刷新表格内容
         self.refresh_address_info_table()
+        
+    def on_debug_display_toggled(self, checked: bool) -> None:
+        """OSC调试显示开关切换事件"""
+        if self.ui_interface.service_controller:
+            osc_service = self.ui_interface.service_controller.osc_service
+            osc_service.set_debug_display_enabled(checked)
+            
+            if checked:
+                logger.info("OSC调试显示已启用")
+            else:
+                logger.info("OSC调试显示已禁用")

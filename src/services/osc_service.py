@@ -5,6 +5,7 @@ OSC服务 - 完全封装OSC功能
 
 import asyncio
 import logging
+import time
 from typing import Dict, List, Optional, Set, TypedDict
 
 from pythonosc import dispatcher, osc_server, udp_client
@@ -15,6 +16,8 @@ from models import ConnectionState, OSCPrimitive, OSCValue, OSCValueType, get_os
 from i18n import translate
 from .service_interface import IService
 
+# 移除对UI组件的直接导入，通过CoreInterface访问
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,12 +25,14 @@ class OSCAddressInfo(TypedDict):
     address: str
     types: Set[OSCValueType]
     last_value: List[OSCValue]
+    last_update_time: float
 
 
 class OSCBindingInfo(TypedDict):
     binding: OSCBinding
     last_address: Optional[OSCAddress]
     last_value: List[OSCValue]
+    last_update_time: float
 
 
 class OSCService(IService):
@@ -64,6 +69,11 @@ class OSCService(IService):
         
         self._address_infos: Dict[str, OSCAddressInfo] = {}
         self._binding_infos: Dict[OSCBinding, OSCBindingInfo] = {}
+        
+        # OSC调试显示配置
+        self._debug_display_enabled: bool = False
+        self._debug_display_duration: float = 5.0  # 显示5秒
+        self._debug_fadeout_duration: float = 1.0  # 淡出1秒
 
     async def start_service(self) -> bool:
         """
@@ -157,10 +167,18 @@ class OSCService(IService):
             value_type: OSCValueType = arg.value_type()
             address_info["types"].add(value_type)
         address_info["last_value"] = list(args)
+        address_info["last_update_time"] = time.time()
 
         # 注册到地址代码注册表
         if not self._core_interface.registries.code_registry.has_code(address):
             self._core_interface.registries.code_registry.register_code(address)
+
+        # OSC调试显示
+        if self._debug_display_enabled:
+            self._core_interface.osc_debug_set_display_duration(self._debug_display_duration)
+            self._core_interface.osc_debug_set_fadeout_duration(self._debug_fadeout_duration)
+            self._core_interface.osc_debug_set_enabled(True)
+            self._core_interface.osc_debug_add_or_update_item(address, list(args))
 
         # 通过UI接口的绑定注册表处理消息
         address_obj = self._core_interface.registries.address_registry.get_address_by_code(address)
@@ -175,6 +193,7 @@ class OSCService(IService):
             binding_info = self.get_binding_info(binding)
             binding_info["last_address"] = address
             binding_info["last_value"] = list(args)
+            binding_info["last_update_time"] = time.time()
 
             success = await binding.action.handle(*args)
             if not success:
@@ -193,7 +212,8 @@ class OSCService(IService):
             address_info = {
                 "address": address,
                 "types": set(),
-                "last_value": list()
+                "last_value": list(),
+                "last_update_time": time.time()
             }
             self._address_infos[address] = address_info
         return address_info
@@ -209,7 +229,8 @@ class OSCService(IService):
             binding_info = {
                 "binding": binding,
                 "last_address": None,
-                "last_value": list()
+                "last_value": list(),
+                "last_update_time": time.time()
             }
             self._binding_infos[binding] = binding_info
         return binding_info
@@ -263,10 +284,45 @@ class OSCService(IService):
         except Exception as e:
             logger.error(f"发送OSC值失败: {e}")
 
+    # ============ OSC调试显示配置 ============
+    
+    def set_debug_display_enabled(self, enabled: bool) -> None:
+        """设置OSC调试显示开关"""
+        self._debug_display_enabled = enabled
+        
+        # 如果禁用调试显示，清理调试管理器
+        if not enabled:
+            self._core_interface.osc_debug_set_enabled(False)
+        
+    def is_debug_display_enabled(self) -> bool:
+        """获取OSC调试显示开关状态"""
+        return self._debug_display_enabled
+        
+    def set_debug_display_duration(self, duration: float) -> None:
+        """设置OSC调试显示时间（秒）"""
+        self._debug_display_duration = max(0.1, duration)
+        
+    def get_debug_display_duration(self) -> float:
+        """获取OSC调试显示时间（秒）"""
+        return self._debug_display_duration
+        
+    def set_debug_fadeout_duration(self, duration: float) -> None:
+        """设置OSC调试显示淡出时间（秒）"""
+        self._debug_fadeout_duration = max(0.1, duration)
+        
+    def get_debug_fadeout_duration(self) -> float:
+        """获取OSC调试显示淡出时间（秒）"""
+        return self._debug_fadeout_duration
+        
     # ============ 生命周期管理 ============
 
     async def cleanup(self) -> None:
         """清理资源"""
         await self.stop_service()
         self._osc_client = None
+        
+        # 清理调试显示
+        if self._debug_display_enabled:
+            self._core_interface.osc_debug_set_enabled(False)
+                
         logger.info("OSC服务已清理")
