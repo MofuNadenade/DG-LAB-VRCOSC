@@ -10,6 +10,7 @@ from gui.connection.connection_tab import ConnectionTab
 from gui.osc.osc_tab import OSCTab
 from gui.pulse.pulse_tab import PulseTab
 from gui.ton.ton_tab import TonTab
+from gui.deepseek.deepseek_tab import DeepseekTab
 from gui.ui_interface import UIInterface
 from i18n import translate, language_signals
 from util import resource_path
@@ -30,6 +31,7 @@ class MainWindow(QMainWindow):
         self.pulse_tab: PulseTab
         self.debug_tab: DebugTab
         self.about_tab: AboutTab
+        self.deepseek_tab: DeepseekTab
 
         self.ui_interface = ui_interface
 
@@ -79,6 +81,10 @@ class MainWindow(QMainWindow):
         self.debug_tab = DebugTab(self.ui_interface)
         self.tab_widget.addTab(self.debug_tab, translate("main.tabs.debug"))
 
+        # Deepseek选项卡
+        self.deepseek_tab = DeepseekTab(self.ui_interface)
+        self.tab_widget.addTab(self.deepseek_tab, translate("main.tabs.deepseek"))
+
         # 关于选项卡
         self.about_tab = AboutTab(self.ui_interface)
         self.tab_widget.addTab(self.about_tab, translate("main.tabs.about"))
@@ -96,7 +102,8 @@ class MainWindow(QMainWindow):
         self.tab_widget.setTabText(3, translate("main.tabs.osc"))
         self.tab_widget.setTabText(4, translate("main.tabs.pulse"))
         self.tab_widget.setTabText(5, translate("main.tabs.debug"))
-        self.tab_widget.setTabText(6, translate("main.tabs.about"))
+        self.tab_widget.setTabText(6, translate("main.tabs.deepseek"))
+        self.tab_widget.setTabText(7, translate("main.tabs.about"))
 
         # 让各个选项卡更新自己的文本
         self.connection_tab.update_ui_texts()
@@ -105,4 +112,5 @@ class MainWindow(QMainWindow):
         self.osc_tab.update_ui_texts()
         self.pulse_tab.update_ui_texts()
         self.debug_tab.update_ui_texts()
+        self.deepseek_tab.update_ui_texts()
         self.about_tab.update_ui_texts()

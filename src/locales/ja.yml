@@ -15,6 +15,7 @@ main:
     about: "について"
     osc: "OSCアドレス"
     pulse: "パルス編集"
+    deepseek: "Deepseek"
   settings:
     language_label: "言語:"
   action:
@@ -514,3 +515,9 @@ welcome_dialog:
   step4: "VRChat を起動して没入感のある体験を楽しむ"
   tip: "ヒント"
   tip_content: "OSC デバッグ表示を有効にすると、パラメータの変化をリアルタイムで監視し、バインディングをより適切に設定できます"
+
+deepseek_tab:
+  url_label: "URL:"
+  go: "移動"
+  home: "ホーム"
+  refresh: "再読み込み"
