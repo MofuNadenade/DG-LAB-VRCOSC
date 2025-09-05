@@ -154,20 +154,23 @@ def clean_build_artifacts(project_root: Path) -> None:
     """Clean up build artifacts"""
     print("Cleaning build artifacts...")
     
+    # Only clean specific directories in project root
     cleanup_paths = [
-        'build',
-        "dist"
+        project_root / 'build',
+        project_root / 'dist'
     ]
     
-    for pattern in cleanup_paths:
-        for path in project_root.rglob(pattern):
+    for path in cleanup_paths:
+        if path.exists():
             try:
                 if path.is_dir():
                     shutil.rmtree(path)
+                    print(f"Removed directory: {path}")
                 else:
                     path.unlink()
-            except Exception:
-                pass  # Ignore errors during cleanup
+                    print(f"Removed file: {path}")
+            except Exception as e:
+                print(f"Warning: Could not remove {path}: {e}")
 
 
 def main() -> int:
