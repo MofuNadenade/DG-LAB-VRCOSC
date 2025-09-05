@@ -1,10 +1,16 @@
 # **DG-LAB-VRCOSC**
 
+---
+
 > 与 **VRChat** 游戏联动的郊狼 (DG-LAB) **3.0** 设备控制程序
 
 > ⚠️ **重要提示**: 本README文件使用AI工具生成，并经过人工检查。由于项目功能复杂，可能存在遗漏或不准确的信息。如有疑问，请参考项目源码或提交Issue反馈。
 
+![](https://count.getloli.com/get/@MofuNadenade-DG-LAB-VRCOSC?theme=rule34)
+
 通过 VRChat 游戏内的 avatars 互动和其他事件来控制 DG-LAB 设备的输出，实现沉浸式的触觉反馈体验。
+
+---
 
 ## ✨ 主要功能
 
