@@ -214,6 +214,9 @@ class AppController(UIInterface):
             # 绑定控制器设置
             self.main_window.settings_tab.bind_settings()
 
+            # 设置录制Tab的控制器
+            self.main_window.recording_tab.set_service_controller(service_controller)
+
             # 注册基础OSC动作（通道控制、面板控制、强度控制、ChatBox控制等）
             self._register_basic_actions()
 

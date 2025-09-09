@@ -6,10 +6,13 @@
 """
 
 from abc import abstractmethod
-from typing import Optional
+from typing import Optional, List
 
 from core.dglab_pulse import Pulse
-from models import Channel, StrengthData, StrengthOperationType
+from core.recording import IPulseRecordHandler
+from core.recording.playback_handler import IPulsePlaybackHandler
+from core.recording.recording_models import RecordingSnapshot
+from models import Channel, StrengthData, StrengthOperationType, PlaybackMode
 from services.service_interface import IService
 
 
@@ -73,17 +76,17 @@ class IDGLabDeviceService(IService):
         ...
 
     @abstractmethod
-    async def reset_strength(self, value: bool, channel: Channel) -> None:
+    async def reset_strength(self, channel: Channel) -> None:
         """重置通道强度为0（原始设备操作）"""
         ...
 
     @abstractmethod
-    async def increase_strength(self, value: bool, channel: Channel) -> None:
+    async def increase_strength(self, channel: Channel) -> None:
         """增加通道强度（原始设备操作）"""
         ...
 
     @abstractmethod
-    async def decrease_strength(self, value: bool, channel: Channel) -> None:
+    async def decrease_strength(self, channel: Channel) -> None:
         """减少通道强度（原始设备操作）"""
         ...
 
@@ -92,6 +95,51 @@ class IDGLabDeviceService(IService):
     @abstractmethod
     async def set_pulse_data(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """设置指定通道的波形数据"""
+        ...
+
+    @abstractmethod
+    async def set_snapshots(self, snapshots: Optional[List[RecordingSnapshot]]) -> None:
+        """设置录制快照列表"""
+        ...
+
+    @abstractmethod
+    async def pause_frames(self) -> None:
+        """暂停波形数据"""
+        ...
+
+    @abstractmethod
+    async def resume_frames(self) -> None:
+        """继续波形数据"""
+        ...
+
+    @abstractmethod
+    def get_frames_position(self) -> int:
+        """获取播放位置"""
+        ...
+
+    @abstractmethod
+    async def seek_frames_to_position(self, position: int) -> None:
+        """跳转到指定位置"""
+        ...
+
+    # ============ 播放模式控制 ============
+
+    @abstractmethod
+    def set_playback_mode(self, mode: PlaybackMode) -> None:
+        """设置播放模式（服务层接口）
+        
+        Args:
+            mode: 播放模式（ONCE或LOOP）
+        """
+        ...
+
+    @abstractmethod
+    def get_playback_mode(self) -> PlaybackMode:
+        """获取当前播放模式（服务层接口）
+        
+        Returns:
+            PlaybackMode: 当前播放模式
+        """
         ...
 
     # ============ 数据访问 ============
@@ -104,4 +152,34 @@ class IDGLabDeviceService(IService):
     @abstractmethod
     def update_strength_data(self, strength_data: StrengthData) -> None:
         """更新强度数据（通常由连接层调用）"""
+        ...
+
+    # ============ 录制功能 ============
+
+    @abstractmethod
+    def get_record_handler(self) -> IPulseRecordHandler:
+        """获取脉冲录制处理器
+        
+        获取一个录制处理器实例，用于录制设备的原始波形数据。
+        
+        Returns:
+            IPulseRecordHandler: 录制处理器实例
+            
+        Raises:
+            RuntimeError: 如果设备未连接或不支持录制功能
+        """
+        ...
+    
+    @abstractmethod
+    def get_playback_handler(self) -> IPulsePlaybackHandler:
+        """获取脉冲回放处理器
+        
+        获取一个回放处理器实例，用于回放录制的波形数据。
+        
+        Returns:
+            IPulsePlaybackHandler: 回放处理器实例
+            
+        Raises:
+            RuntimeError: 如果设备未连接或不支持回放功能
+        """
         ...

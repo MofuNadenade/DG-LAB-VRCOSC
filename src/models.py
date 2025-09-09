@@ -91,6 +91,38 @@ class StrengthOperationType(IntEnum):
     SET_TO = 2
 
 
+class PlaybackMode(Enum):
+    """
+    播放模式枚举（服务层使用）
+    
+    :ivar ONCE: 播放一次后停止
+    :ivar LOOP: 循环播放
+    """
+    ONCE = "once"
+    LOOP = "loop"
+
+
+class FramesEventType(Enum):
+    """帧事件类型"""
+    COMPLETED = "completed"  # 单次播放完成
+    LOOPED = "looped"        # 循环播放重新开始
+
+
+# ============ 服务层回调Protocol定义 ============
+
+class FramesEventCallback(Protocol):
+    """帧事件回调协议"""
+    def __call__(self, event_type: FramesEventType) -> None: ...
+
+class PlaybackModeChangedCallback(Protocol):
+    """播放模式变更回调协议"""
+    def __call__(self, old_mode: PlaybackMode, new_mode: PlaybackMode) -> None: ...
+
+class ProgressChangedCallback(Protocol):
+    """播放进度变更回调协议"""
+    def __call__(self) -> None: ...
+
+
 class FeedbackButton(IntEnum):
     """
     App 反馈按钮

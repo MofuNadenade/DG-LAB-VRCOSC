@@ -15,6 +15,7 @@ main:
     about: "关于"
     osc: "OSC地址"
     pulse: "波形编辑器"
+    recording: "录制回放"
     deepseek: "Deepseek"
   settings:
     language_label: "语言:"
@@ -323,6 +324,70 @@ controller_tab:
   save_settings_tooltip: "保存所有设备控制设置到配置文件"
   settings_saved: "设备控制器设置已成功保存到配置文件"
   save_failed: "保存设备控制器设置失败: {0}"
+
+# 录制回放功能
+recording:
+  title: "录制回放"
+  recording_section: "波形录制"
+  playback_section: "录制回放"
+  recording_status_label: "录制状态:"
+  recording_time_label: "录制时长:"
+  recording_samples_label: "采样数量:"
+  playback_status_label: "回放状态:"
+  playback_progress_label: "播放进度:"
+  playback_position_label: "播放位置:"
+  session_select_label: "选择会话:"
+  
+  # 录制状态
+  status:
+    idle: "空闲"
+    recording: "录制中"
+    paused: "已暂停"
+    playing: "播放中"
+    
+  # 按钮
+  start_recording: "开始录制"
+  pause_recording: "暂停录制"
+  resume_recording: "继续录制"  
+  stop_recording: "停止录制"
+  start_playback: "开始播放"
+  pause_playback: "暂停播放"
+  resume_playback: "继续播放"
+  stop_playback: "停止播放"
+  load_session: "加载会话"
+  save_session: "保存会话"
+  delete_session: "删除会话"
+  
+  # 消息
+  no_sessions: "暂无录制会话"
+  no_session_selected: "请先选择一个会话"
+  recording_started: "录制已开始"
+  recording_stopped: "录制已停止"
+  recording_paused: "录制已暂停"
+  recording_resumed: "录制已继续"
+  playback_started: "回放已开始"
+  playback_stopped: "回放已停止"
+  playback_paused: "回放已暂停"
+  playback_resumed: "回放已继续"
+  session_loaded: "会话已加载"
+  session_saved: "会话已保存"
+  session_deleted: "会话已删除"
+  
+  # 错误信息
+  error_no_service: "设备服务未启动"
+  error_start_recording: "启动录制失败"
+  error_stop_recording: "停止录制失败"
+  error_start_playback: "启动回放失败"
+  error_stop_playback: "停止回放失败"
+  error_load_session: "加载会话失败"
+  error_save_session: "保存会话失败"
+  error_delete_session: "删除会话失败"
+  
+  # 确认对话框
+  confirm_stop_recording: "确认停止录制"
+  confirm_stop_recording_msg: "确定要停止当前录制吗？"
+  confirm_delete_session: "确认删除会话"
+  confirm_delete_session_msg: "确定要删除会话 '{0}' 吗？此操作无法撤销。"
 
 game_tab:
   title: "Terrors of Nowhere"

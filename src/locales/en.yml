@@ -15,6 +15,7 @@ main:
     about: "About"
     osc: "OSC Addresses"
     pulse: "Pulse Editor"
+    recording: "Recording"
     deepseek: "Deepseek"
   settings:
     language_label: "Language:"
@@ -323,6 +324,70 @@ controller_tab:
   save_settings_tooltip: "Save all device controller settings to configuration file"
   settings_saved: "Device controller settings have been successfully saved to configuration file"
   save_failed: "Failed to save device controller settings: {0}"
+
+# Recording and Playback
+recording:
+  title: "Recording & Playback"
+  recording_section: "Pulse Recording"
+  playback_section: "Recording Playback"
+  recording_status_label: "Recording Status:"
+  recording_time_label: "Recording Time:"
+  recording_samples_label: "Sample Count:"
+  playback_status_label: "Playback Status:"
+  playback_progress_label: "Playback Progress:"
+  playback_position_label: "Playback Position:"
+  session_select_label: "Select Session:"
+  
+  # Recording status
+  status:
+    idle: "Idle"
+    recording: "Recording"
+    paused: "Paused"
+    playing: "Playing"
+    
+  # Buttons
+  start_recording: "Start Recording"
+  pause_recording: "Pause Recording"
+  resume_recording: "Resume Recording"
+  stop_recording: "Stop Recording"
+  start_playback: "Start Playback"
+  pause_playback: "Pause Playback"
+  resume_playback: "Resume Playback"
+  stop_playback: "Stop Playback"
+  load_session: "Load Session"
+  save_session: "Save Session"
+  delete_session: "Delete Session"
+  
+  # Messages
+  no_sessions: "No recording sessions"
+  no_session_selected: "Please select a session first"
+  recording_started: "Recording started"
+  recording_stopped: "Recording stopped"
+  recording_paused: "Recording paused"
+  recording_resumed: "Recording resumed"
+  playback_started: "Playback started"
+  playback_stopped: "Playback stopped"
+  playback_paused: "Playback paused"
+  playback_resumed: "Playback resumed"
+  session_loaded: "Session loaded"
+  session_saved: "Session saved"
+  session_deleted: "Session deleted"
+  
+  # Error messages
+  error_no_service: "Device service not started"
+  error_start_recording: "Failed to start recording"
+  error_stop_recording: "Failed to stop recording"
+  error_start_playback: "Failed to start playback"
+  error_stop_playback: "Failed to stop playback"
+  error_load_session: "Failed to load session"
+  error_save_session: "Failed to save session"
+  error_delete_session: "Failed to delete session"
+  
+  # Confirmation dialogs
+  confirm_stop_recording: "Confirm Stop Recording"
+  confirm_stop_recording_msg: "Are you sure you want to stop the current recording?"
+  confirm_delete_session: "Confirm Delete Session"
+  confirm_delete_session_msg: "Are you sure you want to delete session '{0}'? This action cannot be undone."
 
 game_tab:
   title: "Terrors of Nowhere"

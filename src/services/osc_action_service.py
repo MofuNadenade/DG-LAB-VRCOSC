@@ -12,7 +12,7 @@ from typing import Optional, Dict
 
 from core.core_interface import CoreInterface
 from core.dglab_pulse import Pulse
-from models import Channel, StrengthData, StrengthOperationType, UIFeature
+from models import Channel, PlaybackMode, StrengthData, StrengthOperationType, UIFeature
 from services.dglab_service_interface import IDGLabDeviceService
 from services.service_interface import IService
 
@@ -176,6 +176,7 @@ class OSCActionService(IService):
 
     async def send_pulse(self, channel: Channel, pulse: Optional[Pulse]) -> None:
         """发送波形到设备"""
+        self._dglab_device_service.set_playback_mode(PlaybackMode.LOOP)
         await self._dglab_device_service.set_pulse_data(channel, pulse)
 
     # ============ 模式控制业务逻辑 ============
@@ -231,21 +232,24 @@ class OSCActionService(IService):
         if not self._enable_panel_control:
             return
 
-        await self._dglab_device_service.reset_strength(value, channel)
+        if value:
+            await self._dglab_device_service.reset_strength(channel)
 
     async def osc_increase_strength(self, value: bool, channel: Channel) -> None:
         """增加通道强度（委托给设备服务）"""
         if not self._enable_panel_control:
             return
 
-        await self._dglab_device_service.increase_strength(value, channel)
+        if value:
+            await self._dglab_device_service.increase_strength(channel)
 
     async def osc_decrease_strength(self, value: bool, channel: Channel) -> None:
         """减少通道强度（委托给设备服务）"""
         if not self._enable_panel_control:
             return
 
-        await self._dglab_device_service.decrease_strength(value, channel)
+        if value:
+            await self._dglab_device_service.decrease_strength(channel)
 
     async def osc_set_current_channel(self, value: int) -> Optional[Channel]:
         """设置当前活动通道"""
@@ -365,18 +369,14 @@ class OSCActionService(IService):
             logger.warning("OSC动作服务已在运行")
             return True
         
-        try:
-            # 初始化服务状态
-            self._is_running = True
-            
-            # 启动防抖强度更新任务
-            self._strength_update_task = asyncio.create_task(self._debounced_strength_update())
-            
-            logger.info("OSC动作服务已启动")
-            return True
-        except Exception as e:
-            logger.error(f"OSC动作服务启动失败: {e}")
-            return False
+        # 初始化服务状态
+        self._is_running = True
+        
+        # 启动防抖强度更新任务
+        self._strength_update_task = asyncio.create_task(self._debounced_strength_update())
+        
+        logger.info("OSC动作服务已启动")
+        return True
     
     async def stop_service(self) -> None:
         """停止OSC动作服务"""

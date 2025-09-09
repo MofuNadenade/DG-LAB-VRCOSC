@@ -387,7 +387,9 @@ class ImportPulseDialog(QDialog):
                 preview_text += f"版本: {pulse_data.version}\n"
                 preview_text += f"步数: {pulse_data.metadata.steps}\n"
                 preview_text += f"创建时间: {pulse_data.metadata.created.strftime('%Y-%m-%d %H:%M:%S')}\n"
-                preview_text += f"持续时间: {pulse_data.metadata.duration_ms}ms\n"
+                # 基于数据长度计算持续时间而非依赖metadata
+                calculated_duration_ms = len(pulse_data.data) * 100
+                preview_text += f"持续时间: {calculated_duration_ms}ms\n"
                 preview_text += f"最大强度: {pulse_data.metadata.max_intensity}\n"
                 preview_text += f"最大频率: {pulse_data.metadata.max_frequency}\n"
                 
@@ -793,7 +795,7 @@ class ImportPulseDialog(QDialog):
                             'steps': pulse_data.metadata.steps,
                             'max_frequency': pulse_data.metadata.max_frequency,
                             'max_intensity': pulse_data.metadata.max_intensity,
-                            'duration_ms': pulse_data.metadata.duration_ms
+                            'duration_ms': len(pulse_data.data) * 100  # 基于数据长度计算
                         }
                     }
                 }]

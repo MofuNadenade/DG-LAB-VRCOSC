@@ -138,16 +138,16 @@ class WebSocketConnectionManager:
                 if success:
                     logger.info("所有WebSocket服务启动成功")
                     self.ui_interface.set_connection_state(ConnectionState.WAITING)
-
-                    # 保持服务运行
-                    while self.server_task and not self.server_task.cancelled():
-                        await asyncio.sleep(1)
                 else:
                     logger.error("WebSocket服务启动失败")
                     self.ui_interface.set_connection_state(ConnectionState.FAILED, "WebSocket服务启动失败")
                 
                 # 设置初始波形
                 asyncio.create_task(service_controller.osc_action_service.update_pulse())
+
+                # 保持服务运行
+                while self.server_task and not self.server_task.cancelled():
+                    await asyncio.sleep(1)
 
         except asyncio.CancelledError:
             logger.info("WebSocket连接任务被取消")

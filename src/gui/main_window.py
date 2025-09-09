@@ -11,6 +11,7 @@ from gui.osc.osc_tab import OSCTab
 from gui.pulse.pulse_tab import PulseTab
 from gui.ton.ton_tab import TonTab
 from gui.deepseek.deepseek_tab import DeepseekTab
+from gui.recording.recording_tab import RecordingTab
 from gui.ui_interface import UIInterface
 from i18n import translate, language_signals
 from util import resource_path
@@ -32,6 +33,7 @@ class MainWindow(QMainWindow):
         self.debug_tab: DebugTab
         self.about_tab: AboutTab
         self.deepseek_tab: DeepseekTab
+        self.recording_tab: RecordingTab
 
         self.ui_interface = ui_interface
 
@@ -77,6 +79,10 @@ class MainWindow(QMainWindow):
         self.pulse_tab = PulseTab(self.ui_interface)
         self.tab_widget.addTab(self.pulse_tab, translate("main.tabs.pulse"))
 
+        # 录制回放选项卡
+        self.recording_tab = RecordingTab(self.ui_interface)
+        self.tab_widget.addTab(self.recording_tab, translate("main.tabs.recording"))
+
         # 调试选项卡
         self.debug_tab = DebugTab(self.ui_interface)
         self.tab_widget.addTab(self.debug_tab, translate("main.tabs.debug"))
@@ -101,9 +107,10 @@ class MainWindow(QMainWindow):
         self.tab_widget.setTabText(2, translate("main.tabs.ton"))
         self.tab_widget.setTabText(3, translate("main.tabs.osc"))
         self.tab_widget.setTabText(4, translate("main.tabs.pulse"))
-        self.tab_widget.setTabText(5, translate("main.tabs.debug"))
-        self.tab_widget.setTabText(6, translate("main.tabs.deepseek"))
-        self.tab_widget.setTabText(7, translate("main.tabs.about"))
+        self.tab_widget.setTabText(5, translate("main.tabs.recording"))
+        self.tab_widget.setTabText(6, translate("main.tabs.debug"))
+        self.tab_widget.setTabText(7, translate("main.tabs.deepseek"))
+        self.tab_widget.setTabText(8, translate("main.tabs.about"))
 
         # 让各个选项卡更新自己的文本
         self.connection_tab.update_ui_texts()

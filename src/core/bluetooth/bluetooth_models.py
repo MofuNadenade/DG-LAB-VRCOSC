@@ -4,8 +4,11 @@ DG-LAB V3协议数据模型
 基于郊狼情趣脉冲主机V3协议文档实现的强类型数据模型
 """
 
+from dataclasses import dataclass
 from enum import Enum, IntEnum
-from typing import List, TypedDict, Tuple
+from typing import List, TypedDict, Tuple, Optional, Protocol, Awaitable
+
+from core.recording.recording_models import ChannelSnapshot
 
 
 # 基础类型定义
@@ -30,6 +33,52 @@ PulseOperation = Tuple[
     WaveformStrengthOperation
 ]
 """波形操作数据"""
+
+
+class PlaybackMode(Enum):
+    """播放模式"""
+    ONCE = "once"       # 播放一次后停止
+    LOOP = "loop"       # 循环播放
+
+
+class FramesEventType(Enum):
+    """帧事件类型"""
+    COMPLETED = "completed"  # 单次播放完成
+    LOOPED = "looped"        # 循环播放重新开始
+
+
+# ============ 协议层回调Protocol定义 ============
+
+class ConnectionStateCallback(Protocol):
+    """连接状态回调协议"""
+    def __call__(self) -> Awaitable[None]: ...
+
+class DataSyncCallback(Protocol):
+    """数据同步回调协议"""
+    def __call__(self) -> None: ...
+
+class ProgressChangedCallback(Protocol):
+    """进度变化回调协议"""
+    def __call__(self) -> None: ...
+
+class FramesEventCallback(Protocol):
+    """帧事件回调协议"""
+    def __call__(self, event_type: FramesEventType) -> None: ...
+
+class PlaybackModeChangedCallback(Protocol):
+    """播放模式变更回调协议"""
+    def __call__(self, old_mode: PlaybackMode, new_mode: PlaybackMode) -> None: ...
+
+
+@dataclass
+class BluetoothFrame:
+    """Bluetooth内部帧数据，包含脉冲操作和强度信息"""
+    pulse_operation: PulseOperation           # 脉冲操作数据
+    target_strength: Optional[int] = None     # 目标强度（None表示不改变强度）
+    
+    def has_strength_change(self) -> bool:
+        """检查是否包含强度变化"""
+        return self.target_strength is not None
 
 class Channel(Enum):
     """通道枚举"""
@@ -58,7 +107,6 @@ class ChannelState(TypedDict):
     strength_limit: int                          # 强度软上限 (0-200)
     frequency_balance: int                       # 频率平衡参数1 (0-255)
     strength_balance: int                        # 强度平衡参数2 (0-255)
-    pulses: List[PulseOperation]                 # 波形操作数据
 
 
 class DeviceState(TypedDict):
@@ -182,3 +230,51 @@ class ProtocolConstants:
     DEFAULT_STRENGTH_LIMIT = 200
     DEFAULT_FREQUENCY_BALANCE = 100
     DEFAULT_STRENGTH_BALANCE = 100
+
+
+class BluetoothChannelState:
+    """蓝牙通道状态 - 仅存储帧数据"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._frame_data: List[BluetoothFrame] = []
+    
+    def set_pulse_data(self, pulses: List[PulseOperation]) -> None:
+        """从脉冲操作列表设置帧数据"""
+        self._frame_data = [BluetoothFrame(pulse, None) for pulse in pulses]
+
+    def set_snapshot_data(self, snapshots: List[ChannelSnapshot]) -> None:
+        """从快照列表设置帧数据"""
+        frames: List[BluetoothFrame] = []
+        for snapshot in snapshots:
+            if snapshot.pulse_operation:
+                frame = BluetoothFrame(snapshot.pulse_operation, snapshot.current_strength)
+                frames.append(frame)
+        self._frame_data = frames
+
+    def clear_frame_data(self) -> None:
+        """清除波形数据"""
+        self._frame_data.clear()
+
+    @property
+    def frame_data(self) -> List[BluetoothFrame]:
+        """获取帧数据（只读）"""
+        return self._frame_data
+
+    def get_looped_frame_data(self, index: int) -> Optional[BluetoothFrame]:
+        """获取循环的帧数据
+        
+        当通道数据长度不同时，使用模运算循环获取已结束通道的数据
+        
+        Args:
+            index: 要获取的帧索引
+            
+        Returns:
+            对应索引的帧数据，如果无数据则返回None
+        """
+        if not self._frame_data:
+            return None
+        
+        # 使用模运算实现循环
+        looped_index = index % len(self._frame_data)
+        return self._frame_data[looped_index]

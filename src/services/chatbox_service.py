@@ -42,14 +42,10 @@ class ChatboxService(IService):
 
     async def start_service(self) -> bool:
         """启动状态更新任务"""
-        try:
-            if self._send_status_task is None or self._send_status_task.done():
-                self._send_status_task = asyncio.create_task(self._periodic_status_update())
-            logger.info("ChatBox服务已启动")
-            return True
-        except Exception as e:
-            logger.error(f"ChatBox服务启动失败: {e}")
-            return False
+        if self._send_status_task is None or self._send_status_task.done():
+            self._send_status_task = asyncio.create_task(self._periodic_status_update())
+        logger.info("ChatBox服务已启动")
+        return True
 
     async def stop_service(self) -> None:
         """停止状态更新任务"""

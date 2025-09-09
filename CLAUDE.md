@@ -18,6 +18,11 @@ DG-LAB-VRCOSC is a Python desktop application that controls DG-LAB 3.0 devices t
 
 ### Installation and Setup
 ```bash
+# Clone and setup environment
+git clone https://github.com/MofuNadenade/DG-LAB-VRCOSC.git
+cd DG-LAB-VRCOSC
+python -m venv .venv
+.venv\Scripts\activate.bat  # Windows Command Prompt
 pip install -r requirements.txt
 ```
 
@@ -28,6 +33,9 @@ python src/app.py
 
 # Development mode with file watching and auto-rebuild
 python scripts/dev_build.py --watch
+
+# Run with debug logging
+python src/app.py --debug
 ```
 
 ### Build System
@@ -68,13 +76,15 @@ python scripts/i18n_checker.py              # Basic consistency check
 python scripts/i18n_checker.py --details    # Detailed key comparison
 ```
 
-### Code Quality
-The project uses multiple tools for code quality, integrated into the build system:
+### Code Quality and Type Checking
+**Critical**: All builds include automatic type checking that must pass:
 
-**Type Checking (pyright):**
 ```bash
-# Run type checking on all typed modules
+# Run type checking on all typed modules (required before builds)
 python -m pyright src/
+
+# Check version information
+python scripts/generate_version.py --check
 ```
 
 ### VSCode Integration
@@ -97,11 +107,41 @@ The project includes comprehensive VSCode configuration:
 ### Core Components
 
 1. **Entry Point** (`src/app.py`): Sets up the Qt application with asyncio event loop integration using qasync
-2. **Main UI** (`src/gui/main_window.py`): PySide6-based main window implementing the UICallback protocol with tabbed interface
-3. **Device Controller** (`src/dglab_controller.py`): Pure service container with no methods, only property accessors
+2. **Main UI** (`src/gui/main_window.py`): PySide6-based main window with tabbed interface using service controller pattern
+3. **Service Controller** (`src/core/service_controller.py`): Central orchestration of all services with ordered startup/shutdown
 4. **Services Architecture** (`src/services/`): Modular service-based architecture with separated concerns
-5. **OSC System** (`src/osc_binding.py`): Registry-based OSC parameter and action binding system
+5. **OSC System** (`src/core/`): Registry-based OSC parameter and action binding system with three-layer architecture
 6. **Configuration** (`src/config.py`): YAML-based settings management with network interface detection
+
+### Layered Architecture: Protocol Layer vs Service Layer
+
+The application uses a clear separation between protocol layer and service layer:
+
+#### Protocol Layer (`src/core/`)
+Low-level device communication and protocol implementation:
+
+- **WebSocket Protocol** (`src/core/websocket/`):
+  - `WebSocketController`: WebSocket connection management and frame transmission
+  - `WebSocketChannelStateHandler`: Frame buffering and playback control with loop support
+  - `WebSocketModels`: Data models including `PlaybackMode` enum for frame playback modes
+  - Frame-level operations using 100ms time slices
+
+- **Bluetooth Protocol** (`src/core/bluetooth/`):
+  - `BluetoothController`: Direct BLE communication with DG-LAB 3.0 devices
+  - `BluetoothChannelStateHandler`: Frame buffering and playback control with loop support  
+  - `BluetoothModels`: Strong-typed data models including `PlaybackMode` enum
+  - V3 protocol implementation with B0/BF command processing
+
+#### Service Layer (`src/services/`)
+High-level business logic and application services:
+
+- **DGLabWebSocketService**: WebSocket-based DG-LAB hardware control (strength, channels, pulses, fire mode)
+- **DGLabBluetoothService**: Direct Bluetooth LE communication with DG-LAB devices via `bleak` library
+- **OSCService**: OSC message processing and VRChat communication
+- **ChatboxService**: VRChat ChatBox status display and periodic updates
+- **OSCActionService**: Business logic for all OSC actions, independent of device connection type
+
+**Key Distinction**: Protocol layer handles frame-by-frame device communication with playback modes (ONCE/LOOP), while service layer provides high-level abstractions for application features.
 
 ### Key Architectural Patterns
 
@@ -119,10 +159,11 @@ The application uses a service-based architecture where the controller is a pure
 - **Service Orchestration**: Manages the lifecycle of all services in the correct order
 - **Service References**: `dglab_device_service`, `osc_service`, `osc_action_service`, `chatbox_service`
 - **Unified Management**: Single point for starting/stopping all services
+- **Error Handling**: If any service fails to start, all previously started services are stopped in reverse order
 
 #### Core Services (`src/services/`)
 - **DGLabWebSocketService**: WebSocket-based DG-LAB hardware control (strength, channels, pulses, fire mode)
-- **DGLabBluetoothService**: Direct Bluetooth LE communication with DG-LAB devices (in development)
+- **DGLabBluetoothService**: Direct Bluetooth LE communication with DG-LAB devices via `bleak` library
 - **OSCService**: OSC message processing and VRChat communication
 - **ChatboxService**: VRChat ChatBox status display and periodic updates
 - **OSCActionService**: Business logic for all OSC actions, independent of device connection type
@@ -137,6 +178,15 @@ class MyService(IService):  # Inherits from ABC
         ...  # Use ellipsis, not pass
 ```
 
+#### Service Startup Order
+Services are started in a specific order managed by ServiceController:
+1. DG-Lab Device Service (WebSocket or Bluetooth)
+2. OSC Service 
+3. OSC Action Service
+4. ChatBox Service
+
+If any service fails, all previously started services are stopped in reverse order.
+
 ### Interface Architecture
 
 All interfaces use Abstract Base Classes (ABC) with `@abstractmethod` decorators:
@@ -146,30 +196,39 @@ All interfaces use Abstract Base Classes (ABC) with `@abstractmethod` decorators
 - **CoreInterface**: Core functionality interface for logging, state management
 - **UIInterface**: UI operations interface extending CoreInterface
 
-### Bluetooth Architecture (In Development)
+### Frame Playback System
 
-The Bluetooth subsystem (`src/core/bluetooth/`) provides direct communication with DG-LAB 3.0 devices:
+Both protocol layers implement a unified frame playback system:
 
-#### Core Components
-- **BluetoothController**: High-level interface for device management and communication
-- **BluetoothProtocol**: Handles DG-LAB V3 protocol implementation with command/response parsing
-- **BluetoothModels**: Strong-typed data models for all protocol structures and device states
-- **BluetoothUUIDs & ProtocolConstants**: Bluetooth LE service/characteristic definitions and protocol constants
+#### Playback Modes
+- **PlaybackMode.ONCE**: Play frame sequence once then stop
+- **PlaybackMode.LOOP**: Continuously loop frame sequence
 
-#### Key Features
-- **Type-Safe Protocol**: Complete Pydantic models for all DG-LAB V3 protocol messages
-- **Async BLE Communication**: Uses `bleak` library for cross-platform Bluetooth LE support
-- **Device State Management**: Real-time tracking of device connection, battery, and channel states
-- **Command Processing**: Handles B0 (control) and BF (data) commands with proper serialization
+#### Frame Management
+- **Frame Buffering**: 100ms time slices with synchronized A/B channel data
+- **Logical Frame Position**: Tracks playback progress for UI updates  
+- **Buffer Frame Position**: Handles actual data transmission timing
+- **Automatic Completion Detection**: Stops playback when frame sequence ends (ONCE mode)
+- **Loop Support**: Seamlessly restarts from beginning (LOOP mode)
+
+#### Key Methods
+- `advance_buffer_for_send()`: Advances buffer and returns frame data for transmission
+- `advance_logical_frame()`: Updates logical playback position for progress tracking
+- `is_frame_sequence_finished()`: Checks if playback completed (respects loop mode)
+- `set_playback_mode()`: Configures ONCE/LOOP playback behavior
 
 ### OSC Parameter System
 
-The application uses a three-layer OSC binding system:
-- `OSCAddressRegistry`: Maps parameter names to OSC codes
-- `OSCActionRegistry`: Maps action names to callback functions  
-- `OSCBindingRegistry`: Binds parameters to actions for event handling
+The application uses a three-layer OSC binding system (`src/core/registries.py`):
+- **OSCAddressRegistry**: Maps parameter names to OSC codes
+- **OSCActionRegistry**: Maps action names to callback functions  
+- **OSCBindingRegistry**: Binds parameters to actions for event handling
 
-Default parameters include VRChat contact/physbone interactions and SoundPad button controls.
+**Template System** (`src/core/osc_template.py`): Provides pre-configured OSC templates for:
+- VRChat contact/physbone interactions
+- SoundPad button controls  
+- PCS (Penetration Contact System) compatibility
+- Custom user-defined bindings
 
 ### Configuration System
 
@@ -265,8 +324,95 @@ The project uses a comprehensive build system with automated version management:
 - **Logging**: Configured in `logger_config.py` with file + UI output
 - **Chinese Parameters**: VRChat integration uses Chinese parameter names by default
 - **Async Operations**: Heavy use of asyncio - ensure proper await usage
-- **Bluetooth Development**: Use strong typing with Pydantic models for all protocol messages
 - **Device Abstraction**: All device services must implement IDGLabDeviceService interface
+
+### Protocol Layer vs Service Layer Guidelines
+
+**Protocol Layer (`src/core/websocket/`, `src/core/bluetooth/`)**:
+- **Focus**: Frame-level device communication and protocol implementation
+- **Terminology**: Use "frame" terminology (not "playback") for protocol-level operations
+- **PlaybackMode**: Use `PlaybackMode` enum for ONCE/LOOP frame sequence modes
+- **Key Methods**: `advance_buffer_for_send()`, `advance_logical_frame()`, `is_frame_sequence_finished()`
+- **Responsibility**: 100ms time slices, channel state management, device-specific protocol details
+
+**Service Layer (`src/services/`)**:
+- **Focus**: High-level business logic and application features  
+- **Terminology**: Use "playback" terminology for user-facing recording/playback features
+- **Integration**: Services use protocol layer for actual device communication
+- **Responsibility**: Recording system, OSC actions, user interface abstractions
+- **Abstraction**: Hide protocol details from application logic
+
+### Code Quality Guidelines
+
+**Type Safety**:
+- **No Inline Imports**: All imports must be at the top of the file - no inline imports allowed
+- **Strict Typing**: Use strict type annotations - avoid `Any` type completely
+- **Complex Dictionaries**: Use `TypedDict` for complex dictionary structures instead of `Dict[str, Any]`
+- **Complete Type Annotations**: All code must provide complete type annotations including variables, function parameters, return values, class attributes, and method signatures
+- **Generic Types**: Use proper generic types like `List[str]`, `Dict[str, int]` instead of bare `list`, `dict`
+- **Optional Types**: Use `Optional[T]` or `T | None` for nullable values explicitly
+- **TODO Markers**: Use `# TODO:` comments for any placeholder code, unimplemented features, or areas requiring future implementation
+- **Type Annotation Quotes**: Only use quotes in type annotations for forward references (e.g., nested classes referencing outer classes)
+
+**Import Management**:
+- **No Import Renaming**: Avoid `from module import SomeClass as Alias` - use direct imports instead
+- **Direct Imports Preferred**: Use `from module import SomeClass` for normal cases
+- **Module Prefix for Conflicts**: Only use `from module import submodule` then `submodule.SomeClass` when there are naming conflicts
+- **Name Collision Resolution**: When classes have same names across modules, use module prefixes to distinguish them
+- **Example**: Use `websocket_models.PlaybackMode` and `bluetooth_models.PlaybackMode` instead of renaming to `WSPlaybackMode` and `BTPlaybackMode`
+
+**Code Modification Standards**:
+- **No Explanatory Comments**: Do not add explanatory comments like "// Fixed callback registration" when modifying code
+- **Self-Documenting Code**: Code should be clear from its structure and naming, not from added comments
+- **Comment Policy**: Only add comments for complex business logic, not for implementation changes or fixes
+- **Clean Commits**: Remove any debugging or explanatory comments before committing
+
+**Forward Reference Guidelines**:
+- **Quotes Required**: Use quotes for type annotations when the referenced class is not yet defined
+- **Common Cases**: Nested classes referencing outer classes, circular imports, self-referencing classes
+- **Current Usage**: Inner handler classes use `'DGLabWebSocketService'` and `'DGLabBluetoothService'` as forward references
+- **No `__future__.annotations`**: Project does not use delayed annotation evaluation, so forward references must be quoted
+- **Example**: `def __init__(self, service: 'OuterClass') -> None:` in nested classes
+
+**Dynamic Type Features Prohibition**:
+- **No Dynamic Attributes**: Avoid `getattr()`, `setattr()`, `hasattr()` for class attributes - declare all attributes explicitly in `__init__`
+- **No Dynamic Imports**: Avoid `__import__()`, `importlib` for dynamic module loading
+- **No Monkey Patching**: Never modify class or instance attributes at runtime using dynamic assignment
+- **Explicit Attribute Declaration**: All class attributes must be declared with proper type annotations in `__init__`
+- **Static Analysis Friendly**: Code must be analyzable by static type checkers without dynamic features
+- **Example Violation**: `setattr(self, '_dynamic_attr', value)` ❌
+- **Correct Pattern**: `self._explicit_attr: Optional[Type] = None` in `__init__` ✅
+
+### Recording System Architecture
+The recording system uses a layered architecture:
+- **Interface Layer**: `IPulseRecordHandler`, `IPulsePlaybackHandler` using ABC
+- **Base Implementation**: `BaseRecordHandler`, `BasePlaybackHandler` with common logic
+- **Data Models**: `RecordingSession`, `RecordingSnapshot`, `ChannelSnapshot` for 100ms time slices
+- **File Management**: `DGRFileManager` for JSON-based .dgr file serialization
+- **Integration**: Recording handlers are called via `on_data_sync()` to synchronize with device data updates
+
+#### BasePlaybackHandler Optimization Guidelines
+The `BasePlaybackHandler` has been optimized to eliminate redundancy and improve maintainability:
+
+**Removed Unnecessary Abstractions**:
+- Eliminated `_get_total_positions()` - moved logic to base class `get_total_snapshots()`
+- Removed `_register_progress_listener()` and `_unregister_progress_listener()` - callbacks now registered directly in child class `__init__`
+- Deleted unused methods `_is_currently_playing()` and `_is_currently_paused()` from all implementations
+
+**Unified Callback System**:
+- Progress callbacks use consistent `ProgressCallback` type: `(current: int, total: int, percentage: float) -> None`
+- Callback registration moved to child class constructors for better control
+- Simplified callback management with single callback instances instead of callback lists
+
+**Interface Implementation Pattern**:
+- Child classes directly implement interface methods (`get_current_position()`, `get_total_snapshots()`) 
+- Base class provides common implementations where possible
+- Abstract methods only used for truly implementation-specific functionality
+
+**Code Quality Standards**:
+- When removing code blocks, always check for and clean up resulting empty lines
+- Maintain consistent spacing and formatting
+- Ensure type annotations are consistent across all implementations
 
 ### Build System Guidelines
 - **Version Management**: Never edit `src/version.py` manually - it's auto-generated

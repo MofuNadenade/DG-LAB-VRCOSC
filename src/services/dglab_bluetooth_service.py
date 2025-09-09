@@ -9,12 +9,16 @@ import asyncio
 import logging
 from typing import Optional, List, Dict, TypedDict
 
+from core.bluetooth import bluetooth_models
+
 from PySide6.QtCore import QObject, Signal
 
 from core import bluetooth
 from core.core_interface import CoreInterface
-from core.dglab_pulse import Pulse
-from models import Channel, ConnectionState, StrengthData, StrengthOperationType, PulseOperation
+from core.osc_common import Pulse
+from core.recording import IPulseRecordHandler, BaseRecordHandler, IPulsePlaybackHandler, BasePlaybackHandler
+from core.recording.recording_models import RecordingSnapshot
+from models import Channel, ConnectionState, StrengthData, StrengthOperationType, PulseOperation, PlaybackMode, FramesEventType, FramesEventCallback, PlaybackModeChangedCallback, ProgressChangedCallback
 from services.dglab_service_interface import IDGLabDeviceService
 
 logger = logging.getLogger(__name__)
@@ -70,6 +74,17 @@ class DGLabBluetoothService(IDGLabDeviceService):
         self._freq_balances: Dict[Channel, int] = {Channel.A: 160, Channel.B: 160}
         self._strength_balances: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
         
+        # 录制处理器实例
+        self._record_handler: DGLabBluetoothService._BluetoothRecordHandler = self._BluetoothRecordHandler(self)
+        
+        # 回放处理器实例
+        self._playback_handler: DGLabBluetoothService._BluetoothPlaybackHandler = self._BluetoothPlaybackHandler(self)
+        
+        # 外部回调（可选）
+        self._progress_changed_callback: Optional[ProgressChangedCallback] = None
+        self._frames_event_callback: Optional[FramesEventCallback] = None
+        self._playback_mode_changed_callback: Optional[PlaybackModeChangedCallback] = None
+        
         # 设置回调
         self._setup_callbacks()
         
@@ -82,6 +97,10 @@ class DGLabBluetoothService(IDGLabDeviceService):
         self._bluetooth_controller.set_connection_lost_callback(self._on_connection_lost)
         self._bluetooth_controller.set_strength_changed_callback(self._on_strength_changed)
         self._bluetooth_controller.set_battery_callback(self._on_battery_changed)
+        self._bluetooth_controller.set_data_sync_callback(self._on_data_sync)
+        self._bluetooth_controller.set_progress_changed_callback(self._on_progress_changed)
+        self._bluetooth_controller.set_frames_event_callback(self._on_frames_event)
+        self._bluetooth_controller.set_playback_mode_changed_callback(self._on_playback_mode_changed)
 
     async def _on_connected(self) -> None:
         """处理连接状态变化"""
@@ -112,27 +131,23 @@ class DGLabBluetoothService(IDGLabDeviceService):
 
     async def _on_strength_changed(self, strengths: Dict[bluetooth.Channel, int]) -> None:
         """处理强度变化"""
-        try:
-            # 转换蓝牙通道到模型通道
-            model_strengths: Dict[Channel, int] = {
-                Channel.A: strengths[bluetooth.Channel.A],
-                Channel.B: strengths[bluetooth.Channel.B]
-            }
-            
-            # 更新缓存
-            self._current_strengths = model_strengths
-            self._last_strength = {
-                "strength": model_strengths,
-                "strength_limit": self._strength_limits.copy()
-            }
-            
-            logger.debug(f"强度变化: A={model_strengths[Channel.A]}, B={model_strengths[Channel.B]}")
-            
-            # 通知核心接口强度数据更新
-            self._core_interface.on_strength_data_updated(self._last_strength)
-            
-        except Exception as e:
-            logger.error(f"处理强度变化失败: {e}")
+        # 转换蓝牙通道到模型通道
+        model_strengths: Dict[Channel, int] = {
+            Channel.A: strengths[bluetooth.Channel.A],
+            Channel.B: strengths[bluetooth.Channel.B]
+        }
+        
+        # 更新缓存
+        self._current_strengths = model_strengths
+        self._last_strength = {
+            "strength": model_strengths,
+            "strength_limit": self._strength_limits.copy()
+        }
+        
+        logger.debug(f"强度变化: A={model_strengths[Channel.A]}, B={model_strengths[Channel.B]}")
+        
+        # 通知核心接口强度数据更新
+        self._core_interface.on_strength_data_updated(self._last_strength)
 
     async def _on_battery_changed(self, battery_level: int) -> None:
         """处理电量变化"""
@@ -141,38 +156,72 @@ class DGLabBluetoothService(IDGLabDeviceService):
         # 通过信号发送电量更新
         self.signals.battery_level_updated.emit(battery_level)
 
+    def _on_data_sync(self) -> None:
+        """处理数据同步通知（用于录制和播放进度更新）"""
+        # 处理录制数据同步
+        if self._record_handler:
+            self._record_handler.on_data_sync()
+        
+        # 处理播放进度更新
+        # 进度更新通过回调系统处理
+    
+    def _on_progress_changed(self) -> None:
+        if self._playback_handler:
+            self._playback_handler.on_progress_changed()
+        
+        # 触发外部进度回调
+        if self._progress_changed_callback:
+            self._progress_changed_callback()
+    
+    def _on_frames_event(self, event_type: bluetooth_models.FramesEventType) -> None:
+        """处理帧事件回调"""
+        # 转换协议层事件类型到服务层事件类型
+        service_event = self._convert_frames_event_type_from_bluetooth(event_type)
+        
+        # 转发到回放处理器（使用服务层类型）
+        if self._playback_handler:
+            self._playback_handler.on_frames_event(service_event)
+        
+        # 触发外部帧事件回调
+        if self._frames_event_callback:
+            self._frames_event_callback(service_event)
+    
+    def _on_playback_mode_changed(self, old_mode: bluetooth_models.PlaybackMode, new_mode: bluetooth_models.PlaybackMode) -> None:
+        """处理播放模式变更回调"""
+        # 转换协议层播放模式到服务层播放模式
+        service_old_mode = self._convert_playback_mode_from_bluetooth(old_mode)
+        service_new_mode = self._convert_playback_mode_from_bluetooth(new_mode)
+        
+        # 转发到回放处理器（使用服务层类型）
+        if self._playback_handler:
+            self._playback_handler.on_playback_mode_changed(service_old_mode, service_new_mode)
+        
+        # 触发外部播放模式变更回调
+        if self._playback_mode_changed_callback:
+            self._playback_mode_changed_callback(service_old_mode, service_new_mode)
+
     # ============ 连接管理 ============
 
     async def start_service(self) -> bool:
         """启动设备连接服务"""
-        try:
-            logger.info("开始启动蓝牙服务...")
-            self._server_running = True
-            self._stop_event.clear()
-            
-            logger.info("蓝牙服务启动成功")
-            return True
-            
-        except Exception as e:
-            logger.error(f"启动蓝牙服务失败: {e}")
-            self._server_running = False
-            return False
+        logger.info("开始启动蓝牙服务...")
+        self._server_running = True
+        self._stop_event.clear()
+        
+        logger.info("蓝牙服务启动成功")
+        return True
 
     async def stop_service(self) -> None:
         """停止设备连接服务"""
-        try:
-            logger.info("正在停止蓝牙服务...")
-            self._server_running = False
-            self._stop_event.set()
-            
-            # 断开蓝牙连接
-            if self.is_device_connected():
-                await self._disconnect_device()
-            
-            logger.info("蓝牙服务已停止")
-            
-        except Exception as e:
-            logger.error(f"停止蓝牙服务失败: {e}")
+        logger.info("正在停止蓝牙服务...")
+        self._server_running = False
+        self._stop_event.set()
+        
+        # 断开蓝牙连接
+        if self.is_device_connected():
+            await self._disconnect_device()
+        
+        logger.info("蓝牙服务已停止")
 
     def is_service_running(self) -> bool:
         """检查设备连接服务运行状态"""
@@ -192,7 +241,7 @@ class DGLabBluetoothService(IDGLabDeviceService):
         """设置浮点输出强度（原始设备操作）"""
         # 转换通道类型
         await self._bluetooth_controller.set_strength_absolute(
-            self._convert_channel(channel),
+            self._convert_channel_to_bluetooth(channel),
             int(value)
         )
 
@@ -200,34 +249,31 @@ class DGLabBluetoothService(IDGLabDeviceService):
         """调整通道强度（原始设备操作）"""
         if operation_type == StrengthOperationType.SET_TO:
             await self._bluetooth_controller.set_strength_absolute(
-                self._convert_channel(channel),
+                self._convert_channel_to_bluetooth(channel),
                 value
             )
         elif operation_type == StrengthOperationType.INCREASE:
             await self._bluetooth_controller.set_strength_relative(
-                self._convert_channel(channel),
+                self._convert_channel_to_bluetooth(channel),
                 value
             )
         elif operation_type == StrengthOperationType.DECREASE:
             await self._bluetooth_controller.set_strength_relative(
-                self._convert_channel(channel),
+                self._convert_channel_to_bluetooth(channel),
                 -value
             )
 
-    async def reset_strength(self, value: bool, channel: Channel) -> None:
+    async def reset_strength(self, channel: Channel) -> None:
         """重置通道强度为0（原始设备操作）"""
-        if value:
-            await self.adjust_strength(StrengthOperationType.SET_TO, 0, channel)
+        await self.adjust_strength(StrengthOperationType.SET_TO, 0, channel)
 
-    async def increase_strength(self, value: bool, channel: Channel) -> None:
+    async def increase_strength(self, channel: Channel) -> None:
         """增加通道强度（原始设备操作）"""
-        if value:
-            await self.adjust_strength(StrengthOperationType.INCREASE, 1, channel)
+        await self.adjust_strength(StrengthOperationType.INCREASE, 1, channel)
 
-    async def decrease_strength(self, value: bool, channel: Channel) -> None:
+    async def decrease_strength(self, channel: Channel) -> None:
         """减少通道强度（原始设备操作）"""
-        if value:
-            await self.adjust_strength(StrengthOperationType.DECREASE, 1, channel)
+        await self.adjust_strength(StrengthOperationType.DECREASE, 1, channel)
 
     # ============ 波形数据操作 ============
 
@@ -235,13 +281,54 @@ class DGLabBluetoothService(IDGLabDeviceService):
         """设置指定通道的波形数据"""
         if pulse:
             await self._bluetooth_controller.set_pulse_data(
-                self._convert_channel(channel),
-                self._convert_pulse_operations(pulse.data)
+                self._convert_channel_to_bluetooth(channel),
+                self._convert_pulse_operations_to_bluetooth(pulse.data)
             )
         else:
-            await self._bluetooth_controller.clear_pulse_data(
-                self._convert_channel(channel)
+            await self._bluetooth_controller.clear_frame_data(
+                self._convert_channel_to_bluetooth(channel)
             )
+
+    async def set_snapshots(self, snapshots: Optional[List[RecordingSnapshot]]) -> None:
+        """直接播放录制快照列表"""
+        if snapshots:
+            self._bluetooth_controller.set_snapshots(snapshots)
+        else:
+            self._bluetooth_controller.clear_frames()
+
+    async def pause_frames(self) -> None:
+        """暂停波形数据"""
+        self._bluetooth_controller.pause_frames()
+
+    async def resume_frames(self) -> None:
+        """继续波形数据"""
+        self._bluetooth_controller.resume_frames()
+
+    def get_frames_position(self) -> int:
+        """获取播放位置"""
+        return self._bluetooth_controller.get_frames_position()
+
+    async def seek_frames_to_position(self, position: int) -> None:
+        """跳转到指定位置"""
+        if not self._bluetooth_controller.is_connected:
+            raise RuntimeError("设备未连接")
+        
+        # 设置播放位置
+        self._bluetooth_controller.set_frames_position(position)
+
+    # ============ 播放模式控制（实现IDGLabService接口） ============
+
+    def set_playback_mode(self, mode: PlaybackMode) -> None:
+        """设置播放模式（服务层接口）"""
+        # 转换服务层播放模式到协议层播放模式
+        protocol_mode = self._convert_playback_mode_to_bluetooth(mode)
+        self._bluetooth_controller.set_playback_mode(protocol_mode)
+
+    def get_playback_mode(self) -> PlaybackMode:
+        """获取当前播放模式（服务层接口）"""
+        # 从协议层获取播放模式并转换到服务层
+        protocol_mode = self._bluetooth_controller.get_playback_mode()
+        return self._convert_playback_mode_from_bluetooth(protocol_mode)
 
     # ============ 数据访问 ============
 
@@ -520,13 +607,122 @@ class DGLabBluetoothService(IDGLabDeviceService):
             logger.error(f"更新设备参数失败: {e}")
             return False
 
-    def _convert_channel(self, channel: Channel) -> bluetooth.Channel:
+    def _convert_channel_to_bluetooth(self, channel: Channel) -> bluetooth.Channel:
         """转换模型通道到蓝牙通道"""
         if channel == Channel.A:
             return bluetooth.Channel.A
         else:
             return bluetooth.Channel.B
 
-    def _convert_pulse_operations(self, operations: List[PulseOperation]) -> List[bluetooth.PulseOperation]:
+    def _convert_pulse_operations_to_bluetooth(self, operations: List[PulseOperation]) -> List[bluetooth.PulseOperation]:
         """将PulseOperation转换为频率和强度数组"""
         return operations
+
+    def _convert_playback_mode_to_bluetooth(self, mode: PlaybackMode) -> bluetooth_models.PlaybackMode:
+        if mode == PlaybackMode.ONCE:
+            return bluetooth_models.PlaybackMode.ONCE
+        elif mode == PlaybackMode.LOOP:
+            return bluetooth_models.PlaybackMode.LOOP
+
+    def _convert_playback_mode_from_bluetooth(self, bt_mode: bluetooth_models.PlaybackMode) -> PlaybackMode:
+        if bt_mode == bluetooth_models.PlaybackMode.ONCE:
+            return PlaybackMode.ONCE
+        elif bt_mode == bluetooth_models.PlaybackMode.LOOP:
+            return PlaybackMode.LOOP
+    
+    def _convert_frames_event_type_from_bluetooth(self, bt_event: bluetooth_models.FramesEventType) -> FramesEventType:
+        """转换协议层帧事件类型到服务层帧事件类型"""
+        if bt_event == bluetooth_models.FramesEventType.COMPLETED:
+            return FramesEventType.COMPLETED
+        elif bt_event == bluetooth_models.FramesEventType.LOOPED:
+            return FramesEventType.LOOPED
+
+    # ============ 回调设置方法 ============
+    
+    def set_progress_changed_callback(self, callback: Optional[ProgressChangedCallback]) -> None:
+        """设置播放进度变更回调"""
+        self._progress_changed_callback = callback
+    
+    def set_frames_event_callback(self, callback: Optional[FramesEventCallback]) -> None:
+        """设置帧事件回调"""
+        self._frames_event_callback = callback
+    
+    def set_playback_mode_changed_callback(self, callback: Optional[PlaybackModeChangedCallback]) -> None:
+        """设置播放模式变更回调"""
+        self._playback_mode_changed_callback = callback
+
+    # ============ 录制功能 ============
+
+    def get_record_handler(self) -> IPulseRecordHandler:
+        """创建脉冲录制处理器"""
+        return self._record_handler
+    
+    def get_playback_handler(self) -> IPulsePlaybackHandler:
+        """创建脉冲回放处理器"""
+        return self._playback_handler
+
+    class _BluetoothRecordHandler(BaseRecordHandler):
+        """蓝牙录制处理器"""
+
+        def __init__(self, bluetooth_service: 'DGLabBluetoothService') -> None:
+            super().__init__()
+            self._bluetooth_service = bluetooth_service
+
+        def _get_current_pulse_data(self, channel: Channel) -> PulseOperation:
+            """获取指定通道当前的脉冲操作数据"""
+            bluetooth_controller = self._bluetooth_service._bluetooth_controller
+            bt_channel = self._bluetooth_service._convert_channel_to_bluetooth(channel)
+
+            # 使用公共方法获取当前脉冲数据
+            return bluetooth_controller.get_current_pulse_data(bt_channel) or ((10, 10, 10, 10), (0, 0, 0, 0))
+
+        def _get_current_strength(self, channel: Channel) -> int:
+            """获取指定通道当前的强度值"""
+            # 方法1: 从蓝牙服务的缓存获取
+            current_strength = self._bluetooth_service._current_strengths.get(channel, 0)
+            if current_strength > 0:
+                return current_strength
+
+            # 方法2: 从蓝牙控制器的设备状态获取
+            bluetooth_controller = self._bluetooth_service._bluetooth_controller
+            bt_channel = self._bluetooth_service._convert_channel_to_bluetooth(channel)
+            return bluetooth_controller.get_current_strength(bt_channel)
+
+
+    class _BluetoothPlaybackHandler(BasePlaybackHandler):
+        """蓝牙回放处理器"""
+        
+        def __init__(self, bluetooth_service: 'DGLabBluetoothService') -> None:
+            super().__init__()
+            self._bluetooth_service = bluetooth_service
+        
+        async def _start_playback(self, snapshots: List[RecordingSnapshot]) -> None:
+            """启动controller的快照播放"""
+            await self._bluetooth_service.set_snapshots(snapshots)
+
+        async def _stop_playback(self) -> None:
+            """停止controller的播放并清理设备状态"""
+            # 重置所有通道强度为0
+            await self._bluetooth_service.reset_strength(Channel.A)
+            await self._bluetooth_service.reset_strength(Channel.B)
+            
+            # 清空波形数据
+            await self._bluetooth_service.set_snapshots(None)
+
+        async def _pause_playback(self) -> None:
+            """暂停controller的播放但保持设备状态"""
+            await self._bluetooth_service.pause_frames()
+
+        async def _resume_playback(self) -> None:
+            """从暂停状态继续controller的播放"""
+            await self._bluetooth_service.resume_frames()
+
+        async def _seek_to_position(self, position: int) -> None:
+            """跳转到指定位置"""
+            await self._bluetooth_service.seek_frames_to_position(position)
+
+        def get_current_position(self) -> int:
+            """获取当前播放位置"""
+            return self._bluetooth_service.get_frames_position()
+        
+        

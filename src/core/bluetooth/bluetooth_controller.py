@@ -12,15 +12,21 @@ DG-LAB V3蓝牙控制器
 
 import asyncio
 import logging
-from typing import Optional, Callable, Awaitable, Dict, List
+import time
+from typing import Optional, Callable, Awaitable, Dict, List, Tuple
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
+from core.recording.recording_models import ChannelSnapshot, RecordingSnapshot
+
 from .bluetooth_models import (
     DeviceInfo, Channel, DeviceState, BluetoothUUIDs, PulseOperation, StrengthParsingMethod,
-    WaveformFrequencyOperation, WaveformStrengthOperation 
+    WaveformFrequencyOperation, WaveformStrengthOperation, PlaybackMode, FramesEventType,
+    ConnectionStateCallback, DataSyncCallback, ProgressChangedCallback, FramesEventCallback,
+    PlaybackModeChangedCallback
 )
 from .bluetooth_protocol import BluetoothProtocol
+from .bluetooth_channel_state_handler import BluetoothChannelStateHandler
 
 logger = logging.getLogger(__name__)
 
@@ -58,52 +64,64 @@ class BluetoothController:
         # 设备状态
         self._device_state: DeviceState = self._create_device_state()
         
-        # 波形数据管理 - 强类型标记
-        self._pulse_data_a: List[PulseOperation] = []
-        self._pulse_data_b: List[PulseOperation] = []
-        self._pulse_index_a: int = 0
-        self._pulse_index_b: int = 0
+        # 通道状态处理器（统一管理AB通道）
+        self._channel_handler = BluetoothChannelStateHandler()
         
         # 定时任务
         self._data_send_task: Optional[asyncio.Task[None]] = None
         self._battery_polling_task: Optional[asyncio.Task[None]] = None
         self._is_running = False
         self._battery_polling_interval = 5.0
-        self._pulse_buffer = 1
+        self._pulse_buffer_count = 0
+        self._pulse_buffer_min = 1
+        self._pulse_buffer_max = 5
+        
+        # 暂停状态
+        self._is_paused: bool = False
+        
+        # 播放模式相关状态
+        self._current_playback_mode: PlaybackMode = PlaybackMode.ONCE
+        self._last_frame_finished: bool = False
         
         # 连接状态事件信号
         self._connected_event = asyncio.Event()
-        
-        # 回调函数
+
+        # 回调函数 - 使用Protocol类型
         self._on_notification: Optional[Callable[[bytes], Awaitable[None]]] = None
-        self._on_connecting: Optional[Callable[[], Awaitable[None]]] = None
-        self._on_connected: Optional[Callable[[], Awaitable[None]]] = None
-        self._on_disconnected: Optional[Callable[[], Awaitable[None]]] = None
-        self._on_connection_lost: Optional[Callable[[], Awaitable[None]]] = None
+        self._on_connecting: Optional[ConnectionStateCallback] = None
+        self._on_connected: Optional[ConnectionStateCallback] = None
+        self._on_disconnected: Optional[ConnectionStateCallback] = None
+        self._on_connection_lost: Optional[ConnectionStateCallback] = None
         self._on_strength_changed: Optional[Callable[[Dict[Channel, int]], Awaitable[None]]] = None
         self._on_battery_changed: Optional[Callable[[int], Awaitable[None]]] = None
+        self._on_data_sync: Optional[DataSyncCallback] = None
+        self._on_progress_changed: Optional[ProgressChangedCallback] = None
+        
+        # 播放模式相关回调
+        self._on_frames_event: Optional[FramesEventCallback] = None
+        self._on_playback_mode_changed: Optional[PlaybackModeChangedCallback] = None
         
         logger.info("V3蓝牙控制器已初始化")
-    
-    # ============ 公共接口 ============
+
+    # ============ 回调设置 ============
     
     def set_notification_callback(self, callback: Callable[[bytes], Awaitable[None]]) -> None:
         """设置通知回调"""
         self._on_notification = callback
     
-    def set_connecting_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+    def set_connecting_callback(self, callback: Optional[ConnectionStateCallback]) -> None:
         """设置连接中状态回调"""
         self._on_connecting = callback
     
-    def set_connected_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+    def set_connected_callback(self, callback: Optional[ConnectionStateCallback]) -> None:
         """设置连接成功回调"""
         self._on_connected = callback
     
-    def set_disconnected_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+    def set_disconnected_callback(self, callback: Optional[ConnectionStateCallback]) -> None:
         """设置断开连接回调"""
         self._on_disconnected = callback
     
-    def set_connection_lost_callback(self, callback: Callable[[], Awaitable[None]]) -> None:
+    def set_connection_lost_callback(self, callback: Optional[ConnectionStateCallback]) -> None:
         """设置连接丢失回调"""
         self._on_connection_lost = callback
     
@@ -114,6 +132,39 @@ class BluetoothController:
     def set_battery_callback(self, callback: Callable[[int], Awaitable[None]]) -> None:
         """设置电量变化回调"""
         self._on_battery_changed = callback
+    
+    def set_data_sync_callback(self, callback: Optional[DataSyncCallback]) -> None:
+        """设置数据同步回调"""
+        self._on_data_sync = callback
+
+    def set_progress_changed_callback(self, callback: Optional[ProgressChangedCallback]) -> None:
+        """设置进度回调"""
+        self._on_progress_changed = callback
+
+    def set_frames_event_callback(self, callback: Optional[FramesEventCallback]) -> None:
+        """设置帧事件回调"""
+        self._on_frames_event = callback
+
+    def set_playback_mode_changed_callback(self, callback: Optional[PlaybackModeChangedCallback]) -> None:
+        """设置播放模式变更回调"""
+        self._on_playback_mode_changed = callback
+
+    # ============ 播放模式接口 ============
+
+    def set_playback_mode(self, mode: PlaybackMode) -> None:
+        """设置播放模式"""
+        old_mode = self._current_playback_mode
+        self._current_playback_mode = mode
+        self._channel_handler.set_playback_mode(mode)
+        
+        # 通知播放模式变更
+        self._notify_playback_mode_changed(old_mode, mode)
+
+    def get_playback_mode(self) -> PlaybackMode:
+        """获取当前播放模式"""
+        return self._current_playback_mode
+
+    # ============ 公共接口 ============
     
     @property
     def is_connected(self) -> bool:
@@ -146,8 +197,6 @@ class BluetoothController:
             电量百分比 (0-100)
         """
         return self._device_state['battery_level']
-    
-    # ============ 设备管理 ============
     
     async def scan_devices(self, scan_time: float = 5.0) -> List[DeviceInfo]:
         """扫描可用的DG-LAB V3设备"""
@@ -305,8 +354,6 @@ class BluetoothController:
         finally:
             self._is_disconnecting = False
     
-    # ============ 设备参数控制 ============
-    
     async def set_device_params(self, strength_limit_a: int = 200, strength_limit_b: int = 200,
                                        freq_balance_a: int = 100, freq_balance_b: int = 100,
                                        strength_balance_a: int = 100, strength_balance_b: int = 100) -> bool:
@@ -347,8 +394,6 @@ class BluetoothController:
         except Exception as e:
             logger.error(f"设备参数设置失败: {e}")
             return False
-    
-    # ============ 强度控制 ============
     
     async def set_strength_absolute(self, channel: Channel, strength: int) -> bool:
         """设置绝对强度值"""
@@ -409,8 +454,6 @@ class BluetoothController:
         """重置通道强度为0"""
         return await self.set_strength_absolute(channel, 0)
     
-    # ============ 电量管理 ============
-    
     async def query_battery_level(self) -> Optional[int]:
         """手动查询电量
         
@@ -457,69 +500,126 @@ class BluetoothController:
             logger.error(f"手动查询电量失败: {e}")
             return None
     
-    # ============ 波形控制 ============
-    
-    async def set_pulse_data(self, channel: Channel, pulses: List[PulseOperation]) -> bool:
-        """设置通道波形数据
-        
-        Args:
-            channel: 目标通道
-            pulses: 波形操作数据
-        """
-        try:
-            if not self.is_connected:
-                logger.warning("设备未连接，无法设置波形数据")
-                return False
+    async def set_pulse_data(self, channel: Channel, pulses: List[PulseOperation]) -> None:
+        """设置通道波形数据"""
+        if not self.is_connected:
+            logger.warning("设备未连接，无法设置波形数据")
+            return
 
-            # 限制波形频率和强度在有效范围内
-            clamped_pulses: List[PulseOperation] = []
-            for pulse in pulses:
-                freq: WaveformFrequencyOperation = (
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][0])),
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][1])),
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][2])),
-                    self._protocol.clamp_pulse_frequency(self._protocol.clamp_pulse_frequency(pulse[0][3]))
-                )
-                strength: WaveformStrengthOperation = (
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][0])),
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][1])),
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][2])),
-                    self._protocol.clamp_pulse_strength(self._protocol.clamp_pulse_strength(pulse[1][3]))
-                )
-                clamped_pulse: PulseOperation = (freq, strength)
-                clamped_pulses.append(clamped_pulse)
-            
-            # 存储波形数据到对应通道
-            if channel == Channel.A:
-                self._pulse_data_a = clamped_pulses.copy()
-                self._pulse_index_a = 0
-                self._device_state['channel_a']['pulses'] = clamped_pulses.copy()
-            elif channel == Channel.B:
-                self._pulse_data_b = clamped_pulses.copy()
-                self._pulse_index_b = 0
-                self._device_state['channel_b']['pulses'] = clamped_pulses.copy()
-            
-            logger.debug(f"设置{channel}通道波形数据，共{len(clamped_pulses)}个脉冲操作")
-            return True
-            
-        except Exception as e:
-            logger.error(f"设置波形数据失败: {e}")
-            return False
-    
-    async def clear_pulse_data(self, channel: Channel) -> bool:
-        """清除通道波形数据（设置为静止状态）"""
-        if channel == Channel.A:
-            self._pulse_data_a.clear()
-            self._pulse_index_a = 0
-            self._device_state['channel_a']['pulses'].clear()
-        elif channel == Channel.B:
-            self._pulse_data_b.clear()
-            self._pulse_index_b = 0
-            self._device_state['channel_b']['pulses'].clear()
+        # 限制波形频率和强度在有效范围内
+        clamped_pulses: List[PulseOperation] = []
+        for pulse in pulses:
+            freq: WaveformFrequencyOperation = (
+                self._protocol.clamp_pulse_frequency(pulse[0][0]),
+                self._protocol.clamp_pulse_frequency(pulse[0][1]),
+                self._protocol.clamp_pulse_frequency(pulse[0][2]),
+                self._protocol.clamp_pulse_frequency(pulse[0][3])
+            )
+            strength: WaveformStrengthOperation = (
+                self._protocol.clamp_pulse_strength(pulse[1][0]),
+                self._protocol.clamp_pulse_strength(pulse[1][1]),
+                self._protocol.clamp_pulse_strength(pulse[1][2]),
+                self._protocol.clamp_pulse_strength(pulse[1][3])
+            )
+            clamped_pulse: PulseOperation = (freq, strength)
+            clamped_pulses.append(clamped_pulse)
         
-        logger.debug(f"清除{channel}通道波形数据")
-        return True
+        self._channel_handler.set_pulse_data(channel, clamped_pulses)
+        # 重置播放状态，确保新数据可以正常播放
+        self._is_paused = False
+        self._last_frame_finished = False
     
+    async def clear_frame_data(self, channel: Channel) -> None:
+        """清除通道波形数据（设置为静止状态）"""
+        self._channel_handler.clear_frame_data(channel)
+
+    def clear_frames(self) -> None:
+        """清除所有通道的波形数据"""
+        self._channel_handler.clear_all_frames()
+
+    def set_snapshot_data(self, channel: Channel, snapshots: List[ChannelSnapshot]) -> None:
+        """设置通道快照数据（新接口）"""
+        # 限制波形频率和强度在有效范围内
+        clamped_snapshots: List[ChannelSnapshot] = []
+        for snapshot in snapshots:
+            # 获取原始波形操作数据
+            freq, strength = snapshot.pulse_operation
+            
+            # 限制频率范围
+            clamped_freq: WaveformFrequencyOperation = (
+                self._protocol.clamp_pulse_frequency(freq[0]),
+                self._protocol.clamp_pulse_frequency(freq[1]),
+                self._protocol.clamp_pulse_frequency(freq[2]),
+                self._protocol.clamp_pulse_frequency(freq[3])
+            )
+            
+            # 限制强度范围
+            clamped_strength: WaveformStrengthOperation = (
+                self._protocol.clamp_pulse_strength(strength[0]),
+                self._protocol.clamp_pulse_strength(strength[1]),
+                self._protocol.clamp_pulse_strength(strength[2]),
+                self._protocol.clamp_pulse_strength(strength[3])
+            )
+            
+            # 创建限制后的快照
+            clamped_pulse_operation: PulseOperation = (clamped_freq, clamped_strength)
+            clamped_snapshot = ChannelSnapshot(
+                pulse_operation=clamped_pulse_operation,
+                current_strength=min(max(snapshot.current_strength, 0), 200)  # 限制实时强度范围 [0-200]
+            )
+            clamped_snapshots.append(clamped_snapshot)
+        
+        self._channel_handler.set_snapshot_data(channel, clamped_snapshots)
+
+    def set_snapshots(self, snapshots: List[RecordingSnapshot]) -> None:
+        """设置录制快照列表"""
+        self._channel_handler.set_snapshots(snapshots)
+        # 重置播放状态，确保新数据可以正常播放
+        self._is_paused = False
+        self._last_frame_finished = False
+        logger.info("开始播放快照序列")
+
+    def pause_frames(self) -> None:
+        """暂停波形数据"""
+        self._is_paused = True
+
+    def resume_frames(self) -> None:
+        """继续波形数据"""
+        self._is_paused = False
+    
+    def get_frames_position(self) -> int:
+        """获取帧播放位置"""
+        return self._channel_handler.get_frame_position()
+
+    def set_frames_position(self, position: int) -> None:
+        """设置帧播放位置"""
+        self._channel_handler.set_frame_position(position)
+        
+        # 通知进度变化
+        if self._on_progress_changed:
+            self._on_progress_changed()
+    
+    def get_current_pulse_data(self, channel: Channel) -> Optional[PulseOperation]:
+        """获取指定通道当前播放的脉冲操作数据（用于录制）"""
+        return self._channel_handler.get_current_pulse_data(channel)
+    
+    def get_current_strength(self, channel: Channel) -> int:
+        """获取指定通道当前的强度值（用于录制）"""
+        return self._get_current_strength(channel)
+    
+    @property
+    def channel_handler(self) -> BluetoothChannelStateHandler:
+        """获取通道状态处理器"""
+        return self._channel_handler
+    
+    def has_any_frame_data(self) -> bool:
+        """检查是否有任何通道有波形数据"""
+        return self._channel_handler.has_any_frame_data()
+    
+    def prepare_bluetooth_data(self) -> Tuple[Optional[PulseOperation], Optional[PulseOperation]]:
+        """准备蓝牙发送数据"""
+        return self._channel_handler.prepare_bluetooth_command_data()
+
     # ============ 内部实现 ============
 
     def _create_device_state(self) -> DeviceState:
@@ -530,14 +630,12 @@ class BluetoothController:
                 'strength_limit': 200,
                 'frequency_balance': 100,
                 'strength_balance': 100,
-                'pulses': []
             },
             'channel_b': {
                 'strength': 0,
                 'strength_limit': 200,
                 'frequency_balance': 100,
                 'strength_balance': 100,
-                'pulses': []
             },
             'is_connected': False,
             'battery_level': 0
@@ -727,68 +825,87 @@ class BluetoothController:
         logger.debug("控制器服务已停止")
     
     async def _data_send_loop(self) -> None:
-        """数据发送循环（每100ms发送一次B0指令）"""
-        while self._is_running:
-            try:
-                # 等待连接状态变化信号
+        """数据发送循环"""
+        try:
+            next_time = time.time()
+            while self._is_running:
                 if not self.is_connected:
-                    # 清除事件状态，等待连接成功
                     await self._connected_event.wait()
+                    self._pulse_buffer_count = 0
+                    next_time = time.time()
                     continue
 
-                # 发送脉冲缓冲区
-                for _ in range(self._pulse_buffer):
-                    await self._process_and_send_b0_command()
+                # 检查是否暂停
+                if not self._is_paused:
+                    # 未暂停时正常发送数据
+                    if self._pulse_buffer_count < self._pulse_buffer_min:
+                        for _ in range(self._pulse_buffer_max - self._pulse_buffer_count):
+                            await self._process_and_send_b0_command()
+                            self._pulse_buffer_count += 1
 
-                # 发送B0指令
-                await self._process_and_send_b0_command()
+                    if self._pulse_buffer_count > 0:
+                        self._pulse_buffer_count -= 1
 
-                # 等待100ms
-                await asyncio.sleep(0.1)
+                    self._channel_handler.advance_logical_frame()
+                    
+                    # 检测播放状态变化并触发回调
+                    current_finished = self._channel_handler.is_frame_sequence_finished()
+                    
+                    if not self._last_frame_finished and current_finished:
+                        # 帧序列刚刚完成
+                        if self._current_playback_mode == PlaybackMode.ONCE:
+                            logger.info("帧序列播放已完成（单次模式）")
+                            self._notify_frames_event(FramesEventType.COMPLETED)
+                            # 清空快照数据，让后续循环发送空数据
+                            self._channel_handler.clear_all_frames()
+                        elif self._current_playback_mode == PlaybackMode.LOOP:
+                            logger.info("帧序列播放完成，开始新循环")
+                            self._notify_frames_event(FramesEventType.LOOPED)
+                            # 重置帧位置开始新循环
+                            self._channel_handler.reset_frame_progress()
+                    
+                    self._last_frame_finished = current_finished
+                    
+                    # 通知进度变化
+                    if self._on_progress_changed:
+                        self._on_progress_changed()
+                else:
+                    # 暂停时保持连接但不发送新数据，也不推进播放位置
+                    pass
+                
+                self._notify_data_sync()
 
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"数据发送循环错误: {e}")
-                await asyncio.sleep(0.1)
+                next_time += (0.1 - 0.001)  # 时间补偿，减少累积误差
+                sleep_time = max(0, next_time - time.time())
+                await asyncio.sleep(sleep_time)
 
-    def _next_pulse_data(self, channel: Channel) -> PulseOperation:
-        """获取当前波形数据（循环播放）
+        except asyncio.CancelledError:
+            logger.debug("波形发送任务被取消")
+        except Exception as e:
+            logger.error(f"数据发送循环错误: {e}")
 
-        Args:
-            channel: 目标通道
-
-        Returns:
-            当前波形的频率和强度操作数据
-        """
-        if channel == Channel.A:
-            if not self._pulse_data_a:
-                # 返回静止状态的默认波形数据
-                return ((10, 10, 10, 10), (0, 0, 0, 0))
-
-            current_pulse = self._pulse_data_a[self._pulse_index_a]
-            self._pulse_index_a = (self._pulse_index_a + 1) % len(self._pulse_data_a)
-            return current_pulse
-
-        elif channel == Channel.B:
-            if not self._pulse_data_b:
-                # 返回静止状态的默认波形数据
-                return ((10, 10, 10, 10), (0, 0, 0, 0))
-
-            current_pulse = self._pulse_data_b[self._pulse_index_b]
-            self._pulse_index_b = (self._pulse_index_b + 1) % len(self._pulse_data_b)
-            return current_pulse
+    def _next_pulse_and_strength_data(self, channel: Channel) -> Tuple[WaveformFrequencyOperation, WaveformStrengthOperation, Optional[int]]:
+        """获取当前波形和强度数据"""
+        frame_data = self._channel_handler.advance_buffer_for_send()
+        frame = frame_data[channel]
+        return frame.pulse_operation[0], frame.pulse_operation[1], frame.target_strength
 
     async def _process_and_send_b0_command(self) -> None:
-        """处理并发送B0指令"""
+        """处理并发送B0指令 - 支持快照强度"""
         try:
-            # 获取当前强度值
-            strength_a = self._device_state['channel_a']['strength']
-            strength_b = self._device_state['channel_b']['strength']
+            # 获取当前脉冲和强度数据
+            pulse_freq_a, pulse_strength_a, target_strength_a = self._next_pulse_and_strength_data(Channel.A)
+            pulse_freq_b, pulse_strength_b, target_strength_b = self._next_pulse_and_strength_data(Channel.B)
             
-            # 获取当前脉冲数据（循环播放）
-            pulse_freq_a, pulse_strength_a = self._next_pulse_data(Channel.A)
-            pulse_freq_b, pulse_strength_b = self._next_pulse_data(Channel.B)
+            # 确定最终强度值
+            strength_a = target_strength_a if target_strength_a is not None else self._device_state['channel_a']['strength']
+            strength_b = target_strength_b if target_strength_b is not None else self._device_state['channel_b']['strength']
+            
+            # 更新设备状态（如果有强度变化）
+            if target_strength_a is not None:
+                self._device_state['channel_a']['strength'] = target_strength_a
+            if target_strength_b is not None:
+                self._device_state['channel_b']['strength'] = target_strength_b
 
             # 构建强度解读方式
             strength_parsing_method = self._protocol.build_strength_parsing_method(StrengthParsingMethod.ABSOLUTE, StrengthParsingMethod.ABSOLUTE)
@@ -806,13 +923,33 @@ class BluetoothController:
             )
             
             if b0_data is not None:
-                # 发送数据
                 await self._send_data(b0_data)
             else:
                 logger.error("B0指令参数验证失败，跳过发送")
-            
+                
         except Exception as e:
             logger.error(f"处理B0指令失败: {e}")
+    
+    def _notify_data_sync(self) -> None:
+        """通知数据同步"""
+        if self._on_data_sync:
+            self._on_data_sync()
+
+    def _notify_frames_event(self, event_type: FramesEventType) -> None:
+        """通知帧事件"""
+        if self._on_frames_event:
+            try:
+                self._on_frames_event(event_type)
+            except Exception as e:
+                logger.error(f"Frames event callback failed: {e}")
+
+    def _notify_playback_mode_changed(self, old_mode: PlaybackMode, new_mode: PlaybackMode) -> None:
+        """通知播放模式变更"""
+        if self._on_playback_mode_changed:
+            try:
+                self._on_playback_mode_changed(old_mode, new_mode)
+            except Exception as e:
+                logger.error(f"Playback mode changed callback failed: {e}")
     
     async def _battery_polling_loop(self) -> None:
         """电量轮询循环"""
