@@ -23,7 +23,7 @@ from core.recording.playback_handler import PlaybackState
 from core.recording.recording_models import PlaybackState as RecordingPlaybackState
 from core.recording.dgr_file_manager import DGRFileManager
 from gui.ui_interface import UIInterface
-from i18n import language_signals
+from i18n import language_signals, translate
 from models import Channel, PlaybackMode
 
 logger = logging.getLogger(__name__)
@@ -131,11 +131,10 @@ class RecordingTab(QWidget):
         self.update_timer.timeout.connect(self.update_status)
         self.update_timer.start(100)
         
+        self.setup_ui()
+        
         # 连接语言更新信号
         language_signals.language_changed.connect(self.update_ui_texts)
-        
-        self.setup_ui()
-        self.update_ui_texts()
         
     def setup_ui(self) -> None:
         """设置主UI布局 - 精简版"""
@@ -198,11 +197,11 @@ class RecordingTab(QWidget):
         layout.setContentsMargins(8, 4, 8, 4)
         
         # 连接状态
-        self.connection_text = QLabel("设备已连接")
+        self.connection_text = QLabel(translate("recording.device_connected"))
         self.connection_text.setStyleSheet(f"color: {DGLabColors.STATUS_READY}; font-weight: bold;")
         
         # 录制状态
-        self.recording_status_text = QLabel("就绪")
+        self.recording_status_text = QLabel(translate("recording.ready"))
         self.recording_status_text.setStyleSheet(f"color: {DGLabColors.TEXT_SECONDARY};")
         
         # 选中文件
@@ -235,7 +234,7 @@ class RecordingTab(QWidget):
         layout.setSpacing(12)
         
         # 录制按钮组
-        self.start_record_btn = QPushButton("开始录制")
+        self.start_record_btn = QPushButton(translate("recording.start_recording"))
         self.start_record_btn.setMinimumHeight(50)
         self.start_record_btn.clicked.connect(self._start_record_btn_clicked)
         self.start_record_btn.setStyleSheet(f"""
@@ -256,7 +255,7 @@ class RecordingTab(QWidget):
             }}
         """)
         
-        self.stop_record_btn = QPushButton("停止录制")
+        self.stop_record_btn = QPushButton(translate("recording.stop_recording"))
         self.stop_record_btn.setMinimumHeight(50)
         self.stop_record_btn.clicked.connect(self._stop_record_btn_clicked)
         self.stop_record_btn.setStyleSheet(f"""
@@ -280,8 +279,8 @@ class RecordingTab(QWidget):
         # 暂停/继续按钮
         control_layout = QHBoxLayout()
         control_layout.setSpacing(8)
-        self.pause_record_btn = QPushButton("暂停")
-        self.resume_record_btn = QPushButton("继续")
+        self.pause_record_btn = QPushButton(translate("recording.pause"))
+        self.resume_record_btn = QPushButton(translate("recording.resume"))
         
         for btn in [self.pause_record_btn, self.resume_record_btn]:
             btn.setEnabled(False)
@@ -346,7 +345,7 @@ class RecordingTab(QWidget):
         self.recording_status_icon.setFixedSize(12, 12)
         self.recording_status_icon.setStyleSheet(f"color: {DGLabColors.STATUS_READY};")
         
-        self.recording_time_label = QLabel("时长: 00:00")
+        self.recording_time_label = QLabel(translate("recording.duration").format("00:00"))
         self.recording_time_label.setStyleSheet(f"color: {DGLabColors.TEXT_SECONDARY}; font-size: 13px; font-weight: bold;")
         
         status_info_layout.addWidget(self.recording_status_icon)
@@ -360,7 +359,7 @@ class RecordingTab(QWidget):
         channels_layout.setSpacing(6)
         
         # 通道标题
-        channels_title = QLabel("通道强度")
+        channels_title = QLabel(translate("recording.channel_strength"))
         channels_title.setStyleSheet(f"color: {DGLabColors.TEXT_SECONDARY}; font-size: 11px; font-weight: bold;")
         channels_layout.addWidget(channels_title)
         
@@ -498,7 +497,7 @@ class RecordingTab(QWidget):
         toolbar_layout = QHBoxLayout()
         toolbar_layout.setSpacing(8)
         
-        self.import_btn = QPushButton("导入文件")
+        self.import_btn = QPushButton(translate("recording.import_file"))
         self.import_btn.setMinimumHeight(35)
         self.import_btn.clicked.connect(self._import_btn_clicked)
         self.import_btn.setStyleSheet(f"""
@@ -561,11 +560,11 @@ class RecordingTab(QWidget):
         # 播放按钮组
         btn_layout = QHBoxLayout()
         
-        self.play_btn = QPushButton("播放")
-        self.pause_playback_btn = QPushButton("暂停")
-        self.resume_playback_btn = QPushButton("继续")
-        self.stop_playback_btn = QPushButton("停止")
-        self.loop_btn = QPushButton("循环")
+        self.play_btn = QPushButton(translate("recording.play"))
+        self.pause_playback_btn = QPushButton(translate("recording.pause"))
+        self.resume_playback_btn = QPushButton(translate("recording.resume"))
+        self.stop_playback_btn = QPushButton(translate("recording.stop"))
+        self.loop_btn = QPushButton(translate("recording.loop"))
         self.loop_btn.setCheckable(True)
         
         # 初始状态：继续按钮隐藏
@@ -691,8 +690,8 @@ class RecordingTab(QWidget):
         """确认停止录制"""
         reply = QMessageBox.question(
             self,
-            "确认停止录制",
-            "确定要停止当前录制吗？",
+            translate("recording.confirm_stop_recording"),
+            translate("recording.confirm_stop_recording_msg"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
@@ -770,24 +769,24 @@ class RecordingTab(QWidget):
         """)
         
         # 播放菜单
-        play_action = menu.addAction("播放")
+        play_action = menu.addAction(translate("recording.context_menu_play"))
         play_action.triggered.connect(lambda: asyncio.create_task(self.start_playback()))
         
         menu.addSeparator()
         
         # 文件操作菜单
-        rename_action = menu.addAction("重命名")
+        rename_action = menu.addAction(translate("recording.context_menu_rename"))
         rename_action.triggered.connect(lambda: self._rename_file(item, session))
         
-        export_action = menu.addAction("导出")
+        export_action = menu.addAction(translate("recording.context_menu_export"))
         export_action.triggered.connect(lambda: self._export_file(session))
         
-        details_action = menu.addAction("详细信息")
+        details_action = menu.addAction(translate("recording.context_menu_details"))
         details_action.triggered.connect(lambda: self._show_file_details(session))
         
         menu.addSeparator()
         
-        delete_action = menu.addAction("删除")
+        delete_action = menu.addAction(translate("recording.context_menu_delete"))
         delete_action.triggered.connect(lambda: self._delete_file(item, session))
         
         # 显示菜单
@@ -1058,23 +1057,23 @@ class RecordingTab(QWidget):
                         if playback_handler:
                             playback_state = playback_handler.get_playback_state()
                             if playback_state == PlaybackState.PLAYING:
-                                self.recording_status_text.setText("播放中")
+                                self.recording_status_text.setText(translate("recording.status.playing"))
                             elif playback_state == PlaybackState.PAUSED:
-                                self.recording_status_text.setText("已暂停")
+                                self.recording_status_text.setText(translate("recording.status.paused"))
                             else:
-                                self.recording_status_text.setText("就绪")
+                                self.recording_status_text.setText(translate("recording.ready"))
                 elif recording_state == RecordingState.RECORDING:
-                    self.recording_status_text.setText("录制中")
+                    self.recording_status_text.setText(translate("recording.status.recording"))
                 elif recording_state == RecordingState.PAUSED:
-                    self.recording_status_text.setText("录制暂停")
+                    self.recording_status_text.setText(translate("recording.recording_paused"))
                     
                 # 检查系统健康状态
                 self._check_system_health(recording_state)
                     
         # 更新选中文件信息
         if self.current_session and self.current_session.metadata:
-            file_name = f"录制_{self.current_session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
-            self.selected_file_text.setText(f"选中: {file_name}")
+            file_name = f"{translate('recording.recording_prefix')}{self.current_session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
+            self.selected_file_text.setText(translate("recording.selected_file").format(file_name))
         else:
             self.selected_file_text.setText("")
             
@@ -1083,7 +1082,7 @@ class RecordingTab(QWidget):
         self.sessions.append(session)
         
         # 生成完整的文件名显示
-        file_name = f"录制_{session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
+        file_name = f"{translate('recording.recording_prefix')}{session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
         duration = self.format_duration(session.get_duration_ms())
         time_str = session.metadata.start_time.strftime("%Y-%m-%d %H:%M:%S")
         
@@ -1705,7 +1704,7 @@ class RecordingTab(QWidget):
             dialog = QFileDialog(self)
             dialog.setWindowTitle("导出录制文件")
             dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
-            dialog.setNameFilter("录制文件 (*.dgr)")
+            dialog.setNameFilter(translate("recording.recording_files_filter"))
             dialog.selectFile(default_name)
             dialog.setStyleSheet(f"""
                 QFileDialog {{
@@ -1794,7 +1793,7 @@ class RecordingTab(QWidget):
             dialog = QFileDialog(self)
             dialog.setWindowTitle("导入录制文件")
             dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
-            dialog.setNameFilter("录制文件 (*.dgr);;所有文件 (*)")
+            dialog.setNameFilter(f"{translate('recording.recording_files_filter')};;{translate('recording.all_files_filter')}")
             dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
             dialog.setStyleSheet(f"""
                 QFileDialog {{
@@ -1848,7 +1847,7 @@ class RecordingTab(QWidget):
             self.sessions.append(session)
             
             # 生成完整的文件名显示
-            file_name = f"导入_{session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
+            file_name = f"{translate('recording.import_prefix')}{session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
             duration = self.format_duration(session.get_duration_ms())
             time_str = session.metadata.start_time.strftime("%Y-%m-%d %H:%M:%S")
             
@@ -1894,12 +1893,12 @@ class RecordingTab(QWidget):
                     if device_service:
                         playback_handler = device_service.get_playback_handler()
                         if playback_handler and playback_handler.get_playback_state() != PlaybackState.IDLE:
-                            self.show_warning("无法删除正在播放中的文件，请先停止播放")
+                            self.show_warning(translate("recording.cannot_delete_playing_file"))
                             return
             
             # 创建自定义确认对话框
             dialog = QDialog(self)
-            dialog.setWindowTitle("确认删除")
+            dialog.setWindowTitle(translate("recording.confirm_delete_file"))
             dialog.setFixedSize(450, 250)
             dialog.setModal(True)
             
@@ -1923,7 +1922,7 @@ class RecordingTab(QWidget):
                 }}
             """)
             
-            main_text = QLabel("确定要删除这个录制文件吗？")
+            main_text = QLabel(translate("recording.confirm_delete_file_msg"))
             main_text.setStyleSheet(f"""
                 QLabel {{
                     color: {DGLabColors.TEXT_PRIMARY};
@@ -1938,9 +1937,9 @@ class RecordingTab(QWidget):
             main_layout.addLayout(header_layout)
             
             # 详细信息
-            file_name = f"录制_{session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
+            file_name = f"{translate('recording.recording_prefix')}{session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
             duration = self.format_duration(session.get_duration_ms())
-            detail_text = f"文件名: {file_name}\n创建时间: {session.metadata.start_time.strftime('%Y-%m-%d %H:%M:%S')}\n录制时长: {duration}"
+            detail_text = f"{translate('recording.file_name').format(file_name)}\n{translate('recording.create_time').format(session.metadata.start_time.strftime('%Y-%m-%d %H:%M:%S'))}\n{translate('recording.recording_duration').format(duration)}"
             
             detail_label = QLabel(detail_text)
             detail_label.setStyleSheet(f"""
@@ -1960,7 +1959,7 @@ class RecordingTab(QWidget):
             button_layout = QHBoxLayout()
             button_layout.addStretch()
             
-            delete_btn = QPushButton("删除")
+            delete_btn = QPushButton(translate("recording.context_menu_delete"))
             delete_btn.setFixedSize(80, 35)
             delete_btn.setStyleSheet(f"""
                 QPushButton {{
@@ -1975,7 +1974,7 @@ class RecordingTab(QWidget):
                 }}
             """)
             
-            cancel_btn = QPushButton("取消")
+            cancel_btn = QPushButton(translate("recording.context_menu_cancel"))
             cancel_btn.setFixedSize(80, 35)
             cancel_btn.setStyleSheet(f"""
                 QPushButton {{
@@ -2096,13 +2095,6 @@ class RecordingTab(QWidget):
         
         dialog.exec()
         
-    def update_ui_texts(self) -> None:
-        """更新UI文本 - 国际化支持"""
-        # 当前使用中文硬编码，未来可扩展为多语言
-        # 按钮文字固定，不需要动态更新
-        self.start_record_btn.setText("开始录制")
-        self.stop_record_btn.setText("停止录制")
-        self.recording_status_text.setText("就绪")
     
     # ================== 回放回调方法 ==================
     
@@ -2175,3 +2167,29 @@ class RecordingTab(QWidget):
         if device_service:
             # 通过设备服务设置播放模式
             device_service.set_playback_mode(playback_mode)
+        
+    def update_ui_texts(self):
+        """更新UI文本（语言切换时调用）"""
+        # 更新按钮文本
+        self.start_record_btn.setText(translate("recording.start_recording"))
+        self.stop_record_btn.setText(translate("recording.stop_recording"))
+        self.pause_record_btn.setText(translate("recording.pause"))
+        self.resume_record_btn.setText(translate("recording.resume"))
+        self.import_btn.setText(translate("recording.import_file"))
+        self.play_btn.setText(translate("recording.play"))
+        self.pause_playback_btn.setText(translate("recording.pause"))
+        self.resume_playback_btn.setText(translate("recording.resume"))
+        self.stop_playback_btn.setText(translate("recording.stop"))
+        self.loop_btn.setText(translate("recording.loop"))
+        
+        # 更新状态文本
+        self.recording_status_text.setText(translate("recording.ready"))
+        self.connection_text.setText(translate("recording.device_connected"))
+        
+        # 更新时长显示
+        self.recording_time_label.setText(translate("recording.duration").format("00:00"))
+        
+        # 更新选中文件显示
+        if self.current_session and self.current_session.metadata:
+            file_name = f"{translate('recording.recording_prefix')}{self.current_session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}.dgr"
+            self.selected_file_text.setText(translate("recording.selected_file").format(file_name))

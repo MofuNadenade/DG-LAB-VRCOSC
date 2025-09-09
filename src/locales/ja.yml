@@ -328,66 +328,64 @@ controller_tab:
 # 録画・再生機能
 recording:
   title: "録画・再生"
-  recording_section: "パルス録画"
-  playback_section: "録画再生"
-  recording_status_label: "録画ステータス:"
-  recording_time_label: "録画時間:"
-  recording_samples_label: "サンプル数:"
-  playback_status_label: "再生ステータス:"
-  playback_progress_label: "再生進度:"
-  playback_position_label: "再生位置:"
-  session_select_label: "セッション選択:"
   
   # 録画ステータス
   status:
-    idle: "待機中"
     recording: "録画中"
     paused: "一時停止"
     playing: "再生中"
     
   # ボタン
   start_recording: "録画開始"
-  pause_recording: "録画一時停止"
-  resume_recording: "録画再開"
   stop_recording: "録画停止"
-  start_playback: "再生開始"
-  pause_playback: "再生一時停止"
-  resume_playback: "再生再開"
-  stop_playback: "再生停止"
-  load_session: "セッション読み込み"
-  save_session: "セッション保存"
-  delete_session: "セッション削除"
   
   # メッセージ
-  no_sessions: "録画セッションがありません"
-  no_session_selected: "まずセッションを選択してください"
-  recording_started: "録画を開始しました"
-  recording_stopped: "録画を停止しました"
   recording_paused: "録画を一時停止しました"
-  recording_resumed: "録画を再開しました"
-  playback_started: "再生を開始しました"
-  playback_stopped: "再生を停止しました"
-  playback_paused: "再生を一時停止しました"
-  playback_resumed: "再生を再開しました"
-  session_loaded: "セッションを読み込みました"
-  session_saved: "セッションを保存しました"
-  session_deleted: "セッションを削除しました"
   
   # エラーメッセージ
-  error_no_service: "デバイスサービスが開始されていません"
-  error_start_recording: "録画開始に失敗しました"
-  error_stop_recording: "録画停止に失敗しました"
-  error_start_playback: "再生開始に失敗しました"
-  error_stop_playback: "再生停止に失敗しました"
-  error_load_session: "セッション読み込みに失敗しました"
-  error_save_session: "セッション保存に失敗しました"
-  error_delete_session: "セッション削除に失敗しました"
   
   # 確認ダイアログ
   confirm_stop_recording: "録画停止の確認"
   confirm_stop_recording_msg: "現在の録画を停止しますか？"
-  confirm_delete_session: "セッション削除の確認"
-  confirm_delete_session_msg: "セッション '{0}' を削除しますか？この操作は元に戻せません。"
+  confirm_delete_file: "削除の確認"
+  confirm_delete_file_msg: "この録画ファイルを削除しますか？"
+  
+  # UI ラベル
+  device_connected: "デバイス接続済み"
+  ready: "準備完了"
+  duration: "時間: {0}"
+  channel_strength: "チャンネル強度"
+  import_file: "ファイルをインポート"
+  play: "再生"
+  pause: "一時停止"
+  resume: "再開"
+  stop: "停止"
+  loop: "ループ"
+  selected_file: "選択: {0}"
+  
+  # コンテキストメニュー
+  context_menu_play: "再生"
+  context_menu_rename: "名前変更"
+  context_menu_export: "エクスポート"
+  context_menu_details: "詳細"
+  context_menu_delete: "削除"
+  context_menu_cancel: "キャンセル"
+  
+  # ファイル情報
+  file_name: "ファイル名: {0}"
+  create_time: "作成時間: {0}"
+  recording_duration: "録画時間: {0}"
+  
+  # 録画ファイルプレフィックス
+  recording_prefix: "録画_"
+  import_prefix: "インポート_"
+  
+  # ファイルダイアログ
+  recording_files_filter: "録画ファイル (*.dgr)"
+  all_files_filter: "すべてのファイル (*)"
+  
+  # ステータスメッセージ
+  cannot_delete_playing_file: "再生中のファイルは削除できません。まず再生を停止してください"
 
 game_tab:
   title: "Terrors of Nowhere"
