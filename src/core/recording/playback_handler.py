@@ -9,11 +9,6 @@ from typing import Optional
 
 from .recording_models import RecordingSession, PlaybackState, ProgressChangedCallback, StateChangedCallback, ErrorCallback
 
-# 为了向后兼容，保持别名
-PlaybackProgressCallback = ProgressChangedCallback
-
-
-
 
 class IPulsePlaybackHandler(ABC):
     """脉冲回放处理器抽象接口"""

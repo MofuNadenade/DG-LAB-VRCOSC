@@ -316,6 +316,12 @@ class DGLabBluetoothService(IDGLabDeviceService):
         # 设置播放位置
         self._bluetooth_controller.set_frames_position(position)
 
+    def get_current_pulse_data(self, channel: Channel) -> Optional[PulseOperation]:
+        """获取指定通道当前的脉冲操作数据"""
+        return self._bluetooth_controller.get_current_pulse_data(
+            self._convert_channel_to_bluetooth(channel)
+        )
+
     # ============ 播放模式控制（实现IDGLabService接口） ============
 
     def set_playback_mode(self, mode: PlaybackMode) -> None:
@@ -670,23 +676,14 @@ class DGLabBluetoothService(IDGLabDeviceService):
 
         def _get_current_pulse_data(self, channel: Channel) -> PulseOperation:
             """获取指定通道当前的脉冲操作数据"""
-            bluetooth_controller = self._bluetooth_service._bluetooth_controller
-            bt_channel = self._bluetooth_service._convert_channel_to_bluetooth(channel)
-
             # 使用公共方法获取当前脉冲数据
-            return bluetooth_controller.get_current_pulse_data(bt_channel) or ((10, 10, 10, 10), (0, 0, 0, 0))
+            return self._bluetooth_service.get_current_pulse_data(channel) or ((10, 10, 10, 10), (0, 0, 0, 0))
 
         def _get_current_strength(self, channel: Channel) -> int:
             """获取指定通道当前的强度值"""
-            # 方法1: 从蓝牙服务的缓存获取
+            # 从蓝牙服务的缓存获取
             current_strength = self._bluetooth_service._current_strengths.get(channel, 0)
-            if current_strength > 0:
-                return current_strength
-
-            # 方法2: 从蓝牙控制器的设备状态获取
-            bluetooth_controller = self._bluetooth_service._bluetooth_controller
-            bt_channel = self._bluetooth_service._convert_channel_to_bluetooth(channel)
-            return bluetooth_controller.get_current_strength(bt_channel)
+            return current_strength
 
 
     class _BluetoothPlaybackHandler(BasePlaybackHandler):

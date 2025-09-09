@@ -7,6 +7,7 @@
 
 import asyncio
 import logging
+import os
 from typing import Optional
 from datetime import datetime
 
@@ -382,7 +383,7 @@ class RecordingTab(QWidget):
         """)
         
         self.channel_a_progress = QProgressBar()
-        self.channel_a_progress.setRange(0, 200)
+        self.channel_a_progress.setRange(0, 100)
         self.channel_a_progress.setValue(0)
         self.channel_a_progress.setFixedHeight(16)
         self.channel_a_progress.setTextVisible(False)
@@ -436,7 +437,7 @@ class RecordingTab(QWidget):
         """)
         
         self.channel_b_progress = QProgressBar()
-        self.channel_b_progress.setRange(0, 200)
+        self.channel_b_progress.setRange(0, 100)
         self.channel_b_progress.setValue(0)
         self.channel_b_progress.setFixedHeight(16)
         self.channel_b_progress.setTextVisible(False)
@@ -941,18 +942,17 @@ class RecordingTab(QWidget):
             self.recording_time_label.setText("时长: 00:00")
             
         # 更新通道强度显示
-        from models import Channel
-        osc_action_service = self.service_controller.osc_action_service
-        if osc_action_service:
-            last_strength = osc_action_service.get_last_strength()
-            if last_strength and 'strength' in last_strength:
-                strength_a = last_strength['strength'][Channel.A]
-                strength_b = last_strength['strength'][Channel.B]
-                
-                self.channel_a_progress.setValue(int(strength_a))
-                self.channel_b_progress.setValue(int(strength_b))
-                self.channel_a_value.setText(f"{int(strength_a):03d}")
-                self.channel_b_value.setText(f"{int(strength_b):03d}")
+        pulse_data_a = device_service.get_current_pulse_data(Channel.A)
+        pulse_data_b = device_service.get_current_pulse_data(Channel.B)
+
+        # 计算强度平均值
+        strength_a = sum(pulse_data_a[1]) / len(pulse_data_a[1]) if pulse_data_a else 0
+        strength_b = sum(pulse_data_b[1]) / len(pulse_data_b[1]) if pulse_data_b else 0
+        
+        self.channel_a_progress.setValue(int(strength_a))
+        self.channel_b_progress.setValue(int(strength_b))
+        self.channel_a_value.setText(f"{int(strength_a):03d}")
+        self.channel_b_value.setText(f"{int(strength_b):03d}")
         
     def update_playback_status(self):
         """更新回放状态"""
@@ -1747,7 +1747,6 @@ class RecordingTab(QWidget):
                         file_path += '.dgr'
                     
                     # 检查文件是否已存在
-                    import os
                     if os.path.exists(file_path):
                         reply = QMessageBox.question(
                             self, "文件已存在", 
@@ -1779,7 +1778,6 @@ class RecordingTab(QWidget):
             await file_manager.save_recording(session, file_path)
             
             # 导出成功
-            import os
             filename = os.path.basename(file_path)
             logger.info(f"文件导出成功: {filename}")
             

@@ -5,29 +5,35 @@
 """
 
 from .recording_models import (
+    PlaybackState,
     RecordingState,
     ChannelSnapshot,
     RecordingSnapshot,
     RecordingMetadata,
-    RecordingSession
+    RecordingSession,
+    ProgressChangedCallback,
+    StateChangedCallback,
+    ErrorCallback
 )
 from .recording_handler import IPulseRecordHandler
 from .base_record_handler import BaseRecordHandler
-from .playback_handler import IPulsePlaybackHandler, PlaybackState, PlaybackProgressCallback
+from .playback_handler import IPulsePlaybackHandler
 from .base_playback_handler import BasePlaybackHandler
 from .dgr_file_manager import DGRFileManager
 
 __all__ = [
+    'PlaybackState',
     'RecordingState',
     'ChannelSnapshot', 
     'RecordingSnapshot',
     'RecordingMetadata',
     'RecordingSession',
+    'ProgressChangedCallback',
+    'StateChangedCallback',
+    'ErrorCallback',
     'IPulseRecordHandler',
     'BaseRecordHandler',
     'IPulsePlaybackHandler',
-    'PlaybackState',
-    'PlaybackProgressCallback',
     'BasePlaybackHandler',
     'DGRFileManager'
 ]

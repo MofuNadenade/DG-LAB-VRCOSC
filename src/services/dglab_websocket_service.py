@@ -296,6 +296,12 @@ class DGLabWebSocketService(IDGLabDeviceService):
         # 设置播放位置
         self._websocket_controller.set_frames_position(position)
 
+    def get_current_pulse_data(self, channel: Channel) -> Optional[PulseOperation]:
+        """获取指定通道当前的脉冲操作数据"""
+        return self._websocket_controller.get_current_pulse_data(
+            self._convert_channel_to_pydglab(channel)
+        )
+
     # ============ 播放模式控制（实现IDGLabService接口） ============
 
     def set_playback_mode(self, mode: PlaybackMode) -> None:
@@ -402,16 +408,13 @@ class DGLabWebSocketService(IDGLabDeviceService):
 
         def _get_current_pulse_data(self, channel: Channel) -> PulseOperation:
             """获取指定通道当前的脉冲操作数据"""
-            return self._websocket_service._websocket_controller.get_current_pulse_data(
-                self._websocket_service._convert_channel_to_pydglab(channel)
-            ) or ((10, 10, 10, 10), (0, 0, 0, 0))
+            return self._websocket_service.get_current_pulse_data(channel) or ((10, 10, 10, 10), (0, 0, 0, 0))
 
         def _get_current_strength(self, channel: Channel) -> int:
             """获取指定通道当前的强度值"""
             last_strength = self._websocket_service.get_last_strength()
-            if last_strength and 'strength' in last_strength:
+            if last_strength:
                 return last_strength['strength'].get(channel, 0)
-
             return 0
 
     class _WebSocketPlaybackHandler(BasePlaybackHandler):

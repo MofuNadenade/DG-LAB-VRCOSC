@@ -12,7 +12,7 @@ from core.dglab_pulse import Pulse
 from core.recording import IPulseRecordHandler
 from core.recording.playback_handler import IPulsePlaybackHandler
 from core.recording.recording_models import RecordingSnapshot
-from models import Channel, StrengthData, StrengthOperationType, PlaybackMode
+from models import Channel, PulseOperation, StrengthData, StrengthOperationType, PlaybackMode
 from services.service_interface import IService
 
 
@@ -120,6 +120,11 @@ class IDGLabDeviceService(IService):
     @abstractmethod
     async def seek_frames_to_position(self, position: int) -> None:
         """跳转到指定位置"""
+        ...
+
+    @abstractmethod
+    def get_current_pulse_data(self, channel: Channel) -> Optional[PulseOperation]:
+        """获取指定通道当前的脉冲操作数据"""
         ...
 
     # ============ 播放模式控制 ============
