@@ -248,27 +248,3 @@ class DGRFileManager:
         except Exception as e:
             logger.error(f"读取DGR文件信息失败: {e}")
             return None
-    
-    async def delete_recording(self, file_path: str) -> bool:
-        """删除DGR录制文件
-        
-        Args:
-            file_path: DGR文件路径
-            
-        Returns:
-            bool: 是否删除成功
-        """
-        try:
-            file_path_obj = Path(file_path)
-            
-            if not file_path_obj.exists():
-                logger.warning(f"DGR文件不存在，无需删除: {file_path}")
-                return True
-            
-            file_path_obj.unlink()
-            logger.info(f"DGR文件已删除: {file_path}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"删除DGR文件失败: {e}")
-            return False

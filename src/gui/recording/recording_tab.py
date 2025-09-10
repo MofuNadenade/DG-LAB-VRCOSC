@@ -130,7 +130,7 @@ class RecordingTab(QWidget):
         # 定时器
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_status)
-        self.update_timer.start(100)
+        self.update_timer.start(200)  # 200ms更新频率，平衡性能和响应性
         
         self.setup_ui()
         
@@ -198,8 +198,8 @@ class RecordingTab(QWidget):
         layout.setContentsMargins(8, 4, 8, 4)
         
         # 连接状态
-        self.connection_text = QLabel(translate("recording.device_connected"))
-        self.connection_text.setStyleSheet(f"color: {DGLabColors.STATUS_READY}; font-weight: bold;")
+        self.connection_text = QLabel(translate("recording.device_disconnected"))
+        self.connection_text.setStyleSheet(f"color: {DGLabColors.STATUS_WARNING}; font-weight: bold;")
         
         # 录制状态
         self.recording_status_text = QLabel(translate("recording.ready"))
@@ -324,7 +324,7 @@ class RecordingTab(QWidget):
         
         return panel
         
-    def create_compact_status_display(self, parent_layout: QVBoxLayout):
+    def create_compact_status_display(self, parent_layout: QVBoxLayout) -> None:
         """创建紧凑的状态显示"""
         # 状态信息区域
         status_group = QGroupBox()
@@ -556,7 +556,7 @@ class RecordingTab(QWidget):
         
         return panel
         
-    def create_simple_playback_controls(self, parent_layout: QVBoxLayout):
+    def create_simple_playback_controls(self, parent_layout: QVBoxLayout) -> None:
         """创建简化的播放控制"""
         # 播放按钮组
         btn_layout = QHBoxLayout()
@@ -676,18 +676,18 @@ class RecordingTab(QWidget):
         
     # ================== 事件处理方法 ==================
     
-    def _start_record_btn_clicked(self):
+    def _start_record_btn_clicked(self) -> None:
         """开始录制按钮点击"""
         logger.info("用户点击开始录制")
         asyncio.create_task(self.start_recording())
         
-    def _stop_record_btn_clicked(self):
+    def _stop_record_btn_clicked(self) -> None:
         """停止录制按钮点击"""
         logger.info("用户点击停止录制")
         # 显示确认对话框
         QTimer.singleShot(0, lambda: self._confirm_stop_recording())
             
-    def _confirm_stop_recording(self):
+    def _confirm_stop_recording(self) -> None:
         """确认停止录制"""
         reply = QMessageBox.question(
             self,
@@ -701,12 +701,12 @@ class RecordingTab(QWidget):
         else:
             logger.info("用户取消停止录制")
             
-    def _pause_resume_record_clicked(self):
+    def _pause_resume_record_clicked(self) -> None:
         """暂停/继续录制按钮点击"""
         logger.info("用户点击暂停/继续录制")
         asyncio.create_task(self.pause_recording())
         
-    def _file_item_clicked(self, item: QListWidgetItem):
+    def _file_item_clicked(self, item: QListWidgetItem) -> None:
         """文件项点击"""
         # 从item数据中获取会话
         session = item.data(256)
@@ -715,7 +715,7 @@ class RecordingTab(QWidget):
             self.current_session = session
             self.update_playback_ui_state()
             
-    def _file_item_double_clicked(self, item: QListWidgetItem):
+    def _file_item_double_clicked(self, item: QListWidgetItem) -> None:
         """文件项双击 - 开始播放"""
         session = item.data(256)
         if session:
@@ -724,7 +724,7 @@ class RecordingTab(QWidget):
             self.update_playback_ui_state()
             asyncio.create_task(self.start_playback())
             
-    def _import_btn_clicked(self):
+    def _import_btn_clicked(self) -> None:
         """导入文件按钮点击"""
         logger.info("用户点击导入文件按钮")
         # 先显示文件选择对话框，然后在回调中处理异步加载
@@ -733,14 +733,14 @@ class RecordingTab(QWidget):
             # 使用QTimer.singleShot避免在事件循环中直接创建任务
             QTimer.singleShot(0, lambda: self._safe_load_recording_file(file_path))
             
-    def _safe_load_recording_file(self, file_path: str):
+    def _safe_load_recording_file(self, file_path: str) -> None:
         """安全地加载录制文件"""
         try:
             asyncio.create_task(self._load_recording_from_file(file_path))
         except Exception as e:
             logger.error(f"创建异步任务失败: {e}")
             
-    def _show_context_menu(self, position: QPoint):
+    def _show_context_menu(self, position: QPoint) -> None:
         """显示右键菜单"""
         item = self.file_list.itemAt(position)
         if not item:
@@ -793,25 +793,25 @@ class RecordingTab(QWidget):
         # 显示菜单
         menu.exec(self.file_list.mapToGlobal(position))
             
-    def _play_btn_clicked(self):
+    def _play_btn_clicked(self) -> None:
         """播放按钮点击"""
         logger.info("用户点击播放按钮")
         asyncio.create_task(self.start_playback())
         
-    def _pause_playback_clicked(self):
+    def _pause_playback_clicked(self) -> None:
         """暂停回放按钮点击"""
         asyncio.create_task(self.pause_playback())
         
-    def _resume_playback_clicked(self):
+    def _resume_playback_clicked(self) -> None:
         """继续回放按钮点击"""
         logger.info("用户点击继续回放按钮")
         asyncio.create_task(self.resume_playback())
         
-    def _stop_playback_clicked(self):
+    def _stop_playback_clicked(self) -> None:
         """停止回放按钮点击"""
         asyncio.create_task(self.stop_playback())
         
-    def _loop_btn_clicked(self):
+    def _loop_btn_clicked(self) -> None:
         """循环播放按钮点击"""
         self._loop_enabled = self.loop_btn.isChecked()
         if self._loop_enabled:
@@ -824,11 +824,11 @@ class RecordingTab(QWidget):
         asyncio.create_task(self._sync_playback_mode_to_protocol(playback_mode))
             
         
-    def _progress_slider_pressed(self):
+    def _progress_slider_pressed(self) -> None:
         """进度条开始拖拽"""
         self._slider_being_dragged = True
         
-    def _progress_slider_released(self):
+    def _progress_slider_released(self) -> None:
         """进度条拖拽释放"""
         self._slider_being_dragged = False
         # 执行跳转
@@ -842,7 +842,7 @@ class RecordingTab(QWidget):
                         target_position = int((self.progress_slider.value() / 100) * total_snapshots)
                         asyncio.create_task(playback_handler.seek_to_position(target_position))
                         
-    def _progress_slider_changed(self, value: int):
+    def _progress_slider_changed(self, value: int) -> None:
         """进度条值变化"""
         if self._slider_being_dragged and self.current_session:
             # 拖拽时更新时间显示预览
@@ -857,31 +857,42 @@ class RecordingTab(QWidget):
     def set_service_controller(self, service_controller: ServiceController) -> None:
         """设置服务控制器"""
         self.service_controller = service_controller
+        
+        # 设置回放回调函数
+        playback_handler = service_controller.dglab_device_service.get_playback_handler()
+        playback_handler.set_progress_changed_callback(self._on_playback_progress_changed)
+        playback_handler.set_state_changed_callback(self._on_playback_state_changed)
+        playback_handler.set_error_callback(self._on_playback_error)
+        
+        # 更新连接状态
         self.update_connection_status()
         
-    def update_connection_status(self):
+    def update_connection_status(self) -> None:
         """更新连接状态显示"""
+        is_connected = False
+        
         if self.service_controller:
-            self.connection_text.setText("设备已连接")
+            device_service = self.service_controller.dglab_device_service
+            if device_service:
+                # 检查设备服务是否真正运行中
+                is_connected = device_service.is_service_running()
+        
+        if is_connected:
+            self.connection_text.setText(translate("recording.device_connected"))
             self.connection_text.setStyleSheet(f"color: {DGLabColors.STATUS_READY}; font-weight: bold;")
             self.start_record_btn.setEnabled(True)
             self.stop_record_btn.setEnabled(True)
         else:
-            self.connection_text.setText("设备未连接")
+            self.connection_text.setText(translate("recording.device_disconnected"))
             self.connection_text.setStyleSheet(f"color: {DGLabColors.STATUS_WARNING}; font-weight: bold;")
             self.start_record_btn.setEnabled(False)
             self.stop_record_btn.setEnabled(False)
             
-    def update_status(self):
-        """更新状态显示"""
-        if not self.service_controller:
-            return
+    def update_status(self) -> None:
+        """更新状态显示（使用统一更新方法）"""
+        self.update_all_ui_state()
             
-        self.update_recording_status()
-        self.update_playback_status()
-        self.update_status_bar()
-            
-    def update_recording_status(self):
+    def update_recording_status(self) -> None:
         """更新录制状态"""
         if not self.service_controller:
             return
@@ -902,7 +913,6 @@ class RecordingTab(QWidget):
         if state == RecordingState.IDLE:
             self._stop_recording_animation()
             self.recording_status_icon.setText("●")
-            self.recording_status_text.setText("就绪")
             # 显示开始录制按钮，隐藏停止录制按钮
             self.start_record_btn.setVisible(True)
             self.stop_record_btn.setVisible(False)
@@ -911,7 +921,6 @@ class RecordingTab(QWidget):
             
         elif state == RecordingState.RECORDING:
             self._start_recording_animation()
-            self.recording_status_text.setText("录制中...")
             # 隐藏开始录制按钮，显示停止录制按钮
             self.start_record_btn.setVisible(False)
             self.stop_record_btn.setVisible(True)
@@ -921,25 +930,27 @@ class RecordingTab(QWidget):
         elif state == RecordingState.PAUSED:
             self._stop_recording_animation()
             self.recording_status_icon.setText("●")
-            self.recording_status_text.setText("已暂停")
             # 保持停止录制按钮可见，暂停状态下也可以停止
             self.start_record_btn.setVisible(False)
             self.stop_record_btn.setVisible(True)
             self.pause_record_btn.setEnabled(False)
             self.resume_record_btn.setEnabled(True)
+        
+        # 使用统一方法更新状态文本
+        self._update_recording_status_text(state)
             
         # 更新录制时间
         if current_session and current_session.metadata:
             if state == RecordingState.RECORDING:
                 elapsed = datetime.now() - current_session.metadata.start_time
                 minutes, seconds = divmod(int(elapsed.total_seconds()), 60)
-                self.recording_time_label.setText(f"时长: {minutes:02d}:{seconds:02d}")
+                self.recording_time_label.setText(translate("recording.duration").format(f"{minutes:02d}:{seconds:02d}"))
             else:
                 duration_ms = current_session.get_duration_ms()
                 minutes, seconds = divmod(duration_ms // 1000, 60)
-                self.recording_time_label.setText(f"时长: {minutes:02d}:{seconds:02d}")
+                self.recording_time_label.setText(translate("recording.duration").format(f"{minutes:02d}:{seconds:02d}"))
         else:
-            self.recording_time_label.setText("时长: 00:00")
+            self.recording_time_label.setText(translate("recording.duration").format("00:00"))
             
         # 更新通道强度显示
         pulse_data_a = device_service.get_current_pulse_data(Channel.A)
@@ -954,7 +965,7 @@ class RecordingTab(QWidget):
         self.channel_a_value.setText(f"{int(strength_a):03d}")
         self.channel_b_value.setText(f"{int(strength_b):03d}")
         
-    def update_playback_status(self):
+    def update_playback_status(self) -> None:
         """更新回放状态"""
         if not self.service_controller:
             return
@@ -969,36 +980,18 @@ class RecordingTab(QWidget):
             
         state = playback_handler.get_playback_state()
         
-        # 更新播放按钮状态 - 独立的暂停/继续按钮显示逻辑
-        if state == PlaybackState.PLAYING:
-            # 播放中：隐藏播放和继续按钮，显示暂停和停止按钮
-            self.play_btn.setVisible(False)
-            self.pause_playback_btn.setVisible(True)
-            self.resume_playback_btn.setVisible(False)
-            self.stop_playback_btn.setEnabled(True)
-        elif state == PlaybackState.PAUSED:
-            # 暂停中：隐藏播放和暂停按钮，显示继续和停止按钮
-            self.play_btn.setVisible(False)
-            self.pause_playback_btn.setVisible(False)
-            self.resume_playback_btn.setVisible(True)
-            self.stop_playback_btn.setEnabled(True)
-        elif state == PlaybackState.IDLE:
-            # 空闲状态：显示播放按钮，隐藏暂停和继续按钮，禁用停止按钮
-            self.play_btn.setVisible(True)
-            self.play_btn.setEnabled(bool(self.current_session))
-            self.pause_playback_btn.setVisible(False)
-            self.resume_playback_btn.setVisible(False)
-            self.stop_playback_btn.setEnabled(False)
+        # 使用统一方法更新播放控件状态
+        self._update_playback_ui_controls(state, bool(self.current_session))
+        
+        # 处理循环播放逻辑
+        if state == PlaybackState.IDLE and self._loop_enabled and self.current_session:
+            current_position = playback_handler.get_current_position()
+            total_snapshots = playback_handler.get_total_snapshots()
             
-            # 检查是否需要循环播放
-            if self._loop_enabled and self.current_session:
-                current_position = playback_handler.get_current_position()
-                total_snapshots = playback_handler.get_total_snapshots()
-                
-                # 如果播放完毕且启用循环，重新开始播放
-                if total_snapshots > 0 and current_position >= total_snapshots:
-                    logger.info("循环播放：重新开始播放")
-                    asyncio.create_task(self._restart_playback())
+            # 如果播放完毕且启用循环，重新开始播放
+            if total_snapshots > 0 and current_position >= total_snapshots:
+                logger.info("循环播放：重新开始播放")
+                asyncio.create_task(self._restart_playback())
             
         # 更新进度条 - 只在不拖拽时更新
         if not self._slider_being_dragged:
@@ -1015,16 +1008,11 @@ class RecordingTab(QWidget):
                     current_minutes, current_seconds = divmod(current_time_ms // 1000, 60)
                     self.current_time_label.setText(f"{current_minutes:02d}:{current_seconds:02d}")
         
-    def update_playback_ui_state(self):
-        """更新回放UI状态"""
+    def update_playback_ui_state(self) -> None:
+        """更新回放UI状态（仅处理会话相关的UI元素）"""
         has_selected = self.current_session is not None
         
-        # 重置按钮状态到空闲状态
-        self.play_btn.setVisible(True)
-        self.play_btn.setEnabled(has_selected)
-        self.pause_playback_btn.setVisible(False)
-        self.resume_playback_btn.setVisible(False)
-        self.stop_playback_btn.setEnabled(False)
+        # 更新进度条和时间显示
         self.progress_slider.setEnabled(has_selected)
         
         if has_selected and self.current_session and self.current_session.metadata:
@@ -1036,10 +1024,23 @@ class RecordingTab(QWidget):
             self.current_time_label.setText("00:00")
             self.progress_slider.setValue(0)
             
-    def update_status_bar(self):
+        # 更新播放控件状态（根据当前播放状态）
+        if self.service_controller:
+            device_service = self.service_controller.dglab_device_service
+            if device_service:
+                playback_handler = device_service.get_playback_handler()
+                if playback_handler:
+                    state = playback_handler.get_playback_state()
+                    self._update_playback_ui_controls(state, has_selected)
+                    return
+        
+        # 如果没有服务控制器，默认设置为空闲状态
+        self._update_playback_ui_controls(PlaybackState.IDLE, has_selected)
+            
+    def update_status_bar(self) -> None:
         """更新状态栏信息 - 简化版"""
         if not self.service_controller:
-            self.recording_status_text.setText("设备未连接")
+            self.recording_status_text.setText(translate("recording.device_disconnected"))
             self.selected_file_text.setText("")
             return
             
@@ -1050,22 +1051,15 @@ class RecordingTab(QWidget):
             if record_handler:
                 recording_state = record_handler.get_recording_state()
                 
-                # 更新当前操作状态
+                # 获取播放状态（用于录制空闲时的状态显示）
+                playback_state = None
                 if recording_state == RecordingState.IDLE:
-                    if self.service_controller:
-                        playback_handler = device_service.get_playback_handler()
-                        if playback_handler:
-                            playback_state = playback_handler.get_playback_state()
-                            if playback_state == PlaybackState.PLAYING:
-                                self.recording_status_text.setText(translate("recording.status.playing"))
-                            elif playback_state == PlaybackState.PAUSED:
-                                self.recording_status_text.setText(translate("recording.status.paused"))
-                            else:
-                                self.recording_status_text.setText(translate("recording.ready"))
-                elif recording_state == RecordingState.RECORDING:
-                    self.recording_status_text.setText(translate("recording.status.recording"))
-                elif recording_state == RecordingState.PAUSED:
-                    self.recording_status_text.setText(translate("recording.recording_paused"))
+                    playback_handler = device_service.get_playback_handler()
+                    if playback_handler:
+                        playback_state = playback_handler.get_playback_state()
+                
+                # 使用统一方法更新状态文本
+                self._update_recording_status_text(recording_state, playback_state)
                     
                 # 检查系统健康状态
                 self._check_system_health(recording_state)
@@ -1109,18 +1103,18 @@ class RecordingTab(QWidget):
     async def start_recording(self) -> None:
         """开始录制"""
         if not self.service_controller:
-            self.show_error("设备服务未连接，请先连接DG-LAB设备")
+            self.show_error(translate("recording.device_service_not_connected"))
             return
             
         try:
             device_service = self.service_controller.dglab_device_service
             if not device_service:
-                self.show_error("DG-LAB设备服务不可用")
+                self.show_error(translate("recording.device_service_unavailable"))
                 return
                 
             record_handler = device_service.get_record_handler()
             if not record_handler:
-                self.show_error("录制处理器不可用，请检查设备连接")
+                self.show_error(translate("recording.record_handler_unavailable"))
                 return
                 
             # 检查设备连接状态（只记录日志，不弹窗）
@@ -1132,14 +1126,14 @@ class RecordingTab(QWidget):
                 self.recording_started.emit()
                 logger.info("录制已开始")
             else:
-                self.show_error("开始录制失败，请检查设备状态")
+                self.show_error(translate("recording.record_start_failed"))
                 
         except asyncio.TimeoutError:
             logger.error("开始录制超时")
-            self.show_error("录制操作超时，请检查设备连接")
+            self.show_error(translate("recording.record_timeout"))
         except ConnectionError as e:
             logger.error(f"设备连接错误: {e}")
-            self.show_error("设备连接中断，无法开始录制")
+            self.show_error(translate("recording.device_disconnected_during_record"))
         except Exception as e:
             logger.error(f"开始录制时出错: {e}")
             self.show_error(f"开始录制失败: {str(e)}")
@@ -1180,15 +1174,15 @@ class RecordingTab(QWidget):
                         self.recording_stopped.emit(session)
                         logger.info(f"录制已停止，会话ID: {session.metadata.session_id}")
                     else:
-                        self.show_error("停止录制失败")
+                        self.show_error(translate("recording.record_stop_failed"))
         except Exception as e:
             logger.error(f"停止录制时出错: {e}")
-            self.show_error("停止录制失败")
+            self.show_error(translate("recording.record_stop_failed"))
             
     async def start_playback(self) -> None:
         """开始回放"""
         if not self.service_controller:
-            self.show_error("设备服务未连接，请先连接DG-LAB设备")
+            self.show_error(translate("recording.device_service_not_connected"))
             return
             
         if not self.current_session:
@@ -1203,7 +1197,7 @@ class RecordingTab(QWidget):
 
             device_service = self.service_controller.dglab_device_service
             if not device_service:
-                self.show_error("DG-LAB设备服务不可用")
+                self.show_error(translate("recording.device_service_unavailable"))
                 return
                 
             playback_handler = device_service.get_playback_handler()
@@ -1228,11 +1222,6 @@ class RecordingTab(QWidget):
             if not loaded:
                 self.show_error("加载录制会话失败，文件可能已损坏")
                 return
-
-            # 设置回放回调函数
-            playback_handler.set_progress_changed_callback(self._on_playback_progress_changed)
-            playback_handler.set_state_changed_callback(self._on_playback_state_changed)
-            playback_handler.set_error_callback(self._on_playback_error)
             
             # 同步播放模式到协议层
             playback_mode = PlaybackMode.LOOP if self._loop_enabled else PlaybackMode.ONCE
@@ -1307,11 +1296,6 @@ class RecordingTab(QWidget):
                 if playback_handler:
                     success = await playback_handler.stop_playback()
                     if success:
-                        # 清除回调避免内存泄漏
-                        playback_handler.set_progress_changed_callback(None)
-                        playback_handler.set_state_changed_callback(None)
-                        playback_handler.set_error_callback(None)
-                        
                         self.playback_stopped.emit()
                         logger.info("回放已停止")
                     else:
@@ -1402,7 +1386,7 @@ class RecordingTab(QWidget):
             if recording_state == RecordingState.RECORDING and not is_connected:
                 if not self._connection_warning_shown:
                     self._connection_warning_shown = True
-                    self.show_warning("设备连接中断，录制可能不完整")
+                    self.show_warning(translate("recording.device_disconnected_recording_incomplete"))
                     logger.warning("录制期间设备连接中断")
                     
             # 重新连接后清除警告标记
@@ -1416,7 +1400,7 @@ class RecordingTab(QWidget):
                 if playback_state == PlaybackState.PLAYING and not is_connected:
                     if not self._playback_warning_shown:
                         self._playback_warning_shown = True
-                        self.show_warning("设备连接中断，回放已停止")
+                        self.show_warning(translate("recording.device_disconnected_playback_stopped"))
                         logger.warning("回放期间设备连接中断")
                         # 自动停止回放
                         asyncio.create_task(self.stop_playback())
@@ -1461,35 +1445,6 @@ class RecordingTab(QWidget):
             QTimer.singleShot(0, lambda: QMessageBox.critical(
                 self, "保存失败", error_msg, QMessageBox.StandardButton.Ok
             ))
-            return False
-
-    async def _delete_recording_file(self, session: RecordingSession) -> bool:
-        """删除录制文件
-        
-        Args:
-            session: 录制会话
-            
-        Returns:
-            bool: 是否删除成功
-        """
-        try:
-            # 构建文件路径（基于会话ID和时间戳）
-            file_name = f"录制_{session.metadata.start_time.strftime('%Y%m%d_%H%M%S')}_{session.metadata.session_id}.dgr"
-            # 假设保存在recordings目录下
-            file_path = f"recordings/{file_name}"
-            
-            file_manager = DGRFileManager()
-            success = await file_manager.delete_recording(file_path)
-            
-            if success:
-                logger.info(f"录制文件已删除: {file_path}")
-            else:
-                logger.warning(f"删除录制文件失败: {file_path}")
-                
-            return success
-            
-        except Exception as e:
-            logger.error(f"删除录制文件时出错: {e}")
             return False
 
 
@@ -1881,7 +1836,7 @@ class RecordingTab(QWidget):
                     if record_handler:
                         current_session = record_handler.get_current_session()
                         if current_session and current_session.metadata.session_id == session.metadata.session_id:
-                            self.show_warning("无法删除正在录制中的文件，请先停止录制")
+                            self.show_warning(translate("recording.cannot_delete_recording_file"))
                             return
             
             # 检查文件是否正在播放中
@@ -2021,15 +1976,12 @@ class RecordingTab(QWidget):
                     self.current_session = None
                     self.update_playback_ui_state()
                 
-                # 删除实际文件
-                asyncio.create_task(self._delete_recording_file(session))
-                
-                self.show_success("文件已成功删除")
-                logger.info(f"文件删除成功: {session.metadata.session_id}")
+                self.show_success(translate("recording.file_removed_from_list"))
+                logger.info(f"文件已从列表中移除: {session.metadata.session_id}")
                 
         except Exception as e:
-            logger.error(f"删除文件时出错: {e}")
-            self.show_error(f"删除失败: {str(e)}")
+            logger.error(f"从列表中移除文件时出错: {e}")
+            self.show_error(f"移除失败: {str(e)}")
                 
     def _show_file_details(self, session: RecordingSession):
         """显示文件详细信息"""
@@ -2131,7 +2083,7 @@ class RecordingTab(QWidget):
         self.play_btn.setEnabled(False)
         self.pause_playback_btn.setEnabled(True)
         self.stop_playback_btn.setEnabled(True)
-        self.recording_status_text.setText("播放中")
+        self._update_recording_status_text(RecordingState.IDLE, PlaybackState.PLAYING)
         logger.debug("UI状态: 播放中")
         
     def _update_ui_for_paused_state(self) -> None:
@@ -2140,7 +2092,7 @@ class RecordingTab(QWidget):
         self.pause_playback_btn.setEnabled(False)
         self.resume_playback_btn.setEnabled(True)
         self.stop_playback_btn.setEnabled(True)
-        self.recording_status_text.setText("已暂停")
+        self._update_recording_status_text(RecordingState.IDLE, PlaybackState.PAUSED)
         logger.debug("UI状态: 已暂停")
         
     def _update_ui_for_idle_state(self) -> None:
@@ -2149,12 +2101,62 @@ class RecordingTab(QWidget):
         self.pause_playback_btn.setEnabled(False)
         self.resume_playback_btn.setEnabled(False)
         self.stop_playback_btn.setEnabled(False)
-        self.recording_status_text.setText("就绪")
+        self._update_recording_status_text(RecordingState.IDLE, PlaybackState.IDLE)
         
         # 播放完成后重置进度到开始位置
         self.progress_slider.setValue(0)
         self.current_time_label.setText("00:00")
         logger.debug("UI状态: 就绪")
+    
+    def _update_recording_status_text(self, recording_state: RecordingState, playback_state: Optional[PlaybackState] = None) -> None:
+        """统一更新录制状态文本
+        
+        Args:
+            recording_state: 录制状态
+            playback_state: 播放状态（当录制状态为IDLE时有效）
+        """
+        if recording_state == RecordingState.RECORDING:
+            self.recording_status_text.setText(translate("recording.status.recording"))
+        elif recording_state == RecordingState.PAUSED:
+            self.recording_status_text.setText(translate("recording.recording_paused"))
+        elif recording_state == RecordingState.IDLE:
+            # 录制空闲时，检查播放状态
+            if playback_state == PlaybackState.PLAYING:
+                self.recording_status_text.setText(translate("recording.status.playing"))
+            elif playback_state == PlaybackState.PAUSED:
+                self.recording_status_text.setText(translate("recording.status.paused"))
+            else:
+                self.recording_status_text.setText(translate("recording.ready"))
+        else:
+            # 未知状态或设备未连接
+            self.recording_status_text.setText(translate("recording.device_disconnected"))
+    
+    def _update_playback_ui_controls(self, playback_state: PlaybackState, has_session: bool = False) -> None:
+        """统一更新播放控件状态
+        
+        Args:
+            playback_state: 当前播放状态
+            has_session: 是否有选中的录制会话
+        """
+        if playback_state == PlaybackState.PLAYING:
+            # 播放中：隐藏播放和继续按钮，显示暂停和停止按钮
+            self.play_btn.setVisible(False)
+            self.pause_playback_btn.setVisible(True)
+            self.resume_playback_btn.setVisible(False)
+            self.stop_playback_btn.setEnabled(True)
+        elif playback_state == PlaybackState.PAUSED:
+            # 暂停中：隐藏播放和暂停按钮，显示继续和停止按钮
+            self.play_btn.setVisible(False)
+            self.pause_playback_btn.setVisible(False)
+            self.resume_playback_btn.setVisible(True)
+            self.stop_playback_btn.setEnabled(True)
+        else:  # PlaybackState.IDLE
+            # 空闲状态：显示播放按钮，隐藏暂停和继续按钮
+            self.play_btn.setVisible(True)
+            self.play_btn.setEnabled(has_session)
+            self.pause_playback_btn.setVisible(False)
+            self.resume_playback_btn.setVisible(False)
+            self.stop_playback_btn.setEnabled(False)
     
     async def _sync_playback_mode_to_protocol(self, playback_mode: PlaybackMode) -> None:
         """同步播放模式到协议层"""
@@ -2165,6 +2167,39 @@ class RecordingTab(QWidget):
         if device_service:
             # 通过设备服务设置播放模式
             device_service.set_playback_mode(playback_mode)
+        
+    def update_all_ui_state(self):
+        """统一更新所有UI状态（简化的入口方法）"""
+        if not self.service_controller:
+            # 设备未连接状态
+            self.update_connection_status()
+            self._update_recording_status_text(RecordingState.IDLE, None)
+            self._update_playback_ui_controls(PlaybackState.IDLE, bool(self.current_session))
+            return
+        
+        # 设备已连接，更新所有状态
+        self.update_connection_status()
+        self.update_recording_status()
+        self.update_playback_status()
+        self.update_status_bar()
+        
+    def cleanup_resources(self) -> None:
+        """清理资源和断开连接"""
+        try:
+            # 停止定时器
+            if self.update_timer.isActive():
+                self.update_timer.stop()
+                
+            # 停止录制动画定时器
+            if self._recording_animation and self._recording_animation.isActive():
+                self._recording_animation.stop()
+                
+            # 断开语言更新信号
+            language_signals.language_changed.disconnect(self.update_ui_texts)
+            
+            logger.debug("录制标签页资源已清理")
+        except Exception as e:
+            logger.error(f"清理录制标签页资源时出错: {e}")
         
     def update_ui_texts(self):
         """更新UI文本（语言切换时调用）"""
@@ -2180,9 +2215,10 @@ class RecordingTab(QWidget):
         self.stop_playback_btn.setText(translate("recording.stop"))
         self.loop_btn.setText(translate("recording.loop"))
         
-        # 更新状态文本
-        self.recording_status_text.setText(translate("recording.ready"))
-        self.connection_text.setText(translate("recording.device_connected"))
+        # 更新状态文本（根据实际状态）
+        self.update_status_bar()
+        # 更新连接状态（根据实际连接状态）
+        self.update_connection_status()
         
         # 更新时长显示
         self.recording_time_label.setText(translate("recording.duration").format("00:00"))

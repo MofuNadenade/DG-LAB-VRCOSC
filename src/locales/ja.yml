@@ -352,6 +352,7 @@ recording:
   
   # UI ラベル
   device_connected: "デバイス接続済み"
+  device_disconnected: "デバイス未接続"
   ready: "準備完了"
   duration: "時間: {0}"
   channel_strength: "チャンネル強度"
@@ -386,6 +387,17 @@ recording:
   
   # ステータスメッセージ
   cannot_delete_playing_file: "再生中のファイルは削除できません。まず再生を停止してください"
+  device_service_not_connected: "デバイスサービスが接続されていません。まずDG-LABデバイスを接続してください"
+  device_service_unavailable: "DG-LABデバイスサービスが利用できません"
+  record_handler_unavailable: "録画ハンドラーが利用できません。デバイス接続を確認してください"
+  record_start_failed: "録画開始に失敗しました。デバイス状態を確認してください"
+  record_timeout: "録画操作がタイムアウトしました。デバイス接続を確認してください"
+  device_disconnected_during_record: "デバイスが切断されました。録画を開始できません"
+  record_stop_failed: "録画停止に失敗しました"
+  device_disconnected_recording_incomplete: "デバイスが切断されました。録画が不完全な可能性があります"
+  device_disconnected_playback_stopped: "デバイスが切断されました。再生が停止しました"
+  cannot_delete_recording_file: "録画中のファイルは削除できません。まず録画を停止してください"
+  file_removed_from_list: "ファイルがリストから削除されました"
 
 game_tab:
   title: "Terrors of Nowhere"

@@ -352,6 +352,7 @@ recording:
   
   # UI 标签
   device_connected: "设备已连接"
+  device_disconnected: "设备未连接"
   ready: "就绪"
   duration: "时长: {0}"
   channel_strength: "通道强度"
@@ -386,6 +387,17 @@ recording:
   
   # 状态消息
   cannot_delete_playing_file: "无法删除正在播放中的文件，请先停止播放"
+  device_service_not_connected: "设备服务未连接，请先连接DG-LAB设备"
+  device_service_unavailable: "DG-LAB设备服务不可用"
+  record_handler_unavailable: "录制处理器不可用，请检查设备连接"
+  record_start_failed: "开始录制失败，请检查设备状态"
+  record_timeout: "录制操作超时，请检查设备连接"
+  device_disconnected_during_record: "设备连接中断，无法开始录制"
+  record_stop_failed: "停止录制失败"
+  device_disconnected_recording_incomplete: "设备连接中断，录制可能不完整"
+  device_disconnected_playback_stopped: "设备连接中断，回放已停止"
+  cannot_delete_recording_file: "无法删除正在录制中的文件，请先停止录制"
+  file_removed_from_list: "文件已从列表中移除"
 
 game_tab:
   title: "Terrors of Nowhere"

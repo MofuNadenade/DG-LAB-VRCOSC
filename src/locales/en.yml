@@ -352,6 +352,7 @@ recording:
   
   # UI Labels
   device_connected: "Device Connected"
+  device_disconnected: "Device Disconnected"
   ready: "Ready"
   duration: "Duration: {0}"
   channel_strength: "Channel Strength"
@@ -386,6 +387,17 @@ recording:
   
   # Status Messages
   cannot_delete_playing_file: "Cannot delete file being played, please stop playback first"
+  device_service_not_connected: "Device service not connected, please connect DG-LAB device first"
+  device_service_unavailable: "DG-LAB device service unavailable"
+  record_handler_unavailable: "Recording handler unavailable, please check device connection"
+  record_start_failed: "Failed to start recording, please check device status"
+  record_timeout: "Recording operation timeout, please check device connection"
+  device_disconnected_during_record: "Device disconnected, unable to start recording"
+  record_stop_failed: "Failed to stop recording"
+  device_disconnected_recording_incomplete: "Device disconnected, recording may be incomplete"
+  device_disconnected_playback_stopped: "Device disconnected, playback stopped"
+  cannot_delete_recording_file: "Cannot delete file while recording, please stop recording first"
+  file_removed_from_list: "File removed from list"
 
 game_tab:
   title: "Terrors of Nowhere"
