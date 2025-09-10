@@ -936,8 +936,7 @@ class RecordingTab(QWidget):
             self.pause_record_btn.setEnabled(False)
             self.resume_record_btn.setEnabled(True)
         
-        # 使用统一方法更新状态文本
-        self._update_recording_status_text(state)
+        # 状态文本更新统一由 update_status_bar() 处理，避免重复更新导致的闪烁
             
         # 更新录制时间
         if current_session and current_session.metadata:
@@ -2083,7 +2082,7 @@ class RecordingTab(QWidget):
         self.play_btn.setEnabled(False)
         self.pause_playback_btn.setEnabled(True)
         self.stop_playback_btn.setEnabled(True)
-        self._update_recording_status_text(RecordingState.IDLE, PlaybackState.PLAYING)
+        # 状态文本更新统一由定时器的 update_status_bar() 处理
         logger.debug("UI状态: 播放中")
         
     def _update_ui_for_paused_state(self) -> None:
@@ -2092,7 +2091,7 @@ class RecordingTab(QWidget):
         self.pause_playback_btn.setEnabled(False)
         self.resume_playback_btn.setEnabled(True)
         self.stop_playback_btn.setEnabled(True)
-        self._update_recording_status_text(RecordingState.IDLE, PlaybackState.PAUSED)
+        # 状态文本更新统一由定时器的 update_status_bar() 处理
         logger.debug("UI状态: 已暂停")
         
     def _update_ui_for_idle_state(self) -> None:
@@ -2101,7 +2100,7 @@ class RecordingTab(QWidget):
         self.pause_playback_btn.setEnabled(False)
         self.resume_playback_btn.setEnabled(False)
         self.stop_playback_btn.setEnabled(False)
-        self._update_recording_status_text(RecordingState.IDLE, PlaybackState.IDLE)
+        # 状态文本更新统一由定时器的 update_status_bar() 处理
         
         # 播放完成后重置进度到开始位置
         self.progress_slider.setValue(0)
