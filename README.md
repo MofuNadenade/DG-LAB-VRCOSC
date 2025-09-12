@@ -63,6 +63,8 @@
 
 ![DG-LAB-VRCOSC-APP-6.png](docs/assets/DG-LAB-VRCOSC-APP-6.png)
 
+![DG-LAB-VRCOSC-APP-7.png](docs/assets/DG-LAB-VRCOSC-APP-7.png)
+
 ### SoundPad 控制面板
 ![DG-LAB-VRCOSC-SoundPad-CN.png](docs%2Fassets%2FDG-LAB-VRCOSC-SoundPad-CN.png)
 
