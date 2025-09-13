@@ -1,0 +1,3613 @@
+{
+  "version": "1.0",
+  "format": "dgr",
+  "metadata": {
+    "session_id": "training_session_006",
+    "start_time": "2025-09-13T16:04:33.388600",
+    "end_time": null,
+    "duration_ms": 10000,
+    "total_snapshots": 100
+  },
+  "snapshots": [
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            50,
+            60,
+            70,
+            80
+          ],
+          "strength_data": [
+            20,
+            30,
+            40,
+            50
+          ]
+        },
+        "current_strength": 50
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            40,
+            50,
+            60,
+            70
+          ],
+          "strength_data": [
+            15,
+            25,
+            35,
+            45
+          ]
+        },
+        "current_strength": 60
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            52,
+            61,
+            71,
+            81
+          ],
+          "strength_data": [
+            21,
+            31,
+            41,
+            51
+          ]
+        },
+        "current_strength": 51
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            41,
+            51,
+            61,
+            71
+          ],
+          "strength_data": [
+            16,
+            26,
+            36,
+            46
+          ]
+        },
+        "current_strength": 61
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            54,
+            62,
+            72,
+            82
+          ],
+          "strength_data": [
+            22,
+            32,
+            42,
+            52
+          ]
+        },
+        "current_strength": 52
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            42,
+            52,
+            62,
+            72
+          ],
+          "strength_data": [
+            17,
+            27,
+            37,
+            47
+          ]
+        },
+        "current_strength": 62
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            56,
+            63,
+            73,
+            83
+          ],
+          "strength_data": [
+            23,
+            33,
+            43,
+            53
+          ]
+        },
+        "current_strength": 53
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            43,
+            53,
+            63,
+            73
+          ],
+          "strength_data": [
+            18,
+            28,
+            38,
+            48
+          ]
+        },
+        "current_strength": 63
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            58,
+            64,
+            74,
+            84
+          ],
+          "strength_data": [
+            24,
+            34,
+            44,
+            54
+          ]
+        },
+        "current_strength": 54
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            44,
+            54,
+            64,
+            74
+          ],
+          "strength_data": [
+            19,
+            29,
+            39,
+            49
+          ]
+        },
+        "current_strength": 64
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            60,
+            65,
+            75,
+            85
+          ],
+          "strength_data": [
+            25,
+            35,
+            45,
+            55
+          ]
+        },
+        "current_strength": 55
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            45,
+            55,
+            65,
+            75
+          ],
+          "strength_data": [
+            20,
+            30,
+            40,
+            50
+          ]
+        },
+        "current_strength": 65
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            62,
+            66,
+            76,
+            86
+          ],
+          "strength_data": [
+            26,
+            36,
+            46,
+            56
+          ]
+        },
+        "current_strength": 56
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            46,
+            56,
+            66,
+            76
+          ],
+          "strength_data": [
+            21,
+            31,
+            41,
+            51
+          ]
+        },
+        "current_strength": 66
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            64,
+            67,
+            77,
+            87
+          ],
+          "strength_data": [
+            27,
+            37,
+            47,
+            57
+          ]
+        },
+        "current_strength": 57
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            47,
+            57,
+            67,
+            77
+          ],
+          "strength_data": [
+            22,
+            32,
+            42,
+            52
+          ]
+        },
+        "current_strength": 67
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            66,
+            68,
+            78,
+            88
+          ],
+          "strength_data": [
+            28,
+            38,
+            48,
+            58
+          ]
+        },
+        "current_strength": 58
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            48,
+            58,
+            68,
+            78
+          ],
+          "strength_data": [
+            23,
+            33,
+            43,
+            53
+          ]
+        },
+        "current_strength": 68
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            68,
+            69,
+            79,
+            89
+          ],
+          "strength_data": [
+            29,
+            39,
+            49,
+            59
+          ]
+        },
+        "current_strength": 59
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            49,
+            59,
+            69,
+            79
+          ],
+          "strength_data": [
+            24,
+            34,
+            44,
+            54
+          ]
+        },
+        "current_strength": 69
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            70,
+            70,
+            80,
+            90
+          ],
+          "strength_data": [
+            30,
+            40,
+            50,
+            60
+          ]
+        },
+        "current_strength": 60
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            50,
+            60,
+            70,
+            80
+          ],
+          "strength_data": [
+            25,
+            35,
+            45,
+            55
+          ]
+        },
+        "current_strength": 70
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            72,
+            71,
+            81,
+            91
+          ],
+          "strength_data": [
+            31,
+            41,
+            51,
+            61
+          ]
+        },
+        "current_strength": 61
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            51,
+            61,
+            71,
+            81
+          ],
+          "strength_data": [
+            26,
+            36,
+            46,
+            56
+          ]
+        },
+        "current_strength": 71
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            74,
+            72,
+            82,
+            92
+          ],
+          "strength_data": [
+            32,
+            42,
+            52,
+            62
+          ]
+        },
+        "current_strength": 62
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            52,
+            62,
+            72,
+            82
+          ],
+          "strength_data": [
+            27,
+            37,
+            47,
+            57
+          ]
+        },
+        "current_strength": 72
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            76,
+            73,
+            83,
+            93
+          ],
+          "strength_data": [
+            33,
+            43,
+            53,
+            63
+          ]
+        },
+        "current_strength": 63
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            53,
+            63,
+            73,
+            83
+          ],
+          "strength_data": [
+            28,
+            38,
+            48,
+            58
+          ]
+        },
+        "current_strength": 73
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            78,
+            74,
+            84,
+            94
+          ],
+          "strength_data": [
+            34,
+            44,
+            54,
+            64
+          ]
+        },
+        "current_strength": 64
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            54,
+            64,
+            74,
+            84
+          ],
+          "strength_data": [
+            29,
+            39,
+            49,
+            59
+          ]
+        },
+        "current_strength": 74
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            80,
+            75,
+            85,
+            95
+          ],
+          "strength_data": [
+            35,
+            45,
+            55,
+            50
+          ]
+        },
+        "current_strength": 65
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            55,
+            65,
+            75,
+            85
+          ],
+          "strength_data": [
+            30,
+            40,
+            50,
+            60
+          ]
+        },
+        "current_strength": 75
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            82,
+            76,
+            86,
+            96
+          ],
+          "strength_data": [
+            36,
+            46,
+            56,
+            51
+          ]
+        },
+        "current_strength": 66
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            56,
+            66,
+            76,
+            86
+          ],
+          "strength_data": [
+            31,
+            41,
+            51,
+            61
+          ]
+        },
+        "current_strength": 76
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            84,
+            77,
+            87,
+            97
+          ],
+          "strength_data": [
+            37,
+            47,
+            57,
+            52
+          ]
+        },
+        "current_strength": 67
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            57,
+            67,
+            77,
+            87
+          ],
+          "strength_data": [
+            32,
+            42,
+            52,
+            62
+          ]
+        },
+        "current_strength": 77
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            86,
+            78,
+            88,
+            98
+          ],
+          "strength_data": [
+            38,
+            48,
+            58,
+            53
+          ]
+        },
+        "current_strength": 68
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            58,
+            68,
+            78,
+            88
+          ],
+          "strength_data": [
+            33,
+            43,
+            53,
+            63
+          ]
+        },
+        "current_strength": 78
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            88,
+            79,
+            89,
+            99
+          ],
+          "strength_data": [
+            39,
+            49,
+            59,
+            54
+          ]
+        },
+        "current_strength": 69
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            59,
+            69,
+            79,
+            89
+          ],
+          "strength_data": [
+            34,
+            44,
+            54,
+            64
+          ]
+        },
+        "current_strength": 79
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            90,
+            80,
+            90,
+            80
+          ],
+          "strength_data": [
+            40,
+            50,
+            40,
+            55
+          ]
+        },
+        "current_strength": 70
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            60,
+            70,
+            80,
+            90
+          ],
+          "strength_data": [
+            35,
+            45,
+            55,
+            45
+          ]
+        },
+        "current_strength": 80
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            92,
+            81,
+            91,
+            81
+          ],
+          "strength_data": [
+            41,
+            51,
+            41,
+            56
+          ]
+        },
+        "current_strength": 71
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            61,
+            71,
+            81,
+            91
+          ],
+          "strength_data": [
+            36,
+            46,
+            56,
+            46
+          ]
+        },
+        "current_strength": 81
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            94,
+            82,
+            92,
+            82
+          ],
+          "strength_data": [
+            42,
+            52,
+            42,
+            57
+          ]
+        },
+        "current_strength": 72
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            62,
+            72,
+            82,
+            92
+          ],
+          "strength_data": [
+            37,
+            47,
+            57,
+            47
+          ]
+        },
+        "current_strength": 82
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            96,
+            83,
+            93,
+            83
+          ],
+          "strength_data": [
+            43,
+            53,
+            43,
+            58
+          ]
+        },
+        "current_strength": 73
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            63,
+            73,
+            83,
+            93
+          ],
+          "strength_data": [
+            38,
+            48,
+            58,
+            48
+          ]
+        },
+        "current_strength": 83
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            98,
+            84,
+            94,
+            84
+          ],
+          "strength_data": [
+            44,
+            54,
+            44,
+            59
+          ]
+        },
+        "current_strength": 74
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            64,
+            74,
+            84,
+            94
+          ],
+          "strength_data": [
+            39,
+            49,
+            59,
+            49
+          ]
+        },
+        "current_strength": 84
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            100,
+            85,
+            95,
+            85
+          ],
+          "strength_data": [
+            45,
+            30,
+            45,
+            60
+          ]
+        },
+        "current_strength": 75
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            65,
+            75,
+            85,
+            95
+          ],
+          "strength_data": [
+            40,
+            50,
+            35,
+            50
+          ]
+        },
+        "current_strength": 85
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            102,
+            86,
+            96,
+            86
+          ],
+          "strength_data": [
+            46,
+            31,
+            46,
+            61
+          ]
+        },
+        "current_strength": 76
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            66,
+            76,
+            86,
+            96
+          ],
+          "strength_data": [
+            41,
+            51,
+            36,
+            51
+          ]
+        },
+        "current_strength": 86
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            104,
+            87,
+            97,
+            87
+          ],
+          "strength_data": [
+            47,
+            32,
+            47,
+            62
+          ]
+        },
+        "current_strength": 77
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            67,
+            77,
+            87,
+            97
+          ],
+          "strength_data": [
+            42,
+            52,
+            37,
+            52
+          ]
+        },
+        "current_strength": 87
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            106,
+            88,
+            98,
+            88
+          ],
+          "strength_data": [
+            48,
+            33,
+            48,
+            63
+          ]
+        },
+        "current_strength": 78
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            68,
+            78,
+            88,
+            98
+          ],
+          "strength_data": [
+            43,
+            53,
+            38,
+            53
+          ]
+        },
+        "current_strength": 88
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            108,
+            89,
+            99,
+            89
+          ],
+          "strength_data": [
+            49,
+            34,
+            49,
+            64
+          ]
+        },
+        "current_strength": 79
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            69,
+            79,
+            89,
+            99
+          ],
+          "strength_data": [
+            44,
+            54,
+            39,
+            54
+          ]
+        },
+        "current_strength": 89
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            110,
+            90,
+            70,
+            90
+          ],
+          "strength_data": [
+            20,
+            35,
+            50,
+            50
+          ]
+        },
+        "current_strength": 80
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            70,
+            80,
+            90,
+            70
+          ],
+          "strength_data": [
+            45,
+            25,
+            40,
+            55
+          ]
+        },
+        "current_strength": 90
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            112,
+            91,
+            71,
+            91
+          ],
+          "strength_data": [
+            21,
+            36,
+            51,
+            51
+          ]
+        },
+        "current_strength": 81
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            71,
+            81,
+            91,
+            71
+          ],
+          "strength_data": [
+            46,
+            26,
+            41,
+            56
+          ]
+        },
+        "current_strength": 91
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            114,
+            92,
+            72,
+            92
+          ],
+          "strength_data": [
+            22,
+            37,
+            52,
+            52
+          ]
+        },
+        "current_strength": 82
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            72,
+            82,
+            92,
+            72
+          ],
+          "strength_data": [
+            47,
+            27,
+            42,
+            57
+          ]
+        },
+        "current_strength": 92
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            116,
+            93,
+            73,
+            93
+          ],
+          "strength_data": [
+            23,
+            38,
+            53,
+            53
+          ]
+        },
+        "current_strength": 83
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            73,
+            83,
+            93,
+            73
+          ],
+          "strength_data": [
+            48,
+            28,
+            43,
+            58
+          ]
+        },
+        "current_strength": 93
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            118,
+            94,
+            74,
+            94
+          ],
+          "strength_data": [
+            24,
+            39,
+            54,
+            54
+          ]
+        },
+        "current_strength": 84
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            74,
+            84,
+            94,
+            74
+          ],
+          "strength_data": [
+            49,
+            29,
+            44,
+            59
+          ]
+        },
+        "current_strength": 94
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            120,
+            95,
+            75,
+            95
+          ],
+          "strength_data": [
+            25,
+            40,
+            55,
+            55
+          ]
+        },
+        "current_strength": 85
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            75,
+            85,
+            95,
+            75
+          ],
+          "strength_data": [
+            15,
+            30,
+            45,
+            60
+          ]
+        },
+        "current_strength": 95
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            122,
+            96,
+            76,
+            96
+          ],
+          "strength_data": [
+            26,
+            41,
+            56,
+            56
+          ]
+        },
+        "current_strength": 86
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            76,
+            86,
+            96,
+            76
+          ],
+          "strength_data": [
+            16,
+            31,
+            46,
+            61
+          ]
+        },
+        "current_strength": 96
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            124,
+            97,
+            77,
+            97
+          ],
+          "strength_data": [
+            27,
+            42,
+            57,
+            57
+          ]
+        },
+        "current_strength": 87
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            77,
+            87,
+            97,
+            77
+          ],
+          "strength_data": [
+            17,
+            32,
+            47,
+            62
+          ]
+        },
+        "current_strength": 97
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            126,
+            98,
+            78,
+            98
+          ],
+          "strength_data": [
+            28,
+            43,
+            58,
+            58
+          ]
+        },
+        "current_strength": 88
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            78,
+            88,
+            98,
+            78
+          ],
+          "strength_data": [
+            18,
+            33,
+            48,
+            63
+          ]
+        },
+        "current_strength": 98
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            128,
+            99,
+            79,
+            99
+          ],
+          "strength_data": [
+            29,
+            44,
+            59,
+            59
+          ]
+        },
+        "current_strength": 89
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            79,
+            89,
+            99,
+            79
+          ],
+          "strength_data": [
+            19,
+            34,
+            49,
+            64
+          ]
+        },
+        "current_strength": 99
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            130,
+            60,
+            80,
+            80
+          ],
+          "strength_data": [
+            30,
+            45,
+            40,
+            60
+          ]
+        },
+        "current_strength": 90
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            80,
+            90,
+            60,
+            80
+          ],
+          "strength_data": [
+            20,
+            35,
+            50,
+            45
+          ]
+        },
+        "current_strength": 100
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            132,
+            61,
+            81,
+            81
+          ],
+          "strength_data": [
+            31,
+            46,
+            41,
+            61
+          ]
+        },
+        "current_strength": 91
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            81,
+            91,
+            61,
+            81
+          ],
+          "strength_data": [
+            21,
+            36,
+            51,
+            46
+          ]
+        },
+        "current_strength": 101
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            134,
+            62,
+            82,
+            82
+          ],
+          "strength_data": [
+            32,
+            47,
+            42,
+            62
+          ]
+        },
+        "current_strength": 92
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            82,
+            92,
+            62,
+            82
+          ],
+          "strength_data": [
+            22,
+            37,
+            52,
+            47
+          ]
+        },
+        "current_strength": 102
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            136,
+            63,
+            83,
+            83
+          ],
+          "strength_data": [
+            33,
+            48,
+            43,
+            63
+          ]
+        },
+        "current_strength": 93
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            83,
+            93,
+            63,
+            83
+          ],
+          "strength_data": [
+            23,
+            38,
+            53,
+            48
+          ]
+        },
+        "current_strength": 103
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            138,
+            64,
+            84,
+            84
+          ],
+          "strength_data": [
+            34,
+            49,
+            44,
+            64
+          ]
+        },
+        "current_strength": 94
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            84,
+            94,
+            64,
+            84
+          ],
+          "strength_data": [
+            24,
+            39,
+            54,
+            49
+          ]
+        },
+        "current_strength": 104
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            140,
+            65,
+            85,
+            85
+          ],
+          "strength_data": [
+            35,
+            50,
+            45,
+            50
+          ]
+        },
+        "current_strength": 95
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            85,
+            95,
+            65,
+            85
+          ],
+          "strength_data": [
+            25,
+            40,
+            55,
+            50
+          ]
+        },
+        "current_strength": 105
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            142,
+            66,
+            86,
+            86
+          ],
+          "strength_data": [
+            36,
+            51,
+            46,
+            51
+          ]
+        },
+        "current_strength": 96
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            86,
+            96,
+            66,
+            86
+          ],
+          "strength_data": [
+            26,
+            41,
+            56,
+            51
+          ]
+        },
+        "current_strength": 106
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            144,
+            67,
+            87,
+            87
+          ],
+          "strength_data": [
+            37,
+            52,
+            47,
+            52
+          ]
+        },
+        "current_strength": 97
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            87,
+            97,
+            67,
+            87
+          ],
+          "strength_data": [
+            27,
+            42,
+            57,
+            52
+          ]
+        },
+        "current_strength": 107
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            146,
+            68,
+            88,
+            88
+          ],
+          "strength_data": [
+            38,
+            53,
+            48,
+            53
+          ]
+        },
+        "current_strength": 98
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            88,
+            98,
+            68,
+            88
+          ],
+          "strength_data": [
+            28,
+            43,
+            58,
+            53
+          ]
+        },
+        "current_strength": 108
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            148,
+            69,
+            89,
+            89
+          ],
+          "strength_data": [
+            39,
+            54,
+            49,
+            54
+          ]
+        },
+        "current_strength": 99
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            89,
+            99,
+            69,
+            89
+          ],
+          "strength_data": [
+            29,
+            44,
+            59,
+            54
+          ]
+        },
+        "current_strength": 109
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            50,
+            70,
+            90,
+            90
+          ],
+          "strength_data": [
+            40,
+            30,
+            50,
+            55
+          ]
+        },
+        "current_strength": 100
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            90,
+            50,
+            70,
+            90
+          ],
+          "strength_data": [
+            30,
+            45,
+            35,
+            55
+          ]
+        },
+        "current_strength": 110
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            52,
+            71,
+            91,
+            91
+          ],
+          "strength_data": [
+            41,
+            31,
+            51,
+            56
+          ]
+        },
+        "current_strength": 101
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            91,
+            51,
+            71,
+            91
+          ],
+          "strength_data": [
+            31,
+            46,
+            36,
+            56
+          ]
+        },
+        "current_strength": 111
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            54,
+            72,
+            92,
+            92
+          ],
+          "strength_data": [
+            42,
+            32,
+            52,
+            57
+          ]
+        },
+        "current_strength": 102
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            92,
+            52,
+            72,
+            92
+          ],
+          "strength_data": [
+            32,
+            47,
+            37,
+            57
+          ]
+        },
+        "current_strength": 112
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            56,
+            73,
+            93,
+            93
+          ],
+          "strength_data": [
+            43,
+            33,
+            53,
+            58
+          ]
+        },
+        "current_strength": 103
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            93,
+            53,
+            73,
+            93
+          ],
+          "strength_data": [
+            33,
+            48,
+            38,
+            58
+          ]
+        },
+        "current_strength": 113
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            58,
+            74,
+            94,
+            94
+          ],
+          "strength_data": [
+            44,
+            34,
+            54,
+            59
+          ]
+        },
+        "current_strength": 104
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            94,
+            54,
+            74,
+            94
+          ],
+          "strength_data": [
+            34,
+            49,
+            39,
+            59
+          ]
+        },
+        "current_strength": 114
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            60,
+            75,
+            95,
+            95
+          ],
+          "strength_data": [
+            45,
+            35,
+            55,
+            60
+          ]
+        },
+        "current_strength": 105
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            95,
+            55,
+            75,
+            95
+          ],
+          "strength_data": [
+            35,
+            50,
+            40,
+            60
+          ]
+        },
+        "current_strength": 115
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            62,
+            76,
+            96,
+            96
+          ],
+          "strength_data": [
+            46,
+            36,
+            56,
+            61
+          ]
+        },
+        "current_strength": 106
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            96,
+            56,
+            76,
+            96
+          ],
+          "strength_data": [
+            36,
+            51,
+            41,
+            61
+          ]
+        },
+        "current_strength": 116
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            64,
+            77,
+            97,
+            97
+          ],
+          "strength_data": [
+            47,
+            37,
+            57,
+            62
+          ]
+        },
+        "current_strength": 107
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            97,
+            57,
+            77,
+            97
+          ],
+          "strength_data": [
+            37,
+            52,
+            42,
+            62
+          ]
+        },
+        "current_strength": 117
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            66,
+            78,
+            98,
+            98
+          ],
+          "strength_data": [
+            48,
+            38,
+            58,
+            63
+          ]
+        },
+        "current_strength": 108
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            98,
+            58,
+            78,
+            98
+          ],
+          "strength_data": [
+            38,
+            53,
+            43,
+            63
+          ]
+        },
+        "current_strength": 118
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            68,
+            79,
+            99,
+            99
+          ],
+          "strength_data": [
+            49,
+            39,
+            59,
+            64
+          ]
+        },
+        "current_strength": 109
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            99,
+            59,
+            79,
+            99
+          ],
+          "strength_data": [
+            39,
+            54,
+            44,
+            64
+          ]
+        },
+        "current_strength": 119
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            70,
+            80,
+            70,
+            80
+          ],
+          "strength_data": [
+            20,
+            40,
+            40,
+            50
+          ]
+        },
+        "current_strength": 110
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            40,
+            60,
+            80,
+            70
+          ],
+          "strength_data": [
+            40,
+            25,
+            45,
+            45
+          ]
+        },
+        "current_strength": 120
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            72,
+            81,
+            71,
+            81
+          ],
+          "strength_data": [
+            21,
+            41,
+            41,
+            51
+          ]
+        },
+        "current_strength": 111
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            41,
+            61,
+            81,
+            71
+          ],
+          "strength_data": [
+            41,
+            26,
+            46,
+            46
+          ]
+        },
+        "current_strength": 121
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            74,
+            82,
+            72,
+            82
+          ],
+          "strength_data": [
+            22,
+            42,
+            42,
+            52
+          ]
+        },
+        "current_strength": 112
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            42,
+            62,
+            82,
+            72
+          ],
+          "strength_data": [
+            42,
+            27,
+            47,
+            47
+          ]
+        },
+        "current_strength": 122
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            76,
+            83,
+            73,
+            83
+          ],
+          "strength_data": [
+            23,
+            43,
+            43,
+            53
+          ]
+        },
+        "current_strength": 113
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            43,
+            63,
+            83,
+            73
+          ],
+          "strength_data": [
+            43,
+            28,
+            48,
+            48
+          ]
+        },
+        "current_strength": 123
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            78,
+            84,
+            74,
+            84
+          ],
+          "strength_data": [
+            24,
+            44,
+            44,
+            54
+          ]
+        },
+        "current_strength": 114
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            44,
+            64,
+            84,
+            74
+          ],
+          "strength_data": [
+            44,
+            29,
+            49,
+            49
+          ]
+        },
+        "current_strength": 124
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            80,
+            85,
+            75,
+            85
+          ],
+          "strength_data": [
+            25,
+            45,
+            45,
+            55
+          ]
+        },
+        "current_strength": 115
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            45,
+            65,
+            85,
+            75
+          ],
+          "strength_data": [
+            45,
+            30,
+            50,
+            50
+          ]
+        },
+        "current_strength": 125
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            82,
+            86,
+            76,
+            86
+          ],
+          "strength_data": [
+            26,
+            46,
+            46,
+            56
+          ]
+        },
+        "current_strength": 116
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            46,
+            66,
+            86,
+            76
+          ],
+          "strength_data": [
+            46,
+            31,
+            51,
+            51
+          ]
+        },
+        "current_strength": 126
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            84,
+            87,
+            77,
+            87
+          ],
+          "strength_data": [
+            27,
+            47,
+            47,
+            57
+          ]
+        },
+        "current_strength": 117
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            47,
+            67,
+            87,
+            77
+          ],
+          "strength_data": [
+            47,
+            32,
+            52,
+            52
+          ]
+        },
+        "current_strength": 127
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            86,
+            88,
+            78,
+            88
+          ],
+          "strength_data": [
+            28,
+            48,
+            48,
+            58
+          ]
+        },
+        "current_strength": 118
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            48,
+            68,
+            88,
+            78
+          ],
+          "strength_data": [
+            48,
+            33,
+            53,
+            53
+          ]
+        },
+        "current_strength": 128
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            88,
+            89,
+            79,
+            89
+          ],
+          "strength_data": [
+            29,
+            49,
+            49,
+            59
+          ]
+        },
+        "current_strength": 119
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            49,
+            69,
+            89,
+            79
+          ],
+          "strength_data": [
+            49,
+            34,
+            54,
+            54
+          ]
+        },
+        "current_strength": 129
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            90,
+            90,
+            80,
+            90
+          ],
+          "strength_data": [
+            30,
+            50,
+            50,
+            60
+          ]
+        },
+        "current_strength": 120
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            50,
+            70,
+            90,
+            80
+          ],
+          "strength_data": [
+            15,
+            35,
+            55,
+            55
+          ]
+        },
+        "current_strength": 130
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            92,
+            91,
+            81,
+            91
+          ],
+          "strength_data": [
+            31,
+            51,
+            51,
+            61
+          ]
+        },
+        "current_strength": 121
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            51,
+            71,
+            91,
+            81
+          ],
+          "strength_data": [
+            16,
+            36,
+            56,
+            56
+          ]
+        },
+        "current_strength": 131
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            94,
+            92,
+            82,
+            92
+          ],
+          "strength_data": [
+            32,
+            52,
+            52,
+            62
+          ]
+        },
+        "current_strength": 122
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            52,
+            72,
+            92,
+            82
+          ],
+          "strength_data": [
+            17,
+            37,
+            57,
+            57
+          ]
+        },
+        "current_strength": 132
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            96,
+            93,
+            83,
+            93
+          ],
+          "strength_data": [
+            33,
+            53,
+            53,
+            63
+          ]
+        },
+        "current_strength": 123
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            53,
+            73,
+            93,
+            83
+          ],
+          "strength_data": [
+            18,
+            38,
+            58,
+            58
+          ]
+        },
+        "current_strength": 133
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            98,
+            94,
+            84,
+            94
+          ],
+          "strength_data": [
+            34,
+            54,
+            54,
+            64
+          ]
+        },
+        "current_strength": 124
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            54,
+            74,
+            94,
+            84
+          ],
+          "strength_data": [
+            19,
+            39,
+            59,
+            59
+          ]
+        },
+        "current_strength": 134
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            100,
+            95,
+            85,
+            95
+          ],
+          "strength_data": [
+            35,
+            30,
+            55,
+            50
+          ]
+        },
+        "current_strength": 125
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            55,
+            75,
+            95,
+            85
+          ],
+          "strength_data": [
+            20,
+            40,
+            35,
+            60
+          ]
+        },
+        "current_strength": 135
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            102,
+            96,
+            86,
+            96
+          ],
+          "strength_data": [
+            36,
+            31,
+            56,
+            51
+          ]
+        },
+        "current_strength": 126
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            56,
+            76,
+            96,
+            86
+          ],
+          "strength_data": [
+            21,
+            41,
+            36,
+            61
+          ]
+        },
+        "current_strength": 136
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            104,
+            97,
+            87,
+            97
+          ],
+          "strength_data": [
+            37,
+            32,
+            57,
+            52
+          ]
+        },
+        "current_strength": 127
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            57,
+            77,
+            97,
+            87
+          ],
+          "strength_data": [
+            22,
+            42,
+            37,
+            62
+          ]
+        },
+        "current_strength": 137
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            106,
+            98,
+            88,
+            98
+          ],
+          "strength_data": [
+            38,
+            33,
+            58,
+            53
+          ]
+        },
+        "current_strength": 128
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            58,
+            78,
+            98,
+            88
+          ],
+          "strength_data": [
+            23,
+            43,
+            38,
+            63
+          ]
+        },
+        "current_strength": 138
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            108,
+            99,
+            89,
+            99
+          ],
+          "strength_data": [
+            39,
+            34,
+            59,
+            54
+          ]
+        },
+        "current_strength": 129
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            59,
+            79,
+            99,
+            89
+          ],
+          "strength_data": [
+            24,
+            44,
+            39,
+            64
+          ]
+        },
+        "current_strength": 139
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            110,
+            60,
+            90,
+            80
+          ],
+          "strength_data": [
+            40,
+            35,
+            40,
+            55
+          ]
+        },
+        "current_strength": 130
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            60,
+            80,
+            60,
+            90
+          ],
+          "strength_data": [
+            25,
+            45,
+            40,
+            45
+          ]
+        },
+        "current_strength": 60
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            112,
+            61,
+            91,
+            81
+          ],
+          "strength_data": [
+            41,
+            36,
+            41,
+            56
+          ]
+        },
+        "current_strength": 131
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            61,
+            81,
+            61,
+            91
+          ],
+          "strength_data": [
+            26,
+            46,
+            41,
+            46
+          ]
+        },
+        "current_strength": 61
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            114,
+            62,
+            92,
+            82
+          ],
+          "strength_data": [
+            42,
+            37,
+            42,
+            57
+          ]
+        },
+        "current_strength": 132
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            62,
+            82,
+            62,
+            92
+          ],
+          "strength_data": [
+            27,
+            47,
+            42,
+            47
+          ]
+        },
+        "current_strength": 62
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            116,
+            63,
+            93,
+            83
+          ],
+          "strength_data": [
+            43,
+            38,
+            43,
+            58
+          ]
+        },
+        "current_strength": 133
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            63,
+            83,
+            63,
+            93
+          ],
+          "strength_data": [
+            28,
+            48,
+            43,
+            48
+          ]
+        },
+        "current_strength": 63
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            118,
+            64,
+            94,
+            84
+          ],
+          "strength_data": [
+            44,
+            39,
+            44,
+            59
+          ]
+        },
+        "current_strength": 134
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            64,
+            84,
+            64,
+            94
+          ],
+          "strength_data": [
+            29,
+            49,
+            44,
+            49
+          ]
+        },
+        "current_strength": 64
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            120,
+            65,
+            95,
+            85
+          ],
+          "strength_data": [
+            45,
+            40,
+            45,
+            60
+          ]
+        },
+        "current_strength": 135
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            65,
+            85,
+            65,
+            95
+          ],
+          "strength_data": [
+            30,
+            50,
+            45,
+            50
+          ]
+        },
+        "current_strength": 65
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            122,
+            66,
+            96,
+            86
+          ],
+          "strength_data": [
+            46,
+            41,
+            46,
+            61
+          ]
+        },
+        "current_strength": 136
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            66,
+            86,
+            66,
+            96
+          ],
+          "strength_data": [
+            31,
+            51,
+            46,
+            51
+          ]
+        },
+        "current_strength": 66
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            124,
+            67,
+            97,
+            87
+          ],
+          "strength_data": [
+            47,
+            42,
+            47,
+            62
+          ]
+        },
+        "current_strength": 137
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            67,
+            87,
+            67,
+            97
+          ],
+          "strength_data": [
+            32,
+            52,
+            47,
+            52
+          ]
+        },
+        "current_strength": 67
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            126,
+            68,
+            98,
+            88
+          ],
+          "strength_data": [
+            48,
+            43,
+            48,
+            63
+          ]
+        },
+        "current_strength": 138
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            68,
+            88,
+            68,
+            98
+          ],
+          "strength_data": [
+            33,
+            53,
+            48,
+            53
+          ]
+        },
+        "current_strength": 68
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            128,
+            69,
+            99,
+            89
+          ],
+          "strength_data": [
+            49,
+            44,
+            49,
+            64
+          ]
+        },
+        "current_strength": 139
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            69,
+            89,
+            69,
+            99
+          ],
+          "strength_data": [
+            34,
+            54,
+            49,
+            54
+          ]
+        },
+        "current_strength": 69
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            130,
+            70,
+            70,
+            90
+          ],
+          "strength_data": [
+            20,
+            45,
+            50,
+            50
+          ]
+        },
+        "current_strength": 140
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            70,
+            90,
+            70,
+            70
+          ],
+          "strength_data": [
+            35,
+            25,
+            50,
+            55
+          ]
+        },
+        "current_strength": 70
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            132,
+            71,
+            71,
+            91
+          ],
+          "strength_data": [
+            21,
+            46,
+            51,
+            51
+          ]
+        },
+        "current_strength": 141
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            71,
+            91,
+            71,
+            71
+          ],
+          "strength_data": [
+            36,
+            26,
+            51,
+            56
+          ]
+        },
+        "current_strength": 71
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            134,
+            72,
+            72,
+            92
+          ],
+          "strength_data": [
+            22,
+            47,
+            52,
+            52
+          ]
+        },
+        "current_strength": 142
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            72,
+            92,
+            72,
+            72
+          ],
+          "strength_data": [
+            37,
+            27,
+            52,
+            57
+          ]
+        },
+        "current_strength": 72
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            136,
+            73,
+            73,
+            93
+          ],
+          "strength_data": [
+            23,
+            48,
+            53,
+            53
+          ]
+        },
+        "current_strength": 143
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            73,
+            93,
+            73,
+            73
+          ],
+          "strength_data": [
+            38,
+            28,
+            53,
+            58
+          ]
+        },
+        "current_strength": 73
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            138,
+            74,
+            74,
+            94
+          ],
+          "strength_data": [
+            24,
+            49,
+            54,
+            54
+          ]
+        },
+        "current_strength": 144
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            74,
+            94,
+            74,
+            74
+          ],
+          "strength_data": [
+            39,
+            29,
+            54,
+            59
+          ]
+        },
+        "current_strength": 74
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            140,
+            75,
+            75,
+            95
+          ],
+          "strength_data": [
+            25,
+            50,
+            55,
+            55
+          ]
+        },
+        "current_strength": 145
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            75,
+            95,
+            75,
+            75
+          ],
+          "strength_data": [
+            40,
+            30,
+            55,
+            60
+          ]
+        },
+        "current_strength": 75
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            142,
+            76,
+            76,
+            96
+          ],
+          "strength_data": [
+            26,
+            51,
+            56,
+            56
+          ]
+        },
+        "current_strength": 146
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            76,
+            96,
+            76,
+            76
+          ],
+          "strength_data": [
+            41,
+            31,
+            56,
+            61
+          ]
+        },
+        "current_strength": 76
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            144,
+            77,
+            77,
+            97
+          ],
+          "strength_data": [
+            27,
+            52,
+            57,
+            57
+          ]
+        },
+        "current_strength": 147
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            77,
+            97,
+            77,
+            77
+          ],
+          "strength_data": [
+            42,
+            32,
+            57,
+            62
+          ]
+        },
+        "current_strength": 77
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            146,
+            78,
+            78,
+            98
+          ],
+          "strength_data": [
+            28,
+            53,
+            58,
+            58
+          ]
+        },
+        "current_strength": 148
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            78,
+            98,
+            78,
+            78
+          ],
+          "strength_data": [
+            43,
+            33,
+            58,
+            63
+          ]
+        },
+        "current_strength": 78
+      }
+    },
+    {
+      "A": {
+        "pulse_operation": {
+          "frequency_data": [
+            148,
+            79,
+            79,
+            99
+          ],
+          "strength_data": [
+            29,
+            54,
+            59,
+            59
+          ]
+        },
+        "current_strength": 149
+      },
+      "B": {
+        "pulse_operation": {
+          "frequency_data": [
+            79,
+            99,
+            79,
+            79
+          ],
+          "strength_data": [
+            44,
+            34,
+            59,
+            64
+          ]
+        },
+        "current_strength": 79
+      }
+    }
+  ]
+}
