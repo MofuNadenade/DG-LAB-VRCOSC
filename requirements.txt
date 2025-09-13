@@ -19,3 +19,6 @@ reactivex
 bleak
 bleak-winrt
 packaging
+torch
+matplotlib
+ipykernel
