@@ -168,7 +168,7 @@ pulse_dialogs:
       step_format: "第{0}步：必须包含频率和强度两个元组"
       freq_4_values: "第{0}步：频率数据必须包含4个值"
       freq_must_int: "第{0}步：频率值必须是整数"
-      freq_range: "第{0}步：频率值超出范围(10-240ms)"
+      freq_range: "第{0}步：频率值超出范围(10-240)"
       intensity_4_values: "第{0}步：强度数据必须包含4个值"
       intensity_must_int: "第{0}步：强度值必须是整数"
       intensity_range: "第{0}步：强度值超出范围(0-100)"

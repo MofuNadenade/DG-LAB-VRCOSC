@@ -168,7 +168,7 @@ pulse_dialogs:
       step_format: "Step {0}: Must contain frequency and intensity tuples"
       freq_4_values: "Step {0}: Frequency data must contain 4 values"
       freq_must_int: "Step {0}: Frequency values must be integers"
-      freq_range: "Step {0}: Frequency values out of range (10-240ms)"
+      freq_range: "Step {0}: Frequency values out of range (10-240)"
       intensity_4_values: "Step {0}: Intensity data must contain 4 values"
       intensity_must_int: "Step {0}: Intensity values must be integers"
       intensity_range: "Step {0}: Intensity values out of range (0-100)"
