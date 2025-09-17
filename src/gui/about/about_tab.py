@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushBu
 from i18n import translate, language_signals
 from models import SettingsDict
 from gui.ui_interface import UIInterface
+from gui.about.download_dialog import DownloadDialog
 from util import resource_path
 from core.auto_updater.auto_updater import AutoUpdater
 from core.auto_updater.models import ReleaseInfo
@@ -345,8 +346,6 @@ class AboutTab(QWidget):
         """处理仅下载模式"""
         if not self.updater:
             return
-            
-        from gui.about.download_dialog import DownloadDialog
         
         dialog = DownloadDialog(release_info, self.updater, allow_choose_path=True, parent=self)
         dialog.show()
@@ -364,8 +363,6 @@ class AboutTab(QWidget):
         
         if reply == QMessageBox.StandardButton.Yes and self.updater:
             # 显示下载进度框进行自动下载和安装
-            from gui.about.download_dialog import DownloadDialog
-            
             dialog = DownloadDialog(release_info, self.updater, allow_choose_path=False, parent=self)
             dialog.show()
 

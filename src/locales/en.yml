@@ -153,6 +153,7 @@ pulse_dialogs:
     selected_files: "Selected files:"
     file_info: "File information:"
     waveform_preview: "Waveform preview:"
+    file_info_preview: "File Info & Waveform Preview:"
     select_all_files: "Select All"
     clear_file_selection: "Clear Selection"
     
@@ -179,7 +180,7 @@ pulse_dialogs:
       max_frequency: "Max frequency"
       max_intensity: "Max intensity"
       selected_files_count: "Selected {0} files"
-      selected_stats: "Selected files statistics:"
+      selected_stats: "Selected files statistics"
       total_duration: "Total duration"
       file_count: "File count"
       total_warnings: "Total warnings"

@@ -153,6 +153,7 @@ pulse_dialogs:
     selected_files: "選択されたファイル:"
     file_info: "ファイル情報:"
     waveform_preview: "波形プレビュー:"
+    file_info_preview: "ファイル情報と波形プレビュー:"
     select_all_files: "全選択"
     clear_file_selection: "選択解除"
     
@@ -179,7 +180,7 @@ pulse_dialogs:
       max_frequency: "最大周波数"
       max_intensity: "最大強度"
       selected_files_count: "{0} 個のファイルが選択されています"
-      selected_stats: "選択されたファイルの統計:"
+      selected_stats: "選択されたファイルの統計"
       total_duration: "総持続時間"
       file_count: "ファイル数"
       total_warnings: "総警告数"

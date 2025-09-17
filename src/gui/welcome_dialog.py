@@ -6,7 +6,7 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QPushButton, 
                                QTextBrowser, QCheckBox, QLabel, QWidget)
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QDesktopServices
 import os
 from typing import Optional
 
@@ -196,7 +196,6 @@ class WelcomeDialog(QDialog):
     def _show_help(self) -> None:
         """显示更多帮助信息"""
         # 打开QQ群获取帮助
-        from PySide6.QtGui import QDesktopServices
         QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/1Mc6R9IvTq"))
         
     def is_dont_show_again_checked(self) -> bool:

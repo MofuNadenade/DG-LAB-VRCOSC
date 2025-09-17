@@ -153,6 +153,7 @@ pulse_dialogs:
     selected_files: "已选择的文件:"
     file_info: "文件信息:"
     waveform_preview: "波形预览:"
+    file_info_preview: "文件信息与波形预览:"
     select_all_files: "全选"
     clear_file_selection: "清除选择"
     
@@ -179,7 +180,7 @@ pulse_dialogs:
       max_frequency: "最大频率"
       max_intensity: "最大强度"
       selected_files_count: "已选择 {0} 个文件"
-      selected_stats: "选中文件统计:"
+      selected_stats: "选中文件统计"
       total_duration: "总持续时间"
       file_count: "文件数量"
       total_warnings: "总警告数"
