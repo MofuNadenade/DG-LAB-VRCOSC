@@ -238,17 +238,17 @@ def main() -> None:
         # 生成版本文件
         generate_version_file()
         
-        # 构建应用程序
-        if not args.no_build:
-            if not build_application():
-                print("❌ 构建失败，发布中止")
-                sys.exit(1)
-        
         # 创建发布提交
         create_release_commit(new_version, args.message)
         
         # 创建标签
         create_git_tag(new_version, args.message)
+        
+        # 构建应用程序
+        if not args.no_build:
+            if not build_application():
+                print("❌ 构建失败，发布中止")
+                sys.exit(1)
         
         # 推送到远程仓库
         if not args.no_push:
