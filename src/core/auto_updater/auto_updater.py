@@ -11,7 +11,7 @@ import sys
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Optional, Callable, List, Set, TypedDict, Any
+from typing import Optional, Callable, List, Set, TypedDict
 from urllib.parse import urlparse
 
 import aiohttp
@@ -106,55 +106,6 @@ class AutoUpdater(QObject):
         
         return False
     
-    def _is_windows(self) -> bool:
-        """检测是否为Windows系统"""
-        return platform.system().lower() == 'windows'
-    
-    def _get_resource_path(self, relative_path: str) -> Optional[Path]:
-        """获取打包后的资源文件路径"""
-        try:
-            # PyInstaller打包后的资源路径
-            if hasattr(sys, '_MEIPASS'):
-                # 打包后的临时目录
-                meipass: Any = getattr(sys, '_MEIPASS')
-                base_path = Path(meipass)
-            else:
-                # 开发环境
-                base_path = Path(__file__).parent.parent.parent
-            
-            resource_path = base_path / relative_path
-            if resource_path.exists():
-                return resource_path
-            else:
-                logger.warning(f"资源文件不存在: {resource_path}")
-                return None
-        except Exception as e:
-            logger.error(f"获取资源路径失败: {e}")
-            return None
-    
-    def _extract_install_helper(self) -> Optional[Path]:
-        """解压安装助手脚本到临时目录"""
-        try:
-            # 获取打包的bat文件
-            resource_path = self._get_resource_path("resources/install_helper.bat")
-            if not resource_path:
-                logger.error("无法找到安装助手脚本资源")
-                return None
-            
-            # 创建临时目录
-            temp_dir = Path(tempfile.gettempdir()) / "DG-LAB-VRCOSC-Install"
-            temp_dir.mkdir(exist_ok=True)
-            
-            # 解压到临时目录
-            temp_bat_path = temp_dir / "install_helper.bat"
-            shutil.copy2(resource_path, temp_bat_path)
-            
-            logger.info(f"安装助手脚本已解压到: {temp_bat_path}")
-            return temp_bat_path
-            
-        except Exception as e:
-            logger.error(f"解压安装助手脚本失败: {e}")
-            return None
     
     def _validate_paths(self, *paths: Path) -> bool:
         """验证路径安全性"""
@@ -499,101 +450,93 @@ class AutoUpdater(QObject):
             return False
     
     async def _perform_install_async(self, current_exe: Path, backup_path: Path, new_exe_path: Path) -> bool:
-        """异步执行安装操作"""
+        """异步执行安装操作 - 使用重命名策略绕过文件锁定"""
         try:
             # 验证路径安全性
             if not self._validate_paths(current_exe, backup_path, new_exe_path):
                 logger.error("路径验证失败，拒绝安装")
                 return False
             
-            # 在Windows系统上使用批处理脚本进行文件替换
-            if self._is_windows():
-                return await self._perform_windows_install_async(current_exe, backup_path, new_exe_path)
-            else:
-                # 非Windows系统的传统安装方式
-                return await self._perform_traditional_install_async(current_exe, backup_path, new_exe_path)
+            # 使用重命名策略进行安装
+            return await self._perform_rename_install_async(current_exe, backup_path, new_exe_path)
             
         except Exception as e:
             logger.error(f"Install operation failed: {e}")
             return False
     
-    async def _perform_windows_install_async(self, current_exe: Path, backup_path: Path, new_exe_path: Path) -> bool:
-        """Windows系统专用安装方法 - 使用批处理脚本"""
+    async def _perform_rename_install_async(self, current_exe: Path, backup_path: Path, new_exe_path: Path) -> bool:
+        """使用重命名策略安装更新 - 绕过文件锁定问题"""
         try:
-            # 解压安装助手脚本
-            helper_script = self._extract_install_helper()
-            if not helper_script:
-                logger.error("无法解压安装助手脚本")
-                return False
+            loop = asyncio.get_event_loop()
             
-            logger.info("使用Windows批处理脚本进行安装...")
+            logger.info("使用重命名策略进行安装...")
             logger.info(f"当前程序: {current_exe}")
             logger.info(f"新程序: {new_exe_path}")
             logger.info(f"备份位置: {backup_path}")
-            logger.info(f"助手脚本: {helper_script}")
             
-            # 构建批处理脚本命令
-            cmd: List[str] = [
-                str(helper_script),
-                str(current_exe),
-                str(new_exe_path),
-                str(backup_path)
-            ]
+            # 步骤1: 删除可能存在的老备份文件
+            if backup_path.exists():
+                logger.info(f"删除已存在的备份文件: {backup_path}")
+                await loop.run_in_executor(None, backup_path.unlink)
+            
+            # 步骤2: 将当前可执行文件重命名为备份文件
+            # 这样可以释放原文件名的占用
+            logger.info(f"步骤2: 重命名当前程序为备份文件: {current_exe} -> {backup_path}")
+            await loop.run_in_executor(None, shutil.move, str(current_exe), str(backup_path))
+            
+            # 步骤3: 将新的可执行文件复制到原位置
+            logger.info(f"步骤3: 复制新程序到原位置: {new_exe_path} -> {current_exe}")
+            await loop.run_in_executor(None, shutil.copy2, str(new_exe_path), str(current_exe))
+            
+            # 步骤4: 设置可执行权限（在类Unix系统上）
+            if platform.system().lower() != 'windows':
+                import stat
+                await loop.run_in_executor(
+                    None, 
+                    current_exe.chmod, 
+                    stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+                )
+                logger.info("已设置可执行权限")
+            
+            # 步骤5: 清理临时文件
+            if new_exe_path.exists():
+                await loop.run_in_executor(None, new_exe_path.unlink)
+                logger.info("已清理临时文件")
             
             # 询问用户是否重启程序
             reply = QMessageBox.question(
-                None,  # 没有父窗口
+                None,
                 translate('download_dialog.restart_confirm_title'),
                 translate('download_dialog.restart_confirm_message'),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
             )
             
-            if not reply == QMessageBox.StandardButton.Yes:
-                logger.info("用户取消了重启")
-                return False
-
-            # 在后台启动批处理脚本
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None,
-                lambda: subprocess.Popen(
-                    cmd,
-                    stdout=None,  # 不重定向输出，让批处理脚本显示在控制台
-                    stderr=None,  # 不重定向错误输出
-                    stdin=None,   # 不重定向输入
-                    creationflags=subprocess.CREATE_NEW_CONSOLE if hasattr(subprocess, 'CREATE_NEW_CONSOLE') else 0
-                )
-            )
-
-            # 退出当前进程
-            sys.exit(0)
-            
-        except Exception as e:
-            logger.error(f"Windows安装失败: {e}")
-            return False
-    
-    async def _perform_traditional_install_async(self, current_exe: Path, backup_path: Path, new_exe_path: Path) -> bool:
-        """传统安装方法 - 适用于非Windows系统"""
-        try:
-            # 创建备份
-            logger.info(f"Creating backup: {backup_path}")
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, shutil.copy2, current_exe, backup_path)
-            
-            # 替换当前可执行文件
-            logger.info(f"Installing update: {current_exe}")
-            await loop.run_in_executor(None, shutil.move, str(new_exe_path), str(current_exe))
-            
-            # 清理
-            if new_exe_path.exists():
-                await loop.run_in_executor(None, new_exe_path.unlink)
+            if reply == QMessageBox.StandardButton.Yes:
+                logger.info("用户确认重启，准备重启应用程序...")
+                # 延迟重启，给当前进程一些时间完成清理
+                await asyncio.sleep(1)
+                self.restart_application()
+            else:
+                logger.info("用户选择稍后重启")
                 
             return True
             
         except Exception as e:
-            logger.error(f"传统安装失败: {e}")
+            logger.error(f"重命名策略安装失败: {e}")
+            
+            # 尝试恢复：如果备份存在且当前exe不存在，则恢复备份
+            try:
+                if backup_path.exists() and not current_exe.exists():
+                    logger.info("尝试恢复备份文件...")
+                    restore_loop = asyncio.get_event_loop()
+                    await restore_loop.run_in_executor(None, shutil.move, str(backup_path), str(current_exe))
+                    logger.info("已恢复备份文件")
+            except Exception as restore_error:
+                logger.error(f"恢复备份失败: {restore_error}")
+            
             return False
+    
     
     def restart_application(self) -> None:
         """Restart the application after update"""
