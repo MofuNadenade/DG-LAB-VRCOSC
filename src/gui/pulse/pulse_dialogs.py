@@ -221,6 +221,7 @@ class ImportPulseDialog(QDialog):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.imported_pulses: List[PulseDict] = []
+        self.official_pulse_files: List[Dict[str, Any]] = []  # 存储官方波形文件信息
         
         # UI组件类型注解
         self.file_path_edit: QLineEdit
@@ -230,6 +231,11 @@ class ImportPulseDialog(QDialog):
         self.share_code_edit: QPlainTextEdit
         self.share_code_info: QLabel
         self.share_code_preview: QTextEdit
+        
+        # 官方波形导入相关组件
+        self.official_files_list: QListWidget
+        self.official_files_info: QTextEdit
+        self.official_files_preview: QTextEdit
 
         self.setWindowTitle(translate("pulse_dialogs.import_pulse.title"))
         self.setModal(True)
@@ -255,11 +261,15 @@ class ImportPulseDialog(QDialog):
         
         # 文件导入标签页
         file_tab = self.create_file_import_tab()
-        self.tab_widget.addTab(file_tab, "从文件导入")
+        self.tab_widget.addTab(file_tab, translate("pulse_dialogs.import_pulse.file_import_tab"))
         
         # 分享码导入标签页
         share_code_tab = self.create_share_code_import_tab()
-        self.tab_widget.addTab(share_code_tab, "从分享码导入")
+        self.tab_widget.addTab(share_code_tab, translate("pulse_dialogs.import_pulse.share_code_tab"))
+        
+        # 官方波形导入标签页
+        official_tab = self.create_official_pulse_import_tab()
+        self.tab_widget.addTab(official_tab, translate("pulse_dialogs.import_pulse.official_tab"))
         
         layout.addWidget(self.tab_widget)
 
@@ -360,6 +370,70 @@ class ImportPulseDialog(QDialog):
         self.share_code_preview.setMaximumHeight(200)
         self.share_code_preview.setReadOnly(True)
         layout.addWidget(self.share_code_preview)
+        
+        return tab
+    
+    def create_official_pulse_import_tab(self) -> QWidget:
+        """创建官方波形导入标签页"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        
+        # 文件选择区域
+        file_selection_layout = QHBoxLayout()
+        
+        # 选择多个文件按钮
+        browse_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.select_official_files"))
+        browse_official_btn.clicked.connect(self.browse_official_pulse_files)
+        file_selection_layout.addWidget(browse_official_btn)
+        
+        # 清空选择按钮
+        clear_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_official_files"))
+        clear_official_btn.clicked.connect(self.clear_official_pulse_files)
+        file_selection_layout.addWidget(clear_official_btn)
+        
+        file_selection_layout.addStretch()
+        layout.addLayout(file_selection_layout)
+        
+        # 已选择文件列表
+        files_label = QLabel(translate("pulse_dialogs.import_pulse.selected_files"))
+        layout.addWidget(files_label)
+        
+        self.official_files_list = QListWidget()
+        self.official_files_list.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
+        self.official_files_list.itemSelectionChanged.connect(self.update_official_pulse_preview)
+        layout.addWidget(self.official_files_list)
+        
+        # 文件信息显示
+        info_label = QLabel(translate("pulse_dialogs.import_pulse.file_info"))
+        layout.addWidget(info_label)
+        
+        self.official_files_info = QTextEdit()
+        self.official_files_info.setMaximumHeight(100)
+        self.official_files_info.setReadOnly(True)
+        layout.addWidget(self.official_files_info)
+        
+        # 波形预览
+        preview_label = QLabel(translate("pulse_dialogs.import_pulse.waveform_preview"))
+        layout.addWidget(preview_label)
+        
+        self.official_files_preview = QTextEdit()
+        self.official_files_preview.setMaximumHeight(120)
+        self.official_files_preview.setReadOnly(True)
+        layout.addWidget(self.official_files_preview)
+        
+        # 选择操作按钮
+        selection_layout = QHBoxLayout()
+        
+        select_all_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.select_all_files"))
+        select_all_official_btn.clicked.connect(self.select_all_official_files)
+        selection_layout.addWidget(select_all_official_btn)
+        
+        clear_selection_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_file_selection"))
+        clear_selection_official_btn.clicked.connect(self.clear_official_selection)
+        selection_layout.addWidget(clear_selection_official_btn)
+        
+        selection_layout.addStretch()
+        layout.addLayout(selection_layout)
         
         return tab
 
@@ -768,6 +842,8 @@ class ImportPulseDialog(QDialog):
             return selected_pulses
         elif current_index == 1:  # 分享码导入
             return self.get_share_code_pulses()
+        elif current_index == 2:  # 官方波形导入
+            return self.get_official_pulse_data()
         
         return []
     
@@ -804,6 +880,232 @@ class ImportPulseDialog(QDialog):
             logger.error(f"Failed to get share code pulses: {e}")
         
         return []
+    
+    def browse_official_pulse_files(self) -> None:
+        """浏览并选择多个.pulse文件"""
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self, translate("pulse_dialogs.import_pulse.select_official_files"), "", "Pulse文件 (*.pulse);;所有文件 (*)"
+        )
+        
+        if file_paths:
+            self.load_official_pulse_files(file_paths)
+    
+    def load_official_pulse_files(self, file_paths: List[str]) -> None:
+        """加载多个官方.pulse文件"""
+        from core.official.pulse_file_parser import PulseFileParser
+        
+        parser = PulseFileParser()
+        loaded_files: List[Dict[str, Any]] = []
+        success_count = 0
+        error_count = 0
+        error_messages: List[str] = []
+        
+        for file_path in file_paths:
+            try:
+                # 解析文件
+                result = parser.parse_file(file_path)
+                
+                if result.success and result.data:
+                    # 转换为PulseOperation
+                    pulse_operations = parser.convert_to_pulse_operations(result.data.header, result.data.sections)
+                    
+                    # 生成波形名称（使用文件名）
+                    import os
+                    file_name = os.path.splitext(os.path.basename(file_path))[0]
+                    pulse_name = f"官方-{file_name}"
+                    
+                    # 计算统计信息
+                    if pulse_operations:
+                        frequencies = [freq[0] for freq, _ in pulse_operations]
+                        intensities = [intensity[0] for _, intensity in pulse_operations]
+                        max_frequency = max(frequencies) if frequencies else 0
+                        max_intensity = max(intensities) if intensities else 0
+                    else:
+                        max_frequency = 0
+                        max_intensity = 0
+                    
+                    file_info = {
+                        'file_path': file_path,
+                        'file_name': file_name,
+                        'pulse_name': pulse_name,
+                        'pulse_data': result.data,
+                        'pulse_operations': pulse_operations,
+                        'warnings': [w.message for w in result.warnings],
+                        'stats': {
+                            'steps': len(pulse_operations),
+                            'duration_ms': len(pulse_operations) * 100,
+                            'max_frequency': max_frequency,
+                            'max_intensity': max_intensity,
+                            'sections': len(result.data.sections),
+                            'enabled_sections': sum(1 for s in result.data.sections if s.enabled),
+                            'rest_duration': result.data.header.rest_duration,
+                            'speed_multiplier': result.data.header.speed_multiplier
+                        }
+                    }
+                    
+                    loaded_files.append(file_info)
+                    success_count += 1
+                else:
+                    error_count += 1
+                    errors = [e.message for e in result.errors]
+                    error_messages.extend(errors)
+                    logger.warning(f"解析文件失败 '{file_path}': {'; '.join(errors)}")
+                    
+            except Exception as e:
+                error_count += 1
+                error_msg = f"加载文件 '{file_path}' 时发生异常: {e}"
+                error_messages.append(error_msg)
+                logger.error(error_msg)
+        
+        # 更新UI
+        if loaded_files:
+            self.official_pulse_files.extend(loaded_files)
+            self.update_official_files_list()
+            
+            # 显示加载结果
+            if error_count > 0:
+                message = translate("pulse_dialogs.import_pulse.partial_load_msg").format(success_count, error_count) + "\n\n"
+                if error_messages:
+                    message += translate("pulse_dialogs.import_pulse.error_details") + "\n" + "\n".join(error_messages[:5])  # 只显示前5个错误
+                    if len(error_messages) > 5:
+                        message += "\n" + translate("pulse_dialogs.import_pulse.more_errors").format(len(error_messages) - 5)
+                QMessageBox.warning(self, translate("pulse_dialogs.import_pulse.partial_load_success"), message)
+            else:
+                QMessageBox.information(self, translate("pulse_dialogs.import_pulse.load_success"), 
+                                      translate("pulse_dialogs.import_pulse.load_success_msg").format(success_count))
+        else:
+            if error_messages:
+                message = translate("pulse_dialogs.import_pulse.all_files_failed") + ":\n" + "\n".join(error_messages[:3])
+                if len(error_messages) > 3:
+                    message += "\n" + translate("pulse_dialogs.import_pulse.more_errors").format(len(error_messages) - 3)
+            else:
+                message = translate("pulse_dialogs.import_pulse.no_files_loaded")
+            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.load_failed"), message)
+    
+    def update_official_files_list(self) -> None:
+        """更新官方文件列表显示"""
+        self.official_files_list.clear()
+        
+        for i, file_info in enumerate(self.official_pulse_files):
+            item_text = f"{file_info['file_name']} ({file_info['stats']['steps']}步, {file_info['stats']['duration_ms']}ms)"
+            if file_info['warnings']:
+                item_text += " ⚠️"
+            
+            item = QListWidgetItem(item_text)
+            item.setData(Qt.ItemDataRole.UserRole, i)
+            item.setSelected(True)  # 默认选中
+            self.official_files_list.addItem(item)
+    
+    def update_official_pulse_preview(self) -> None:
+        """更新官方波形预览"""
+        selected_items = self.official_files_list.selectedItems()
+        
+        if not selected_items:
+            self.official_files_info.clear()
+            self.official_files_preview.clear()
+            return
+        
+        # 显示选中文件的信息
+        if len(selected_items) == 1:
+            # 单个文件详细信息
+            item = selected_items[0]
+            index: int = item.data(Qt.ItemDataRole.UserRole)
+            file_info: Dict[str, Any] = self.official_pulse_files[index]
+            
+            # 文件信息
+            info_text = f"{translate('pulse_dialogs.import_pulse.file_stats.file')}: {file_info['file_name']}\n"
+            info_text += f"{translate('pulse_dialogs.import_pulse.file_stats.rest_duration')}: {file_info['stats']['rest_duration']:.1f}秒\n"
+            info_text += f"{translate('pulse_dialogs.import_pulse.file_stats.speed_multiplier')}: {file_info['stats']['speed_multiplier']}x\n"
+            info_text += f"{translate('pulse_dialogs.import_pulse.file_stats.sections')}: {file_info['stats']['sections']}\n"
+            info_text += f"{translate('pulse_dialogs.import_pulse.file_stats.enabled_sections')}: {file_info['stats']['enabled_sections']}"
+            
+            if file_info['warnings']:
+                info_text += f"\n⚠️ {translate('pulse_dialogs.import_pulse.file_stats.warnings')}: {len(file_info['warnings'])}个"
+            
+            self.official_files_info.setText(info_text)
+            
+            # 波形预览
+            stats = file_info['stats']
+            preview_text = f"{translate('pulse_dialogs.import_pulse.file_stats.waveform_name')}: {file_info['pulse_name']}\n"
+            preview_text += f"{translate('pulse_dialogs.import_pulse.file_stats.total_steps')}: {stats['steps']}\n"
+            preview_text += f"{translate('pulse_dialogs.import_pulse.file_stats.duration')}: {stats['duration_ms']}ms ({stats['duration_ms']/1000:.1f}秒)\n"
+            preview_text += f"{translate('pulse_dialogs.import_pulse.file_stats.max_frequency')}: {stats['max_frequency']}\n"
+            preview_text += f"{translate('pulse_dialogs.import_pulse.file_stats.max_intensity')}: {stats['max_intensity']}%"
+            
+            if file_info['warnings']:
+                preview_text += f"\n\n⚠️ {translate('pulse_dialogs.import_pulse.file_stats.warnings')}:\n" + "\n".join(f"• {w}" for w in file_info['warnings'][:3])
+                if len(file_info['warnings']) > 3:
+                    preview_text += f"\n" + translate("pulse_dialogs.import_pulse.more_errors").format(len(file_info['warnings']) - 3)
+            
+            self.official_files_preview.setText(preview_text)
+        else:
+            # 多个文件统计信息
+            total_steps = 0
+            total_duration = 0
+            total_warnings = 0
+            
+            for item in selected_items:
+                item_index: int = item.data(Qt.ItemDataRole.UserRole)
+                item_file_info: Dict[str, Any] = self.official_pulse_files[item_index]
+                total_steps += item_file_info['stats']['steps']
+                total_duration += item_file_info['stats']['duration_ms']
+                total_warnings += len(item_file_info['warnings'])
+            
+            info_text = translate("pulse_dialogs.import_pulse.file_stats.selected_files_count").format(len(selected_items))
+            self.official_files_info.setText(info_text)
+            
+            preview_text = f"{translate('pulse_dialogs.import_pulse.file_stats.selected_stats')}:\n"
+            preview_text += f"{translate('pulse_dialogs.import_pulse.file_stats.total_steps')}: {total_steps}\n"
+            preview_text += f"{translate('pulse_dialogs.import_pulse.file_stats.total_duration')}: {total_duration}ms ({total_duration/1000:.1f}秒)\n"
+            preview_text += f"{translate('pulse_dialogs.import_pulse.file_stats.file_count')}: {len(selected_items)}"
+            
+            if total_warnings > 0:
+                preview_text += f"\n⚠️ {translate('pulse_dialogs.import_pulse.file_stats.total_warnings')}: {total_warnings}"
+            
+            self.official_files_preview.setText(preview_text)
+    
+    def clear_official_pulse_files(self) -> None:
+        """清空官方波形文件"""
+        self.official_pulse_files.clear()
+        self.official_files_list.clear()
+        self.official_files_info.clear()
+        self.official_files_preview.clear()
+    
+    def select_all_official_files(self) -> None:
+        """选择所有官方文件"""
+        for i in range(self.official_files_list.count()):
+            self.official_files_list.item(i).setSelected(True)
+    
+    def clear_official_selection(self) -> None:
+        """清除官方文件选择"""
+        self.official_files_list.clearSelection()
+    
+    def get_official_pulse_data(self) -> List[PulseDict]:
+        """获取选中的官方波形数据"""
+        selected_items = self.official_files_list.selectedItems()
+        selected_pulses: List[PulseDict] = []
+        
+        for item in selected_items:
+            index: int = item.data(Qt.ItemDataRole.UserRole)
+            file_info: Dict[str, Any] = self.official_pulse_files[index]
+            
+            # 创建完整性报告
+            integrity_report: IntegrityReport = {
+                'valid': True,
+                'issues': [],
+                'warnings': file_info['warnings'],
+                'stats': file_info['stats']
+            }
+            
+            pulse_dict: PulseDict = {
+                'name': file_info['pulse_name'],
+                'data': file_info['pulse_operations'],
+                'integrity': integrity_report
+            }
+            
+            selected_pulses.append(pulse_dict)
+        
+        return selected_pulses
 
 
 class ExportPulseDialog(QDialog):
