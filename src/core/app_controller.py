@@ -527,16 +527,21 @@ class AppController(UIInterface):
         show_welcome = self.settings.get('app', {}).get('show_welcome_dialog', True)
         
         if show_welcome:
-            # 显示欢迎对话框
+            # 非阻塞方式显示欢迎对话框
             welcome_dialog = WelcomeDialog(self.main_window)
-            result = welcome_dialog.exec()
             
-            # 如果用户选择了"不再显示"，保存到设置
-            if welcome_dialog.is_dont_show_again_checked():
-                if 'app' not in self.settings:
-                    self.settings['app'] = {}
-                self.settings['app']['show_welcome_dialog'] = False
-                self.save_settings()
-                logger.info("用户选择不再显示欢迎对话框")
+            # 连接对话框关闭信号来处理用户选择
+            def on_dialog_finished():
+                # 如果用户选择了"不再显示"，保存到设置
+                if welcome_dialog.is_dont_show_again_checked():
+                    if 'app' not in self.settings:
+                        self.settings['app'] = {}
+                    self.settings['app']['show_welcome_dialog'] = False
+                    self.save_settings()
+                    logger.info("用户选择不再显示欢迎对话框")
+                
+                logger.info("欢迎对话框已关闭")
+                welcome_dialog.deleteLater()  # 清理对话框资源
             
-            logger.info(f"欢迎对话框已显示，用户操作: {'确认' if result else '取消'}")
+            welcome_dialog.finished.connect(on_dialog_finished)
+            welcome_dialog.show()
