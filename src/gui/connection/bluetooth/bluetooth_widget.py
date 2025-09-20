@@ -237,6 +237,16 @@ class BluetoothConnectionWidget(QWidget):
         
         # 应用按钮 - 最大化并放在底部
         self.apply_params_button = QPushButton(translate("bluetooth.apply_parameters"))
+        self.apply_params_button.setStyleSheet("""
+            QPushButton:enabled {
+                background-color: green;
+                color: white;
+            }
+            QPushButton:disabled {
+                background-color: lightgray;
+                color: gray;
+            }
+        """)
         self.apply_params_button.setEnabled(False)
         self.apply_params_button.clicked.connect(self.on_apply_params_clicked)
         layout.addWidget(self.apply_params_button)

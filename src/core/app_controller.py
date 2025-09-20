@@ -267,6 +267,11 @@ class AppController(UIInterface):
             await osc_action_service.osc_set_strength(args[0].value, current_channel)
         self.registries.action_registry.register_action("设置当前通道强度", osc_set_strength_current, OSCFloat)
 
+        async def osc_set_strength_all(*args: OSCFloat) -> None:
+            await osc_action_service.osc_set_strength(args[0].value, Channel.A)
+            await osc_action_service.osc_set_strength(args[0].value, Channel.B)
+        self.registries.action_registry.register_action("设置所有通道强度", osc_set_strength_all, OSCFloat)
+
         # 注册面板控制操作
         async def osc_set_panel_control(*args: OSCBool) -> None:
             await osc_action_service.osc_set_panel_control(args[0].value)

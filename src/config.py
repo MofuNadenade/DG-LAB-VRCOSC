@@ -31,8 +31,8 @@ def get_default_settings() -> SettingsDict:
                 'remote_address': "",
             },
             'bluetooth': {
-                'strength_limit_a': 200,
-                'strength_limit_b': 200,
+                'strength_limit_a': 20,
+                'strength_limit_b': 20,
                 'freq_balance_a': 160,
                 'freq_balance_b': 160,
                 'strength_balance_a': 0,
@@ -47,15 +47,15 @@ def get_default_settings() -> SettingsDict:
             'fire_mode_disabled': False,
             'enable_panel_control': True,
             'disable_panel_pulse_setting': False,
-            'dynamic_bone_mode_a': False,
-            'dynamic_bone_mode_b': False,
+            'dynamic_bone_mode_a': True,
+            'dynamic_bone_mode_b': True,
             'current_pulse_a': "无波形",
             'current_pulse_b': "无波形",
             # 动骨模式范围设置
             'dynamic_bone_min_value_a': 0,
-            'dynamic_bone_max_value_a': 100,
+            'dynamic_bone_max_value_a': 10,
             'dynamic_bone_min_value_b': 0,
-            'dynamic_bone_max_value_b': 100,
+            'dynamic_bone_max_value_b': 10,
         },
 
         # 自动更新设置

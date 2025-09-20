@@ -9,16 +9,16 @@ from typing import Dict
 
 logger = logging.getLogger(__name__)
 
-VERSION = "v0.2.7-20250918-0101-e104d85"
-VERSION_SHORT = "v0.2.7"
+VERSION = "v0.2.8"
+VERSION_SHORT = "v0.2.8"
 
 BUILD_INFO = {
-    "version": "v0.2.7-20250918-0101-e104d85",
-    "commit_hash": "e104d85f9b6772adf85e2ab08aca9933cea6277e",
-    "commit_short": "e104d85",
+    "version": "v0.2.8",
+    "commit_hash": "d34ba62928ebffa1e61dce7c647c92f2a4331caa",
+    "commit_short": "d34ba62",
     "branch": "master",
-    "commit_date": "2025-09-18 00:54:37 +0800",
-    "build_time": "2025-09-18T01:01:26.160256",
+    "commit_date": "2025-09-18 01:01:29 +0800",
+    "build_time": "2025-09-18T01:01:31.549033",
     "python_version": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
     "platform": "win32"
 }

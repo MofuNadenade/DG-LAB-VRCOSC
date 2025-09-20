@@ -170,6 +170,7 @@ DEFAULT_BINDINGS: List[OSCBindingDict] = [
     {"address_name": "DG-LAB碰左小腿", "action_name": "设置A通道强度"},
     {"address_name": "DG-LAB碰右小腿", "action_name": "设置B通道强度"},
     {"address_name": "DG-LAB拉尾巴", "action_name": "设置当前通道强度"},
+    {"address_name": "PCS进入", "action_name": "设置所有通道强度"},
 
     # SoundPad控制相关
     {"address_name": "SoundPad面板控制开关", "action_name": "面板控制开关"},
