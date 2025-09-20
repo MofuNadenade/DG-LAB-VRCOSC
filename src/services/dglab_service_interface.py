@@ -66,11 +66,6 @@ class IDGLabDeviceService(IService):
     # ============ 基础强度操作 ============
 
     @abstractmethod
-    async def set_float_output(self, value: float, channel: Channel) -> None:
-        """设置浮点输出强度（原始设备操作）"""
-        ...
-
-    @abstractmethod
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度（原始设备操作）"""
         ...

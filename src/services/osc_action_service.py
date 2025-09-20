@@ -74,7 +74,7 @@ class OSCActionService(IService):
         self._is_running: bool = False
         
         # 强度缓存和防抖机制
-        self._pending_strength_updates: Dict[Channel, float] = {}
+        self._pending_strength_updates: Dict[Channel, int] = {}
         self._strength_update_task: Optional[asyncio.Task[None]] = None
         self._strength_debounce_interval: float = 0.1  # 防抖间隔，单位秒，默认100ms
 
@@ -224,8 +224,8 @@ class OSCActionService(IService):
             limit = last_strength['strength_limit'][channel]
             final_output = min(self._map_unit_value(value, min_val, max_val), limit)
 
-            # 缓存强度更新
-            self._pending_strength_updates[channel] = final_output
+            # 缓存强度更新（转换为整数）
+            self._pending_strength_updates[channel] = int(final_output)
 
     async def osc_reset_strength(self, value: bool, channel: Channel) -> None:
         """重置通道强度为0（委托给设备服务）"""
@@ -422,7 +422,7 @@ class OSCActionService(IService):
                     
                     # 发送缓存的强度更新
                     for channel, strength_value in pending_updates.items():
-                        await self._dglab_device_service.set_float_output(strength_value, channel)
+                        await self._dglab_device_service.adjust_strength(StrengthOperationType.SET_TO, strength_value, channel)
                             
         except asyncio.CancelledError:
             logger.debug("防抖强度更新任务已取消")

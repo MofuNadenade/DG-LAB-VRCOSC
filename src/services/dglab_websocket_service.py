@@ -215,14 +215,6 @@ class DGLabWebSocketService(IDGLabDeviceService):
 
     # ============ 基础强度操作（实现IDGLabService接口） ============
 
-    async def set_float_output(self, value: float, channel: Channel) -> None:
-        """设置浮点输出强度（原始设备操作）"""
-        await self._websocket_controller.set_strength(
-            self._convert_channel_to_pydglab(channel),
-            self._convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
-            int(value)
-        )
-
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度（原始设备操作）"""
         await self._websocket_controller.set_strength(
@@ -233,27 +225,15 @@ class DGLabWebSocketService(IDGLabDeviceService):
 
     async def reset_strength(self, channel: Channel) -> None:
         """重置通道强度为0（原始设备操作）"""
-        await self._websocket_controller.set_strength(
-            self._convert_channel_to_pydglab(channel),
-            self._convert_strength_operation_to_pydglab(StrengthOperationType.SET_TO),
-            0
-        )
+        await self.adjust_strength(StrengthOperationType.SET_TO, 0, channel)
 
     async def increase_strength(self, channel: Channel) -> None:
         """增加通道强度（原始设备操作）"""
-        await self._websocket_controller.set_strength(
-            self._convert_channel_to_pydglab(channel),
-            self._convert_strength_operation_to_pydglab(StrengthOperationType.INCREASE),
-            1
-        )
+        await self.adjust_strength(StrengthOperationType.INCREASE, 1, channel)
 
     async def decrease_strength(self, channel: Channel) -> None:
         """减少通道强度（原始设备操作）"""
-        await self._websocket_controller.set_strength(
-            self._convert_channel_to_pydglab(channel),
-            self._convert_strength_operation_to_pydglab(StrengthOperationType.DECREASE),
-            1
-        )
+        await self.adjust_strength(StrengthOperationType.DECREASE, 1, channel)
 
     # ============ 波形数据操作（实现IDGLabService接口） ============
 
