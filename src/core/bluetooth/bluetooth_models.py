@@ -94,6 +94,13 @@ class StrengthParsingMethod(IntEnum):
     ABSOLUTE = 0b11       # 绝对设置
 
 
+class BluetoothStrengthOperationType(IntEnum):
+    """蓝牙协议层强度操作类型"""
+    DECREASE = 0      # 通道强度减少
+    INCREASE = 1      # 通道强度增加
+    SET_TO = 2        # 通道强度变化为指定数值
+
+
 class DeviceInfo(TypedDict):
     """设备信息"""
     address: str

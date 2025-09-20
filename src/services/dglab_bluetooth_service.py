@@ -10,6 +10,7 @@ import logging
 from typing import Optional, List, Dict, TypedDict
 
 from core.bluetooth import bluetooth_models
+from core.bluetooth.bluetooth_models import BluetoothStrengthOperationType
 
 from PySide6.QtCore import QObject, Signal
 
@@ -239,21 +240,11 @@ class DGLabBluetoothService(IDGLabDeviceService):
 
     async def adjust_strength(self, operation_type: StrengthOperationType, value: int, channel: Channel) -> None:
         """调整通道强度（原始设备操作）"""
-        if operation_type == StrengthOperationType.SET_TO:
-            await self._bluetooth_controller.set_strength_absolute(
-                self._convert_channel_to_bluetooth(channel),
-                value
-            )
-        elif operation_type == StrengthOperationType.INCREASE:
-            await self._bluetooth_controller.set_strength_relative(
-                self._convert_channel_to_bluetooth(channel),
-                value
-            )
-        elif operation_type == StrengthOperationType.DECREASE:
-            await self._bluetooth_controller.set_strength_relative(
-                self._convert_channel_to_bluetooth(channel),
-                -value
-            )
+        await self._bluetooth_controller.set_strength(
+            self._convert_channel_to_bluetooth(channel),
+            self._convert_strength_operation_to_bluetooth(operation_type),
+            value
+        )
 
     async def reset_strength(self, channel: Channel) -> None:
         """重置通道强度为0（原始设备操作）"""
@@ -605,12 +596,25 @@ class DGLabBluetoothService(IDGLabDeviceService):
             logger.error(f"更新设备参数失败: {e}")
             return False
 
+    # ============ 类型转换函数 ============
+
     def _convert_channel_to_bluetooth(self, channel: Channel) -> bluetooth.Channel:
         """转换模型通道到蓝牙通道"""
         if channel == Channel.A:
             return bluetooth.Channel.A
         else:
             return bluetooth.Channel.B
+
+    def _convert_strength_operation_to_bluetooth(self, operation_type: StrengthOperationType) -> BluetoothStrengthOperationType:
+        """转换服务层强度操作类型到蓝牙协议层强度操作类型"""
+        if operation_type == StrengthOperationType.DECREASE:
+            return BluetoothStrengthOperationType.DECREASE
+        elif operation_type == StrengthOperationType.INCREASE:
+            return BluetoothStrengthOperationType.INCREASE
+        elif operation_type == StrengthOperationType.SET_TO:
+            return BluetoothStrengthOperationType.SET_TO
+        else:
+            raise ValueError(f"未知的强度操作类型: {operation_type}")
 
     def _convert_pulse_operations_to_bluetooth(self, operations: List[PulseOperation]) -> List[bluetooth.PulseOperation]:
         """将PulseOperation转换为频率和强度数组"""

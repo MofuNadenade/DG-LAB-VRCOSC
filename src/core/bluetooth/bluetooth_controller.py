@@ -23,7 +23,7 @@ from .bluetooth_models import (
     DeviceInfo, Channel, DeviceState, BluetoothUUIDs, PulseOperation, StrengthParsingMethod,
     WaveformFrequencyOperation, WaveformStrengthOperation, PlaybackMode, FramesEventType,
     ConnectionStateCallback, DataSyncCallback, ProgressChangedCallback, FramesEventCallback,
-    PlaybackModeChangedCallback
+    PlaybackModeChangedCallback, BluetoothStrengthOperationType
 )
 from .bluetooth_protocol import BluetoothProtocol
 from .bluetooth_channel_state_handler import BluetoothChannelStateHandler
@@ -462,6 +462,24 @@ class BluetoothController:
     async def reset_strength(self, channel: Channel) -> bool:
         """重置通道强度为0"""
         return await self.set_strength_absolute(channel, 0)
+    
+    async def set_strength(self, channel: Channel, operation_type: BluetoothStrengthOperationType, value: int) -> bool:
+        """设置通道强度（协议层统一接口）
+        
+        Args:
+            channel: 通道
+            operation_type: 强度操作类型
+            value: 强度值
+            
+        Returns:
+            操作是否成功
+        """
+        if operation_type == BluetoothStrengthOperationType.SET_TO:
+            return await self.set_strength_absolute(channel, value)
+        elif operation_type == BluetoothStrengthOperationType.INCREASE:
+            return await self.set_strength_relative(channel, value)
+        elif operation_type == BluetoothStrengthOperationType.DECREASE:
+            return await self.set_strength_relative(channel, -value)
     
     async def query_battery_level(self) -> Optional[int]:
         """手动查询电量
