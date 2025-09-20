@@ -588,6 +588,8 @@ class BluetoothConnectionWidget(QWidget):
             QMessageBox.warning(self, translate("common.error"), translate("bluetooth.no_device_selected"))
             return
             
+        self.device_list.clear()
+
         osc_port = self.settings.get('osc_port', 9001)
         device_params = self.get_device_params()
         self.connection_manager.start_connection(selected_device, osc_port, device_params)
