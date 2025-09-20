@@ -16,7 +16,6 @@ main:
     osc: "OSC地址"
     pulse: "波形编辑器"
     recording: "录制回放"
-    deepseek: "Deepseek"
   settings:
     language_label: "语言:"
   action:
@@ -633,9 +632,3 @@ welcome_dialog:
   step4: "启动 VRChat 并享受沉浸式体验"
   tip: "小贴士"
   tip_content: "开启 OSC 调试显示可以实时监控参数变化，帮助您更好地配置绑定关系"
-
-deepseek_tab:
-  url_label: "网址:"
-  go: "前往"
-  home: "主页"
-  refresh: "刷新"

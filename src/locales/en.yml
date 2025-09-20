@@ -16,7 +16,6 @@ main:
     osc: "OSC Addresses"
     pulse: "Pulse Editor"
     recording: "Recording"
-    deepseek: "Deepseek"
   settings:
     language_label: "Language:"
   action:
@@ -633,9 +632,3 @@ welcome_dialog:
   step4: "Launch VRChat and enjoy the immersive experience"
   tip: "Tip"
   tip_content: "Enable OSC debug display to monitor parameter changes in real-time and better configure your bindings"
-
-deepseek_tab:
-  url_label: "URL:"
-  go: "Go"
-  home: "Home"
-  refresh: "Refresh"
