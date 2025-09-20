@@ -85,6 +85,13 @@ class BluetoothController:
         
         # 连接状态事件信号
         self._connected_event = asyncio.Event()
+        
+        # 序列号和强度变更状态
+        self._sequence_no: int = 0
+        self._input_allowed: bool = True
+        self._accumulated_changes: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
+        self._pending_sequence_no: int = 0
+        self._request_time: float = 0.0
 
         # 回调函数 - 使用Protocol类型
         self._on_notification: Optional[Callable[[bytes], Awaitable[None]]] = None
@@ -102,6 +109,20 @@ class BluetoothController:
         self._on_playback_mode_changed: Optional[PlaybackModeChangedCallback] = None
         
         logger.info("V3蓝牙控制器已初始化")
+
+    def _next_sequence_no(self) -> int:
+        """获取下一个序列号"""
+        self._sequence_no = (self._sequence_no + 1) % 16
+        if self._sequence_no == 0:
+            self._sequence_no = 1
+        return self._sequence_no
+    
+    def _check_timeout(self) -> None:
+        """检查强度变更请求超时"""
+        if not self._input_allowed and time.time() - self._request_time > 1.0:
+            logger.warning("强度变更请求超时，重置状态")
+            self._input_allowed = True
+            self._pending_sequence_no = 0
 
     # ============ 回调设置 ============
     
@@ -397,58 +418,50 @@ class BluetoothController:
     
     async def set_strength_absolute(self, channel: Channel, strength: int) -> bool:
         """设置绝对强度值"""
-        try:
-            if not self.is_connected:
-                logger.warning("设备未连接，无法设置强度")
-                return False
-            
-            if not self._protocol.validate_strength(strength):
-                logger.error(f"强度值超出范围: {strength}")
-                return False
-            
-            # 直接更新设备状态中的强度值
-            if channel == Channel.A:
-                self._device_state['channel_a']['strength'] = strength
-            else:
-                self._device_state['channel_b']['strength'] = strength
-            
-            logger.debug(f"设置{channel}通道绝对强度: {strength}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"设置绝对强度失败: {e}")
+        if not self.is_connected:
+            logger.warning("设备未连接，无法设置强度")
             return False
+        
+        if not self._protocol.validate_strength(strength):
+            logger.error(f"强度值超出范围: {strength}")
+            return False
+        
+        # 检查超时
+        self._check_timeout()
+        
+        # 累积强度变更
+        current_strength: int = self._get_current_strength(channel)
+        if self._input_allowed:
+            self._accumulated_changes[channel] = strength - current_strength
+        else:
+            # 等待确认期间继续累积
+            additional_change: int = strength - current_strength
+            self._accumulated_changes[channel] += additional_change
+        
+        return True
     
     async def set_strength_relative(self, channel: Channel, delta: int) -> bool:
         """相对调整强度"""
-        try:
-            if not self.is_connected:
-                logger.warning("设备未连接，无法调整强度")
-                return False
-            
-            # 获取当前强度值
-            current_strength = self._get_current_strength(channel)
-            
-            # 计算新的绝对强度值
-            new_strength = current_strength + delta
-            
-            # 验证强度值范围
-            if not self._protocol.validate_strength(new_strength):
-                logger.error(f"调整后强度值超出范围: {new_strength}")
-                return False
-            
-            # 直接更新设备状态中的强度值
-            if channel == Channel.A:
-                self._device_state['channel_a']['strength'] = new_strength
-            else:
-                self._device_state['channel_b']['strength'] = new_strength
-            
-            logger.debug(f"调整{channel}通道相对强度: {current_strength} -> {new_strength} (变化: {delta})")
-            return True
-            
-        except Exception as e:
-            logger.error(f"相对调整强度失败: {e}")
+        if not self.is_connected:
+            logger.warning("设备未连接，无法调整强度")
             return False
+        
+        # 检查超时
+        self._check_timeout()
+        
+        # 直接累积相对变化
+        self._accumulated_changes[channel] += delta
+        
+        # 验证累积后的强度值范围
+        current_strength: int = self._get_current_strength(channel)
+        new_strength: int = current_strength + self._accumulated_changes[channel]
+        
+        if not self._protocol.validate_strength(new_strength):
+            logger.error(f"累积后强度值超出范围: {new_strength}")
+            self._accumulated_changes[channel] -= delta  # 回退
+            return False
+        
+        return True
     
     async def reset_strength(self, channel: Channel) -> bool:
         """重置通道强度为0"""
@@ -491,7 +504,6 @@ class BluetoothController:
                 if self._on_battery_changed:
                     await self._on_battery_changed(battery_level)
                 
-                logger.info(f"手动查询电量: {battery_level}%")
                 return battery_level
             
             return None
@@ -766,15 +778,22 @@ class BluetoothController:
             if not response:
                 return
             
-            # 更新设备强度状态
             self._device_state['channel_a']['strength'] = response['strength_a']
             self._device_state['channel_b']['strength'] = response['strength_b']
             
-            logger.debug(f"收到B1回应: 强度A={response['strength_a']}, B={response['strength_b']}")
+            logger.debug(f"收到B1回应: 序列号={response['sequence_no']}, 强度A={response['strength_a']}, B={response['strength_b']}")
+            
+            # 处理序列号确认
+            if response['sequence_no'] > 0 and response['sequence_no'] == self._pending_sequence_no:
+                # 强度变更确认成功
+                self._input_allowed = True
+                self._pending_sequence_no = 0
+            elif response['sequence_no'] > 0:
+                logger.warning(f"B1序列号不匹配: 期望={self._pending_sequence_no}, 实际={response['sequence_no']}")
             
             # 触发强度变化回调
             if self._on_strength_changed:
-                strength_dict = {Channel.A: response['strength_a'], Channel.B: response['strength_b']}
+                strength_dict: Dict[Channel, int] = {Channel.A: response['strength_a'], Channel.B: response['strength_b']}
                 await self._on_strength_changed(strength_dict)
                 
         except Exception as e:
@@ -891,28 +910,74 @@ class BluetoothController:
         return frame.pulse_operation[0], frame.pulse_operation[1], frame.target_strength
 
     async def _process_and_send_b0_command(self) -> None:
-        """处理并发送B0指令 - 支持快照强度"""
+        """处理并发送B0指令 - 强度变更逻辑"""
         try:
+            # 检查强度变更超时
+            self._check_timeout()
+            
             # 获取当前脉冲和强度数据
             pulse_freq_a, pulse_strength_a, target_strength_a = self._next_pulse_and_strength_data(Channel.A)
             pulse_freq_b, pulse_strength_b, target_strength_b = self._next_pulse_and_strength_data(Channel.B)
             
-            # 确定最终强度值
-            strength_a = target_strength_a if target_strength_a is not None else self._device_state['channel_a']['strength']
-            strength_b = target_strength_b if target_strength_b is not None else self._device_state['channel_b']['strength']
+            # 检查是否有累积的强度变更需要发送
+            has_strength_changes: bool = any(self._accumulated_changes.values())
             
-            # 更新设备状态（如果有强度变化）
-            if target_strength_a is not None:
-                self._device_state['channel_a']['strength'] = target_strength_a
-            if target_strength_b is not None:
-                self._device_state['channel_b']['strength'] = target_strength_b
-
-            # 构建强度解读方式
-            strength_parsing_method = self._protocol.build_strength_parsing_method(StrengthParsingMethod.ABSOLUTE, StrengthParsingMethod.ABSOLUTE)
+            if has_strength_changes and self._input_allowed:
+                # 发送强度变更B0指令
+                sequence_no = self._next_sequence_no()
+                self._pending_sequence_no = sequence_no
+                self._input_allowed = False
+                self._request_time = time.time()
+                
+                # 构建强度解读方式
+                method_a: StrengthParsingMethod = (
+                    StrengthParsingMethod.INCREASE if self._accumulated_changes[Channel.A] > 0 else
+                    StrengthParsingMethod.DECREASE if self._accumulated_changes[Channel.A] < 0 else
+                    StrengthParsingMethod.NO_CHANGE
+                )
+                method_b: StrengthParsingMethod = (
+                    StrengthParsingMethod.INCREASE if self._accumulated_changes[Channel.B] > 0 else
+                    StrengthParsingMethod.DECREASE if self._accumulated_changes[Channel.B] < 0 else
+                    StrengthParsingMethod.NO_CHANGE
+                )
+                strength_parsing_method = self._protocol.build_strength_parsing_method(method_a, method_b)
+                
+                # 强度设定值：使用累积变更的绝对值
+                strength_a = abs(self._accumulated_changes[Channel.A])
+                strength_b = abs(self._accumulated_changes[Channel.B])
+                
+                # 清空累积变更
+                self._accumulated_changes = {Channel.A: 0, Channel.B: 0}
+                
+            elif not self._input_allowed:
+                # 正在等待强度变更确认，发送序列号为0的B0指令
+                sequence_no = 0
+                strength_parsing_method = self._protocol.build_strength_parsing_method(
+                    StrengthParsingMethod.NO_CHANGE, StrengthParsingMethod.NO_CHANGE
+                )
+                # 等待期间强度设定值为0
+                strength_a = 0
+                strength_b = 0
+            else:
+                # 常规波形数据发送
+                sequence_no = 0
+                strength_parsing_method = self._protocol.build_strength_parsing_method(
+                    StrengthParsingMethod.ABSOLUTE, StrengthParsingMethod.ABSOLUTE
+                )
+                
+                # 使用当前设备状态或快照强度
+                strength_a = target_strength_a if target_strength_a is not None else self._device_state['channel_a']['strength']
+                strength_b = target_strength_b if target_strength_b is not None else self._device_state['channel_b']['strength']
+                
+                # 更新设备状态（快照强度变化）
+                if target_strength_a is not None:
+                    self._device_state['channel_a']['strength'] = target_strength_a
+                if target_strength_b is not None:
+                    self._device_state['channel_b']['strength'] = target_strength_b
             
-            # 构建B0指令
-            b0_data = self._protocol.build_b0_command(
-                sequence_no=0,  # 序列号设为0
+            # 构建并发送B0指令
+            b0_data: Optional[bytes] = self._protocol.build_b0_command(
+                sequence_no=sequence_no,
                 strength_parsing_method=strength_parsing_method,
                 strength_a=strength_a,
                 strength_b=strength_b,
@@ -975,12 +1040,19 @@ class BluetoothController:
     async def _cleanup_connection(self) -> None:
         """清理连接状态"""
         self._is_connected = False
-        self._is_connecting = False  # 清除连接中状态
+        self._is_connecting = False
         self._current_device = None
         self._device_state['is_connected'] = False
         self._write_characteristic = None
         self._notify_characteristic = None
         self._battery_characteristic = None
+        
+        # 清理强度变更状态
+        self._input_allowed = True
+        self._accumulated_changes = {Channel.A: 0, Channel.B: 0}
+        self._pending_sequence_no = 0
+        self._request_time = 0.0
+        self._sequence_no = 0
         
         # 清除连接状态事件信号
         self._connected_event.clear()

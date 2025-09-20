@@ -422,11 +422,7 @@ class OSCActionService(IService):
                     
                     # 发送缓存的强度更新
                     for channel, strength_value in pending_updates.items():
-                        try:
-                            await self._dglab_device_service.set_float_output(strength_value, channel)
-                            logger.debug(f"防抖强度更新完成: 通道{self._get_channel_name(channel)} = {strength_value}")
-                        except Exception as e:
-                            logger.error(f"防抖强度更新失败: 通道{self._get_channel_name(channel)}, 错误: {e}")
+                        await self._dglab_device_service.set_float_output(strength_value, channel)
                             
         except asyncio.CancelledError:
             logger.debug("防抖强度更新任务已取消")
