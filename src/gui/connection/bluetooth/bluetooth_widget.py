@@ -595,9 +595,9 @@ class BluetoothConnectionWidget(QWidget):
         elif state == ConnectionState.ERROR:
             self._update_error_state(message)
 
-    def _update_status_labels(self, status_key: str, device_info: str = "", battery_visible: bool = True) -> None:
+    def _update_status_labels(self, status_text: str, device_info: str = "", battery_visible: bool = True) -> None:
         """更新状态标签"""
-        self.connection_status_label.setText(translate(status_key))
+        self.connection_status_label.setText(status_text)
         if device_info:
             self.device_info_label.setText(device_info)
         else:
@@ -622,21 +622,21 @@ class BluetoothConnectionWidget(QWidget):
 
     def _update_disconnected_state(self) -> None:
         """更新断开连接状态"""
-        self._update_status_labels("bluetooth.disconnected", battery_visible=False)
+        self._update_status_labels(translate("bluetooth.disconnected"), battery_visible=False)
         self._update_button_states(scan_enabled=True, connect_enabled=True, 
                                  disconnect_enabled=False, apply_enabled=False)
         self.set_device_control_enabled(False)
 
     def _update_connecting_state(self) -> None:
         """更新连接中状态"""
-        self._update_status_labels("bluetooth.connecting")
+        self._update_status_labels(translate("bluetooth.connecting"))
         self._update_button_states(scan_enabled=False, connect_enabled=False, 
                                  disconnect_enabled=True, apply_enabled=False)
         self.set_device_control_enabled(False)
 
     def _update_waiting_state(self) -> None:
         """更新等待状态"""
-        self._update_status_labels("bluetooth.waiting")
+        self._update_status_labels(translate("bluetooth.waiting"))
         self._update_button_states(scan_enabled=False, connect_enabled=False, 
                                  disconnect_enabled=True, apply_enabled=False)
         self.set_device_control_enabled(False)
@@ -649,7 +649,7 @@ class BluetoothConnectionWidget(QWidget):
         if connected_device:
             device_info = f"{connected_device['name']} ({connected_device['address']})"
         
-        self._update_status_labels("bluetooth.connected", device_info)
+        self._update_status_labels(translate("bluetooth.connected"), device_info)
         self._update_button_states(scan_enabled=False, connect_enabled=False, 
                                  disconnect_enabled=True, apply_enabled=True)
         self.set_device_control_enabled(True)
@@ -657,8 +657,7 @@ class BluetoothConnectionWidget(QWidget):
     def _update_failed_state(self, message: str = "") -> None:
         """更新连接失败状态"""
         status_text = message or translate("bluetooth.connection_failed")
-        self.connection_status_label.setText(status_text)
-        self._update_status_labels("bluetooth.connection_failed", battery_visible=False)
+        self._update_status_labels(status_text, battery_visible=False)
         self._update_button_states(scan_enabled=True, connect_enabled=True, 
                                  disconnect_enabled=False, apply_enabled=False)
         self.set_device_control_enabled(False)
