@@ -15,7 +15,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QGroupBox, QFormLayout, QLabel, QWidget,
     QPushButton, QListWidget, QListWidgetItem, QProgressBar,
-    QSlider, QMessageBox
+    QSlider, QMessageBox, QTabWidget
 )
 
 from config import save_settings
@@ -41,6 +41,8 @@ class BluetoothConnectionWidget(QWidget):
         # UI组件声明
         self.device_discovery_group: QGroupBox
         self.device_control_group: QGroupBox
+        self.status_group: QGroupBox
+        self.params_tab_widget: QTabWidget
         self.device_list: QListWidget
         self.scan_button: QPushButton
         self.connect_button: QPushButton
@@ -49,6 +51,9 @@ class BluetoothConnectionWidget(QWidget):
         self.battery_label: QLabel
         self.device_info_label: QLabel
         self.battery_progress: QProgressBar
+        self.status_label: QLabel
+        self.device_label: QLabel
+        self.battery_title_label: QLabel
         
         # 设备参数控制组件
         self.strength_limit_a_slider: QSlider
@@ -64,6 +69,14 @@ class BluetoothConnectionWidget(QWidget):
         self.strength_balance_a_label: QLabel
         self.strength_balance_b_label: QLabel
         self.apply_params_button: QPushButton
+        self.strength_limit_a_title: QLabel
+        self.strength_limit_b_title: QLabel
+        self.freq_balance_a_title: QLabel
+        self.freq_balance_b_title: QLabel
+        self.strength_balance_a_title: QLabel
+        self.strength_balance_b_title: QLabel
+        self.freq_balance_group: QGroupBox
+        self.strength_balance_group: QGroupBox
         
         # 初始化UI
         self.init_ui()
@@ -153,8 +166,8 @@ class BluetoothConnectionWidget(QWidget):
         layout.addLayout(button_layout)
         
         # 状态显示
-        status_group = self.create_status_display()
-        layout.addWidget(status_group)
+        self.status_group = self.create_status_display()
+        layout.addWidget(self.status_group)
         
         self.device_discovery_group.setLayout(layout)
         self.device_discovery_group.setMinimumWidth(400)
@@ -167,12 +180,14 @@ class BluetoothConnectionWidget(QWidget):
         
         # 连接状态
         self.connection_status_label = QLabel(translate("bluetooth.disconnected"))
-        layout.addRow(translate("bluetooth.status") + ":", self.connection_status_label)
+        self.status_label = QLabel(translate("bluetooth.status") + ":")
+        layout.addRow(self.status_label, self.connection_status_label)
         
         # 设备信息
         self.device_info_label = QLabel(translate("bluetooth.no_device"))
         self.device_info_label.setWordWrap(True)
-        layout.addRow(translate("bluetooth.device") + ":", self.device_info_label)
+        self.device_label = QLabel(translate("bluetooth.device") + ":")
+        layout.addRow(self.device_label, self.device_info_label)
         
         # 电量显示
         battery_widget = QWidget()
@@ -189,7 +204,8 @@ class BluetoothConnectionWidget(QWidget):
         self.battery_progress.setFixedHeight(20)
         battery_layout.addWidget(self.battery_progress)
         
-        layout.addRow(translate("bluetooth.battery") + ":", battery_widget)
+        self.battery_title_label = QLabel(translate("bluetooth.battery") + ":")
+        layout.addRow(self.battery_title_label, battery_widget)
         
         status_group.setLayout(layout)
         return status_group
@@ -208,32 +224,31 @@ class BluetoothConnectionWidget(QWidget):
         self.device_control_group.setLayout(layout)
 
     def create_parameter_groups(self) -> QWidget:
-        """创建参数分组区域"""
+        """创建参数分组区域（选项卡布局）"""
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(15)
+        layout.setSpacing(10)
         
-        # 强度上限分组
-        strength_limits_group = QGroupBox(translate("bluetooth.strength_limits"))
-        self.create_strength_limits_group(strength_limits_group)
-        layout.addWidget(strength_limits_group)
+        # 创建选项卡组件
+        self.params_tab_widget = QTabWidget()
+        self.params_tab_widget.setTabPosition(QTabWidget.TabPosition.North)
         
-        # 频率平衡分组  
-        freq_balance_group = QGroupBox(translate("bluetooth.frequency_balance"))
-        self.create_freq_balance_group(freq_balance_group)
-        layout.addWidget(freq_balance_group)
+        # 强度上限选项卡
+        strength_tab = self.create_strength_limits_tab()
+        self.params_tab_widget.addTab(strength_tab, translate("bluetooth.strength_limits_tab"))
         
-        # 强度平衡分组
-        strength_balance_group = QGroupBox(translate("bluetooth.strength_balance"))
-        self.create_strength_balance_group(strength_balance_group)
-        layout.addWidget(strength_balance_group)
+        # 输出设置选项卡
+        output_tab = self.create_output_settings_tab()
+        self.params_tab_widget.addTab(output_tab, translate("bluetooth.output_settings_tab"))
+        
+        layout.addWidget(self.params_tab_widget)
         
         # 添加弹性空间，将按钮推到底部
         layout.addStretch()
         
         # 在按钮上方添加分隔空间
-        layout.addSpacing(20)
+        layout.addSpacing(15)
         
         # 应用按钮 - 最大化并放在底部
         self.apply_params_button = QPushButton(translate("bluetooth.apply_parameters"))
@@ -241,10 +256,13 @@ class BluetoothConnectionWidget(QWidget):
             QPushButton:enabled {
                 background-color: green;
                 color: white;
+                font-weight: bold;
+                padding: 8px;
             }
             QPushButton:disabled {
                 background-color: lightgray;
                 color: gray;
+                padding: 8px;
             }
         """)
         self.apply_params_button.setEnabled(False)
@@ -252,115 +270,203 @@ class BluetoothConnectionWidget(QWidget):
         layout.addWidget(self.apply_params_button)
         return container
 
-    def create_strength_limits_group(self, group: QGroupBox) -> None:
-        """创建强度上限分组"""
-        layout = QFormLayout()
-        layout.setSpacing(15)
+    def create_strength_limits_tab(self) -> QWidget:
+        """创建强度上限选项卡"""
+        tab_widget = QWidget()
+        layout = QVBoxLayout(tab_widget)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
         
         # A通道
+        a_layout = QHBoxLayout()
+        a_layout.setSpacing(10)
+        
+        self.strength_limit_a_title = QLabel(translate("bluetooth.channel_a") + ":")
+        self.strength_limit_a_title.setMinimumWidth(60)
+        a_layout.addWidget(self.strength_limit_a_title)
+        
         self.strength_limit_a_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_limit_a_slider.setRange(0, 200)
         self.strength_limit_a_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_limit_a_slider.setTickInterval(20)
-        self.strength_limit_a_label = QLabel()
-        self.strength_limit_a_label.setMinimumWidth(50)
-        self.strength_limit_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_limit_a_slider.valueChanged.connect(self._update_strength_limit_a_label)
-        
-        a_layout = QHBoxLayout()
         a_layout.addWidget(self.strength_limit_a_slider)
+        
+        self.strength_limit_a_label = QLabel()
+        self.strength_limit_a_label.setMinimumWidth(40)
+        self.strength_limit_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         a_layout.addWidget(self.strength_limit_a_label)
-        layout.addRow(translate("pulse_editor.channel_a") + ":", a_layout)
+        
+        layout.addLayout(a_layout)
         
         # B通道
+        b_layout = QHBoxLayout()
+        b_layout.setSpacing(10)
+        
+        self.strength_limit_b_title = QLabel(translate("bluetooth.channel_b") + ":")
+        self.strength_limit_b_title.setMinimumWidth(60)
+        b_layout.addWidget(self.strength_limit_b_title)
+        
         self.strength_limit_b_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_limit_b_slider.setRange(0, 200)
         self.strength_limit_b_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_limit_b_slider.setTickInterval(20)
-        self.strength_limit_b_label = QLabel()
-        self.strength_limit_b_label.setMinimumWidth(50)
-        self.strength_limit_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_limit_b_slider.valueChanged.connect(self._update_strength_limit_b_label)
-        
-        b_layout = QHBoxLayout()
         b_layout.addWidget(self.strength_limit_b_slider)
-        b_layout.addWidget(self.strength_limit_b_label)
-        layout.addRow(translate("pulse_editor.channel_b") + ":", b_layout)
         
-        group.setLayout(layout)
+        self.strength_limit_b_label = QLabel()
+        self.strength_limit_b_label.setMinimumWidth(40)
+        self.strength_limit_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        b_layout.addWidget(self.strength_limit_b_label)
+        
+        layout.addLayout(b_layout)
+        
+        # 添加弹性空间
+        layout.addStretch()
+        
+        return tab_widget
 
-    def create_freq_balance_group(self, group: QGroupBox) -> None:
-        """创建频率平衡分组"""
-        layout = QFormLayout()
+    def create_output_settings_tab(self) -> QWidget:
+        """创建输出设置选项卡"""
+        tab_widget = QWidget()
+        layout = QVBoxLayout(tab_widget)
+        layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(15)
         
+        # 频率平衡分组
+        self.freq_balance_group = QGroupBox(translate("bluetooth.frequency_balance"))
+        self.create_freq_balance_group(self.freq_balance_group)
+        layout.addWidget(self.freq_balance_group)
+        
+        # 强度平衡分组
+        self.strength_balance_group = QGroupBox(translate("bluetooth.strength_balance"))
+        self.create_strength_balance_group(self.strength_balance_group)
+        layout.addWidget(self.strength_balance_group)
+        
+        # 添加弹性空间
+        layout.addStretch()
+        
+        return tab_widget
+
+
+    def create_freq_balance_group(self, group: QGroupBox) -> None:
+        """创建频率平衡分组（紧凑横向布局）"""
+        layout = QVBoxLayout()
+        layout.setSpacing(12)
+        
+        # 横向布局容器
+        channels_layout = QHBoxLayout()
+        channels_layout.setSpacing(20)
+        
         # A通道
+        a_container = QWidget()
+        a_layout = QVBoxLayout(a_container)
+        a_layout.setContentsMargins(0, 0, 0, 0)
+        a_layout.setSpacing(5)
+        
+        self.freq_balance_a_title = QLabel(translate("bluetooth.channel_a") + ":")
+        self.freq_balance_a_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        a_layout.addWidget(self.freq_balance_a_title)
+        
         self.freq_balance_a_slider = QSlider(Qt.Orientation.Horizontal)
         self.freq_balance_a_slider.setRange(0, 255)
         self.freq_balance_a_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.freq_balance_a_slider.setTickInterval(25)
-        self.freq_balance_a_label = QLabel()
-        self.freq_balance_a_label.setMinimumWidth(50)
-        self.freq_balance_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.freq_balance_a_slider.valueChanged.connect(self._update_freq_balance_a_label)
+        a_layout.addWidget(self.freq_balance_a_slider)
         
-        freq_a_layout = QHBoxLayout()
-        freq_a_layout.addWidget(self.freq_balance_a_slider)
-        freq_a_layout.addWidget(self.freq_balance_a_label)
-        layout.addRow(translate("pulse_editor.channel_a") + ":", freq_a_layout)
+        self.freq_balance_a_label = QLabel()
+        self.freq_balance_a_label.setMinimumWidth(40)
+        self.freq_balance_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        a_layout.addWidget(self.freq_balance_a_label)
+        
+        channels_layout.addWidget(a_container)
         
         # B通道
+        b_container = QWidget()
+        b_layout = QVBoxLayout(b_container)
+        b_layout.setContentsMargins(0, 0, 0, 0)
+        b_layout.setSpacing(5)
+        
+        self.freq_balance_b_title = QLabel(translate("bluetooth.channel_b") + ":")
+        self.freq_balance_b_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        b_layout.addWidget(self.freq_balance_b_title)
+        
         self.freq_balance_b_slider = QSlider(Qt.Orientation.Horizontal)
         self.freq_balance_b_slider.setRange(0, 255)
         self.freq_balance_b_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.freq_balance_b_slider.setTickInterval(25)
-        self.freq_balance_b_label = QLabel()
-        self.freq_balance_b_label.setMinimumWidth(50)
-        self.freq_balance_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.freq_balance_b_slider.valueChanged.connect(self._update_freq_balance_b_label)
+        b_layout.addWidget(self.freq_balance_b_slider)
         
-        freq_b_layout = QHBoxLayout()
-        freq_b_layout.addWidget(self.freq_balance_b_slider)
-        freq_b_layout.addWidget(self.freq_balance_b_label)
-        layout.addRow(translate("pulse_editor.channel_b") + ":", freq_b_layout)
+        self.freq_balance_b_label = QLabel()
+        self.freq_balance_b_label.setMinimumWidth(40)
+        self.freq_balance_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        b_layout.addWidget(self.freq_balance_b_label)
         
+        channels_layout.addWidget(b_container)
+        
+        layout.addLayout(channels_layout)
         group.setLayout(layout)
 
     def create_strength_balance_group(self, group: QGroupBox) -> None:
-        """创建强度平衡分组"""
-        layout = QFormLayout()
-        layout.setSpacing(15)
+        """创建强度平衡分组（紧凑横向布局）"""
+        layout = QVBoxLayout()
+        layout.setSpacing(12)
+        
+        # 横向布局容器
+        channels_layout = QHBoxLayout()
+        channels_layout.setSpacing(20)
         
         # A通道
+        a_container = QWidget()
+        a_layout = QVBoxLayout(a_container)
+        a_layout.setContentsMargins(0, 0, 0, 0)
+        a_layout.setSpacing(5)
+        
+        self.strength_balance_a_title = QLabel(translate("bluetooth.channel_a") + ":")
+        self.strength_balance_a_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        a_layout.addWidget(self.strength_balance_a_title)
+        
         self.strength_balance_a_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_balance_a_slider.setRange(0, 255)
         self.strength_balance_a_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_balance_a_slider.setTickInterval(25)
-        self.strength_balance_a_label = QLabel()
-        self.strength_balance_a_label.setMinimumWidth(50)
-        self.strength_balance_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_balance_a_slider.valueChanged.connect(self._update_strength_balance_a_label)
+        a_layout.addWidget(self.strength_balance_a_slider)
         
-        str_a_layout = QHBoxLayout()
-        str_a_layout.addWidget(self.strength_balance_a_slider)
-        str_a_layout.addWidget(self.strength_balance_a_label)
-        layout.addRow(translate("pulse_editor.channel_a") + ":", str_a_layout)
+        self.strength_balance_a_label = QLabel()
+        self.strength_balance_a_label.setMinimumWidth(40)
+        self.strength_balance_a_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        a_layout.addWidget(self.strength_balance_a_label)
+        
+        channels_layout.addWidget(a_container)
         
         # B通道
+        b_container = QWidget()
+        b_layout = QVBoxLayout(b_container)
+        b_layout.setContentsMargins(0, 0, 0, 0)
+        b_layout.setSpacing(5)
+        
+        self.strength_balance_b_title = QLabel(translate("bluetooth.channel_b") + ":")
+        self.strength_balance_b_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        b_layout.addWidget(self.strength_balance_b_title)
+        
         self.strength_balance_b_slider = QSlider(Qt.Orientation.Horizontal)
         self.strength_balance_b_slider.setRange(0, 255)
         self.strength_balance_b_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.strength_balance_b_slider.setTickInterval(25)
-        self.strength_balance_b_label = QLabel()
-        self.strength_balance_b_label.setMinimumWidth(50)
-        self.strength_balance_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.strength_balance_b_slider.valueChanged.connect(self._update_strength_balance_b_label)
+        b_layout.addWidget(self.strength_balance_b_slider)
         
-        str_b_layout = QHBoxLayout()
-        str_b_layout.addWidget(self.strength_balance_b_slider)
-        str_b_layout.addWidget(self.strength_balance_b_label)
-        layout.addRow(translate("pulse_editor.channel_b") + ":", str_b_layout)
+        self.strength_balance_b_label = QLabel()
+        self.strength_balance_b_label.setMinimumWidth(40)
+        self.strength_balance_b_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        b_layout.addWidget(self.strength_balance_b_label)
         
+        channels_layout.addWidget(b_container)
+        
+        layout.addLayout(channels_layout)
         group.setLayout(layout)
 
     def setup_tooltips(self) -> None:
@@ -390,6 +496,14 @@ class BluetoothConnectionWidget(QWidget):
         self.freq_balance_b_slider.setValue(bluetooth_settings.get('freq_balance_b', 160))
         self.strength_balance_a_slider.setValue(bluetooth_settings.get('strength_balance_a', 0))
         self.strength_balance_b_slider.setValue(bluetooth_settings.get('strength_balance_b', 0))
+        
+        # 手动更新所有标签显示初始值
+        self._update_strength_limit_a_label(self.strength_limit_a_slider.value())
+        self._update_strength_limit_b_label(self.strength_limit_b_slider.value())
+        self._update_freq_balance_a_label(self.freq_balance_a_slider.value())
+        self._update_freq_balance_b_label(self.freq_balance_b_slider.value())
+        self._update_strength_balance_a_label(self.strength_balance_a_slider.value())
+        self._update_strength_balance_b_label(self.strength_balance_b_slider.value())
 
     def save_settings(self, osc_port: int, language: str) -> None:
         """保存设置"""
@@ -435,6 +549,32 @@ class BluetoothConnectionWidget(QWidget):
         self.connect_button.setText(translate("bluetooth.connect_device"))
         self.disconnect_button.setText(translate("bluetooth.disconnect_device"))
         self.apply_params_button.setText(translate("bluetooth.apply_parameters"))
+        
+        # 更新状态显示区域标题
+        self.status_group.setTitle(translate("bluetooth.connection_status"))
+        
+        # 更新状态显示区域的标签
+        self.status_label.setText(translate("bluetooth.status") + ":")
+        self.device_label.setText(translate("bluetooth.device") + ":")
+        self.battery_title_label.setText(translate("bluetooth.battery") + ":")
+        
+        # 更新选项卡标题
+        self.params_tab_widget.setTabText(0, translate("bluetooth.strength_limits_tab"))
+        self.params_tab_widget.setTabText(1, translate("bluetooth.output_settings_tab"))
+        
+        # 更新强度上限选项卡中的通道标题
+        self.strength_limit_a_title.setText(translate("bluetooth.channel_a") + ":")
+        self.strength_limit_b_title.setText(translate("bluetooth.channel_b") + ":")
+        
+        # 更新输出设置选项卡中的GroupBox标题
+        self.freq_balance_group.setTitle(translate("bluetooth.frequency_balance"))
+        self.strength_balance_group.setTitle(translate("bluetooth.strength_balance"))
+        
+        # 更新输出设置选项卡中的通道标题
+        self.freq_balance_a_title.setText(translate("bluetooth.channel_a") + ":")
+        self.freq_balance_b_title.setText(translate("bluetooth.channel_b") + ":")
+        self.strength_balance_a_title.setText(translate("bluetooth.channel_a") + ":")
+        self.strength_balance_b_title.setText(translate("bluetooth.channel_b") + ":")
         
         if not self.is_connected():
             self.connection_status_label.setText(translate("bluetooth.disconnected"))

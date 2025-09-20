@@ -1,10 +1,8 @@
-# 日本語翻訳ファイル
 common:
   error: "エラー"
   save_success: "保存成功"
   save_failed: "保存失敗"
   success: "成功"
-
 main:
   title: "DG-Lab Universal Controller for VRChat"
   tabs:
@@ -20,7 +18,6 @@ main:
     language_label: "言語:"
   action:
     set_pulse: "パルスを({0})に設定"
-
 pulse_editor:
   pulse_list: "パルスリスト"
   operations: "操作"
@@ -38,10 +35,8 @@ pulse_editor:
   save_pulse: "パルス保存"
   pulse_editor: "パルス編集"
   add_step: "+ ステップ追加"
-  delete_step: "このステップを削除"
   clear_all: "全クリア"
   pulse_frequency: "パルス周波数"
-  fixed: "固定"
   no_waveform_data: "波形データなし"
   steps_count: "ステップ"
   detailed_edit_title: "詳細ステップ編集"
@@ -89,7 +84,6 @@ pulse_editor:
   copy_failed: "複製失敗"
   copy_failed_msg: "パルスの複製に失敗しました: {0}"
   delete_failed: "削除失敗"
-  cannot_delete_preset: "プリセットパルスは削除できません"
   confirm_delete: "削除確認"
   confirm_delete_msg: "パルス '{0}' を削除してもよろしいですか？\nこの操作は元に戻せません。"
   delete_success: "削除成功"
@@ -109,11 +103,8 @@ pulse_editor:
   registry_unavailable: "パルスレジストリが利用できません"
   no_pulses_available: "利用可能なパルスなし"
   no_pulses_available_msg: "書出可能なパルスがありません"
-  share_success: "シェア成功"
-  share_success_msg: "波形 '{0}' のシェアコードをクリップボードにコピーしました"
   share_failed: "シェア失敗"
   share_failed_msg: "シェアコードの生成に失敗しました: {0}"
-
 pulse_dialogs:
   new_pulse:
     title: "新規パルス"
@@ -130,7 +121,6 @@ pulse_dialogs:
     description_placeholder: "パルスの説明を入力してください（オプション）"
     input_error: "入力エラー"
     name_required: "パルス名を入力してください"
-  
   import_pulse:
     title: "パルス読込"
     import_file: "パルスファイル読込"
@@ -140,22 +130,15 @@ pulse_dialogs:
     pulse_preview: "パルス予覧:"
     select_all: "全選択"
     clear_selection: "選択解除"
-    
-    # タブ名
     file_import_tab: "ファイルから読込"
     share_code_tab: "共有コードから読込"
-    
-    # 公式パルス読込関連
     official_tab: "公式波形から読込"
     select_official_files: ".pulseファイルを選択..."
     clear_official_files: "選択をクリア"
     selected_files: "選択されたファイル:"
-    file_info: "ファイル情報:"
-    waveform_preview: "波形プレビュー:"
     file_info_preview: "ファイル情報と波形プレビュー:"
     select_all_files: "全選択"
     clear_file_selection: "選択解除"
-    
     load_success: "読込成功"
     load_success_msg: "{0} 個の公式パルスファイルを正常に読み込みました"
     partial_load_success: "部分読込成功"
@@ -165,7 +148,6 @@ pulse_dialogs:
     no_files_loaded: "ファイルが正常に読み込まれませんでした"
     error_details: "エラーの詳細:"
     more_errors: "... あと {0} 個のエラーがあります"
-    
     file_stats:
       file: "ファイル"
       rest_duration: "休止時間"
@@ -191,8 +173,6 @@ pulse_dialogs:
     encoding_unsupported: "サポートされていないファイルエンコーディング、UTF-8を使用してください"
     read_error: "読込エラー"
     read_failed: "ファイルの読込に失敗しました: {0}"
-    data_format_error: "データ形式エラー"
-    data_must_dict: "パルスデータは辞書形式である必要があります"
     data_error: "データエラー"
     missing_field: "必要なフィールドがありません: {0}"
     process_error: "処理エラー"
@@ -205,15 +185,6 @@ pulse_dialogs:
     all_invalid: "すべてのパルスデータが無効です"
     no_valid_data: "ファイル内に有効なパルスデータが見つかりません"
     validation:
-      data_must_list: "データはリスト形式である必要があります"
-      data_not_empty: "パルスデータを空にすることはできません"
-      step_format: "ステップ {0}: 周波数と強度のタプルを含む必要があります"
-      freq_4_values: "ステップ {0}: 周波数データは4つの値を含む必要があります"
-      freq_must_int: "ステップ {0}: 周波数値は整数である必要があります"
-      freq_range: "ステップ {0}: 周波数値が範囲外です (10-240)"
-      intensity_4_values: "ステップ {0}: 強度データは4つの値を含む必要があります"
-      intensity_must_int: "ステップ {0}: 強度値は整数である必要があります"
-      intensity_range: "ステップ {0}: 強度値が範囲外です (0-100)"
       too_many_steps: "ステップ数が多すぎます ({0})、≤100ステップを推奨"
       many_steps: "ステップ数が多いです ({0})、リアルタイム性能に影響する可能性があります"
       high_frequency: "高周波数値 ({0}ms) が含まれています、注意して使用してください"
@@ -227,7 +198,6 @@ pulse_dialogs:
       max_intensity: "最大強度"
       warnings: "警告"
       first_3_steps: "最初の3ステップデータ"
-  
   export_pulse:
     title: "パルス書出"
     export_file: "パルスファイル書出"
@@ -238,14 +208,14 @@ pulse_dialogs:
     selection_error: "選択エラー"
     select_at_least_one: "少なくとも1つのパルスを選択してください"
     export_success: "書出成功"
-    export_success_msg: "{1}個のパルスをファイル{0}に正常にエクスポートしました\n総ステップ数: {2}\n総持続時間: {3}ms ({4}秒)"
+    export_success_msg: "{1}個のパルスをファイル{0}に正常にエクスポートしました\n総ステップ数: {2}\n総持続時間: {3}ms
+      ({4}秒)"
     permission_error: "権限エラー"
     no_write_permission: "このファイルへの書込権限がありません、別の場所を選択してください"
     file_error: "ファイルエラー"
     cannot_create: "ファイルを作成できません: {0}"
     export_error: "書出エラー"
     save_failed: "ファイルの保存に失敗しました: {0}"
-  
   pulse_info:
     title: "パルス情報"
     pulse_name: "パルス"
@@ -257,9 +227,7 @@ pulse_dialogs:
     detailed_data_label: "詳細データ:"
     step_header: "ステップ\t持続時間\t強度"
     close: "閉じる"
-
 connection_tab:
-  title: "ネットワーク設定"
   connection_mode: "接続モード"
   connection_mode_label: "接続方式:"
   use_bluetooth: "Bluetooth接続を使用"
@@ -282,54 +250,30 @@ connection_tab:
   offline: "未接続、接続後にQRコードをスキャン"
   failed: "接続失敗、再試行してください"
   cancel: "キャンセル"
-  bluetooth_settings: "Bluetooth設定"
-  bluetooth_placeholder: "Bluetooth接続機能は開発中です。お楽しみに..."
   save_settings: "設定を保存"
   settings_saved_successfully: "設定が正常に保存されました"
   save_settings_failed: "設定の保存に失敗しました: {0}"
-  get_public_ip_failed: "パブリックIP取得に失敗しました: {0}"
   osc_port_in_use: "OSCポートが使用中です"
   osc_port_in_use_detail: "OSCポート {0} は既に使用中です。別のポートを試すか、このポートを使用しているプログラムを閉じてください"
-
 bluetooth:
   device_discovery: "デバイス検出"
   device_control: "デバイス制御"
-  device_parameters: "デバイスパラメータ"
-  realtime_control: "リアルタイム制御"
   scan_devices: "デバイススキャン"
   scanning: "スキャン中..."
   connect_device: "デバイス接続"
   disconnect_device: "デバイス切断"
-  connection_status: "接続状態:"
-  current_device: "現在のデバイス:"
-  battery_level: "バッテリー:"
-  connected: "接続済み"
+  connection_status: "接続状態"
   disconnected: "切断済み"
-  connecting: "接続中..."
-  waiting: "待機中..."
   connection_failed: "接続失敗"
   no_device: "デバイスなし"
   device_not_connected: "デバイスが未接続"
-  scan_failed: "デバイススキャン失敗: {0}"
-  strength_limit_a: "チャンネルA強度上限:"
-  strength_limit_b: "チャンネルB強度上限:"
-  freq_balance_a: "チャンネルA周波数バランス:"
-  freq_balance_b: "チャンネルB周波数バランス:"
-  strength_balance_a: "チャンネルA強度バランス:"
-  strength_balance_b: "チャンネルB強度バランス:"
-  current_strength_a: "チャンネルA現在の強度:"
-  current_strength_b: "チャンネルB現在の強度:"
   apply_parameters: "パラメータ適用"
-  reset_strength: "強度リセット"
-  parameters_applied: "パラメータが正常に適用されました"
-  parameters_failed: "パラメータの適用に失敗しました"
-  invalid_remote_address: "無効なリモートアドレス"
-  server_error: "サーバーエラー: {0}"
-  start_server_failed: "サーバー起動に失敗しました: {0}"
-  services_start_failed: "サービスの起動に失敗しました"
-  strength_limits: "強度上限"
   frequency_balance: "周波数バランス"
   strength_balance: "強度バランス"
+  strength_limits_tab: "強度上限"
+  output_settings_tab: "出力設定"
+  channel_a: "チャンネルA"
+  channel_b: "チャンネルB"
   status: "ステータス"
   device: "デバイス"
   battery: "バッテリー"
@@ -345,7 +289,6 @@ bluetooth:
   strength_balance_b_tooltip: "チャンネルBの強度バランスを設定 (範囲: 0-255, デフォルト: 0)"
   device_list_tooltip: "発見されたBluetoothデバイスのリスト。クリックで選択、ダブルクリックで接続。"
   no_device_selected: "デバイスが選択されていません"
-
 controller_tab:
   title: "デバイス設定"
   channel_intensity: "チャンネル強度"
@@ -366,33 +309,18 @@ controller_tab:
   save_settings_tooltip: "すべてのデバイスコントローラー設定を設定ファイルに保存"
   settings_saved: "デバイスコントローラー設定が正常に設定ファイルに保存されました"
   save_failed: "デバイスコントローラー設定の保存に失敗しました: {0}"
-
-# 録画・再生機能
 recording:
-  title: "録画・再生"
-  
-  # 録画ステータス
   status:
     recording: "録画中"
     paused: "一時停止"
     playing: "再生中"
-    
-  # ボタン
   start_recording: "録画開始"
   stop_recording: "録画停止"
-  
-  # メッセージ
   recording_paused: "録画を一時停止しました"
-  
-  # エラーメッセージ
-  
-  # 確認ダイアログ
   confirm_stop_recording: "録画停止の確認"
   confirm_stop_recording_msg: "現在の録画を停止しますか？"
   confirm_delete_file: "削除の確認"
   confirm_delete_file_msg: "この録画ファイルを削除しますか？"
-  
-  # UI ラベル
   device_connected: "デバイス接続済み"
   device_disconnected: "デバイス未接続"
   ready: "準備完了"
@@ -405,29 +333,19 @@ recording:
   stop: "停止"
   loop: "ループ"
   selected_file: "選択: {0}"
-  
-  # コンテキストメニュー
   context_menu_play: "再生"
   context_menu_rename: "名前変更"
   context_menu_export: "エクスポート"
   context_menu_details: "詳細"
   context_menu_delete: "削除"
   context_menu_cancel: "キャンセル"
-  
-  # ファイル情報
   file_name: "ファイル名: {0}"
   create_time: "作成時間: {0}"
   recording_duration: "録画時間: {0}"
-  
-  # 録画ファイルプレフィックス
   recording_prefix: "録画_"
   import_prefix: "インポート_"
-  
-  # ファイルダイアログ
   recording_files_filter: "録画ファイル (*.dgr)"
   all_files_filter: "すべてのファイル (*)"
-  
-  # ステータスメッセージ
   cannot_delete_playing_file: "再生中のファイルは削除できません。まず再生を停止してください"
   device_service_not_connected: "デバイスサービスが接続されていません。まずDG-LABデバイスを接続してください"
   device_service_unavailable: "DG-LABデバイスサービスが利用できません"
@@ -440,7 +358,6 @@ recording:
   device_disconnected_playback_stopped: "デバイスが切断されました。再生が停止しました"
   cannot_delete_recording_file: "録画中のファイルは削除できません。まず録画を停止してください"
   file_removed_from_list: "ファイルがリストから削除されました"
-
 game_tab:
   title: "Terrors of Nowhere"
   enable_damage_system: "ToN ダメージシステム"
@@ -454,25 +371,18 @@ game_tab:
   damage_strength: "ダメージ強度上限"
   death_penalty: "死亡ペナルティ強度"
   death_penalty_time_label: "死亡ペナルティ持続時間 (秒):"
-
 debug_tab:
   simple_log: "シンプルログ"
   debug_info: "デバッグ情報"
   controller_params_label: "デバイスパラメータ:"
   loading_params: "コントローラーパラメータを読み込み中..."
   controller_not_initialized: "コントローラーが初期化されていません。"
-
-# チャンネル強度表示
 channel:
   strength_display: "チャンネル強度"
   strength_limit: "強度上限"
   pulse: "波形"
-  current_control: "現在のパネル制御チャンネル"
-
-# WebSocketステータス
 websocket:
   error_status: "エラー"
-
 about_tab:
   current_version_label: "現在のバージョン: {0}"
   feedback: "フィードバック"
@@ -486,31 +396,22 @@ about_tab:
   no_update_message: "既に最新バージョンをお使いです"
   check_error_title: "更新チェックに失敗"
   check_error_message: "更新チェック中にエラーが発生しました:\n{0}"
-  download_info_title: "更新をダウンロード"
-  download_info_message: "ブラウザでダウンロードページが開きます。新しいバージョンを手動でダウンロードしてインストールしてください"
   download_error_title: "ダウンロードエラー"
-  no_download_url: "ダウンロードURLが利用できません"
   manual_download_title: "手動ダウンロード"
   manual_download_message: "バージョン {0} のダウンロードページをブラウザで開きますか？"
-  install_now_title: "今すぐインストール"
-  install_now_message: "ダウンロードが完了しました。ファイルは以下に保存されました:\n{0}\n\n今すぐ更新をインストールしますか？"
   auto_update_disabled: "自動更新機能が無効になっています"
   download_error_detail: "ダウンロードに失敗しました:\n{0}"
   download_complete_title: "ダウンロード完了"
-  download_complete_message: "更新は以下にダウンロードされました:\n{0}\n\n後で手動でインストールできます。"
   download_saved_message: "ファイルが以下に保存されました:\n{0}"
   open_file_location_title: "ファイルの場所を開く"
   open_file_location_message: "ファイルのダウンロードが完了しました:\n{0}\n\nファイルの場所を開きますか？"
   auto_install_title: "自動インストール"
-  auto_install_message: "バージョン {0} を自動的にダウンロードしてインストールします。\n\n注意：インストール中にプログラムが再起動されます。\n\n続行しますか？"
+  auto_install_message: "バージョン {0} を自動的にダウンロードしてインストールします。\n\n注意：インストール中にプログラムが再起動されます。\n\
+    \n続行しますか？"
   install_success_title: "インストール成功"
   install_success_message: "更新のインストールが完了しました！今すぐプログラムを再起動しますか？"
   install_error_title: "インストール失敗"
-  install_error_message: "インストール中にエラーが発生しました。手動で更新をインストールしてください。"
   install_error_detail: "インストールに失敗しました:\n{0}"
-  dev_env_title: "開発環境"
-  dev_env_no_install_message: "開発環境で実行されていることが検出されました。\n\nセキュリティ上の理由により、開発環境では自動インストール機能はサポートされていません。\n\nダウンロードのみモード（インストールなしでダウンロード）に切り替えます。"
-
 download_dialog:
   title: "更新をダウンロード"
   downloading_version: "バージョンをダウンロード中: {0}"
@@ -524,7 +425,6 @@ download_dialog:
   cancel: "キャンセル"
   close: "閉じる"
   install: "インストール"
-  choose_save_location: "保存場所を選択"
   install_complete: "インストール完了"
   install_failed: "インストール失敗"
   install_error_detail: "インストールエラー詳細: {0}"
@@ -533,7 +433,6 @@ download_dialog:
   restart_confirm_title: "再起動確認"
   restart_confirm_message: "更新のインストールが完了しました！\n\nプログラムを再起動して更新を適用する必要があります。\n\n今すぐプログラムを再起動しますか？"
   restart_cancelled: "ユーザーが再起動をキャンセルしました。後で手動でプログラムを再起動してください。"
-
 osc_address_tab:
   address_list: "アドレスリスト"
   binding_list: "バインディングリスト"
@@ -556,10 +455,8 @@ osc_address_tab:
   osc_code_placeholder: "OSCアドレスを入力してください（例：/avatar/parameters/Contact_LeftHand）"
   input_error: "入力エラー"
   name_code_required: "アドレス名とOSCアドレスの両方が必要です"
-  registry_not_available: "アドレスレジストリが初期化されていません"
   address_exists: "アドレス名が既に存在します"
   code_exists: "OSCアドレスが既に存在します"
-  binding_exists: "アドレスには既にバインディングがあります"
   confirm_delete: "削除確認"
   delete_address_confirm: "アドレス '{0}' を削除してもよろしいですか？"
   config_saved: "設定が保存されました"
@@ -574,7 +471,6 @@ osc_address_tab:
   delete_address_tooltip: "選択されたアドレスを削除"
   refresh_tooltip: "アドレスリストを更新"
   save_addresses_tooltip: "アドレスを設定ファイルに保存"
-  provider_not_initialized: "ドロップダウンデータプロバイダーが初期化されていません"
   add_binding_tooltip: "新しいアドレスバインディングを追加"
   delete_binding_tooltip: "選択されたアドレスバインディングを削除"
   refresh_binding_tooltip: "アドレスバインディングリストを更新"
@@ -584,17 +480,13 @@ osc_address_tab:
   binding_status_all_valid: "バインディング総数: {0}"
   binding_status_with_invalid: "バインディング総数: {0} (有効: {1}, 無効: {2})"
   select_address_action: "アドレスとアクションを選択してください"
-  registry_not_ready: "レジストリが利用できません。初期化の完了をお待ちください"
   address_added: "アドレスを正常に追加しました: {0}"
   address_deleted: "アドレスを正常に削除しました: {0}"
   address_action_not_found: "アドレスまたはアクションが見つかりません: {0}, {1}"
   binding_added: "バインディングを正常に追加しました: {0} -> {1}"
   binding_deleted: "バインディングを正常に削除しました: {0} -> {1}"
-  add_binding_failed: "バインディングの追加に失敗しました: {0}"
-  delete_binding_failed: "バインディングの削除に失敗しました: {0}"
   save_config_failed: "設定の保存に失敗しました: {0}"
   address_info: "アドレス情報"
-  address_info_tooltip: "OSCサービスで検出されたアドレスとそのパラメータタイプ情報を表示"
   refresh_address_info: "アドレス情報を更新"
   refresh_address_info_tooltip: "OSCサービスで検出されたアドレス情報を更新"
   no_address_info: "アドレス情報がありません"
@@ -604,10 +496,7 @@ osc_address_tab:
   debug_options: "デバッグオプション"
   enable_debug_display: "デバッグ表示を有効にする"
   enable_debug_display_tooltip: "画面の左上隅にOSCメッセージのリアルタイムデバッグ情報を表示します。パラメータアドレス、値、タイプが含まれます"
-  info: "情報"
-  no_changes_to_save: "保存する変更がありません"
   edit_state: "編集状態"
-
 welcome_dialog:
   title: "DG-LAB-VRCOSC へようこそ"
   welcome_title: "DG-LAB-VRCOSC へようこそ！"

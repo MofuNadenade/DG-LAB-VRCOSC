@@ -51,6 +51,7 @@ class WebSocketConnectionWidget(QWidget):
         self.websocket_port_label: QLabel
         self.status_label: QLabel
         self.remote_address_label: QLabel
+        self.pairing_instruction: QLabel
 
         # 初始化原始二维码
         self.original_qrcode_pixmap = None
@@ -169,10 +170,10 @@ class WebSocketConnectionWidget(QWidget):
         self.device_pairing_layout = QVBoxLayout()
 
         # 说明文字
-        pairing_instruction = QLabel(translate("connection_tab.pairing_instruction"))
-        pairing_instruction.setWordWrap(True)
-        pairing_instruction.setStyleSheet("color: #666; margin-bottom: 10px;")
-        self.device_pairing_layout.addWidget(pairing_instruction)
+        self.pairing_instruction = QLabel(translate("connection_tab.pairing_instruction"))
+        self.pairing_instruction.setWordWrap(True)
+        self.pairing_instruction.setStyleSheet("color: #666; margin-bottom: 10px;")
+        self.device_pairing_layout.addWidget(self.pairing_instruction)
 
         # 二维码显示区域
         self.qrcode_label = QLabel()
@@ -483,6 +484,9 @@ class WebSocketConnectionWidget(QWidget):
         self.websocket_port_label.setText(translate("connection_tab.websocket_port_label"))
         self.status_label.setText(translate("connection_tab.status_label"))
         self.remote_address_label.setText(translate("connection_tab.remote_address_label"))
+        
+        # 更新配对说明文字
+        self.pairing_instruction.setText(translate("connection_tab.pairing_instruction"))
         
         # 更新其他UI文本
         self.enable_remote_checkbox.setText(translate("connection_tab.enable_remote"))

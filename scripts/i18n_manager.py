@@ -19,6 +19,9 @@ from typing import Set, Dict, List, Tuple, Any
 from ruamel.yaml import YAML
 
 yaml_loader = YAML(typ='safe')
+yaml_writer = YAML()
+yaml_writer.preserve_quotes = True
+yaml_writer.default_flow_style = False
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -159,12 +162,83 @@ def print_usage_report(analysis: Dict[str, Any]) -> None:
     else:
         print("\n✅ 所有使用的键都已定义！")
 
+def remove_keys_from_dict(data: Any, keys_to_remove: Set[str], parent_key: str = '') -> Dict[str, Any]:
+    """从嵌套字典中移除指定的键"""
+    result: Dict[str, Any] = {}
+
+    for k, v in data.items():
+        current_key = f"{parent_key}.{k}" if parent_key else k
+        
+        if current_key in keys_to_remove:
+            continue  # 跳过要删除的键
+        
+        if isinstance(v, dict):
+            # 递归处理嵌套字典
+            nested_result = remove_keys_from_dict(v, keys_to_remove, current_key)
+            if nested_result:  # 只有当嵌套字典不为空时才添加
+                result[k] = nested_result
+        else:
+            result[k] = v
+    
+    return result
+
+def clean_unused_keys(locale_files: List[str], unused_keys: Set[str], dry_run: bool = True) -> None:
+    """清理未使用的键"""
+    print(f"\n=== 清理未使用的键 ({'预览模式' if dry_run else '执行模式'}) ===")
+    
+    if not unused_keys:
+        print("✅ 没有未使用的键需要清理！")
+        return
+    
+    for locale_file in locale_files:
+        print(f"\n处理文件: {locale_file}")
+        
+        try:
+            # 读取原始数据
+            with open(locale_file, 'r', encoding='utf-8') as f:
+                original_data = yaml_writer.load(f)  # type: ignore
+            
+            if not original_data:
+                print(f"  ⚠️ 文件为空，跳过")
+                continue
+            
+            # 移除未使用的键
+            cleaned_data = remove_keys_from_dict(original_data, unused_keys)
+            
+            # 计算移除的键数量
+            original_keys = set(flatten_dict(original_data).keys())  # type: ignore
+            removed_keys = original_keys & unused_keys
+            
+            if removed_keys:
+                print(f"  将移除 {len(removed_keys)} 个键:")
+                for key in sorted(removed_keys):
+                    print(f"    - {key}")
+                
+                if not dry_run:
+                    # 写入清理后的数据
+                    with open(locale_file, 'w', encoding='utf-8') as f:
+                        yaml_writer.dump(cleaned_data, f)  # type: ignore
+                    print(f"  ✅ 已更新文件")
+                else:
+                    print(f"  📋 预览完成（移除 --dry-run 执行实际清理）")
+            else:
+                print(f"  ✅ 此文件中没有未使用的键")
+                
+        except Exception as e:
+            print(f"  ❌ 处理文件时出错: {e}")
+    
+    if dry_run:
+        print(f"\n📋 预览完成！要执行实际清理，请移除 --dry-run 参数")
+    else:
+        print(f"\n🎉 清理完成！已从所有语言文件中移除 {len(unused_keys)} 个未使用的键")
+
 def main() -> None:
     parser = argparse.ArgumentParser(description='本地化管理工具')
     parser.add_argument('--src-dir', default='src', help='源代码目录 (默认: src)')
     parser.add_argument('--locales', nargs='+', 
                        default=['src/locales/zh.yml', 'src/locales/en.yml', 'src/locales/ja.yml'],
                        help='语言文件路径列表')
+    parser.add_argument('--dry-run', action='store_true', help='预览模式，不执行实际修改')
     
     subparsers = parser.add_subparsers(dest='command', help='可用命令')
     
@@ -183,6 +257,9 @@ def main() -> None:
     
     # 查找未使用的键命令
     subparsers.add_parser('find-unused', help='查找未使用的键')
+    
+    # 清理未使用的键命令
+    subparsers.add_parser('clean', help='清理未使用的键')
     
     args = parser.parse_args()
     
@@ -234,6 +311,14 @@ def main() -> None:
                 print(key)
         else:
             print("✅ 所有键都被使用了！")
+    
+    elif args.command == 'clean':
+        analysis = analyze_usage(src_dir, locale_files)
+        
+        if analysis['unused_keys']:
+            clean_unused_keys(locale_files, analysis['unused_keys'], dry_run=args.dry_run)
+        else:
+            print("✅ 没有未使用的键需要清理！")
 
 if __name__ == "__main__":
     main()
