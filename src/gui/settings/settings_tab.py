@@ -54,6 +54,12 @@ class SettingsTab(QWidget):
         self.current_pulse_a_label: QLabel
         self.current_pulse_b_label: QLabel
         self.fire_mode_strength_step_label: QLabel
+        self.interaction_group: QGroupBox
+        self.range_title_label: QLabel
+        self.range_a_min_label: QLabel
+        self.range_a_max_label: QLabel
+        self.range_b_min_label: QLabel
+        self.range_b_max_label: QLabel
 
         self.init_ui()
 
@@ -120,8 +126,8 @@ class SettingsTab(QWidget):
         controller_form.addRow(self.enable_chatbox_status_checkbox)
 
         # 交互设置GroupBox - 包含所有交互相关控件
-        interaction_group = QGroupBox(translate("controller_tab.interaction_settings_label"))
-        interaction_group.setStyleSheet("""
+        self.interaction_group = QGroupBox(translate("controller_tab.interaction_settings_label"))
+        self.interaction_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
                 border: 2px solid #cccccc;
@@ -166,9 +172,9 @@ class SettingsTab(QWidget):
         interaction_layout.addRow(self.current_channel_label)
         
         # 3. 交互模式范围设置
-        range_title_label = QLabel(translate("controller_tab.interaction_mode_range_label"))
-        range_title_label.setStyleSheet("QLabel { font-weight: bold; color: #333333; margin-top: 2px; margin-bottom: 1px; }")
-        interaction_layout.addRow(range_title_label)
+        self.range_title_label = QLabel(translate("controller_tab.interaction_mode_range_label"))
+        self.range_title_label.setStyleSheet("QLabel { font-weight: bold; color: #333333; margin-top: 2px; margin-bottom: 1px; }")
+        interaction_layout.addRow(self.range_title_label)
         
         # A通道和B通道范围设置 - 使用更紧凑的垂直布局
         range_container_layout = QVBoxLayout()
@@ -184,16 +190,16 @@ class SettingsTab(QWidget):
         range_a_channel_label.setFixedWidth(15)
         range_a_channel_label.setStyleSheet("font-weight: bold; color: #2E5BBA;")
         
-        range_a_min_label = QLabel(translate('controller_tab.min_value_label'))
-        range_a_min_label.setFixedWidth(45)
+        self.range_a_min_label = QLabel(translate('controller_tab.min_value_label'))
+        self.range_a_min_label.setFixedWidth(45)
         self.interaction_range_a_min_spinbox = QSpinBox()
         self.interaction_range_a_min_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.interaction_range_a_min_spinbox.setRange(0, 100)
         self.interaction_range_a_min_spinbox.setValue(0)
         self.interaction_range_a_min_spinbox.setFixedWidth(70)
         
-        range_a_max_label = QLabel(translate('controller_tab.max_value_label'))
-        range_a_max_label.setFixedWidth(45)
+        self.range_a_max_label = QLabel(translate('controller_tab.max_value_label'))
+        self.range_a_max_label.setFixedWidth(45)
         self.interaction_range_a_max_spinbox = QSpinBox()
         self.interaction_range_a_max_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.interaction_range_a_max_spinbox.setRange(1, 100)
@@ -201,9 +207,9 @@ class SettingsTab(QWidget):
         self.interaction_range_a_max_spinbox.setFixedWidth(70)
         
         range_a_layout.addWidget(range_a_channel_label)
-        range_a_layout.addWidget(range_a_min_label)
+        range_a_layout.addWidget(self.range_a_min_label)
         range_a_layout.addWidget(self.interaction_range_a_min_spinbox)
-        range_a_layout.addWidget(range_a_max_label)
+        range_a_layout.addWidget(self.range_a_max_label)
         range_a_layout.addWidget(self.interaction_range_a_max_spinbox)
         range_a_layout.addStretch()
         
@@ -216,16 +222,16 @@ class SettingsTab(QWidget):
         range_b_channel_label.setFixedWidth(15)
         range_b_channel_label.setStyleSheet("font-weight: bold; color: #BA2E5B;")
         
-        range_b_min_label = QLabel(translate('controller_tab.min_value_label'))
-        range_b_min_label.setFixedWidth(45)
+        self.range_b_min_label = QLabel(translate('controller_tab.min_value_label'))
+        self.range_b_min_label.setFixedWidth(45)
         self.interaction_range_b_min_spinbox = QSpinBox()
         self.interaction_range_b_min_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.interaction_range_b_min_spinbox.setRange(0, 100)
         self.interaction_range_b_min_spinbox.setValue(0)
         self.interaction_range_b_min_spinbox.setFixedWidth(70)
         
-        range_b_max_label = QLabel(translate('controller_tab.max_value_label'))
-        range_b_max_label.setFixedWidth(45)
+        self.range_b_max_label = QLabel(translate('controller_tab.max_value_label'))
+        self.range_b_max_label.setFixedWidth(45)
         self.interaction_range_b_max_spinbox = QSpinBox()
         self.interaction_range_b_max_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.interaction_range_b_max_spinbox.setRange(1, 100)
@@ -233,9 +239,9 @@ class SettingsTab(QWidget):
         self.interaction_range_b_max_spinbox.setFixedWidth(70)
         
         range_b_layout.addWidget(range_b_channel_label)
-        range_b_layout.addWidget(range_b_min_label)
+        range_b_layout.addWidget(self.range_b_min_label)
         range_b_layout.addWidget(self.interaction_range_b_min_spinbox)
-        range_b_layout.addWidget(range_b_max_label)
+        range_b_layout.addWidget(self.range_b_max_label)
         range_b_layout.addWidget(self.interaction_range_b_max_spinbox)
         range_b_layout.addStretch()
         
@@ -252,8 +258,8 @@ class SettingsTab(QWidget):
         range_container_widget.setLayout(range_container_layout)
         interaction_layout.addRow(range_container_widget)
         
-        interaction_group.setLayout(interaction_layout)
-        controller_form.addRow(interaction_group)
+        self.interaction_group.setLayout(interaction_layout)
+        controller_form.addRow(self.interaction_group)
 
         # 波形模式选择
         pulse_options = list(self.pulse_registry.pulses_by_name.keys())
@@ -647,6 +653,14 @@ class SettingsTab(QWidget):
         self.current_pulse_a_label.setText(f"A{translate('controller_tab.pulse')}:")
         self.current_pulse_b_label.setText(f"B{translate('controller_tab.pulse')}:")
         self.fire_mode_strength_step_label.setText(translate("controller_tab.fire_mode_strength_step_label"))
+
+        # 更新交互设置相关标签
+        self.interaction_group.setTitle(translate("controller_tab.interaction_settings_label"))
+        self.range_title_label.setText(translate("controller_tab.interaction_mode_range_label"))
+        self.range_a_min_label.setText(translate('controller_tab.min_value_label'))
+        self.range_a_max_label.setText(translate('controller_tab.max_value_label'))
+        self.range_b_min_label.setText(translate('controller_tab.min_value_label'))
+        self.range_b_max_label.setText(translate('controller_tab.max_value_label'))
 
         # 更新工具提示
         self.save_settings_btn.setToolTip(translate("controller_tab.save_settings_tooltip"))
