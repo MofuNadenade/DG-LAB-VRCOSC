@@ -105,8 +105,8 @@ class ChatboxService(IService):
         """通过 ChatBox 发送当前强度数值"""
         last_strength = self._osc_action_service.get_last_strength()
         if last_strength:
-            interaction_type_a = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.A) else "面板"
-            interaction_type_b = "交互" if self._osc_action_service.is_dynamic_bone_enabled(Channel.B) else "面板"
+            interaction_type_a = "交互" if self._osc_action_service.is_interaction_mode_enabled(Channel.A) else "面板"
+            interaction_type_b = "交互" if self._osc_action_service.is_interaction_mode_enabled(Channel.B) else "面板"
             current_channel = self._osc_action_service.get_current_channel()
             channel_strength = f"[A]: {last_strength['strength'][Channel.A]} B: {last_strength['strength'][Channel.B]}" if current_channel == Channel.A else f"A: {last_strength['strength'][Channel.A]} [B]: {last_strength['strength'][Channel.B]}"
             pulse_a = self._osc_action_service.get_current_pulse(Channel.A)

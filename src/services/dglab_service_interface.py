@@ -21,7 +21,7 @@ class IDGLabDeviceService(IService):
     
     纯粹的设备硬件通信接口，只定义设备连接和基础操作功能。
     不同的连接方式（WebSocket、蓝牙等）都需要实现这个接口。
-    所有业务逻辑（如动骨模式、开火模式等）由OSCActionService统一处理。
+    所有业务逻辑（如交互模式、开火模式等）由OSCActionService统一处理。
     """
 
     # ============ 连接管理 ============

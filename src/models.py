@@ -38,8 +38,8 @@ class UIFeature(Enum):
     """UI功能开关枚举"""
     PANEL_CONTROL = "panel_control"
     CHATBOX_STATUS = "chatbox_status"
-    DYNAMIC_BONE_A = "dynamic_bone_a"
-    DYNAMIC_BONE_B = "dynamic_bone_b"
+    INTERACTION_MODE_A = "interaction_mode_a"
+    INTERACTION_MODE_B = "interaction_mode_b"
     FIRE_MODE = "fire_mode"
 
 
@@ -454,15 +454,15 @@ class ControllerSettingsDict(TypedDict, total=False):
     fire_mode_disabled: bool
     enable_panel_control: bool
     disable_panel_pulse_setting: bool
-    dynamic_bone_mode_a: bool
-    dynamic_bone_mode_b: bool
+    interaction_mode_a: bool
+    interaction_mode_b: bool
     current_pulse_a: str
     current_pulse_b: str
-    # 动骨模式范围设置
-    dynamic_bone_min_value_a: int
-    dynamic_bone_max_value_a: int
-    dynamic_bone_min_value_b: int
-    dynamic_bone_max_value_b: int
+    # 交互模式范围设置
+    interaction_min_value_a: int
+    interaction_max_value_a: int
+    interaction_min_value_b: int
+    interaction_max_value_b: int
 
 
 class AutoUpdaterSettingsDict(TypedDict, total=False):

@@ -24,9 +24,9 @@ class OSCActionService(IService):
     
     职责：
     1. 实现所有OSC动作的业务逻辑（从DGLabWebSocketService迁移）
-    2. 管理业务状态（动骨模式、开火模式、通道状态、波形状态等）
+    2. 管理业务状态（交互模式、开火模式、通道状态、波形状态等）
     3. 通过IDGLabService抽象访问设备，支持多种连接方式
-    4. 提供智能化的业务方法（如自动处理动骨模式映射）
+    4. 提供智能化的业务方法（如自动处理交互模式映射）
     """
 
     def __init__(self, dglab_device_service: IDGLabDeviceService, core_interface: CoreInterface) -> None:
@@ -48,12 +48,12 @@ class OSCActionService(IService):
         # 波形管理
         self._current_pulse: Dict[Channel, Pulse] = {}
         
-        # 动骨模式管理
-        self._dynamic_bone_modes: Dict[Channel, bool] = {Channel.A: False, Channel.B: False}
+        # 交互模式管理
+        self._interaction_modes: Dict[Channel, bool] = {Channel.A: False, Channel.B: False}
         
-        # 动骨模式范围配置
-        self._dynamic_bone_min_values: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
-        self._dynamic_bone_max_values: Dict[Channel, int] = {Channel.A: 100, Channel.B: 100}
+        # 交互模式范围配置
+        self._interaction_min_values: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
+        self._interaction_max_values: Dict[Channel, int] = {Channel.A: 100, Channel.B: 100}
         
         # 开火模式管理
         self._fire_mode_disabled: bool = False
@@ -64,7 +64,7 @@ class OSCActionService(IService):
         self._fire_mode_origin_strengths: Dict[Channel, int] = {Channel.A: 0, Channel.B: 0}
         
         # 模式切换管理
-        self._set_dynamic_bone_mode_timer: Optional[asyncio.Task[None]] = None
+        self._set_interaction_mode_timer: Optional[asyncio.Task[None]] = None
         
         # 面板控制
         self._enable_panel_control: bool = True
@@ -181,46 +181,46 @@ class OSCActionService(IService):
 
     # ============ 模式控制业务逻辑 ============
 
-    def is_dynamic_bone_enabled(self, channel: Channel) -> bool:
-        """检查指定通道的动骨模式是否启用"""
-        return self._dynamic_bone_modes[channel]
+    def is_interaction_mode_enabled(self, channel: Channel) -> bool:
+        """检查指定通道的交互模式是否启用"""
+        return self._interaction_modes[channel]
 
-    def set_dynamic_bone_mode(self, channel: Channel, enabled: bool) -> None:
-        """设置指定通道的动骨模式"""
-        self._dynamic_bone_modes[channel] = enabled
+    def set_interaction_mode(self, channel: Channel, enabled: bool) -> None:
+        """设置指定通道的交互模式"""
+        self._interaction_modes[channel] = enabled
 
-    def get_dynamic_bone_min_value(self, channel: Channel) -> int:
-        """获取指定通道动骨模式的最小值"""
-        return self._dynamic_bone_min_values[channel]
+    def get_interaction_min_value(self, channel: Channel) -> int:
+        """获取指定通道交互模式的最小值"""
+        return self._interaction_min_values[channel]
 
-    def set_dynamic_bone_min_value(self, channel: Channel, min_value: int) -> None:
-        """设置指定通道动骨模式的最小值"""
+    def set_interaction_min_value(self, channel: Channel, min_value: int) -> None:
+        """设置指定通道交互模式的最小值"""
         if min_value >= 0:
-            self._dynamic_bone_min_values[channel] = min_value
-            logger.info(f"通道 {self._get_channel_name(channel)} 动骨模式最小值设置为: {min_value}")
+            self._interaction_min_values[channel] = min_value
+            logger.info(f"通道 {self._get_channel_name(channel)} 交互模式最小值设置为: {min_value}")
 
-    def get_dynamic_bone_max_value(self, channel: Channel) -> int:
-        """获取指定通道动骨模式的最大值"""
-        return self._dynamic_bone_max_values[channel]
+    def get_interaction_max_value(self, channel: Channel) -> int:
+        """获取指定通道交互模式的最大值"""
+        return self._interaction_max_values[channel]
 
-    def set_dynamic_bone_max_value(self, channel: Channel, max_value: int) -> None:
-        """设置指定通道动骨模式的最大值"""
+    def set_interaction_max_value(self, channel: Channel, max_value: int) -> None:
+        """设置指定通道交互模式的最大值"""
         if max_value > 0:
-            self._dynamic_bone_max_values[channel] = max_value
-            logger.info(f"通道 {self._get_channel_name(channel)} 动骨模式最大值设置为: {max_value}")
+            self._interaction_max_values[channel] = max_value
+            logger.info(f"通道 {self._get_channel_name(channel)} 交互模式最大值设置为: {max_value}")
 
     # ============ OSC业务逻辑 ============
 
     async def osc_set_strength(self, value: float, channel: Channel) -> None:
-        """设置浮点输出强度（自动处理动骨模式映射，带防抖机制）"""
-        if not self._dynamic_bone_modes.get(channel):
+        """设置浮点输出强度（自动处理交互模式映射，带防抖机制）"""
+        if not self._interaction_modes.get(channel):
             return
 
         last_strength = self.get_last_strength()
         if value >= 0.0 and last_strength:
             # 计算最终输出值
-            min_val = self._dynamic_bone_min_values[channel]
-            max_val = self._dynamic_bone_max_values[channel]
+            min_val = self._interaction_min_values[channel]
+            max_val = self._interaction_max_values[channel]
             limit = last_strength['strength_limit'][channel]
             final_output = min(self._map_unit_value(value, min_val, max_val), limit)
 
@@ -275,19 +275,19 @@ class OSCActionService(IService):
         # 更新 UI 组件
         self._core_interface.set_feature_state(UIFeature.PANEL_CONTROL, self._enable_panel_control)
 
-    async def osc_set_dynamic_bone_mode(self, value: bool, channel: Channel) -> None:
-        """切换工作模式（延时触发动骨模式切换）"""
+    async def osc_set_interaction_mode(self, value: bool, channel: Channel) -> None:
+        """切换工作模式（延时触发交互模式切换）"""
         if not self._enable_panel_control:
             return
 
         if value:  # 按下按键
-            if self._set_dynamic_bone_mode_timer is not None:
-                self._set_dynamic_bone_mode_timer.cancel()
-            self._set_dynamic_bone_mode_timer = asyncio.create_task(self._set_dynamic_bone_mode_timer_handle(channel))
+            if self._set_interaction_mode_timer is not None:
+                self._set_interaction_mode_timer.cancel()
+            self._set_interaction_mode_timer = asyncio.create_task(self._set_interaction_mode_timer_handle(channel))
         else:  # 松开按键
-            if self._set_dynamic_bone_mode_timer:
-                self._set_dynamic_bone_mode_timer.cancel()
-                self._set_dynamic_bone_mode_timer = None
+            if self._set_interaction_mode_timer:
+                self._set_interaction_mode_timer.cancel()
+                self._set_interaction_mode_timer = None
 
     async def osc_set_fire_mode_strength_step(self, value: float) -> None:
         """设置开火模式步进值"""
@@ -394,9 +394,9 @@ class OSCActionService(IService):
     async def cleanup(self) -> None:
         """清理资源"""
         # 取消模式切换定时器
-        if self._set_dynamic_bone_mode_timer:
-            self._set_dynamic_bone_mode_timer.cancel()
-            self._set_dynamic_bone_mode_timer = None
+        if self._set_interaction_mode_timer:
+            self._set_interaction_mode_timer.cancel()
+            self._set_interaction_mode_timer = None
         
         # 取消强度更新任务
         if self._strength_update_task and not self._strength_update_task.done():
@@ -432,17 +432,17 @@ class OSCActionService(IService):
         finally:
             logger.debug("防抖强度更新任务已结束")
 
-    async def _set_dynamic_bone_mode_timer_handle(self, channel: Channel) -> None:
+    async def _set_interaction_mode_timer_handle(self, channel: Channel) -> None:
         """模式切换计时器处理"""
         try:
             await asyncio.sleep(1.0)
 
-            new_mode = not self._dynamic_bone_modes[channel]
-            self.set_dynamic_bone_mode(channel, new_mode)
+            new_mode = not self._interaction_modes[channel]
+            self.set_interaction_mode(channel, new_mode)
             interaction_type = "可交互模式" if new_mode else "面板设置模式"
             logger.info(f"通道 {self._get_channel_name(channel)} 切换为{interaction_type}")
             # 更新UI
-            ui_feature = self._get_dynamic_bone_ui_feature(channel)
+            ui_feature = self._get_interaction_ui_feature(channel)
             self._core_interface.set_feature_state(ui_feature, new_mode)
         except asyncio.CancelledError:
             logger.debug(f"通道 {self._get_channel_name(channel)} 模式切换计时器已取消")
@@ -452,9 +452,9 @@ class OSCActionService(IService):
         """获取通道名称"""
         return "A" if channel == Channel.A else "B"
 
-    def _get_dynamic_bone_ui_feature(self, channel: Channel) -> UIFeature:
-        """获取动骨模式对应的UI特性"""
-        return UIFeature.DYNAMIC_BONE_A if channel == Channel.A else UIFeature.DYNAMIC_BONE_B
+    def _get_interaction_ui_feature(self, channel: Channel) -> UIFeature:
+        """获取交互模式对应的UI特性"""
+        return UIFeature.INTERACTION_MODE_A if channel == Channel.A else UIFeature.INTERACTION_MODE_B
 
     def _map_unit_value(self, value: float, min_value: float, max_value: float) -> float:
         """将单位值映射到指定范围"""

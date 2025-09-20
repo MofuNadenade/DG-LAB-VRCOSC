@@ -35,7 +35,7 @@ class DGLabWebSocketService(IDGLabDeviceService):
     """DG-LAB WebSocket 设备服务实现
     
     基于WebSocketController的纯WebSocket连接管理和基础设备操作，实现IDGLabService接口。
-    不包含业务逻辑（如动骨模式、开火模式等），这些由OSCActionService处理。
+    不包含业务逻辑（如交互模式、开火模式等），这些由OSCActionService处理。
     """
 
     def __init__(self, core_interface: CoreInterface, ip: str, port: int, remote_address: Optional[str] = None) -> None:

@@ -47,15 +47,15 @@ def get_default_settings() -> SettingsDict:
             'fire_mode_disabled': False,
             'enable_panel_control': True,
             'disable_panel_pulse_setting': False,
-            'dynamic_bone_mode_a': True,
-            'dynamic_bone_mode_b': True,
+            'interaction_mode_a': True,
+            'interaction_mode_b': True,
             'current_pulse_a': "无波形",
             'current_pulse_b': "无波形",
-            # 动骨模式范围设置
-            'dynamic_bone_min_value_a': 0,
-            'dynamic_bone_max_value_a': 10,
-            'dynamic_bone_min_value_b': 0,
-            'dynamic_bone_max_value_b': 10,
+            # 交互模式范围设置
+            'interaction_min_value_a': 0,
+            'interaction_max_value_a': 10,
+            'interaction_min_value_b': 0,
+            'interaction_max_value_b': 10,
         },
 
         # 自动更新设置

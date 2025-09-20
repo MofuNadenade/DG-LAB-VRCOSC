@@ -361,7 +361,7 @@ controller_tab:
   not_set: "Not Set"
   fire_mode_strength_step_label: "Fire Intensity Step:"
   interaction_settings_label: "Interaction Settings"
-  dynamic_bone_range_label: "Interaction Mode Range:"
+  interaction_mode_range_label: "Interaction Mode Range:"
   min_value_label: "Min Value:"
   max_value_label: "Max Value:"
   save_settings_tooltip: "Save all device controller settings to configuration file"

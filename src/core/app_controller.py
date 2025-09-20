@@ -89,8 +89,8 @@ class AppController(UIInterface):
         fire_mode_disabled = self.settings.get('controller', {}).get('fire_mode_disabled', False)
         enable_panel_control = self.settings.get('controller', {}).get('enable_panel_control', True)
         disable_panel_pulse_setting = self.settings.get('controller', {}).get('disable_panel_pulse_setting', False)
-        dynamic_bone_mode_a = self.settings.get('controller', {}).get('dynamic_bone_mode_a', False)
-        dynamic_bone_mode_b = self.settings.get('controller', {}).get('dynamic_bone_mode_b', False)
+        interaction_mode_a = self.settings.get('controller', {}).get('interaction_mode_a', False)
+        interaction_mode_b = self.settings.get('controller', {}).get('interaction_mode_b', False)
 
         # 设置UI状态（静默方式，不触发事件）
         self.main_window.settings_tab.fire_mode_disabled_checkbox.blockSignals(True)
@@ -105,36 +105,36 @@ class AppController(UIInterface):
         self.main_window.settings_tab.disable_panel_pulse_setting_checkbox.setChecked(disable_panel_pulse_setting)
         self.main_window.settings_tab.disable_panel_pulse_setting_checkbox.blockSignals(False)
 
-        self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.blockSignals(True)
-        self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.setChecked(dynamic_bone_mode_a)
-        self.main_window.settings_tab.dynamic_bone_mode_a_checkbox.blockSignals(False)
+        self.main_window.settings_tab.interaction_mode_a_checkbox.blockSignals(True)
+        self.main_window.settings_tab.interaction_mode_a_checkbox.setChecked(interaction_mode_a)
+        self.main_window.settings_tab.interaction_mode_a_checkbox.blockSignals(False)
 
-        self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.blockSignals(True)
-        self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.setChecked(dynamic_bone_mode_b)
-        self.main_window.settings_tab.dynamic_bone_mode_b_checkbox.blockSignals(False)
+        self.main_window.settings_tab.interaction_mode_b_checkbox.blockSignals(True)
+        self.main_window.settings_tab.interaction_mode_b_checkbox.setChecked(interaction_mode_b)
+        self.main_window.settings_tab.interaction_mode_b_checkbox.blockSignals(False)
 
-        # 动骨模式范围设置
-        dynamic_bone_min_value_a = self.settings.get('controller', {}).get('dynamic_bone_min_value_a', 0)
-        dynamic_bone_max_value_a = self.settings.get('controller', {}).get('dynamic_bone_max_value_a', 100)
-        dynamic_bone_min_value_b = self.settings.get('controller', {}).get('dynamic_bone_min_value_b', 0)
-        dynamic_bone_max_value_b = self.settings.get('controller', {}).get('dynamic_bone_max_value_b', 100)
+        # 交互模式范围设置
+        interaction_min_value_a = self.settings.get('controller', {}).get('interaction_min_value_a', 0)
+        interaction_max_value_a = self.settings.get('controller', {}).get('interaction_max_value_a', 100)
+        interaction_min_value_b = self.settings.get('controller', {}).get('interaction_min_value_b', 0)
+        interaction_max_value_b = self.settings.get('controller', {}).get('interaction_max_value_b', 100)
 
         # 设置UI状态（静默方式，不触发事件）
-        self.main_window.settings_tab.dynamic_bone_range_a_min_spinbox.blockSignals(True)
-        self.main_window.settings_tab.dynamic_bone_range_a_min_spinbox.setValue(dynamic_bone_min_value_a)
-        self.main_window.settings_tab.dynamic_bone_range_a_min_spinbox.blockSignals(False)
+        self.main_window.settings_tab.interaction_range_a_min_spinbox.blockSignals(True)
+        self.main_window.settings_tab.interaction_range_a_min_spinbox.setValue(interaction_min_value_a)
+        self.main_window.settings_tab.interaction_range_a_min_spinbox.blockSignals(False)
 
-        self.main_window.settings_tab.dynamic_bone_range_a_max_spinbox.blockSignals(True)
-        self.main_window.settings_tab.dynamic_bone_range_a_max_spinbox.setValue(dynamic_bone_max_value_a)
-        self.main_window.settings_tab.dynamic_bone_range_a_max_spinbox.blockSignals(False)
+        self.main_window.settings_tab.interaction_range_a_max_spinbox.blockSignals(True)
+        self.main_window.settings_tab.interaction_range_a_max_spinbox.setValue(interaction_max_value_a)
+        self.main_window.settings_tab.interaction_range_a_max_spinbox.blockSignals(False)
 
-        self.main_window.settings_tab.dynamic_bone_range_b_min_spinbox.blockSignals(True)
-        self.main_window.settings_tab.dynamic_bone_range_b_min_spinbox.setValue(dynamic_bone_min_value_b)
-        self.main_window.settings_tab.dynamic_bone_range_b_min_spinbox.blockSignals(False)
+        self.main_window.settings_tab.interaction_range_b_min_spinbox.blockSignals(True)
+        self.main_window.settings_tab.interaction_range_b_min_spinbox.setValue(interaction_min_value_b)
+        self.main_window.settings_tab.interaction_range_b_min_spinbox.blockSignals(False)
 
-        self.main_window.settings_tab.dynamic_bone_range_b_max_spinbox.blockSignals(True)
-        self.main_window.settings_tab.dynamic_bone_range_b_max_spinbox.setValue(dynamic_bone_max_value_b)
-        self.main_window.settings_tab.dynamic_bone_range_b_max_spinbox.blockSignals(False)
+        self.main_window.settings_tab.interaction_range_b_max_spinbox.blockSignals(True)
+        self.main_window.settings_tab.interaction_range_b_max_spinbox.setValue(interaction_max_value_b)
+        self.main_window.settings_tab.interaction_range_b_max_spinbox.blockSignals(False)
 
         # 波形选择
         current_pulse_a = self.settings.get('controller', {}).get('current_pulse_a', '无波形')
@@ -168,14 +168,14 @@ class AppController(UIInterface):
             self.service_controller.osc_action_service.fire_mode_disabled = fire_mode_disabled
             self.service_controller.osc_action_service.enable_panel_control = enable_panel_control
             self.service_controller.osc_action_service.disable_panel_pulse_setting = disable_panel_pulse_setting
-            self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.A, dynamic_bone_mode_a)
-            self.service_controller.osc_action_service.set_dynamic_bone_mode(Channel.B, dynamic_bone_mode_b)
+            self.service_controller.osc_action_service.set_interaction_mode(Channel.A, interaction_mode_a)
+            self.service_controller.osc_action_service.set_interaction_mode(Channel.B, interaction_mode_b)
             
-            # 同步动骨模式范围设置
-            self.service_controller.osc_action_service.set_dynamic_bone_min_value(Channel.A, dynamic_bone_min_value_a)
-            self.service_controller.osc_action_service.set_dynamic_bone_max_value(Channel.A, dynamic_bone_max_value_a)
-            self.service_controller.osc_action_service.set_dynamic_bone_min_value(Channel.B, dynamic_bone_min_value_b)
-            self.service_controller.osc_action_service.set_dynamic_bone_max_value(Channel.B, dynamic_bone_max_value_b)
+            # 同步交互模式范围设置
+            self.service_controller.osc_action_service.set_interaction_min_value(Channel.A, interaction_min_value_a)
+            self.service_controller.osc_action_service.set_interaction_max_value(Channel.A, interaction_max_value_a)
+            self.service_controller.osc_action_service.set_interaction_min_value(Channel.B, interaction_min_value_b)
+            self.service_controller.osc_action_service.set_interaction_max_value(Channel.B, interaction_max_value_b)
 
             # 同步波形设置并更新设备
             pulse_registry = self.registries.pulse_registry
@@ -286,10 +286,10 @@ class AppController(UIInterface):
         self.registries.action_registry.register_action("设置当前通道", osc_set_current_channel, OSCInt)
 
         # 注册强度控制操作
-        async def osc_set_dynamic_bone_mode(*args: OSCBool) -> None:
+        async def osc_set_interaction_mode(*args: OSCBool) -> None:
             current_channel = osc_action_service.get_current_channel()
-            await osc_action_service.osc_set_dynamic_bone_mode(args[0].value, current_channel)
-        self.registries.action_registry.register_action("设置模式", osc_set_dynamic_bone_mode, OSCBool)
+            await osc_action_service.osc_set_interaction_mode(args[0].value, current_channel)
+        self.registries.action_registry.register_action("设置模式", osc_set_interaction_mode, OSCBool)
 
         async def osc_reset_strength(*args: OSCBool) -> None:
             current_channel = osc_action_service.get_current_channel()
@@ -423,8 +423,8 @@ class AppController(UIInterface):
         feature_mapping = {
             UIFeature.PANEL_CONTROL: self.main_window.settings_tab.enable_panel_control_checkbox,
             UIFeature.CHATBOX_STATUS: self.main_window.settings_tab.enable_chatbox_status_checkbox,
-            UIFeature.DYNAMIC_BONE_A: self.main_window.settings_tab.dynamic_bone_mode_a_checkbox,
-            UIFeature.DYNAMIC_BONE_B: self.main_window.settings_tab.dynamic_bone_mode_b_checkbox,
+            UIFeature.INTERACTION_MODE_A: self.main_window.settings_tab.interaction_mode_a_checkbox,
+            UIFeature.INTERACTION_MODE_B: self.main_window.settings_tab.interaction_mode_b_checkbox,
         }
 
         checkbox = feature_mapping.get(feature)
@@ -438,8 +438,8 @@ class AppController(UIInterface):
         feature_mapping = {
             UIFeature.PANEL_CONTROL: self.main_window.settings_tab.enable_panel_control_checkbox,
             UIFeature.CHATBOX_STATUS: self.main_window.settings_tab.enable_chatbox_status_checkbox,
-            UIFeature.DYNAMIC_BONE_A: self.main_window.settings_tab.dynamic_bone_mode_a_checkbox,
-            UIFeature.DYNAMIC_BONE_B: self.main_window.settings_tab.dynamic_bone_mode_b_checkbox,
+            UIFeature.INTERACTION_MODE_A: self.main_window.settings_tab.interaction_mode_a_checkbox,
+            UIFeature.INTERACTION_MODE_B: self.main_window.settings_tab.interaction_mode_b_checkbox,
         }
 
         checkbox = feature_mapping.get(feature)

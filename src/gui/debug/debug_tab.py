@@ -170,8 +170,8 @@ class DebugTab(QWidget):
                 f"Fire Mode Disabled: {self.service_controller.osc_action_service.fire_mode_disabled}\n" +
                 f"Enable ChatBox Status: {self.service_controller.chatbox_service.is_enabled}\n" +
                 # 动态骨骼模式
-                f"Dynamic Bone Mode A: {self.service_controller.osc_action_service.is_dynamic_bone_enabled(Channel.A)}\n" +
-                f"Dynamic Bone Mode B: {self.service_controller.osc_action_service.is_dynamic_bone_enabled(Channel.B)}\n" +
+                f"Interaction Mode A: {self.service_controller.osc_action_service.is_interaction_mode_enabled(Channel.A)}\n" +
+                f"Interaction Mode B: {self.service_controller.osc_action_service.is_interaction_mode_enabled(Channel.B)}\n" +
                 # 当前波形
                 f"Current Pulse Name A: {self.service_controller.osc_action_service.get_current_pulse(Channel.A)}\n" +
                 f"Current Pulse Name B: {self.service_controller.osc_action_service.get_current_pulse(Channel.B)}\n" +
