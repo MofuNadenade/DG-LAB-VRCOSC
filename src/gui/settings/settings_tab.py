@@ -27,6 +27,9 @@ class SettingsTab(QWidget):
         # 防止重复绑定的标志
         self._signals_connected: bool = False
 
+        # 当前通道状态跟踪
+        self._current_channel: Optional[Channel] = None
+        
         # UI组件类型注解
         self.controller_group: QGroupBox
         self.a_channel_label: QLabel
@@ -157,9 +160,9 @@ class SettingsTab(QWidget):
         interaction_layout.addRow(dynamic_bone_widget)
         
         # 2. 当前通道显示
-        self.current_channel_label = QLabel(
-            f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}")
+        self.current_channel_label = QLabel()
         self.current_channel_label.setStyleSheet("QLabel { font-weight: bold; color: #666666; margin-bottom: 2px; }")
+        self._update_current_channel_display()
         interaction_layout.addRow(self.current_channel_label)
         
         # 3. 交互模式范围设置
@@ -353,6 +356,10 @@ class SettingsTab(QWidget):
 
             # 标记信号槽已连接
             self._signals_connected = True
+            
+            # 初始化当前通道状态
+            self._initialize_current_channel()
+            
             logger.info("ServiceController 参数已绑定")
         else:
             logger.warning("Controller is not initialized yet.")
@@ -580,8 +587,17 @@ class SettingsTab(QWidget):
 
     def on_current_channel_updated(self, channel: Channel) -> None:
         """更新当前选择通道显示"""
-        channel_name = "A" if channel == Channel.A else "B"
-        self.current_channel_label.setText(f"{translate('channel.current_control')}: {channel_name}")
+        self._current_channel = channel
+        self._update_current_channel_display()
+        
+    def _update_current_channel_display(self) -> None:
+        """更新当前通道显示文本"""
+        if self._current_channel is None:
+            display_text = f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}"
+        else:
+            channel_name = "A" if self._current_channel == Channel.A else "B"
+            display_text = f"{translate('controller_tab.current_panel_channel')}: {channel_name}"
+        self.current_channel_label.setText(display_text)
 
     def on_strength_data_updated(self, strength_data: StrengthData) -> None:
         """更新通道强度"""
@@ -624,21 +640,8 @@ class SettingsTab(QWidget):
         self.a_channel_label.setText(f"A {translate('controller_tab.channel_intensity')}: {a_value} / 100")
         self.b_channel_label.setText(f"B {translate('controller_tab.channel_intensity')}: {b_value} / 100")
 
-        # 更新当前通道标签 - 保持当前显示的通道名
-        current_channel_text = self.current_channel_label.text()
-        if ": " in current_channel_text:
-            # 提取当前显示的通道名
-            current_channel = current_channel_text.split(": ", 1)[1]
-            # 如果通道名不是翻译键，保持原样；否则重新翻译
-            if current_channel in [translate('controller_tab.not_set'), "not_set", "未设置", "未設定"]:
-                self.current_channel_label.setText(
-                    f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}")
-            else:
-                self.current_channel_label.setText(
-                    f"{translate('controller_tab.current_panel_channel')}: {current_channel}")
-        else:
-            self.current_channel_label.setText(
-                f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}")
+        # 更新当前通道标签
+        self._update_current_channel_display()
 
         # 更新表单行标签
         self.current_pulse_a_label.setText(f"A{translate('controller_tab.pulse')}:")
@@ -653,3 +656,12 @@ class SettingsTab(QWidget):
 
     def _on_pulse_removed(self, pulse: Pulse) -> None:
         self.update_pulse_comboboxes()
+        
+    def _initialize_current_channel(self) -> None:
+        """初始化当前通道状态"""
+        # 如果服务控制器可用，从服务中获取当前通道
+        if self.service_controller and self.service_controller.osc_action_service:
+            current_channel = self.service_controller.osc_action_service.get_current_channel()
+            self._current_channel = current_channel
+        # 否则保持 None 状态（未设置）
+        self._update_current_channel_display()
