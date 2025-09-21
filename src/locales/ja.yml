@@ -230,7 +230,8 @@ pulse_dialogs:
 connection_tab:
   connection_mode: "接続モード"
   connection_mode_label: "接続方式:"
-  use_bluetooth: "Bluetooth接続を使用"
+  websocket_mode: "WebSocket"
+  bluetooth_mode: "Bluetooth"
   connection_settings: "接続設定"
   device_pairing: "デバイスペアリング"
   pairing_instruction: "接続開始後、DG-Lab Appで二次元コードをスキャンしてデバイスをペアリングしてください"

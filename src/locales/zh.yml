@@ -229,7 +229,8 @@ pulse_dialogs:
 connection_tab:
   connection_mode: "连接模式"
   connection_mode_label: "连接方式:"
-  use_bluetooth: "使用蓝牙连接"
+  websocket_mode: "WebSocket"
+  bluetooth_mode: "Bluetooth"
   connection_settings: "连接设置"
   device_pairing: "设备配对"
   pairing_instruction: "启动连接后，使用DG-Lab App扫描二维码进行设备配对"

@@ -234,7 +234,8 @@ pulse_dialogs:
 connection_tab:
   connection_mode: "Connection Mode"
   connection_mode_label: "Connection Type:"
-  use_bluetooth: "Use Bluetooth Connection"
+  websocket_mode: "WebSocket"
+  bluetooth_mode: "Bluetooth"
   connection_settings: "Connection Settings"
   device_pairing: "Device Pairing"
   pairing_instruction: "After starting connection, use DG-Lab App to scan QR code
