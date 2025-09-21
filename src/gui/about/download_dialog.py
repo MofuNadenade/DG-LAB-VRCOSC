@@ -4,9 +4,13 @@
 
 import asyncio
 import logging
+from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QProgressBar, QTextEdit, QWidget, QMessageBox
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QCloseEvent
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QProgressBar, QTextEdit, QWidget, QFileDialog
 
 from i18n import translate
 from core.auto_updater.auto_updater import AutoUpdater
@@ -25,6 +29,8 @@ class DownloadDialog(QDialog):
         self.allow_choose_path: bool = allow_choose_path
         self.download_path: Optional[str] = None
         self.should_stop: bool = False
+        self._is_closed: bool = False
+        self.default_path: str = ""  # 初始化默认路径
         
         # UI组件类型注解
         self.progress_bar: QProgressBar
@@ -36,8 +42,8 @@ class DownloadDialog(QDialog):
         self.init_ui()
         self.setup_updater_connections()
         
-        # 启动下载
-        asyncio.create_task(self._start_download())
+        # 启动下载 - 使用QTimer延迟执行，避免在构造函数中直接调用异步方法
+        QTimer.singleShot(100, self._start_download_delayed)
         
     def init_ui(self) -> None:
         """初始化UI"""
@@ -96,27 +102,57 @@ class DownloadDialog(QDialog):
         self.updater.download_error.connect(self._on_download_error)
         self.updater.install_complete.connect(self._on_install_complete)
         self.updater.install_error.connect(self._on_install_error)
+    
+
+    def _start_download_delayed(self) -> None:
+        """延迟启动下载"""
+        asyncio.create_task(self._start_download())
 
     async def _start_download(self) -> None:
         """启动下载"""
+        if self._is_closed:
+            return
+            
         self._update_status(translate('dialogs.download.connecting'))
         
         try:
             if self.allow_choose_path:
-                # 仅下载模式
-                self.download_path = await self.updater.download_update(self.release_info, self)
+                # 仅下载模式 - 异步选择保存路径
+                await self._choose_save_path_async()
             else:
                 # 下载并安装模式
                 self._update_status(translate('dialogs.download.auto_installing'))
-                success = await self.updater.download_and_install_update(self.release_info)
-                if success:
-                    self._on_install_complete()
-                else:
-                    self._on_install_error("安装失败")
+                await self.updater.download_and_install_update(self.release_info)
+                # 不再手动调用UI处理方法，完全依赖信号机制
                     
         except Exception as e:
             logger.error(f"下载启动失败: {e}")
-            self._on_download_error(str(e))
+            # 通过信号发射错误，而不是直接调用UI方法
+            self.updater.download_error.emit(str(e))
+    
+    async def _choose_save_path_async(self) -> None:
+        """异步选择保存路径"""
+        # 获取文件名
+        filename = Path(str(urlparse(self.release_info.download_url).path)).name
+        if not filename:
+            filename = "DG-LAB-VRCOSC-Update.exe"
+        
+        # 直接显示文件对话框（同步操作）
+        default_path = str(Path.home() / "Downloads" / filename)
+        chosen_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "选择保存位置",
+            default_path,
+            "Executable Files (*.exe);;All Files (*.*)"
+        )
+        
+        if chosen_path:
+            # 开始下载
+            await self.updater.download_update(self.release_info, chosen_path)
+        else:
+            # 用户取消
+            self.reject()
+    
 
     # AutoUpdater信号处理方法 - 纯UI逻辑
     def _on_download_progress(self, progress: int) -> None:
@@ -145,20 +181,6 @@ class DownloadDialog(QDialog):
         self.cancel_button.setText(translate('dialogs.download.close'))
         self.install_button.setEnabled(False)
         self._log_message(translate('dialogs.download.install_success'))
-        
-        # 询问是否重启程序
-        reply = QMessageBox.question(
-            self,
-            translate('dialogs.download.restart_confirm_title'),
-            translate('dialogs.download.restart_confirm_message'),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            self.updater.restart_application()
-        else:
-            self._log_message(translate('dialogs.download.restart_cancelled'))
 
     def _on_install_error(self, error_message: str) -> None:
         """处理安装错误信号"""
@@ -178,6 +200,7 @@ class DownloadDialog(QDialog):
     def cancel_download(self) -> None:
         """取消下载 - UI逻辑"""
         self.should_stop = True
+        self._is_closed = True
         self.updater.cancel_current_task()
         self.reject()
         
@@ -192,12 +215,29 @@ class DownloadDialog(QDialog):
     async def _install_update_async(self) -> None:
         """异步安装更新"""
         if self.download_path:
-            success = await self.updater.install_update(self.download_path)
-            if success:
-                self._on_install_complete()
-            else:
-                self._on_install_error("安装失败")
+            # 只调用安装方法，依赖信号处理结果
+            await self.updater.install_update(self.download_path)
         
     def get_download_path(self) -> Optional[str]:
         """获取下载文件路径"""
         return self.download_path
+    
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """对话框关闭时的清理工作"""
+        self._is_closed = True
+        self.should_stop = True
+        
+        # 手动断开信号连接，确保没有内存泄漏
+        try:
+            self.updater.download_progress.disconnect(self._on_download_progress)
+            self.updater.download_complete.disconnect(self._on_download_complete)
+            self.updater.download_error.disconnect(self._on_download_error)
+            self.updater.install_complete.disconnect(self._on_install_complete)
+            self.updater.install_error.disconnect(self._on_install_error)
+        except Exception as e:
+            logger.debug(f"断开信号连接时出现异常（可忽略）: {e}")
+        
+        # 取消当前任务
+        self.updater.cancel_current_task()
+        
+        super().closeEvent(event)

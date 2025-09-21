@@ -6,25 +6,52 @@ import asyncio
 import logging
 import platform
 import shutil
-import subprocess
 import sys
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Optional, Callable, List, Set, TypedDict
+from typing import Optional, List, TypedDict, Any
+from enum import Enum
 from urllib.parse import urlparse
+from contextlib import asynccontextmanager
 
 import aiohttp
 from packaging import version
-from PySide6.QtCore import QObject, Signal
-from PySide6.QtWidgets import QFileDialog, QWidget, QMessageBox
-
-from i18n import translate
+from PySide6.QtCore import QObject, Signal, SignalInstance
 
 from .models import ReleaseInfo
 from models import SettingsDict
 
 logger = logging.getLogger(__name__)
+
+
+# 常量定义
+class AutoUpdaterConstants:
+    """自动更新器常量"""
+    DEFAULT_TIMEOUT = 30
+    WINDOWS_MAX_PATH_LENGTH = 260
+    DEFAULT_UPDATE_FILENAME = "DG-LAB-VRCOSC-Update.exe"
+    TEMP_DIR_NAME = "DG-LAB-VRCOSC-Update"
+    CHUNK_SIZE = 8192
+    
+    # 下载策略
+    STRATEGY_MANUAL = "manual"
+    STRATEGY_DOWNLOAD_ONLY = "download_only"
+    STRATEGY_DOWNLOAD_AND_INSTALL = "download_and_install"
+    
+    # 危险字符列表
+    DANGEROUS_PATH_CHARS = ['..', '~', '$', '`', '|', '&', ';', '(', ')', '<', '>', '"', '*', '?', '\x00']
+    
+    # 开发环境指示符
+    DEV_INDICATORS = ['python', 'Scripts', 'venv', 'env', 'conda']
+
+
+class UpdateState(Enum):
+    """更新状态枚举"""
+    IDLE = "idle"
+    CHECKING = "checking"
+    DOWNLOADING = "downloading"
+    INSTALLING = "installing"
 
 
 # GitHub API 响应类型定义
@@ -58,33 +85,56 @@ class AutoUpdater(QObject):
     download_error = Signal(str)
     install_complete = Signal()
     install_error = Signal(str)
+    state_changed = Signal(str)  # 新增状态变化信号
     
     def __init__(self, repo: str, current_version: str, settings: SettingsDict) -> None:
         super().__init__()
         self.repo: str = repo
         self.current_version: str = current_version.lstrip('v')
         self.settings: SettingsDict = settings
-        self.timeout: int = 30
-        self._callbacks: Set[Callable[[str, str], None]] = set()
+        self.timeout: int = AutoUpdaterConstants.DEFAULT_TIMEOUT
         
-        # 当前任务
-        self.current_task: Optional[asyncio.Task[bool]] = None
+        # 当前任务和状态
+        self.current_task: Optional[asyncio.Task[Any]] = None
+        self._current_state: UpdateState = UpdateState.IDLE
         
-    def register_callback(self, callback: Callable[[str, str], None]) -> None:
-        """Register a callback for auto-updater events"""
-        self._callbacks.add(callback)
         
-    def unregister_callback(self, callback: Callable[[str, str], None]) -> None:
-        """Unregister a callback"""
-        self._callbacks.discard(callback)
+    def _set_state(self, state: UpdateState) -> None:
+        """设置当前状态并发送信号"""
+        if self._current_state != state:
+            self._current_state = state
+            self.state_changed.emit(state.value)
+            logger.debug(f"更新状态变更为: {state.value}")
+    
+    def get_current_state(self) -> UpdateState:
+        """获取当前状态"""
+        return self._current_state
+    
+    @asynccontextmanager
+    async def _task_context(self, state: UpdateState, error_signal: SignalInstance, task_name: str, allowed_states: Optional[List[UpdateState]] = None):
+        """统一的任务执行上下文管理器"""
+        if allowed_states is None:
+            allowed_states = [UpdateState.IDLE]
+            
+        if self._current_state not in allowed_states:
+            logger.warning(f"{task_name}已在进行中，跳过重复请求")
+            yield False
+            return
+            
+        try:
+            self._set_state(state)
+            yield True
+        except asyncio.CancelledError:
+            logger.info(f"{task_name}任务被取消")
+            raise  # 重新抛出取消异常
+        except Exception as e:
+            logger.error(f"{task_name}失败: {e}")
+            error_signal.emit(str(e))
+            raise  # 重新抛出异常以便调用者处理
+        finally:
+            self._set_state(UpdateState.IDLE)
+            self.current_task = None
         
-    def _notify_callbacks(self, event: str, data: str = "") -> None:
-        """Notify all registered callbacks"""
-        for callback in self._callbacks:
-            try:
-                callback(event, data)
-            except Exception as e:
-                logger.error(f"Callback error: {e}")
     
     def _is_development_environment(self) -> bool:
         """检测是否为开发环境"""
@@ -98,9 +148,8 @@ class AutoUpdater(QObject):
         
         # 检查可执行文件路径是否包含开发相关目录
         exe_path = Path(sys.executable).resolve()
-        dev_indicators = ['python', 'Scripts', 'venv', 'env', 'conda']
         
-        for indicator in dev_indicators:
+        for indicator in AutoUpdaterConstants.DEV_INDICATORS:
             if indicator in str(exe_path).lower():
                 return True
         
@@ -116,15 +165,14 @@ class AutoUpdater(QObject):
                 
                 # 检查是否包含危险字符
                 path_str = str(resolved_path)
-                dangerous_chars = ['..', '~', '$', '`', '|', '&', ';', '(', ')']
-                for char in dangerous_chars:
+                for char in AutoUpdaterConstants.DANGEROUS_PATH_CHARS:
                     if char in path_str:
                         logger.warning(f"路径包含危险字符: {char} in {path_str}")
                         return False
                 
                 # 检查路径长度
-                if len(path_str) > 260:  # Windows路径长度限制
-                    logger.warning(f"路径过长: {len(path_str)} > 260")
+                if len(path_str) > AutoUpdaterConstants.WINDOWS_MAX_PATH_LENGTH:
+                    logger.warning(f"路径过长: {len(path_str)} > {AutoUpdaterConstants.WINDOWS_MAX_PATH_LENGTH}")
                     return False
             
             return True
@@ -144,34 +192,35 @@ class AutoUpdater(QObject):
             auto_install = False
         
         if not auto_download:
-            return "manual"
+            return AutoUpdaterConstants.STRATEGY_MANUAL
         elif auto_download and not auto_install:
-            return "download_only"
+            return AutoUpdaterConstants.STRATEGY_DOWNLOAD_ONLY
         else:
-            return "download_and_install"
+            return AutoUpdaterConstants.STRATEGY_DOWNLOAD_AND_INSTALL
         
     async def check_for_updates(self) -> Optional[ReleaseInfo]:
         """Check for new releases on GitHub"""
         try:
-            # 创建异步任务获取最新发布信息
-            fetch_task = asyncio.create_task(self._fetch_latest_release_async())
-            release_info = await fetch_task
-            
-            if release_info and self._is_newer_version(release_info.version):
-                logger.info(f"New version available: {release_info.version}")
-                self._notify_callbacks("update_available", release_info.version)
-                self.update_available.emit(release_info)
-                return release_info
-            else:
-                logger.info("No updates available")
-                self._notify_callbacks("no_update_available", "")
-                self.no_update_available.emit()
-                return None
+            async with self._task_context(UpdateState.CHECKING, self.check_error, "更新检查") as should_continue:
+                if not should_continue:
+                    return None
+                    
+                # 创建异步任务获取最新发布信息并设置为当前任务
+                fetch_task = asyncio.create_task(self._fetch_latest_release_async())
+                self.current_task = fetch_task
+                release_info = await fetch_task
                 
-        except Exception as e:
-            logger.error(f"Failed to check for updates: {e}")
-            self._notify_callbacks("check_error", str(e))
-            self.check_error.emit(str(e))
+                if release_info and self._is_newer_version(release_info.version):
+                    logger.info(f"New version available: {release_info.version}")
+                    self.update_available.emit(release_info)
+                    return release_info
+                else:
+                    logger.info("No updates available")
+                    self.no_update_available.emit()
+                    return None
+        except asyncio.CancelledError:
+            return None
+        except Exception:
             return None
     
     async def _fetch_latest_release_async(self) -> Optional[ReleaseInfo]:
@@ -221,77 +270,55 @@ class AutoUpdater(QObject):
             logger.warning(f"Version comparison failed: {e}, falling back to string comparison")
             return new_version != self.current_version
     
-    async def download_update(self, release_info: ReleaseInfo, parent_widget: Optional[QWidget] = None) -> Optional[str]:
-        """下载更新 - 根据策略选择下载方式"""
+    async def download_update(self, release_info: ReleaseInfo, save_path: Optional[str] = None) -> Optional[str]:
+        """下载更新到指定路径，如果未指定路径则下载到临时目录"""
         if not release_info.download_url:
             self.download_error.emit("没有可用的下载链接")
             return None
-        
-        strategy = self.get_download_strategy()
-        
-        if strategy == "manual":
-            return await self._manual_download(release_info, parent_widget)
-        elif strategy == "download_only":
-            return await self._download_only(release_info, parent_widget)
-        else:
-            return await self._download_for_install(release_info)
-    
-    async def _manual_download(self, release_info: ReleaseInfo, parent_widget: Optional[QWidget] = None) -> Optional[str]:
-        """手动下载 - 打开浏览器"""
-        # 这个方法实际上不下载文件，只是返回下载URL
-        # UI层会处理打开浏览器
-        return release_info.download_url
-    
-    async def _download_only(self, release_info: ReleaseInfo, parent_widget: Optional[QWidget] = None) -> Optional[str]:
-        """仅下载 - 让用户选择保存位置"""
-        if not parent_widget:
-            self.download_error.emit("需要父窗口来选择保存位置")
+            
+        try:
+            async with self._task_context(UpdateState.DOWNLOADING, self.download_error, "下载", 
+                                       [UpdateState.IDLE, UpdateState.CHECKING]) as should_continue:
+                if not should_continue:
+                    return None
+                
+                # 取消之前的任务
+                if self.current_task and not self.current_task.done():
+                    self.current_task.cancel()
+                    try:
+                        await asyncio.wait_for(self.current_task, timeout=1.0)
+                    except (asyncio.CancelledError, asyncio.TimeoutError):
+                        pass  # 预期的取消或超时
+                
+                # 确定下载路径
+                if save_path:
+                    target_path = Path(save_path)
+                else:
+                    # 下载到临时目录
+                    filename = Path(str(urlparse(release_info.download_url).path)).name
+                    if not filename:
+                        filename = AutoUpdaterConstants.DEFAULT_UPDATE_FILENAME
+                        
+                    temp_dir = Path(tempfile.gettempdir()) / AutoUpdaterConstants.TEMP_DIR_NAME
+                    temp_dir.mkdir(exist_ok=True)
+                    
+                    # 添加随机后缀避免冲突
+                    base_name = Path(filename).stem
+                    extension = Path(filename).suffix
+                    random_suffix = str(uuid.uuid4())[:8]
+                    filename_with_suffix = f"{base_name}_{random_suffix}{extension}"
+                    target_path = temp_dir / filename_with_suffix
+                
+                # 创建下载任务并设置为当前任务
+                download_task = asyncio.create_task(self._download_to_path(release_info.download_url, target_path))
+                self.current_task = download_task
+                return await download_task
+                
+        except asyncio.CancelledError:
             return None
-        
-        # 获取文件名
-        filename = Path(str(urlparse(release_info.download_url).path)).name
-        if not filename:
-            filename = "DG-LAB-VRCOSC-Update.exe"
-        
-        # 让用户选择保存位置
-        chosen_path, _ = QFileDialog.getSaveFileName(
-            parent_widget,
-            "选择保存位置",
-            str(Path.home() / "Downloads" / filename),
-            "Executable Files (*.exe);;All Files (*.*)"
-        )
-        
-        if not chosen_path:
+        except Exception:
             return None
-        
-        # 下载到指定位置
-        if release_info.download_url:
-            return await self._download_to_path(release_info.download_url, Path(str(chosen_path)))
-        return None
     
-    async def _download_for_install(self, release_info: ReleaseInfo) -> Optional[str]:
-        """为安装而下载 - 下载到临时目录"""
-        # 获取文件名
-        filename = Path(str(urlparse(release_info.download_url).path)).name
-        if not filename:
-            filename = "DG-LAB-VRCOSC-Update.exe"
-        
-        # 下载到临时目录，使用随机后缀避免冲突
-        temp_dir = Path(tempfile.gettempdir()) / "DG-LAB-VRCOSC-Update"
-        temp_dir.mkdir(exist_ok=True)
-        
-        # 添加随机后缀到文件名
-        base_name = Path(filename).stem
-        extension = Path(filename).suffix
-        random_suffix = str(uuid.uuid4())[:8]  # 使用前8位UUID
-        filename_with_suffix = f"{base_name}_{random_suffix}{extension}"
-        
-        update_path = temp_dir / filename_with_suffix
-        logger.info(f"下载到临时目录: {update_path}")
-        
-        if release_info.download_url:
-            return await self._download_to_path(release_info.download_url, update_path)
-        return None
     
     async def _download_to_path(self, download_url: str, target_path: Path) -> Optional[str]:
         """下载文件到指定路径"""
@@ -310,7 +337,18 @@ class AutoUpdater(QObject):
                     downloaded = 0
                     
                     with open(target_path, 'wb') as f:
-                        async for chunk in response.content.iter_chunked(8192):
+                        async for chunk in response.content.iter_chunked(AutoUpdaterConstants.CHUNK_SIZE):
+                            # 检查是否被取消（在写入前检查，避免写入无用数据）
+                            if self.current_task and self.current_task.cancelled():
+                                logger.info("下载任务被取消")
+                                # 删除未完成的文件
+                                try:
+                                    if target_path.exists():
+                                        target_path.unlink()
+                                except Exception as cleanup_error:
+                                    logger.warning(f"清理未完成下载文件失败: {cleanup_error}")
+                                return None
+                                
                             if chunk:
                                 f.write(chunk)
                                 downloaded += len(chunk)
@@ -333,6 +371,10 @@ class AutoUpdater(QObject):
     
     async def install_update(self, update_path: str) -> bool:
         """安装更新"""
+        if self._current_state not in [UpdateState.IDLE, UpdateState.DOWNLOADING]:
+            logger.warning("安装已在进行中，跳过重复请求")
+            return False
+            
         try:
             # 检测开发环境，如果是在开发环境中则拒绝安装
             if self._is_development_environment():
@@ -341,34 +383,37 @@ class AutoUpdater(QObject):
                 self.install_error.emit(error_msg)
                 return False
             
+            self._set_state(UpdateState.INSTALLING)
+            
+            # 取消之前的任务
             if self.current_task and not self.current_task.done():
                 self.current_task.cancel()
+                try:
+                    await asyncio.wait_for(self.current_task, timeout=1.0)
+                except (asyncio.CancelledError, asyncio.TimeoutError):
+                    pass  # 预期的取消或超时
             
-            # 创建假的ReleaseInfo用于安装
-            fake_release = ReleaseInfo(
-                tag_name="",
-                name="",
-                body="",
-                download_url=update_path,
-                published_at="",
-                prerelease=False
-            )
+            # 创建安装任务并设置为当前任务
+            install_task = asyncio.create_task(self._install_update_async(update_path))
+            self.current_task = install_task
+            return await install_task
             
-            self.current_task = asyncio.create_task(
-                self._download_and_install_update_internal(fake_release)
-            )
-            return await self.current_task
-            
+        except asyncio.CancelledError:
+            logger.info("安装任务被取消")
+            return False
         except Exception as e:
             logger.error(f"安装更新失败: {e}")
             self.install_error.emit(str(e))
             return False
+        finally:
+            self._set_state(UpdateState.IDLE)
+            self.current_task = None
     
-    async def download_and_install_update(self, release_info: ReleaseInfo, 
-                                        progress_callback: Optional[Callable[[int], None]] = None) -> bool:
+    async def download_and_install_update(self, release_info: ReleaseInfo) -> bool:
         """Download and install update"""
         if not release_info.download_url:
             logger.error("No download URL available")
+            self.download_error.emit("没有可用的下载链接")
             return False
         
         # 检测开发环境，如果是在开发环境中则拒绝安装
@@ -379,37 +424,31 @@ class AutoUpdater(QObject):
             return False
             
         try:
-            # 先下载
-            download_path = await self._download_for_install(release_info)
-            if not download_path:
-                return False
+            # 创建组合任务并设置为当前任务
+            combined_task = asyncio.create_task(self._download_and_install_task(release_info))
+            self.current_task = combined_task
+            return await combined_task
             
-            # 再安装
-            return await self.install_update(download_path)
-            
+        except asyncio.CancelledError:
+            logger.info("下载安装任务被取消")
+            return False
         except Exception as e:
             logger.error(f"Failed to download and install update: {e}")
-            self._notify_callbacks("download_error", str(e))
             self.download_error.emit(str(e))
             return False
+        finally:
+            self.current_task = None
     
-    async def _download_and_install_update_internal(self, release_info: ReleaseInfo) -> bool:
-        """内部下载和安装方法"""
-        if not release_info.download_url:
-            logger.error("No download URL available")
+    async def _download_and_install_task(self, release_info: ReleaseInfo) -> bool:
+        """下载和安装的组合任务"""
+        # 先下载到临时目录
+        download_path = await self.download_update(release_info)
+        if not download_path:
             return False
-            
-        try:
-            # 创建异步安装任务
-            install_task = asyncio.create_task(self._install_update_async(release_info.download_url))
-            result: bool = await install_task
-            return result
-            
-        except Exception as e:
-            logger.error(f"Failed to download and install update: {e}")
-            self._notify_callbacks("download_error", str(e))
-            self.download_error.emit(str(e))
-            return False
+        
+        # 再安装
+        return await self.install_update(download_path)
+    
     
     async def _install_update_async(self, update_path: str) -> bool:
         """异步安装下载的更新"""
@@ -431,18 +470,15 @@ class AutoUpdater(QObject):
             
             if result:
                 logger.info("Update installed successfully")
-                self._notify_callbacks("update_installed", "")
                 self.install_complete.emit()
             else:
                 logger.error("Installation failed")
-                self._notify_callbacks("install_error", "Installation failed")
                 self.install_error.emit("Installation failed")
                 
             return result
             
         except Exception as e:
             logger.error(f"Installation failed: {e}")
-            self._notify_callbacks("install_error", str(e))
             self.install_error.emit(str(e))
             
             # 尝试恢复备份
@@ -450,10 +486,8 @@ class AutoUpdater(QObject):
                 if backup_path.exists():
                     shutil.move(str(backup_path), str(current_exe))
                     logger.info("Restored backup after failed installation")
-                    self._notify_callbacks("backup_restored", "")
             except Exception as restore_error:
                 logger.error(f"Failed to restore backup: {restore_error}")
-                self._notify_callbacks("restore_error", str(restore_error))
                     
             return False
     
@@ -482,21 +516,22 @@ class AutoUpdater(QObject):
             logger.info(f"新程序: {new_exe_path}")
             logger.info(f"备份位置: {backup_path}")
             
-            # 步骤1: 删除可能存在的老备份文件
+            logger.info("准备执行安装操作...")
+            
+            # 删除可能存在的老备份文件
             if backup_path.exists():
                 logger.info(f"删除已存在的备份文件: {backup_path}")
                 await loop.run_in_executor(None, backup_path.unlink)
             
-            # 步骤2: 将当前可执行文件重命名为备份文件
-            # 这样可以释放原文件名的占用
-            logger.info(f"步骤2: 重命名当前程序为备份文件: {current_exe} -> {backup_path}")
+            # 将当前可执行文件重命名为备份文件，释放原文件名的占用
+            logger.info(f"重命名当前程序为备份文件: {current_exe} -> {backup_path}")
             await loop.run_in_executor(None, shutil.move, str(current_exe), str(backup_path))
             
-            # 步骤3: 将新的可执行文件复制到原位置
-            logger.info(f"步骤3: 复制新程序到原位置: {new_exe_path} -> {current_exe}")
+            # 将新的可执行文件复制到原位置
+            logger.info(f"复制新程序到原位置: {new_exe_path} -> {current_exe}")
             await loop.run_in_executor(None, shutil.copy2, str(new_exe_path), str(current_exe))
             
-            # 步骤4: 设置可执行权限（在类Unix系统上）
+            # 设置可执行权限（在类Unix系统上）
             if platform.system().lower() != 'windows':
                 import stat
                 await loop.run_in_executor(
@@ -506,28 +541,12 @@ class AutoUpdater(QObject):
                 )
                 logger.info("已设置可执行权限")
             
-            # 步骤5: 清理临时文件
+            # 清理临时文件
             if new_exe_path.exists():
                 await loop.run_in_executor(None, new_exe_path.unlink)
                 logger.info("已清理临时文件")
             
-            # 询问用户是否重启程序
-            reply = QMessageBox.question(
-                None,
-                translate('dialogs.download.restart_confirm_title'),
-                translate('dialogs.download.restart_confirm_message'),
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.Yes
-            )
-            
-            if reply == QMessageBox.StandardButton.Yes:
-                logger.info("用户确认重启，准备重启应用程序...")
-                # 延迟重启，给当前进程一些时间完成清理
-                await asyncio.sleep(1)
-                self.restart_application()
-            else:
-                logger.info("用户选择稍后重启")
-                
+            logger.info("安装完成，请重启应用程序以使用新版本")
             return True
             
         except Exception as e:
@@ -545,20 +564,28 @@ class AutoUpdater(QObject):
             
             return False
     
-    
-    def restart_application(self) -> None:
-        """Restart the application after update"""
-        try:
-            logger.info("Restarting application...")
-            # Start new process
-            subprocess.Popen([sys.executable] + sys.argv)
-            # Exit current process
-            sys.exit(0)
-        except Exception as e:
-            logger.error(f"Failed to restart application: {e}")
-    
     def cancel_current_task(self) -> None:
         """取消当前任务"""
         if self.current_task and not self.current_task.done():
+            logger.info(f"正在取消当前任务: {self.current_task}")
             self.current_task.cancel()
+            try:
+                # 等待任务真正取消
+                asyncio.create_task(self._wait_for_cancellation())
+            except Exception as e:
+                logger.error(f"等待任务取消时出错: {e}")
             logger.info("已取消当前升级任务")
+        else:
+            logger.info("没有正在运行的任务需要取消")
+    
+    async def _wait_for_cancellation(self) -> None:
+        """等待任务取消完成"""
+        if self.current_task:
+            try:
+                await asyncio.wait_for(self.current_task, timeout=1.0)
+            except (asyncio.CancelledError, asyncio.TimeoutError):
+                pass  # 预期的取消或超时
+            except Exception as e:
+                logger.debug(f"任务取消过程中的异常（可忽略）: {e}")
+            finally:
+                self.current_task = None

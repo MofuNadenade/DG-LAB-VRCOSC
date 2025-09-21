@@ -231,12 +231,8 @@ dialogs:
     install_complete: "インストール完了"
     install_failed: "インストール失敗"
     install_error_detail: "インストールエラー詳細: {0}"
-    install_success: "インストール成功！プログラムが自動的に再起動します。"
+    install_success: "インストール成功！新しいバージョンを使用するにはアプリケーションを再起動してください。"
     auto_installing: "自動インストール中..."
-    restart_confirm_title: "再起動確認"
-    restart_confirm_message: "更新のインストールが完了しました！\n\nプログラムを再起動して更新を適用する必要があります。\n\n\
-      今すぐプログラムを再起動しますか？"
-    restart_cancelled: "ユーザーが再起動をキャンセルしました。後で手動でプログラムを再起動してください。"
 tabs:
   about:
     current_version_label: "現在のバージョン: {0}"
@@ -252,8 +248,6 @@ tabs:
     check_error_title: "更新チェックに失敗"
     check_error_message: "更新チェック中にエラーが発生しました:\n{0}"
     download_error_title: "ダウンロードエラー"
-    manual_download_title: "手動ダウンロード"
-    manual_download_message: "バージョン {0} のダウンロードページをブラウザで開きますか？"
     auto_update_disabled: "自動更新機能が無効になっています"
     download_error_detail: "ダウンロードに失敗しました:\n{0}"
     download_complete_title: "ダウンロード完了"
@@ -261,9 +255,8 @@ tabs:
     open_file_location_title: "ファイルの場所を開く"
     open_file_location_message: "ファイルのダウンロードが完了しました:\n{0}\n\nファイルの場所を開きますか？"
     auto_install_title: "自動インストール"
-    auto_install_message: "GitHubからバージョン {0} を自動的にダウンロードしてインストールします。\n\n注意：\n• インストール中にプログラムが再起動されます\n• GitHubからのダウンロードのため、一部地域ではプロキシが必要な場合があります\n\n続行しますか？"
-    install_success_title: "インストール成功"
-    install_success_message: "更新のインストールが完了しました！今すぐプログラムを再起動しますか？"
+    auto_install_message: "GitHubからバージョン {0} を自動的にダウンロードしてインストールします。\n\n注意：\n• インストール完了後に手動でプログラムを再起動する必要があります\n\
+      • GitHubからのダウンロードのため、一部地域ではプロキシが必要な場合があります\n\n続行しますか？"
     install_error_title: "インストール失敗"
     install_error_detail: "インストールに失敗しました:\n{0}"
   connection:

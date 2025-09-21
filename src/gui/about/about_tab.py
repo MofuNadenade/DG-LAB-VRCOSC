@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from PySide6.QtCore import QLocale, QUrl, QTimer
+from PySide6.QtCore import QLocale, QUrl, QTimer, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit, QMessageBox
 
@@ -36,6 +36,9 @@ logger = logging.getLogger(__name__)
 class AboutTab(QWidget):
     """关于选项卡 - 纯UI逻辑"""
     
+    # 内部信号，用于简化异步对话框
+    _dialog_finished = Signal(bool)  # True表示Yes，False表示No
+    
     def __init__(self, ui_interface: UIInterface) -> None:
         super().__init__()
         self.ui_interface: UIInterface = ui_interface
@@ -50,8 +53,8 @@ class AboutTab(QWidget):
         # AutoUpdater实例
         self.updater: Optional[AutoUpdater] = None
         
-        # 标记是否为启动时自动检查
-        self.is_startup_check: bool = False
+        # 待处理的发布信息
+        self._pending_release: Optional[ReleaseInfo] = None
 
         self.init_ui()
         self.setup_updater()
@@ -133,8 +136,8 @@ class AboutTab(QWidget):
             self.updater.check_error.connect(self._on_check_error)
             self.updater.download_complete.connect(self._on_download_complete)
             self.updater.download_error.connect(self._on_download_error)
-            self.updater.install_complete.connect(self._on_install_complete)
             self.updater.install_error.connect(self._on_install_error)
+            self.updater.state_changed.connect(self._on_state_changed)
             
             logger.info("AutoUpdater已初始化")
         elif not enabled:
@@ -150,18 +153,11 @@ class AboutTab(QWidget):
         
         if enabled and check_on_startup and self.updater:
             logger.info("启动时自动检查更新")
-            asyncio.create_task(self._delayed_startup_check())
+            asyncio.create_task(self.updater.check_for_updates())
         elif not enabled:
             logger.info("自动更新功能已禁用，跳过启动检查")
         elif not check_on_startup:
             logger.info("启动时检查更新已禁用")
-
-    async def _delayed_startup_check(self) -> None:
-        """延迟启动检查更新"""
-        if self.updater:
-            self.is_startup_check = True
-            await self.updater.check_for_updates()
-            self.is_startup_check = False
 
     def open_feedback(self) -> None:
         """打开问题反馈页面"""
@@ -184,33 +180,35 @@ class AboutTab(QWidget):
             
         if not self.updater:
             QMessageBox.warning(
-                self, 
+                self,
                 translate('tabs.about.update_check_title'),
                 translate('tabs.about.no_repo_configured')
             )
             return
             
-        # 禁用按钮防止重复点击
-        self.check_update_btn.setEnabled(False)
-        self.check_update_btn.setText(translate('tabs.about.checking_updates'))
-        
-        # 使用AutoUpdater检查更新
-        asyncio.create_task(self._check_updates_async())
-        
-    async def _check_updates_async(self) -> None:
-        """异步检查更新"""
-        if self.updater:
-            await self.updater.check_for_updates()
+        # 直接调用检查更新，状态管理由AutoUpdater处理
+        asyncio.create_task(self.updater.check_for_updates())
+
+    def _on_state_changed(self, state: str) -> None:
+        """处理状态变化信号 - 统一管理按钮状态"""
+        if state == "checking":
+            self.check_update_btn.setEnabled(False)
+            self.check_update_btn.setText(translate('tabs.about.checking_updates'))
+        elif state == "idle":
+            self.check_update_btn.setEnabled(True)
+            self.check_update_btn.setText(translate('tabs.about.check_updates'))
 
     # AutoUpdater信号处理方法 - 纯UI逻辑
     def _on_update_available(self, release_info: ReleaseInfo) -> None:
         """处理发现新版本信号"""
-        # 如果不是启动时自动检查，恢复按钮状态
-        if not self.is_startup_check:
-            self.check_update_btn.setEnabled(True)
-            self.check_update_btn.setText(translate('tabs.about.check_updates'))
+        # 保存待处理的发布信息
+        self._pending_release = release_info
         
-        # 显示更新可用对话框
+        # 使用QTimer延迟显示对话框，避免阻塞信号处理
+        QTimer.singleShot(0, lambda: self._show_update_available_dialog(release_info))
+    
+    def _show_update_available_dialog(self, release_info: ReleaseInfo) -> None:
+        """显示更新可用对话框"""
         reply = QMessageBox.question(
             self,
             translate('tabs.about.update_available_title'),
@@ -223,40 +221,73 @@ class AboutTab(QWidget):
         
         if reply == QMessageBox.StandardButton.Yes:
             self._handle_update_download(release_info)
+    
+    def _handle_update_download(self, release_info: ReleaseInfo) -> None:
+        """处理更新下载 - 根据策略决定下载方式"""
+        if not self.updater:
+            return
+            
+        strategy = self.updater.get_download_strategy()
+        
+        if strategy == "manual":
+            # 手动下载 - 打开浏览器
+            if release_info.download_url:
+                url = QUrl(release_info.download_url)
+                QDesktopServices.openUrl(url)
+                logger.info(f"已打开手动下载页面: {release_info.download_url}")
+        elif strategy == "download_only":
+            # 仅下载 - 显示下载对话框，允许选择路径
+            dialog = DownloadDialog(release_info, self.updater, allow_choose_path=True, parent=self)
+            dialog.show()
+        else:
+            # 下载并安装 - 显示确认对话框后开始自动安装
+            reply = QMessageBox.question(
+                self,
+                translate('tabs.about.auto_install_title'),
+                translate('tabs.about.auto_install_message').format(release_info.version),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                dialog = DownloadDialog(release_info, self.updater, allow_choose_path=False, parent=self)
+                dialog.show()
 
     def _on_no_update_available(self) -> None:
         """处理无更新信号"""
-        # 如果不是启动时自动检查，恢复按钮状态并显示信息
-        if not self.is_startup_check:
-            self.check_update_btn.setEnabled(True)
-            self.check_update_btn.setText(translate('tabs.about.check_updates'))
-            
-            # 显示无更新信息
-            QMessageBox.information(
-                self,
-                translate('tabs.about.no_update_title'),
-                translate('tabs.about.no_update_message')
-            )
+        # 根据按钮是否禁用来判断是否为手动检查
+        if not self.check_update_btn.isEnabled():
+            # 手动检查 - 显示对话框
+            QTimer.singleShot(0, self._show_no_update_dialog)
         else:
-            # 启动时自动检查，只记录日志
+            # 启动检查 - 仅记录日志
             logger.info("启动时检查更新：当前已是最新版本")
+            
+    def _show_no_update_dialog(self) -> None:
+        """显示无更新对话框"""
+        QMessageBox.information(
+            self,
+            translate('tabs.about.no_update_title'),
+            translate('tabs.about.no_update_message')
+        )
 
     def _on_check_error(self, error_message: str) -> None:
         """处理检查错误信号"""
-        # 如果不是启动时自动检查，恢复按钮状态并显示错误信息
-        if not self.is_startup_check:
-            self.check_update_btn.setEnabled(True)
-            self.check_update_btn.setText(translate('tabs.about.check_updates'))
-            
-            # 显示错误信息
-            QMessageBox.critical(
-                self,
-                translate('tabs.about.check_error_title'),
-                translate('tabs.about.check_error_message').format(error_message)
-            )
+        # 根据按钮是否禁用来判断是否为手动检查
+        if not self.check_update_btn.isEnabled():
+            # 手动检查 - 显示错误对话框
+            QTimer.singleShot(0, lambda: self._show_check_error_dialog(error_message))
         else:
-            # 启动时自动检查，只记录错误日志
+            # 启动检查 - 仅记录日志
             logger.error(f"启动时检查更新失败: {error_message}")
+            
+    def _show_check_error_dialog(self, error_message: str) -> None:
+        """显示检查错误对话框"""
+        QMessageBox.critical(
+            self,
+            translate('tabs.about.check_error_title'),
+            translate('tabs.about.check_error_message').format(error_message)
+        )
 
     def _on_download_complete(self, download_path: str) -> None:
         """处理下载完成信号"""
@@ -266,108 +297,56 @@ class AboutTab(QWidget):
         strategy = self.updater.get_download_strategy() if self.updater else "unknown"
         
         if strategy == "download_only":
-            # 仅下载模式：询问是否打开文件位置
-            download_dir = str(Path(download_path).parent)
-            reply = QMessageBox.question(
-                self,
-                translate('tabs.about.open_file_location_title'),
-                translate('tabs.about.open_file_location_message').format(download_path),
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.Yes
-            )
+            # 仅下载模式：延迟显示完成对话框
+            QTimer.singleShot(0, lambda: self._show_download_complete_dialog(download_path))
             
-            if reply == QMessageBox.StandardButton.Yes:
-                QDesktopServices.openUrl(QUrl.fromLocalFile(download_dir))
-                logger.info(f"已打开文件位置: {download_dir}")
-            
-            QMessageBox.information(
-                self,
-                translate('tabs.about.download_complete_title'),
-                translate('tabs.about.download_saved_message').format(download_path)
-            )
+    def _show_download_complete_dialog(self, download_path: str) -> None:
+        """显示下载完成对话框"""
+        # 询问是否打开文件位置
+        download_dir = str(Path(download_path).parent)
+        reply = QMessageBox.question(
+            self,
+            translate('tabs.about.open_file_location_title'),
+            translate('tabs.about.open_file_location_message').format(download_path),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(download_dir))
+            logger.info(f"已打开文件位置: {download_dir}")
+        
+        # 显示下载完成信息
+        QMessageBox.information(
+            self,
+            translate('tabs.about.download_complete_title'),
+            translate('tabs.about.download_saved_message').format(download_path)
+        )
 
     def _on_download_error(self, error_message: str) -> None:
         """处理下载错误信号"""
+        QTimer.singleShot(0, lambda: self._show_download_error_dialog(error_message))
+        
+    def _show_download_error_dialog(self, error_message: str) -> None:
+        """显示下载错误对话框"""
         QMessageBox.critical(
             self,
             translate('tabs.about.download_error_title'),
             translate('tabs.about.download_error_detail').format(error_message)
         )
 
-    def _on_install_complete(self) -> None:
-        """处理安装完成信号"""
-        # 询问是否重启
-        reply = QMessageBox.question(
-            self,
-            translate('tabs.about.install_success_title'),
-            translate('tabs.about.install_success_message'),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes and self.updater:
-            self.updater.restart_application()
-
     def _on_install_error(self, error_message: str) -> None:
         """处理安装错误信号"""
+        QTimer.singleShot(0, lambda: self._show_install_error_dialog(error_message))
+        
+    def _show_install_error_dialog(self, error_message: str) -> None:
+        """显示安装错误对话框"""
         QMessageBox.critical(
             self,
             translate('tabs.about.install_error_title'),
             translate('tabs.about.install_error_detail').format(error_message)
         )
 
-    def _handle_update_download(self, release_info: ReleaseInfo) -> None:
-        """处理更新下载 - 根据策略决定下载方式"""
-        if not self.updater:
-            return
-            
-        strategy = self.updater.get_download_strategy()
-        
-        if strategy == "manual":
-            self._handle_manual_download(release_info)
-        elif strategy == "download_only":
-            self._handle_download_only(release_info)
-        else:
-            self._handle_download_and_install(release_info)
-
-    def _handle_manual_download(self, release_info: ReleaseInfo) -> None:
-        """处理手动下载"""
-        reply = QMessageBox.question(
-            self,
-            translate('tabs.about.manual_download_title'),
-            translate('tabs.about.manual_download_message').format(release_info.version),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes and release_info.download_url:
-            url = QUrl(release_info.download_url)
-            QDesktopServices.openUrl(url)
-            logger.info(f"已打开手动下载页面: {release_info.download_url}")
-
-    def _handle_download_only(self, release_info: ReleaseInfo) -> None:
-        """处理仅下载模式"""
-        if not self.updater:
-            return
-        
-        dialog = DownloadDialog(release_info, self.updater, allow_choose_path=True, parent=self)
-        dialog.show()
-
-    def _handle_download_and_install(self, release_info: ReleaseInfo) -> None:
-        """处理下载并安装模式"""
-        # 确认安装
-        reply = QMessageBox.question(
-            self,
-            translate('tabs.about.auto_install_title'),
-            translate('tabs.about.auto_install_message').format(release_info.version),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes and self.updater:
-            # 显示下载进度框进行自动下载和安装
-            dialog = DownloadDialog(release_info, self.updater, allow_choose_path=False, parent=self)
-            dialog.show()
 
     def update_ui_texts(self) -> None:
         """更新UI上的所有文本为当前语言"""

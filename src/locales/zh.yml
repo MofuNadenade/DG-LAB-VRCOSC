@@ -230,11 +230,8 @@ dialogs:
     install_complete: "安装完成"
     install_failed: "安装失败"
     install_error_detail: "安装错误详情: {0}"
-    install_success: "安装成功！程序将自动重启。"
+    install_success: "安装成功！请重启应用程序以使用新版本。"
     auto_installing: "自动安装中..."
-    restart_confirm_title: "重启确认"
-    restart_confirm_message: "更新安装完成！\n\n程序需要重启以应用更新。\n\n是否现在重启程序？"
-    restart_cancelled: "用户取消了重启，请稍后手动重启程序。"
 tabs:
   about:
     current_version_label: "当前版本: {0}"
@@ -250,8 +247,6 @@ tabs:
     check_error_title: "检查更新失败"
     check_error_message: "检查更新时出现错误:\n{0}"
     download_error_title: "下载错误"
-    manual_download_title: "手动下载"
-    manual_download_message: "是否在浏览器中打开版本 {0} 的下载页面？"
     auto_update_disabled: "自动更新功能已禁用"
     download_error_detail: "下载失败:\n{0}"
     download_complete_title: "下载完成"
@@ -259,9 +254,8 @@ tabs:
     open_file_location_title: "打开文件位置"
     open_file_location_message: "文件已下载完成:\n{0}\n\n是否打开文件所在位置？"
     auto_install_title: "自动安装"
-    auto_install_message: "即将从GitHub自动下载并安装版本 {0}。\n\n注意：\n• 安装过程中程序将会重启\n• 从GitHub下载，国内用户可能需要代理\n\n是否继续？"
-    install_success_title: "安装成功"
-    install_success_message: "更新安装完成！是否现在重启程序？"
+    auto_install_message: "即将从GitHub自动下载并安装版本 {0}。\n\n注意：\n• 安装完成后需要手动重启程序\n• 从GitHub下载，国内用户可能需要代理\n\
+      \n是否继续？"
     install_error_title: "安装失败"
     install_error_detail: "安装失败:\n{0}"
   connection:

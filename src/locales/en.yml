@@ -239,13 +239,8 @@ dialogs:
     install_complete: "Installation complete"
     install_failed: "Installation failed"
     install_error_detail: "Installation error details: {0}"
-    install_success: "Installation successful! The program will restart automatically."
+    install_success: "Installation successful! Please restart the application to use the new version."
     auto_installing: "Auto-installing..."
-    restart_confirm_title: "Restart Confirmation"
-    restart_confirm_message: "Update installation completed!\n\nThe program needs
-      to restart to apply the update.\n\nRestart the program now?"
-    restart_cancelled: "User cancelled restart. Please restart the program manually
-      later."
 tabs:
   about:
     current_version_label: "Current Version: {0}"
@@ -261,8 +256,6 @@ tabs:
     check_error_title: "Update Check Failed"
     check_error_message: "Error occurred while checking for updates:\n{0}"
     download_error_title: "Download Error"
-    manual_download_title: "Manual Download"
-    manual_download_message: "Open download page for version {0} in browser?"
     auto_update_disabled: "Auto-update feature is disabled"
     download_error_detail: "Download failed:\n{0}"
     download_complete_title: "Download Complete"
@@ -270,10 +263,9 @@ tabs:
     open_file_location_title: "Open File Location"
     open_file_location_message: "File download completed:\n{0}\n\nOpen file location?"
     auto_install_title: "Auto Install"
-    auto_install_message: "About to automatically download and install version {0} from GitHub.\n\
-      \nNote:\n• The program will restart during installation\n• Downloads from GitHub, users in some regions may need a proxy\n\nContinue?"
-    install_success_title: "Installation Successful"
-    install_success_message: "Update installation completed! Restart program now?"
+    auto_install_message: "About to automatically download and install version {0}
+      from GitHub.\n\nNote:\n• Manual restart required after installation\n• Downloads
+      from GitHub, users in some regions may need a proxy\n\nContinue?"
     install_error_title: "Installation Failed"
     install_error_detail: "Installation failed:\n{0}"
   connection:
