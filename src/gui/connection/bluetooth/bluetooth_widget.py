@@ -128,7 +128,7 @@ class BluetoothConnectionWidget(QWidget):
 
     def create_device_discovery_group(self) -> None:
         """创建设备发现组"""
-        self.device_discovery_group = QGroupBox(translate("bluetooth.device_discovery"))
+        self.device_discovery_group = QGroupBox(translate("devices.bluetooth.device_discovery"))
         layout = QVBoxLayout()
         
         # 设备列表
@@ -142,7 +142,7 @@ class BluetoothConnectionWidget(QWidget):
         button_layout.setSpacing(8)
         
         # 扫描按钮
-        self.scan_button = QPushButton(translate("bluetooth.scan_devices"))
+        self.scan_button = QPushButton(translate("devices.bluetooth.scan_devices"))
         self.scan_button.setMinimumHeight(30)
         self.scan_button.setStyleSheet(CommonColors.get_secondary_button_style())
         self.scan_button.clicked.connect(self.on_scan_clicked)
@@ -152,14 +152,14 @@ class BluetoothConnectionWidget(QWidget):
         connection_layout = QHBoxLayout()
         connection_layout.setSpacing(8)
         
-        self.connect_button = QPushButton(translate("bluetooth.connect_device"))
+        self.connect_button = QPushButton(translate("devices.bluetooth.connect_device"))
         self.connect_button.setMinimumHeight(30)
         self.connect_button.setStyleSheet(CommonColors.get_primary_button_style())
         self.connect_button.setEnabled(False)
         self.connect_button.clicked.connect(self.on_connect_clicked)
         connection_layout.addWidget(self.connect_button)
         
-        self.disconnect_button = QPushButton(translate("bluetooth.disconnect_device"))
+        self.disconnect_button = QPushButton(translate("devices.bluetooth.disconnect_device"))
         self.disconnect_button.setMinimumHeight(30)
         self.disconnect_button.setStyleSheet(CommonColors.get_warning_button_style())
         self.disconnect_button.setEnabled(False)
@@ -178,19 +178,19 @@ class BluetoothConnectionWidget(QWidget):
 
     def create_status_display(self) -> QGroupBox:
         """创建状态显示区域"""
-        status_group = QGroupBox(translate("bluetooth.connection_status"))
+        status_group = QGroupBox(translate("devices.bluetooth.connection_status"))
         layout = QFormLayout()
         layout.setSpacing(8)
         
         # 连接状态
-        self.connection_status_label = QLabel(translate("bluetooth.disconnected"))
-        self.status_label = QLabel(translate("bluetooth.status") + ":")
+        self.connection_status_label = QLabel(translate("devices.bluetooth.disconnected"))
+        self.status_label = QLabel(translate("devices.bluetooth.status") + ":")
         layout.addRow(self.status_label, self.connection_status_label)
         
         # 设备信息
-        self.device_info_label = QLabel(translate("bluetooth.no_device"))
+        self.device_info_label = QLabel(translate("devices.bluetooth.no_device"))
         self.device_info_label.setWordWrap(True)
-        self.device_label = QLabel(translate("bluetooth.device") + ":")
+        self.device_label = QLabel(translate("devices.bluetooth.device") + ":")
         layout.addRow(self.device_label, self.device_info_label)
         
         # 电量显示
@@ -208,7 +208,7 @@ class BluetoothConnectionWidget(QWidget):
         self.battery_progress.setFixedHeight(20)
         battery_layout.addWidget(self.battery_progress)
         
-        self.battery_title_label = QLabel(translate("bluetooth.battery") + ":")
+        self.battery_title_label = QLabel(translate("devices.bluetooth.battery") + ":")
         layout.addRow(self.battery_title_label, battery_widget)
         
         status_group.setLayout(layout)
@@ -216,7 +216,7 @@ class BluetoothConnectionWidget(QWidget):
 
     def create_device_control_group(self) -> None:
         """创建设备控制组"""
-        self.device_control_group = QGroupBox(translate("bluetooth.device_control"))
+        self.device_control_group = QGroupBox(translate("devices.bluetooth.device_control"))
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(0)
@@ -240,11 +240,11 @@ class BluetoothConnectionWidget(QWidget):
         
         # 强度上限选项卡
         strength_tab = self.create_strength_limits_tab()
-        self.params_tab_widget.addTab(strength_tab, translate("bluetooth.strength_limits_tab"))
+        self.params_tab_widget.addTab(strength_tab, translate("devices.bluetooth.strength_limits_tab"))
         
         # 输出设置选项卡
         output_tab = self.create_output_settings_tab()
-        self.params_tab_widget.addTab(output_tab, translate("bluetooth.output_settings_tab"))
+        self.params_tab_widget.addTab(output_tab, translate("devices.bluetooth.output_settings_tab"))
         
         layout.addWidget(self.params_tab_widget)
         
@@ -255,7 +255,7 @@ class BluetoothConnectionWidget(QWidget):
         layout.addSpacing(15)
         
         # 应用按钮 - 最大化并放在底部
-        self.apply_params_button = QPushButton(translate("bluetooth.apply_parameters"))
+        self.apply_params_button = QPushButton(translate("devices.bluetooth.apply_parameters"))
         self.apply_params_button.setStyleSheet(CommonColors.get_special_button_style())
         self.apply_params_button.setEnabled(False)
         self.apply_params_button.clicked.connect(self.on_apply_params_clicked)
@@ -273,7 +273,7 @@ class BluetoothConnectionWidget(QWidget):
         a_layout = QHBoxLayout()
         a_layout.setSpacing(10)
         
-        self.strength_limit_a_title = QLabel(translate("bluetooth.channel_a") + ":")
+        self.strength_limit_a_title = QLabel(translate("devices.bluetooth.channel_a") + ":")
         self.strength_limit_a_title.setMinimumWidth(60)
         a_layout.addWidget(self.strength_limit_a_title)
         
@@ -295,7 +295,7 @@ class BluetoothConnectionWidget(QWidget):
         b_layout = QHBoxLayout()
         b_layout.setSpacing(10)
         
-        self.strength_limit_b_title = QLabel(translate("bluetooth.channel_b") + ":")
+        self.strength_limit_b_title = QLabel(translate("devices.bluetooth.channel_b") + ":")
         self.strength_limit_b_title.setMinimumWidth(60)
         b_layout.addWidget(self.strength_limit_b_title)
         
@@ -326,12 +326,12 @@ class BluetoothConnectionWidget(QWidget):
         layout.setSpacing(15)
         
         # 频率平衡分组
-        self.freq_balance_group = QGroupBox(translate("bluetooth.frequency_balance"))
+        self.freq_balance_group = QGroupBox(translate("devices.bluetooth.frequency_balance"))
         self.create_freq_balance_group(self.freq_balance_group)
         layout.addWidget(self.freq_balance_group)
         
         # 强度平衡分组
-        self.strength_balance_group = QGroupBox(translate("bluetooth.strength_balance"))
+        self.strength_balance_group = QGroupBox(translate("devices.bluetooth.strength_balance"))
         self.create_strength_balance_group(self.strength_balance_group)
         layout.addWidget(self.strength_balance_group)
         
@@ -356,7 +356,7 @@ class BluetoothConnectionWidget(QWidget):
         a_layout.setContentsMargins(0, 0, 0, 0)
         a_layout.setSpacing(5)
         
-        self.freq_balance_a_title = QLabel(translate("bluetooth.channel_a") + ":")
+        self.freq_balance_a_title = QLabel(translate("devices.bluetooth.channel_a") + ":")
         self.freq_balance_a_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         a_layout.addWidget(self.freq_balance_a_title)
         
@@ -380,7 +380,7 @@ class BluetoothConnectionWidget(QWidget):
         b_layout.setContentsMargins(0, 0, 0, 0)
         b_layout.setSpacing(5)
         
-        self.freq_balance_b_title = QLabel(translate("bluetooth.channel_b") + ":")
+        self.freq_balance_b_title = QLabel(translate("devices.bluetooth.channel_b") + ":")
         self.freq_balance_b_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         b_layout.addWidget(self.freq_balance_b_title)
         
@@ -416,7 +416,7 @@ class BluetoothConnectionWidget(QWidget):
         a_layout.setContentsMargins(0, 0, 0, 0)
         a_layout.setSpacing(5)
         
-        self.strength_balance_a_title = QLabel(translate("bluetooth.channel_a") + ":")
+        self.strength_balance_a_title = QLabel(translate("devices.bluetooth.channel_a") + ":")
         self.strength_balance_a_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         a_layout.addWidget(self.strength_balance_a_title)
         
@@ -440,7 +440,7 @@ class BluetoothConnectionWidget(QWidget):
         b_layout.setContentsMargins(0, 0, 0, 0)
         b_layout.setSpacing(5)
         
-        self.strength_balance_b_title = QLabel(translate("bluetooth.channel_b") + ":")
+        self.strength_balance_b_title = QLabel(translate("devices.bluetooth.channel_b") + ":")
         self.strength_balance_b_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         b_layout.addWidget(self.strength_balance_b_title)
         
@@ -463,19 +463,19 @@ class BluetoothConnectionWidget(QWidget):
 
     def setup_tooltips(self) -> None:
         """设置工具提示"""
-        self.scan_button.setToolTip(translate("bluetooth.scan_tooltip"))
-        self.connect_button.setToolTip(translate("bluetooth.connect_tooltip"))
-        self.disconnect_button.setToolTip(translate("bluetooth.disconnect_tooltip"))
-        self.apply_params_button.setToolTip(translate("bluetooth.apply_params_tooltip"))
+        self.scan_button.setToolTip(translate("devices.bluetooth.scan_tooltip"))
+        self.connect_button.setToolTip(translate("devices.bluetooth.connect_tooltip"))
+        self.disconnect_button.setToolTip(translate("devices.bluetooth.disconnect_tooltip"))
+        self.apply_params_button.setToolTip(translate("devices.bluetooth.apply_params_tooltip"))
         
-        self.strength_limit_a_slider.setToolTip(translate("bluetooth.strength_limit_a_tooltip"))
-        self.strength_limit_b_slider.setToolTip(translate("bluetooth.strength_limit_b_tooltip"))
-        self.freq_balance_a_slider.setToolTip(translate("bluetooth.freq_balance_a_tooltip"))
-        self.freq_balance_b_slider.setToolTip(translate("bluetooth.freq_balance_b_tooltip"))
-        self.strength_balance_a_slider.setToolTip(translate("bluetooth.strength_balance_a_tooltip"))
-        self.strength_balance_b_slider.setToolTip(translate("bluetooth.strength_balance_b_tooltip"))
+        self.strength_limit_a_slider.setToolTip(translate("devices.bluetooth.strength_limit_a_tooltip"))
+        self.strength_limit_b_slider.setToolTip(translate("devices.bluetooth.strength_limit_b_tooltip"))
+        self.freq_balance_a_slider.setToolTip(translate("devices.bluetooth.freq_balance_a_tooltip"))
+        self.freq_balance_b_slider.setToolTip(translate("devices.bluetooth.freq_balance_b_tooltip"))
+        self.strength_balance_a_slider.setToolTip(translate("devices.bluetooth.strength_balance_a_tooltip"))
+        self.strength_balance_b_slider.setToolTip(translate("devices.bluetooth.strength_balance_b_tooltip"))
         
-        self.device_list.setToolTip(translate("bluetooth.device_list_tooltip"))
+        self.device_list.setToolTip(translate("devices.bluetooth.device_list_tooltip"))
 
     def load_settings(self) -> None:
         """加载设置"""
@@ -534,43 +534,43 @@ class BluetoothConnectionWidget(QWidget):
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
-        self.device_discovery_group.setTitle(translate("bluetooth.device_discovery"))
-        self.device_control_group.setTitle(translate("bluetooth.device_control"))
+        self.device_discovery_group.setTitle(translate("devices.bluetooth.device_discovery"))
+        self.device_control_group.setTitle(translate("devices.bluetooth.device_control"))
         
-        self.scan_button.setText(translate("bluetooth.scan_devices"))
-        self.connect_button.setText(translate("bluetooth.connect_device"))
-        self.disconnect_button.setText(translate("bluetooth.disconnect_device"))
-        self.apply_params_button.setText(translate("bluetooth.apply_parameters"))
+        self.scan_button.setText(translate("devices.bluetooth.scan_devices"))
+        self.connect_button.setText(translate("devices.bluetooth.connect_device"))
+        self.disconnect_button.setText(translate("devices.bluetooth.disconnect_device"))
+        self.apply_params_button.setText(translate("devices.bluetooth.apply_parameters"))
         
         # 更新状态显示区域标题
-        self.status_group.setTitle(translate("bluetooth.connection_status"))
+        self.status_group.setTitle(translate("devices.bluetooth.connection_status"))
         
         # 更新状态显示区域的标签
-        self.status_label.setText(translate("bluetooth.status") + ":")
-        self.device_label.setText(translate("bluetooth.device") + ":")
-        self.battery_title_label.setText(translate("bluetooth.battery") + ":")
+        self.status_label.setText(translate("devices.bluetooth.status") + ":")
+        self.device_label.setText(translate("devices.bluetooth.device") + ":")
+        self.battery_title_label.setText(translate("devices.bluetooth.battery") + ":")
         
         # 更新选项卡标题
-        self.params_tab_widget.setTabText(0, translate("bluetooth.strength_limits_tab"))
-        self.params_tab_widget.setTabText(1, translate("bluetooth.output_settings_tab"))
+        self.params_tab_widget.setTabText(0, translate("devices.bluetooth.strength_limits_tab"))
+        self.params_tab_widget.setTabText(1, translate("devices.bluetooth.output_settings_tab"))
         
         # 更新强度上限选项卡中的通道标题
-        self.strength_limit_a_title.setText(translate("bluetooth.channel_a") + ":")
-        self.strength_limit_b_title.setText(translate("bluetooth.channel_b") + ":")
+        self.strength_limit_a_title.setText(translate("devices.bluetooth.channel_a") + ":")
+        self.strength_limit_b_title.setText(translate("devices.bluetooth.channel_b") + ":")
         
         # 更新输出设置选项卡中的GroupBox标题
-        self.freq_balance_group.setTitle(translate("bluetooth.frequency_balance"))
-        self.strength_balance_group.setTitle(translate("bluetooth.strength_balance"))
+        self.freq_balance_group.setTitle(translate("devices.bluetooth.frequency_balance"))
+        self.strength_balance_group.setTitle(translate("devices.bluetooth.strength_balance"))
         
         # 更新输出设置选项卡中的通道标题
-        self.freq_balance_a_title.setText(translate("bluetooth.channel_a") + ":")
-        self.freq_balance_b_title.setText(translate("bluetooth.channel_b") + ":")
-        self.strength_balance_a_title.setText(translate("bluetooth.channel_a") + ":")
-        self.strength_balance_b_title.setText(translate("bluetooth.channel_b") + ":")
+        self.freq_balance_a_title.setText(translate("devices.bluetooth.channel_a") + ":")
+        self.freq_balance_b_title.setText(translate("devices.bluetooth.channel_b") + ":")
+        self.strength_balance_a_title.setText(translate("devices.bluetooth.channel_a") + ":")
+        self.strength_balance_b_title.setText(translate("devices.bluetooth.channel_b") + ":")
         
         if not self.is_connected():
-            self.connection_status_label.setText(translate("bluetooth.disconnected"))
-            self.device_info_label.setText(translate("bluetooth.no_device"))
+            self.connection_status_label.setText(translate("devices.bluetooth.disconnected"))
+            self.device_info_label.setText(translate("devices.bluetooth.no_device"))
 
     def update_connection_state(self, state: ConnectionState, message: str = "") -> None:
         """更新连接状态"""
@@ -593,7 +593,7 @@ class BluetoothConnectionWidget(QWidget):
         if device_info:
             self.device_info_label.setText(device_info)
         else:
-            self.device_info_label.setText(translate("bluetooth.no_device"))
+            self.device_info_label.setText(translate("devices.bluetooth.no_device"))
         
         if not battery_visible:
             self.battery_label.setText("--")
@@ -614,21 +614,21 @@ class BluetoothConnectionWidget(QWidget):
 
     def _update_disconnected_state(self) -> None:
         """更新断开连接状态"""
-        self._update_status_labels(translate("bluetooth.disconnected"), battery_visible=False)
+        self._update_status_labels(translate("devices.bluetooth.disconnected"), battery_visible=False)
         self._update_button_states(scan_enabled=True, connect_enabled=True, 
                                  disconnect_enabled=False, apply_enabled=False)
         self.set_device_control_enabled(False)
 
     def _update_connecting_state(self) -> None:
         """更新连接中状态"""
-        self._update_status_labels(translate("bluetooth.connecting"))
+        self._update_status_labels(translate("devices.bluetooth.connecting"))
         self._update_button_states(scan_enabled=False, connect_enabled=False, 
                                  disconnect_enabled=True, apply_enabled=False)
         self.set_device_control_enabled(False)
 
     def _update_waiting_state(self) -> None:
         """更新等待状态"""
-        self._update_status_labels(translate("bluetooth.waiting"))
+        self._update_status_labels(translate("devices.bluetooth.waiting"))
         self._update_button_states(scan_enabled=False, connect_enabled=False, 
                                  disconnect_enabled=True, apply_enabled=False)
         self.set_device_control_enabled(False)
@@ -641,14 +641,14 @@ class BluetoothConnectionWidget(QWidget):
         if connected_device:
             device_info = f"{connected_device['name']} ({connected_device['address']})"
         
-        self._update_status_labels(translate("bluetooth.connected"), device_info)
+        self._update_status_labels(translate("devices.bluetooth.connected"), device_info)
         self._update_button_states(scan_enabled=False, connect_enabled=False, 
                                  disconnect_enabled=True, apply_enabled=True)
         self.set_device_control_enabled(True)
 
     def _update_failed_state(self, message: str = "") -> None:
         """更新连接失败状态"""
-        status_text = message or translate("bluetooth.connection_failed")
+        status_text = message or translate("devices.bluetooth.connection_failed")
         self._update_status_labels(status_text, battery_visible=False)
         self._update_button_states(scan_enabled=True, connect_enabled=True, 
                                  disconnect_enabled=False, apply_enabled=False)
@@ -658,7 +658,7 @@ class BluetoothConnectionWidget(QWidget):
         """更新错误状态"""
         status_text = message or translate("common.error")
         self.connection_status_label.setText(status_text)
-        self.device_info_label.setText(translate("bluetooth.no_device"))
+        self.device_info_label.setText(translate("devices.bluetooth.no_device"))
         self.battery_label.setText("--")
         self.battery_progress.setVisible(False)
         self._update_button_states(scan_enabled=True, connect_enabled=True, 
@@ -681,7 +681,7 @@ class BluetoothConnectionWidget(QWidget):
     def on_scan_clicked(self) -> None:
         """扫描按钮点击"""
         self.scan_button.setEnabled(False)
-        self.scan_button.setText(translate("bluetooth.scanning"))
+        self.scan_button.setText(translate("devices.bluetooth.scanning"))
         
         asyncio.create_task(self._scan_devices())
 
@@ -704,7 +704,7 @@ class BluetoothConnectionWidget(QWidget):
         finally:
             # 恢复按钮状态
             self.scan_button.setEnabled(True)
-            self.scan_button.setText(translate("bluetooth.scan_devices"))
+            self.scan_button.setText(translate("devices.bluetooth.scan_devices"))
 
     def on_device_selected(self, item: QListWidgetItem) -> None:
         """设备选择"""
@@ -716,7 +716,7 @@ class BluetoothConnectionWidget(QWidget):
         """连接按钮点击"""
         selected_device = self.connection_manager.get_selected_device()
         if not selected_device:
-            QMessageBox.warning(self, translate("common.error"), translate("bluetooth.no_device_selected"))
+            QMessageBox.warning(self, translate("common.error"), translate("devices.bluetooth.no_device_selected"))
             return
             
         self.device_list.clear()
@@ -732,7 +732,7 @@ class BluetoothConnectionWidget(QWidget):
     def on_apply_params_clicked(self) -> None:
         """应用参数按钮点击"""
         if not self.is_connected():
-            QMessageBox.warning(self, translate("common.error"), translate("bluetooth.device_not_connected"))
+            QMessageBox.warning(self, translate("common.error"), translate("devices.bluetooth.device_not_connected"))
             return
             
         try:

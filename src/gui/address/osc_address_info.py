@@ -57,7 +57,7 @@ class OSCAddressInfoTab(QWidget):
 
     def create_description_label(self, parent_layout: QVBoxLayout) -> None:
         """创建描述标签"""
-        self.description_label = QLabel(translate("osc_address_tab.info_description"))
+        self.description_label = QLabel(translate("tabs.osc.info_description"))
         self.description_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -74,7 +74,7 @@ class OSCAddressInfoTab(QWidget):
 
     def create_address_info_group(self, parent_layout: QVBoxLayout) -> None:
         """创建地址信息组"""
-        self.address_info_group = QGroupBox(translate("osc_address_tab.address_info"))
+        self.address_info_group = QGroupBox(translate("tabs.osc.address_info"))
         group = self.address_info_group
         layout = QVBoxLayout(group)
 
@@ -82,9 +82,9 @@ class OSCAddressInfoTab(QWidget):
         self.address_info_table = QTableWidget()
         self.address_info_table.setColumnCount(3)
         self.address_info_table.setHorizontalHeaderLabels([
-            translate("osc_address_tab.osc_code"),
-            translate("osc_address_tab.osc_types"),
-            translate("osc_address_tab.last_value")
+            translate("tabs.osc.osc_code"),
+            translate("tabs.osc.osc_types"),
+            translate("tabs.osc.last_value")
         ])
 
         # 设置表格属性
@@ -112,7 +112,7 @@ class OSCAddressInfoTab(QWidget):
         layout.addWidget(self.address_info_table)
 
         # 地址信息状态标签
-        self.address_info_status_label = QLabel(translate("osc_address_tab.no_address_info"))
+        self.address_info_status_label = QLabel(translate("tabs.osc.no_address_info"))
         self.address_info_status_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -126,12 +126,12 @@ class OSCAddressInfoTab(QWidget):
 
     def create_debug_options_group(self, parent_layout: QVBoxLayout) -> None:
         """创建调试选项组"""
-        debug_group = QGroupBox(translate("osc_address_tab.debug_options"))
+        debug_group = QGroupBox(translate("tabs.osc.debug_options"))
         debug_layout = QVBoxLayout(debug_group)
         
         # OSC调试显示开关
-        self.debug_display_checkbox = QCheckBox(translate("osc_address_tab.enable_debug_display"))
-        self.debug_display_checkbox.setToolTip(translate("osc_address_tab.enable_debug_display_tooltip"))
+        self.debug_display_checkbox = QCheckBox(translate("tabs.osc.enable_debug_display"))
+        self.debug_display_checkbox.setToolTip(translate("tabs.osc.enable_debug_display_tooltip"))
         self.debug_display_checkbox.toggled.connect(self.on_debug_display_toggled)
         self.debug_display_checkbox.setStyleSheet("""
             QCheckBox {
@@ -153,10 +153,10 @@ class OSCAddressInfoTab(QWidget):
         button_layout = QHBoxLayout()
 
         # 刷新地址信息按钮
-        self.refresh_address_info_btn = QPushButton(translate("osc_address_tab.refresh_address_info"))
+        self.refresh_address_info_btn = QPushButton(translate("tabs.osc.refresh_address_info"))
         self.refresh_address_info_btn.clicked.connect(self.refresh_address_info_table)
         self.refresh_address_info_btn.setStyleSheet(CommonColors.get_secondary_button_style())
-        self.refresh_address_info_btn.setToolTip(translate("osc_address_tab.refresh_address_info_tooltip"))
+        self.refresh_address_info_btn.setToolTip(translate("tabs.osc.refresh_address_info_tooltip"))
         button_layout.addWidget(self.refresh_address_info_btn)
 
         button_layout.addStretch()  # 添加弹性空间
@@ -171,7 +171,7 @@ class OSCAddressInfoTab(QWidget):
 
         if not address_infos:
             self.address_info_table.setRowCount(0)
-            self.address_info_status_label.setText(translate("osc_address_tab.no_address_info"))
+            self.address_info_status_label.setText(translate("tabs.osc.no_address_info"))
             return
 
         # 对检测到的地址按地址排序
@@ -199,37 +199,37 @@ class OSCAddressInfoTab(QWidget):
         # 更新状态标签
         if len(address_infos) > 0:
             self.address_info_status_label.setText \
-                (translate("osc_address_tab.address_info_count").format(len(address_infos)))
+                (translate("tabs.osc.address_info_count").format(len(address_infos)))
         else:
-            self.address_info_status_label.setText(translate("osc_address_tab.no_address_info"))
+            self.address_info_status_label.setText(translate("tabs.osc.no_address_info"))
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新分组框标题
-        self.address_info_group.setTitle(translate("osc_address_tab.address_info"))
+        self.address_info_group.setTitle(translate("tabs.osc.address_info"))
         
         # 更新描述标签
-        self.description_label.setText(translate("osc_address_tab.info_description"))
+        self.description_label.setText(translate("tabs.osc.info_description"))
 
         # 更新表格标题
         self.address_info_table.setHorizontalHeaderLabels([
-            translate("osc_address_tab.osc_code"),
-            translate("osc_address_tab.osc_types"),
-            translate("osc_address_tab.last_value")
+            translate("tabs.osc.osc_code"),
+            translate("tabs.osc.osc_types"),
+            translate("tabs.osc.last_value")
         ])
 
         # 更新按钮文本
-        self.refresh_address_info_btn.setText(translate("osc_address_tab.refresh_address_info"))
+        self.refresh_address_info_btn.setText(translate("tabs.osc.refresh_address_info"))
 
         # 更新工具提示
-        self.refresh_address_info_btn.setToolTip(translate("osc_address_tab.refresh_address_info_tooltip"))
+        self.refresh_address_info_btn.setToolTip(translate("tabs.osc.refresh_address_info_tooltip"))
 
         # 更新调试选项文本
         debug_group_widget = self.debug_display_checkbox.parent()
         if debug_group_widget and isinstance(debug_group_widget, QGroupBox):
-            debug_group_widget.setTitle(translate("osc_address_tab.debug_options"))
-        self.debug_display_checkbox.setText(translate("osc_address_tab.enable_debug_display"))
-        self.debug_display_checkbox.setToolTip(translate("osc_address_tab.enable_debug_display_tooltip"))
+            debug_group_widget.setTitle(translate("tabs.osc.debug_options"))
+        self.debug_display_checkbox.setText(translate("tabs.osc.enable_debug_display"))
+        self.debug_display_checkbox.setToolTip(translate("tabs.osc.enable_debug_display_tooltip"))
 
         # 刷新表格内容
         self.refresh_address_info_table()

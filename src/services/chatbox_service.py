@@ -111,8 +111,8 @@ class ChatboxService(IService):
             channel_strength = f"[A]: {last_strength['strength'][Channel.A]} B: {last_strength['strength'][Channel.B]}" if current_channel == Channel.A else f"A: {last_strength['strength'][Channel.A]} [B]: {last_strength['strength'][Channel.B]}"
             pulse_a = self._osc_action_service.get_current_pulse(Channel.A)
             pulse_b = self._osc_action_service.get_current_pulse(Channel.B)
-            pulse_name_a = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
-            pulse_name_b = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
+            pulse_name_a = pulse_a.name if pulse_a else translate("tabs.settings.no_waveform")
+            pulse_name_b = pulse_b.name if pulse_b else translate("tabs.settings.no_waveform")
 
             self._osc_service.send_message_to_vrchat_chatbox(
                 f"MAX A: {last_strength['strength_limit'][Channel.A]} B: {last_strength['strength_limit'][Channel.B]}\n" +

@@ -20,7 +20,7 @@ class WelcomeDialog(QDialog):
     
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(translate("welcome_dialog.title"))
+        self.setWindowTitle(translate("dialogs.welcome.title"))
         self.setModal(True)
         self.setMinimumSize(800, 600)
         self.resize(900, 700)
@@ -59,7 +59,7 @@ class WelcomeDialog(QDialog):
     def _create_header(self, layout: QVBoxLayout) -> None:
         """创建标题区域"""
         # 主标题
-        title_label = QLabel(translate("welcome_dialog.welcome_title"))
+        title_label = QLabel(translate("dialogs.welcome.welcome_title"))
         title_font = QFont()
         title_font.setPointSize(18)
         title_font.setBold(True)
@@ -69,7 +69,7 @@ class WelcomeDialog(QDialog):
         layout.addWidget(title_label)
         
         # 副标题
-        subtitle_label = QLabel(translate("welcome_dialog.welcome_subtitle"))
+        subtitle_label = QLabel(translate("dialogs.welcome.welcome_subtitle"))
         subtitle_font = QFont()
         subtitle_font.setPointSize(11)
         subtitle_label.setFont(subtitle_font)
@@ -89,7 +89,7 @@ class WelcomeDialog(QDialog):
     def _create_bottom_area(self, layout: QVBoxLayout) -> None:
         """创建底部区域"""
         # 复选框：不再显示此对话框
-        self.dont_show_again_checkbox = QCheckBox(translate("welcome_dialog.dont_show_again"))
+        self.dont_show_again_checkbox = QCheckBox(translate("dialogs.welcome.dont_show_again"))
         self.dont_show_again_checkbox.setStyleSheet("margin: 10px 0;")
         layout.addWidget(self.dont_show_again_checkbox)
         
@@ -98,7 +98,7 @@ class WelcomeDialog(QDialog):
         button_layout.setSpacing(12)
         
         # 左侧：帮助按钮
-        self.help_button = QPushButton(translate("welcome_dialog.more_help"))
+        self.help_button = QPushButton(translate("dialogs.welcome.more_help"))
         self.help_button.setMinimumHeight(36)
         self.help_button.setStyleSheet(CommonColors.get_secondary_button_style())
         self.help_button.clicked.connect(self._show_help)
@@ -108,7 +108,7 @@ class WelcomeDialog(QDialog):
         button_layout.addStretch()
         
         # 右侧：开始使用按钮
-        self.start_button = QPushButton(translate("welcome_dialog.start_using"))
+        self.start_button = QPushButton(translate("dialogs.welcome.start_using"))
         self.start_button.setMinimumHeight(36)
         self.start_button.setMinimumWidth(120)
         self.start_button.setDefault(True)
@@ -154,28 +154,28 @@ class WelcomeDialog(QDialog):
         """显示备用内容（如果Markdown文件不可用）"""
         fallback_html = f"""
         <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6;">
-            <h2 style="color: #2c3e50;">🎉 {translate("welcome_dialog.welcome_title")}</h2>
+            <h2 style="color: #2c3e50;">🎉 {translate("dialogs.welcome.welcome_title")}</h2>
             
-            <p>{translate("welcome_dialog.feature_overview")}:</p>
+            <p>{translate("dialogs.welcome.feature_overview")}:</p>
             
-            <h3 style="color: #3498db;">🔗 {translate("welcome_dialog.main_features")}</h3>
+            <h3 style="color: #3498db;">🔗 {translate("dialogs.welcome.main_features")}</h3>
             <ul>
-                <li><strong>{translate("welcome_dialog.device_connection")}</strong> - {translate("welcome_dialog.device_connection_desc")}</li>
-                <li><strong>{translate("welcome_dialog.pulse_system")}</strong> - {translate("welcome_dialog.pulse_system_desc")}</li>
-                <li><strong>{translate("welcome_dialog.osc_integration")}</strong> - {translate("welcome_dialog.osc_integration_desc")}</li>
-                <li><strong>{translate("welcome_dialog.debug_display")}</strong> - {translate("welcome_dialog.debug_display_desc")}</li>
+                <li><strong>{translate("dialogs.welcome.device_connection")}</strong> - {translate("dialogs.welcome.device_connection_desc")}</li>
+                <li><strong>{translate("dialogs.welcome.pulse_system")}</strong> - {translate("dialogs.welcome.pulse_system_desc")}</li>
+                <li><strong>{translate("dialogs.welcome.osc_integration")}</strong> - {translate("dialogs.welcome.osc_integration_desc")}</li>
+                <li><strong>{translate("dialogs.welcome.debug_display")}</strong> - {translate("dialogs.welcome.debug_display_desc")}</li>
             </ul>
             
-            <h3 style="color: #27ae60;">🚀 {translate("welcome_dialog.quick_start")}</h3>
+            <h3 style="color: #27ae60;">🚀 {translate("dialogs.welcome.quick_start")}</h3>
             <ol>
-                <li>{translate("welcome_dialog.step1")}</li>
-                <li>{translate("welcome_dialog.step2")}</li>
-                <li>{translate("welcome_dialog.step3")}</li>
-                <li>{translate("welcome_dialog.step4")}</li>
+                <li>{translate("dialogs.welcome.step1")}</li>
+                <li>{translate("dialogs.welcome.step2")}</li>
+                <li>{translate("dialogs.welcome.step3")}</li>
+                <li>{translate("dialogs.welcome.step4")}</li>
             </ol>
             
             <p style="background-color: #e8f5e8; padding: 12px; border-radius: 6px; border-left: 4px solid #27ae60;">
-                💡 <strong>{translate("welcome_dialog.tip")}</strong>: {translate("welcome_dialog.tip_content")}
+                💡 <strong>{translate("dialogs.welcome.tip")}</strong>: {translate("dialogs.welcome.tip_content")}
             </p>
         </div>
         """
@@ -192,8 +192,8 @@ class WelcomeDialog(QDialog):
         
     def retranslate_ui(self) -> None:
         """重新翻译界面"""
-        self.setWindowTitle(translate("welcome_dialog.title"))
-        self.dont_show_again_checkbox.setText(translate("welcome_dialog.dont_show_again"))
-        self.help_button.setText(translate("welcome_dialog.more_help"))
-        self.start_button.setText(translate("welcome_dialog.start_using"))
+        self.setWindowTitle(translate("dialogs.welcome.title"))
+        self.dont_show_again_checkbox.setText(translate("dialogs.welcome.dont_show_again"))
+        self.help_button.setText(translate("dialogs.welcome.more_help"))
+        self.start_button.setText(translate("dialogs.welcome.start_using"))
         self._load_content()  # 重新加载内容以应用新的语言

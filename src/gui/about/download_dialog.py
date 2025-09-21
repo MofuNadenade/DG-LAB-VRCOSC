@@ -41,14 +41,14 @@ class DownloadDialog(QDialog):
         
     def init_ui(self) -> None:
         """初始化UI"""
-        self.setWindowTitle(translate('download_dialog.title'))
+        self.setWindowTitle(translate('dialogs.download.title'))
         self.setFixedSize(400, 250)
         self.setModal(True)
         
         layout = QVBoxLayout()
         
         # 版本信息
-        version_label = QLabel(translate('download_dialog.downloading_version').format(self.release_info.version))
+        version_label = QLabel(translate('dialogs.download.downloading_version').format(self.release_info.version))
         version_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(version_label)
         
@@ -59,7 +59,7 @@ class DownloadDialog(QDialog):
         layout.addWidget(self.progress_bar)
         
         # 状态标签
-        self.status_label = QLabel(translate('download_dialog.preparing'))
+        self.status_label = QLabel(translate('dialogs.download.preparing'))
         layout.addWidget(self.status_label)
         
         # 日志文本框
@@ -71,11 +71,11 @@ class DownloadDialog(QDialog):
         # 按钮
         button_layout = QHBoxLayout()
         
-        self.cancel_button = QPushButton(translate('download_dialog.cancel'))
+        self.cancel_button = QPushButton(translate('dialogs.download.cancel'))
         self.cancel_button.clicked.connect(self.cancel_download)
         button_layout.addWidget(self.cancel_button)
         
-        self.install_button = QPushButton(translate('download_dialog.install'))
+        self.install_button = QPushButton(translate('dialogs.download.install'))
         self.install_button.clicked.connect(self.install_update)
         self.install_button.setEnabled(False)
         
@@ -99,7 +99,7 @@ class DownloadDialog(QDialog):
 
     async def _start_download(self) -> None:
         """启动下载"""
-        self._update_status(translate('download_dialog.connecting'))
+        self._update_status(translate('dialogs.download.connecting'))
         
         try:
             if self.allow_choose_path:
@@ -107,7 +107,7 @@ class DownloadDialog(QDialog):
                 self.download_path = await self.updater.download_update(self.release_info, self)
             else:
                 # 下载并安装模式
-                self._update_status(translate('download_dialog.auto_installing'))
+                self._update_status(translate('dialogs.download.auto_installing'))
                 success = await self.updater.download_and_install_update(self.release_info)
                 if success:
                     self._on_install_complete()
@@ -122,35 +122,35 @@ class DownloadDialog(QDialog):
     def _on_download_progress(self, progress: int) -> None:
         """处理下载进度信号"""
         self.progress_bar.setValue(progress)
-        self._update_status(translate('download_dialog.downloading'))
+        self._update_status(translate('dialogs.download.downloading'))
 
     def _on_download_complete(self, download_path: str) -> None:
         """处理下载完成信号"""
         self.download_path = download_path
-        self._update_status(translate('download_dialog.download_complete'))
-        self.cancel_button.setText(translate('download_dialog.close'))
+        self._update_status(translate('dialogs.download.download_complete'))
+        self.cancel_button.setText(translate('dialogs.download.close'))
         self.install_button.setEnabled(True)
-        self._log_message(translate('download_dialog.download_success').format(download_path))
+        self._log_message(translate('dialogs.download.download_success').format(download_path))
 
     def _on_download_error(self, error_message: str) -> None:
         """处理下载错误信号"""
         logger.error(f"下载失败: {error_message}")
-        self._update_status(translate('download_dialog.download_failed'))
-        self._log_message(translate('download_dialog.error_detail').format(error_message))
-        self.cancel_button.setText(translate('download_dialog.close'))
+        self._update_status(translate('dialogs.download.download_failed'))
+        self._log_message(translate('dialogs.download.error_detail').format(error_message))
+        self.cancel_button.setText(translate('dialogs.download.close'))
 
     def _on_install_complete(self) -> None:
         """处理安装完成信号"""
-        self._update_status(translate('download_dialog.install_complete'))
-        self.cancel_button.setText(translate('download_dialog.close'))
+        self._update_status(translate('dialogs.download.install_complete'))
+        self.cancel_button.setText(translate('dialogs.download.close'))
         self.install_button.setEnabled(False)
-        self._log_message(translate('download_dialog.install_success'))
+        self._log_message(translate('dialogs.download.install_success'))
         
         # 询问是否重启程序
         reply = QMessageBox.question(
             self,
-            translate('download_dialog.restart_confirm_title'),
-            translate('download_dialog.restart_confirm_message'),
+            translate('dialogs.download.restart_confirm_title'),
+            translate('dialogs.download.restart_confirm_message'),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes
         )
@@ -158,14 +158,14 @@ class DownloadDialog(QDialog):
         if reply == QMessageBox.StandardButton.Yes:
             self.updater.restart_application()
         else:
-            self._log_message(translate('download_dialog.restart_cancelled'))
+            self._log_message(translate('dialogs.download.restart_cancelled'))
 
     def _on_install_error(self, error_message: str) -> None:
         """处理安装错误信号"""
         logger.error(f"安装失败: {error_message}")
-        self._update_status(translate('download_dialog.install_failed'))
-        self._log_message(translate('download_dialog.install_error_detail').format(error_message))
-        self.cancel_button.setText(translate('download_dialog.close'))
+        self._update_status(translate('dialogs.download.install_failed'))
+        self._log_message(translate('dialogs.download.install_error_detail').format(error_message))
+        self.cancel_button.setText(translate('dialogs.download.close'))
 
     def _update_status(self, status: str) -> None:
         """更新状态 - UI逻辑"""

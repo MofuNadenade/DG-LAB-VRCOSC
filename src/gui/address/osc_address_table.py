@@ -31,7 +31,7 @@ class AddAddressDialog(QDialog):
         self.name_combo: EditableComboBox
         self.code_combo: EditableComboBox
 
-        self.setWindowTitle(translate("osc_address_tab.add_address"))
+        self.setWindowTitle(translate("tabs.osc.add_address"))
         self.setModal(True)
         self.resize(450, 200)
 
@@ -57,8 +57,8 @@ class AddAddressDialog(QDialog):
         self.name_combo.setCurrentText("")  # 默认为空，让用户输入
         name_line_edit = self.name_combo.lineEdit()
         if name_line_edit:
-            name_line_edit.setPlaceholderText(translate("osc_address_tab.address_name_placeholder"))
-        form_layout.addRow(translate("osc_address_tab.address_name_label"), self.name_combo)
+            name_line_edit.setPlaceholderText(translate("tabs.osc.address_name_placeholder"))
+        form_layout.addRow(translate("tabs.osc.address_name_label"), self.name_combo)
 
         # OSC地址/代码 - 可编辑下拉列表
         osc_code_options = self.options_provider.get_osc_code_options()
@@ -66,8 +66,8 @@ class AddAddressDialog(QDialog):
         self.code_combo.setCurrentText("")  # 默认为空，让用户输入
         code_line_edit = self.code_combo.lineEdit()
         if code_line_edit:
-            code_line_edit.setPlaceholderText(translate("osc_address_tab.osc_code_placeholder"))
-        form_layout.addRow(translate("osc_address_tab.osc_code_label"), self.code_combo)
+            code_line_edit.setPlaceholderText(translate("tabs.osc.osc_code_placeholder"))
+        form_layout.addRow(translate("tabs.osc.osc_code_label"), self.code_combo)
 
         layout.addLayout(form_layout)
 
@@ -82,13 +82,13 @@ class AddAddressDialog(QDialog):
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
-        self.setWindowTitle(translate("osc_address_tab.add_address"))
+        self.setWindowTitle(translate("tabs.osc.add_address"))
         name_line_edit = self.name_combo.lineEdit()
         if name_line_edit:
-            name_line_edit.setPlaceholderText(translate("osc_address_tab.address_name_placeholder"))
+            name_line_edit.setPlaceholderText(translate("tabs.osc.address_name_placeholder"))
         code_line_edit = self.code_combo.lineEdit()
         if code_line_edit:
-            code_line_edit.setPlaceholderText(translate("osc_address_tab.osc_code_placeholder"))
+            code_line_edit.setPlaceholderText(translate("tabs.osc.osc_code_placeholder"))
 
     def get_address_data(self) -> tuple[str, str]:
         """获取输入的地址数据"""
@@ -98,8 +98,8 @@ class AddAddressDialog(QDialog):
         """验证输入"""
         name, code = self.get_address_data()
         if not name or not code:
-            QMessageBox.warning(self, translate("osc_address_tab.input_error"),
-                                translate("osc_address_tab.name_code_required"))
+            QMessageBox.warning(self, translate("tabs.osc.input_error"),
+                                translate("tabs.osc.name_code_required"))
             return False
         return True
 
@@ -153,7 +153,7 @@ class OSCAddressTableTab(QWidget):
 
     def create_description_label(self, parent_layout: QVBoxLayout) -> None:
         """创建描述标签"""
-        self.description_label = QLabel(translate("osc_address_tab.description"))
+        self.description_label = QLabel(translate("tabs.osc.description"))
         self.description_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -170,7 +170,7 @@ class OSCAddressTableTab(QWidget):
 
     def create_address_list_group(self, parent_layout: QVBoxLayout) -> None:
         """创建地址列表组"""
-        self.address_list_group = QGroupBox(translate("osc_address_tab.address_list"))
+        self.address_list_group = QGroupBox(translate("tabs.osc.address_list"))
         group = self.address_list_group
         layout = QVBoxLayout(group)
 
@@ -178,11 +178,11 @@ class OSCAddressTableTab(QWidget):
         self.address_table = QTableWidget()
         self.address_table.setColumnCount(5)
         self.address_table.setHorizontalHeaderLabels([
-            translate("osc_address_tab.id"),
-            translate("osc_address_tab.address_name"),
-            translate("osc_address_tab.osc_code"),
-            translate("osc_address_tab.status"),
-            translate("osc_address_tab.edit_state")
+            translate("tabs.osc.id"),
+            translate("tabs.osc.address_name"),
+            translate("tabs.osc.osc_code"),
+            translate("tabs.osc.status"),
+            translate("tabs.osc.edit_state")
         ])
 
         # 隐藏ID列和编辑状态列
@@ -215,7 +215,7 @@ class OSCAddressTableTab(QWidget):
         layout.addWidget(self.address_table)
 
         # 状态标签
-        self.status_label = QLabel(translate("osc_address_tab.total_addresses").format(0))
+        self.status_label = QLabel(translate("tabs.osc.total_addresses").format(0))
         self.status_label.setStyleSheet("""
             QLabel {
                 color: #2e7d32;
@@ -233,32 +233,32 @@ class OSCAddressTableTab(QWidget):
         button_layout = QHBoxLayout()
 
         # 添加地址按钮
-        self.add_address_btn = QPushButton(translate("osc_address_tab.add_address"))
+        self.add_address_btn = QPushButton(translate("tabs.osc.add_address"))
         self.add_address_btn.clicked.connect(self.add_address)
         self.add_address_btn.setStyleSheet(CommonColors.get_primary_button_style())
-        self.add_address_btn.setToolTip(translate("osc_address_tab.add_address_tooltip"))
+        self.add_address_btn.setToolTip(translate("tabs.osc.add_address_tooltip"))
         button_layout.addWidget(self.add_address_btn)
 
         # 删除地址按钮
-        self.delete_address_btn = QPushButton(translate("osc_address_tab.delete_address"))
+        self.delete_address_btn = QPushButton(translate("tabs.osc.delete_address"))
         self.delete_address_btn.clicked.connect(self.delete_address)
         self.delete_address_btn.setEnabled(False)
         self.delete_address_btn.setStyleSheet(CommonColors.get_warning_button_style())
-        self.delete_address_btn.setToolTip(translate("osc_address_tab.delete_address_tooltip"))
+        self.delete_address_btn.setToolTip(translate("tabs.osc.delete_address_tooltip"))
         button_layout.addWidget(self.delete_address_btn)
 
         # 刷新按钮
-        self.refresh_btn = QPushButton(translate("osc_address_tab.refresh"))
+        self.refresh_btn = QPushButton(translate("tabs.osc.refresh"))
         self.refresh_btn.clicked.connect(self.refresh_address_table)
         self.refresh_btn.setStyleSheet(CommonColors.get_secondary_button_style())
-        self.refresh_btn.setToolTip(translate("osc_address_tab.refresh_tooltip"))
+        self.refresh_btn.setToolTip(translate("tabs.osc.refresh_tooltip"))
         button_layout.addWidget(self.refresh_btn)
 
         # 保存地址按钮
-        self.save_addresses_btn = QPushButton(translate("osc_address_tab.save_config"))
+        self.save_addresses_btn = QPushButton(translate("tabs.osc.save_config"))
         self.save_addresses_btn.clicked.connect(self.save_addresses)
         self.save_addresses_btn.setStyleSheet(CommonColors.get_special_button_style())
-        self.save_addresses_btn.setToolTip(translate("osc_address_tab.save_addresses_tooltip"))
+        self.save_addresses_btn.setToolTip(translate("tabs.osc.save_addresses_tooltip"))
         button_layout.addWidget(self.save_addresses_btn)
 
         button_layout.addStretch()  # 添加弹性空间
@@ -315,12 +315,12 @@ class OSCAddressTableTab(QWidget):
             
             # 显示成功消息
             QMessageBox.information(self, translate("common.success"),
-                                    translate("osc_address_tab.config_saved"))
+                                    translate("tabs.osc.config_saved"))
                                     
         except Exception as e:
             logger.error(f"Failed to save addresses: {e}")
             QMessageBox.critical(self, translate("common.error"),
-                                 translate("osc_address_tab.save_config_failed").format(str(e)))
+                                 translate("tabs.osc.save_config_failed").format(str(e)))
 
     def _handle_new_address(self, row: int) -> None:
         """处理新增地址"""
@@ -396,7 +396,7 @@ class OSCAddressTableTab(QWidget):
         self.address_table.setItem(row, 2, code_item)
         
         # 状态列 - 所有地址都显示为可用状态
-        status_item = QTableWidgetItem(translate("osc_address_tab.available"))
+        status_item = QTableWidgetItem(translate("tabs.osc.available"))
         # 设置状态列样式为绿色
         status_item.setBackground(QColor(144, 238, 144))  # 浅绿色背景
         status_item.setForeground(QColor(0, 128, 0))  # 深绿色文字
@@ -419,13 +419,13 @@ class OSCAddressTableTab(QWidget):
                 # 检查表格中是否已存在相同名称
                 if self.has_address_name_in_table(name):
                     QMessageBox.warning(self, translate("common.error"),
-                                        translate("osc_address_tab.address_exists"))
+                                        translate("tabs.osc.address_exists"))
                     return
 
                 # 检查表格中是否已存在相同代码
                 if self.has_address_code_in_table(code):
                     QMessageBox.warning(self, translate("common.error"),
-                                        translate("osc_address_tab.code_exists"))
+                                        translate("tabs.osc.code_exists"))
                     return
                 
                 # 阻塞信号避免在刷新时触发itemChanged
@@ -440,7 +440,7 @@ class OSCAddressTableTab(QWidget):
                 id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 name_item = QTableWidgetItem(name)
                 code_item = QTableWidgetItem(code)
-                status_item = QTableWidgetItem(translate("osc_address_tab.available"))
+                status_item = QTableWidgetItem(translate("tabs.osc.available"))
                 
                 # 设置状态列样式
                 status_item.setBackground(QColor(144, 238, 144))
@@ -471,7 +471,7 @@ class OSCAddressTableTab(QWidget):
 
                 # 显示成功消息
                 QMessageBox.information(self, translate("common.success"),
-                                        translate("osc_address_tab.address_added").format(name))
+                                        translate("tabs.osc.address_added").format(name))
 
     def delete_address(self) -> None:
         """删除选中的地址"""
@@ -487,8 +487,8 @@ class OSCAddressTableTab(QWidget):
         address_name = address_name_item.text()
 
         # 确认删除
-        reply = QMessageBox.question(self, translate("osc_address_tab.confirm_delete"),
-                                     translate("osc_address_tab.delete_address_confirm").format(address_name),
+        reply = QMessageBox.question(self, translate("tabs.osc.confirm_delete"),
+                                     translate("tabs.osc.delete_address_confirm").format(address_name),
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -512,7 +512,7 @@ class OSCAddressTableTab(QWidget):
 
             # 显示成功消息
             QMessageBox.information(self, translate("common.success"),
-                                    translate("osc_address_tab.address_deleted").format(address_name))
+                                    translate("tabs.osc.address_deleted").format(address_name))
 
     def has_address_name_in_table(self, name: str, exclude_row: int = -1) -> bool:
         """检查表格中是否已存在相同名称的地址
@@ -565,7 +565,7 @@ class OSCAddressTableTab(QWidget):
             if edit_state_item and edit_state_item.text() != EditState.DELETED.value:
                 total_count += 1
         
-        self.status_label.setText(translate("osc_address_tab.total_addresses").format(total_count))
+        self.status_label.setText(translate("tabs.osc.total_addresses").format(total_count))
 
     def on_address_selection_changed(self) -> None:
         """地址选择变化时的处理"""
@@ -604,31 +604,31 @@ class OSCAddressTableTab(QWidget):
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新分组框标题
-        self.address_list_group.setTitle(translate("osc_address_tab.address_list"))
+        self.address_list_group.setTitle(translate("tabs.osc.address_list"))
         
         # 更新描述标签
-        self.description_label.setText(translate("osc_address_tab.description"))
+        self.description_label.setText(translate("tabs.osc.description"))
 
         # 更新表格标题
         self.address_table.setHorizontalHeaderLabels([
-            translate("osc_address_tab.id"),
-            translate("osc_address_tab.address_name"),
-            translate("osc_address_tab.osc_code"),
-            translate("osc_address_tab.status"),
-            translate("osc_address_tab.edit_state")
+            translate("tabs.osc.id"),
+            translate("tabs.osc.address_name"),
+            translate("tabs.osc.osc_code"),
+            translate("tabs.osc.status"),
+            translate("tabs.osc.edit_state")
         ])
 
         # 更新按钮文本
-        self.add_address_btn.setText(translate("osc_address_tab.add_address"))
-        self.delete_address_btn.setText(translate("osc_address_tab.delete_address"))
-        self.refresh_btn.setText(translate("osc_address_tab.refresh"))
-        self.save_addresses_btn.setText(translate("osc_address_tab.save_config"))
+        self.add_address_btn.setText(translate("tabs.osc.add_address"))
+        self.delete_address_btn.setText(translate("tabs.osc.delete_address"))
+        self.refresh_btn.setText(translate("tabs.osc.refresh"))
+        self.save_addresses_btn.setText(translate("tabs.osc.save_config"))
 
         # 更新工具提示
-        self.add_address_btn.setToolTip(translate("osc_address_tab.add_address_tooltip"))
-        self.delete_address_btn.setToolTip(translate("osc_address_tab.delete_address_tooltip"))
-        self.refresh_btn.setToolTip(translate("osc_address_tab.refresh_tooltip"))
-        self.save_addresses_btn.setToolTip(translate("osc_address_tab.save_addresses_tooltip"))
+        self.add_address_btn.setToolTip(translate("tabs.osc.add_address_tooltip"))
+        self.delete_address_btn.setToolTip(translate("tabs.osc.delete_address_tooltip"))
+        self.refresh_btn.setToolTip(translate("tabs.osc.refresh_tooltip"))
+        self.save_addresses_btn.setToolTip(translate("tabs.osc.save_addresses_tooltip"))
 
         # 刷新表格内容以更新状态列
         self.refresh_address_table()
@@ -684,12 +684,12 @@ class OSCAddressTableDelegate(QStyledItemDelegate):
                 if column == 1:  # 地址名称列
                     if self.address_tab.has_address_name_in_table(new_text, row):
                         QMessageBox.warning(self.address_tab, translate("common.error"),
-                                            translate("osc_address_tab.address_exists"))
+                                            translate("tabs.osc.address_exists"))
                     return
                 elif column == 2:  # OSC代码列
                     if self.address_tab.has_address_code_in_table(new_text, row):
                         QMessageBox.warning(self.address_tab, translate("common.error"),
-                                            translate("osc_address_tab.code_exists"))
+                                            translate("tabs.osc.code_exists"))
                     return
             
             # 没有冲突，正常设置数据

@@ -102,7 +102,7 @@ class PulsePreviewWidget(QWidget):
         if not self.pulse_data:
             # 绘制空状态
             painter.setPen(QPen(QColor("#666666"), 1))
-            painter.drawText(draw_rect, Qt.AlignmentFlag.AlignCenter, translate("pulse_editor.no_waveform_data"))
+            painter.drawText(draw_rect, Qt.AlignmentFlag.AlignCenter, translate("editors.pulse.no_waveform_data"))
             return
 
         # 绘制波形曲线
@@ -703,7 +703,7 @@ class ParameterControlPanel(QWidget):
 
     def _create_frequency_group(self) -> QWidget:
         """创建频率控制组"""
-        self.freq_group = QGroupBox(translate("pulse_editor.pulse_frequency"))
+        self.freq_group = QGroupBox(translate("editors.pulse.pulse_frequency"))
         group = self.freq_group
         group.setStyleSheet("""
             QGroupBox {
@@ -807,7 +807,7 @@ class ParameterControlPanel(QWidget):
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新频率组标题
-        self.freq_group.setTitle(translate("pulse_editor.pulse_frequency"))
+        self.freq_group.setTitle(translate("editors.pulse.pulse_frequency"))
 
         # 更新模式按钮文本
         if self.frequency_mode == FrequencyMode.FIXED:

@@ -115,10 +115,10 @@ class OSCService(IService):
 
         except OSError as e:
             if e.errno == 10048:  # Port already in use
-                error_message = translate("connection_tab.osc_port_in_use_detail").format(self._osc_port)
+                error_message = translate("tabs.connection.osc_port_in_use_detail").format(self._osc_port)
                 logger.error(error_message)
                 # 通过UI接口报告错误
-                self._core_interface.set_connection_state(ConnectionState.ERROR, translate("connection_tab.osc_port_in_use"))
+                self._core_interface.set_connection_state(ConnectionState.ERROR, translate("tabs.connection.osc_port_in_use"))
                 return False
             else:
                 logger.error(f"OSC服务器启动失败: {e}")

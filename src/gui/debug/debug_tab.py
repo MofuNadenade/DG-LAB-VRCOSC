@@ -97,7 +97,7 @@ class DebugTab(QWidget):
         layout = QVBoxLayout()
 
         # 日志显示组
-        self.log_groupbox = QGroupBox(translate("debug_tab.simple_log"))
+        self.log_groupbox = QGroupBox(translate("tabs.debug.simple_log"))
         self.log_groupbox.setCheckable(True)
         self.log_groupbox.setChecked(True)
         self.log_groupbox.toggled.connect(self.toggle_log_display)
@@ -112,17 +112,17 @@ class DebugTab(QWidget):
         layout.addWidget(self.log_groupbox)
 
         # 调试信息组
-        debug_info_group = QGroupBox(translate("debug_tab.debug_info"))
+        debug_info_group = QGroupBox(translate("tabs.debug.debug_info"))
         debug_info_group.setCheckable(True)
         debug_info_group.setChecked(False)
         debug_info_group.toggled.connect(self.toggle_debug_info)
         self.debug_group = debug_info_group  # 保持引用
 
         debug_info_layout = QVBoxLayout()
-        self.controller_params_label = QLabel(translate("debug_tab.controller_params_label"))
+        self.controller_params_label = QLabel(translate("tabs.debug.controller_params_label"))
         debug_info_layout.addWidget(self.controller_params_label)
 
-        self.param_label = QLabel(translate("debug_tab.loading_params"))
+        self.param_label = QLabel(translate("tabs.debug.loading_params"))
         self.param_label.setWordWrap(True)
         debug_info_layout.addWidget(self.param_label)
 
@@ -182,12 +182,12 @@ class DebugTab(QWidget):
             )
             self.param_label.setText(debug_text)
         else:
-            self.param_label.setText(translate("debug_tab.controller_not_initialized"))
+            self.param_label.setText(translate("tabs.debug.controller_not_initialized"))
 
     def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""
-        self.log_groupbox.setTitle(translate("debug_tab.simple_log"))
-        self.debug_group.setTitle(translate("debug_tab.debug_info"))
+        self.log_groupbox.setTitle(translate("tabs.debug.simple_log"))
+        self.debug_group.setTitle(translate("tabs.debug.debug_info"))
 
         # 更新调试信息组内的标签 - 使用直接引用
-        self.controller_params_label.setText(translate("debug_tab.controller_params_label"))
+        self.controller_params_label.setText(translate("tabs.debug.controller_params_label"))

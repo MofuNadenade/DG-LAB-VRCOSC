@@ -72,7 +72,7 @@ class NewPulseDialog(QDialog):
         self.steps_spinbox: QSpinBox
         self.description_edit: QTextEdit
 
-        self.setWindowTitle(translate("pulse_dialogs.new_pulse.title"))
+        self.setWindowTitle(translate("dialogs.pulse.new_pulse.title"))
         self.setModal(True)
         self.resize(400, 300)
         self.setup_ui()
@@ -83,7 +83,7 @@ class NewPulseDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # 标题
-        title = QLabel(translate("pulse_dialogs.new_pulse.create_new"))
+        title = QLabel(translate("dialogs.pulse.new_pulse.create_new"))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont()
         font.setPointSize(16)
@@ -96,24 +96,24 @@ class NewPulseDialog(QDialog):
 
         # 波形名称
         self.name_edit = QLineEdit()
-        self.name_edit.setPlaceholderText(translate("pulse_dialogs.new_pulse.name_placeholder"))
-        form_layout.addRow(translate("pulse_dialogs.new_pulse.pulse_name_label"), self.name_edit)
+        self.name_edit.setPlaceholderText(translate("dialogs.pulse.new_pulse.name_placeholder"))
+        form_layout.addRow(translate("dialogs.pulse.new_pulse.pulse_name_label"), self.name_edit)
 
         # 模板选择
         self.template_combo = QComboBox()
-        self.template_combo.addItem(translate("pulse_dialogs.new_pulse.blank_waveform"), [])
-        self.template_combo.addItem(translate("pulse_dialogs.new_pulse.simple_pulse"), [
+        self.template_combo.addItem(translate("dialogs.pulse.new_pulse.blank_waveform"), [])
+        self.template_combo.addItem(translate("dialogs.pulse.new_pulse.simple_pulse"), [
             ((10, 10, 10, 10), (100, 100, 100, 100)),
             ((10, 10, 10, 10), (0, 0, 0, 0))
         ])
-        self.template_combo.addItem(translate("pulse_dialogs.new_pulse.progressive_waveform"), [
+        self.template_combo.addItem(translate("dialogs.pulse.new_pulse.progressive_waveform"), [
             ((10, 10, 10, 10), (20, 20, 20, 20)),
             ((10, 10, 10, 10), (40, 40, 40, 40)),
             ((10, 10, 10, 10), (60, 60, 60, 60)),
             ((10, 10, 10, 10), (80, 80, 80, 80)),
             ((10, 10, 10, 10), (100, 100, 100, 100))
         ])
-        self.template_combo.addItem(translate("pulse_dialogs.new_pulse.pulse_sequence"), [
+        self.template_combo.addItem(translate("dialogs.pulse.new_pulse.pulse_sequence"), [
             ((10, 10, 10, 10), (100, 100, 100, 100)),
             ((10, 10, 10, 10), (0, 0, 0, 0)),
             ((10, 10, 10, 10), (100, 100, 100, 100)),
@@ -121,23 +121,23 @@ class NewPulseDialog(QDialog):
             ((10, 10, 10, 10), (100, 100, 100, 100)),
             ((10, 10, 10, 10), (0, 0, 0, 0))
         ])
-        form_layout.addRow(translate("pulse_dialogs.new_pulse.base_template_label"), self.template_combo)
+        form_layout.addRow(translate("dialogs.pulse.new_pulse.base_template_label"), self.template_combo)
 
         # 初始步数
         self.steps_spinbox = QSpinBox()
         self.steps_spinbox.setRange(1, 50)
         self.steps_spinbox.setValue(8)
-        form_layout.addRow(translate("pulse_dialogs.new_pulse.initial_steps_label"), self.steps_spinbox)
+        form_layout.addRow(translate("dialogs.pulse.new_pulse.initial_steps_label"), self.steps_spinbox)
 
         layout.addLayout(form_layout)
 
         # 描述
-        desc_label = QLabel(translate("pulse_dialogs.new_pulse.description_label"))
+        desc_label = QLabel(translate("dialogs.pulse.new_pulse.description_label"))
         layout.addWidget(desc_label)
 
         self.description_edit = QTextEdit()
         self.description_edit.setMaximumHeight(80)
-        self.description_edit.setPlaceholderText(translate("pulse_dialogs.new_pulse.description_placeholder"))
+        self.description_edit.setPlaceholderText(translate("dialogs.pulse.new_pulse.description_placeholder"))
         layout.addWidget(self.description_edit)
 
         # 按钮
@@ -239,8 +239,8 @@ class NewPulseDialog(QDialog):
         """验证输入"""
         name = self.name_edit.text().strip()
         if not name:
-            QMessageBox.warning(self, translate("pulse_dialogs.new_pulse.input_error"),
-                                translate("pulse_dialogs.new_pulse.name_required"))
+            QMessageBox.warning(self, translate("dialogs.pulse.new_pulse.input_error"),
+                                translate("dialogs.pulse.new_pulse.name_required"))
             return False
         return True
 
@@ -266,7 +266,7 @@ class ImportPulseDialog(QDialog):
         self.official_files_list: QListWidget
         self.official_files_info_preview: QTextEdit
 
-        self.setWindowTitle(translate("pulse_dialogs.import_pulse.title"))
+        self.setWindowTitle(translate("dialogs.pulse.import_pulse.title"))
         self.setModal(True)
         self.resize(800, 650)
         self.setup_ui()
@@ -277,7 +277,7 @@ class ImportPulseDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # 标题
-        title = QLabel(translate("pulse_dialogs.import_pulse.import_file"))
+        title = QLabel(translate("dialogs.pulse.import_pulse.import_file"))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont()
         font.setPointSize(16)
@@ -290,15 +290,15 @@ class ImportPulseDialog(QDialog):
         
         # 文件导入标签页
         file_tab = self.create_file_import_tab()
-        self.tab_widget.addTab(file_tab, translate("pulse_dialogs.import_pulse.file_import_tab"))
+        self.tab_widget.addTab(file_tab, translate("dialogs.pulse.import_pulse.file_import_tab"))
         
         # 分享码导入标签页
         share_code_tab = self.create_share_code_import_tab()
-        self.tab_widget.addTab(share_code_tab, translate("pulse_dialogs.import_pulse.share_code_tab"))
+        self.tab_widget.addTab(share_code_tab, translate("dialogs.pulse.import_pulse.share_code_tab"))
         
         # 官方波形导入标签页
         official_tab = self.create_official_pulse_import_tab()
-        self.tab_widget.addTab(official_tab, translate("pulse_dialogs.import_pulse.official_tab"))
+        self.tab_widget.addTab(official_tab, translate("dialogs.pulse.import_pulse.official_tab"))
         
         layout.addWidget(self.tab_widget)
 
@@ -324,18 +324,18 @@ class ImportPulseDialog(QDialog):
         file_layout = QHBoxLayout()
 
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText(translate("pulse_dialogs.import_pulse.select_file"))
+        self.file_path_edit.setPlaceholderText(translate("dialogs.pulse.import_pulse.select_file"))
         self.file_path_edit.setReadOnly(True)
         file_layout.addWidget(self.file_path_edit)
 
-        browse_btn = QPushButton(translate("pulse_dialogs.import_pulse.browse"))
+        browse_btn = QPushButton(translate("dialogs.pulse.import_pulse.browse"))
         browse_btn.clicked.connect(self.browse_file)
         file_layout.addWidget(browse_btn)
 
         layout.addLayout(file_layout)
 
         # 波形列表
-        list_label = QLabel(translate("pulse_dialogs.import_pulse.pulses_in_file"))
+        list_label = QLabel(translate("dialogs.pulse.import_pulse.pulses_in_file"))
         layout.addWidget(list_label)
 
         self.pulse_list = QListWidget()
@@ -343,7 +343,7 @@ class ImportPulseDialog(QDialog):
         layout.addWidget(self.pulse_list)
 
         # 预览区域
-        preview_label = QLabel(translate("pulse_dialogs.import_pulse.pulse_preview"))
+        preview_label = QLabel(translate("dialogs.pulse.import_pulse.pulse_preview"))
         layout.addWidget(preview_label)
 
         self.preview_text = QTextEdit()
@@ -354,11 +354,11 @@ class ImportPulseDialog(QDialog):
         # 文件导入按钮
         file_button_layout = QHBoxLayout()
 
-        select_all_btn = QPushButton(translate("pulse_dialogs.import_pulse.select_all"))
+        select_all_btn = QPushButton(translate("dialogs.pulse.import_pulse.select_all"))
         select_all_btn.clicked.connect(self.select_all)
         file_button_layout.addWidget(select_all_btn)
 
-        clear_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_selection"))
+        clear_btn = QPushButton(translate("dialogs.pulse.import_pulse.clear_selection"))
         clear_btn.clicked.connect(self.clear_selection)
         file_button_layout.addWidget(clear_btn)
 
@@ -411,12 +411,12 @@ class ImportPulseDialog(QDialog):
         file_selection_layout = QHBoxLayout()
         
         # 选择多个文件按钮
-        browse_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.select_official_files"))
+        browse_official_btn = QPushButton(translate("dialogs.pulse.import_pulse.select_official_files"))
         browse_official_btn.clicked.connect(self.browse_official_pulse_files)
         file_selection_layout.addWidget(browse_official_btn)
         
         # 清空选择按钮
-        clear_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_official_files"))
+        clear_official_btn = QPushButton(translate("dialogs.pulse.import_pulse.clear_official_files"))
         clear_official_btn.clicked.connect(self.clear_official_pulse_files)
         file_selection_layout.addWidget(clear_official_btn)
         
@@ -424,7 +424,7 @@ class ImportPulseDialog(QDialog):
         layout.addLayout(file_selection_layout)
         
         # 已选择文件列表
-        files_label = QLabel(translate("pulse_dialogs.import_pulse.selected_files"))
+        files_label = QLabel(translate("dialogs.pulse.import_pulse.selected_files"))
         layout.addWidget(files_label)
         
         self.official_files_list = QListWidget()
@@ -433,7 +433,7 @@ class ImportPulseDialog(QDialog):
         layout.addWidget(self.official_files_list)
         
         # 文件信息和波形预览（合并）
-        info_preview_label = QLabel(translate("pulse_dialogs.import_pulse.file_info_preview"))
+        info_preview_label = QLabel(translate("dialogs.pulse.import_pulse.file_info_preview"))
         layout.addWidget(info_preview_label)
         
         self.official_files_info_preview = QTextEdit()
@@ -444,11 +444,11 @@ class ImportPulseDialog(QDialog):
         # 选择操作按钮
         selection_layout = QHBoxLayout()
         
-        select_all_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.select_all_files"))
+        select_all_official_btn = QPushButton(translate("dialogs.pulse.import_pulse.select_all_files"))
         select_all_official_btn.clicked.connect(self.select_all_official_files)
         selection_layout.addWidget(select_all_official_btn)
         
-        clear_selection_official_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_file_selection"))
+        clear_selection_official_btn = QPushButton(translate("dialogs.pulse.import_pulse.clear_file_selection"))
         clear_selection_official_btn.clicked.connect(self.clear_official_selection)
         selection_layout.addWidget(clear_selection_official_btn)
         
@@ -559,9 +559,9 @@ class ImportPulseDialog(QDialog):
 
         # 检查数据长度
         if len(pulse_data) > 100:
-            warnings.append(translate("pulse_dialogs.import_pulse.validation.too_many_steps").format(len(pulse_data)))
+            warnings.append(translate("dialogs.pulse.import_pulse.validation.too_many_steps").format(len(pulse_data)))
         elif len(pulse_data) > 50:
-            warnings.append(translate("pulse_dialogs.import_pulse.validation.many_steps").format(len(pulse_data)))
+            warnings.append(translate("dialogs.pulse.import_pulse.validation.many_steps").format(len(pulse_data)))
 
         # 统计频率和强度使用情况
         frequencies: List[int] = []
@@ -576,13 +576,13 @@ class ImportPulseDialog(QDialog):
         max_intensity = max(intensities) if intensities else 0
 
         if max_freq > 150:
-            warnings.append(translate("pulse_dialogs.import_pulse.validation.high_frequency").format(max_freq))
+            warnings.append(translate("dialogs.pulse.import_pulse.validation.high_frequency").format(max_freq))
         if max_intensity > 150:
-            warnings.append(translate("pulse_dialogs.import_pulse.validation.high_intensity").format(max_intensity))
+            warnings.append(translate("dialogs.pulse.import_pulse.validation.high_intensity").format(max_intensity))
 
         # 检查数据变化
         if len(set(intensities)) == 1:
-            warnings.append(translate("pulse_dialogs.import_pulse.validation.monotonic"))
+            warnings.append(translate("dialogs.pulse.import_pulse.validation.monotonic"))
 
         return {
             'valid': len(issues) == 0,
@@ -709,7 +709,7 @@ class ImportPulseDialog(QDialog):
     def browse_file(self) -> None:
         """浏览文件"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, translate("pulse_dialogs.import_pulse.select_file"), "", "JSON文件 (*.json);;所有文件 (*)"
+            self, translate("dialogs.pulse.import_pulse.select_file"), "", "JSON文件 (*.json);;所有文件 (*)"
         )
 
         if file_path:
@@ -723,20 +723,20 @@ class ImportPulseDialog(QDialog):
                 data = json.load(f)
 
         except FileNotFoundError:
-            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.file_error"),
-                                 translate("pulse_dialogs.import_pulse.file_not_found"))
+            QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.file_error"),
+                                 translate("dialogs.pulse.import_pulse.file_not_found"))
             return
         except json.JSONDecodeError as e:
-            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.format_error"),
-                                 translate("pulse_dialogs.import_pulse.json_invalid").format(str(e)))
+            QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.format_error"),
+                                 translate("dialogs.pulse.import_pulse.json_invalid").format(str(e)))
             return
         except UnicodeDecodeError:
-            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.encoding_error"),
-                                 translate("pulse_dialogs.import_pulse.encoding_unsupported"))
+            QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.encoding_error"),
+                                 translate("dialogs.pulse.import_pulse.encoding_unsupported"))
             return
         except Exception as e:
-            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.read_error"),
-                                 translate("pulse_dialogs.import_pulse.read_failed").format(str(e)))
+            QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.read_error"),
+                                 translate("dialogs.pulse.import_pulse.read_failed").format(str(e)))
             return
 
         try:
@@ -774,7 +774,7 @@ class ImportPulseDialog(QDialog):
                     integrity_warnings = integrity.get('warnings', [])
                     if integrity_warnings:
                         item.setToolTip(
-                            f"{translate('pulse_dialogs.import_pulse.preview.warnings')}: {'; '.join(integrity_warnings)}")
+                            f"{translate('dialogs.pulse.import_pulse.preview.warnings')}: {'; '.join(integrity_warnings)}")
                         warnings.extend(integrity_warnings)
 
                     self.pulse_list.addItem(item)
@@ -785,29 +785,29 @@ class ImportPulseDialog(QDialog):
 
             # 显示导入结果
             if valid_count > 0:
-                message = translate("pulse_dialogs.import_pulse.import_success_msg").format(valid_count)
+                message = translate("dialogs.pulse.import_pulse.import_success_msg").format(valid_count)
                 if error_count > 0:
-                    message += translate("pulse_dialogs.import_pulse.skipped_invalid").format(error_count)
+                    message += translate("dialogs.pulse.import_pulse.skipped_invalid").format(error_count)
                 if warnings:
-                    message += f"\n\n{translate('pulse_dialogs.import_pulse.preview.warnings')}:\n" + '\n'.join(
+                    message += f"\n\n{translate('dialogs.pulse.import_pulse.preview.warnings')}:\n" + '\n'.join(
                         set(warnings))
-                    QMessageBox.warning(self, translate("pulse_dialogs.import_pulse.import_complete"), message)
+                    QMessageBox.warning(self, translate("dialogs.pulse.import_pulse.import_complete"), message)
                 else:
-                    QMessageBox.information(self, translate("pulse_dialogs.import_pulse.import_success"), message)
+                    QMessageBox.information(self, translate("dialogs.pulse.import_pulse.import_success"), message)
             else:
                 if error_count > 0:
-                    QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.import_failed"),
-                                         translate("pulse_dialogs.import_pulse.all_invalid"))
+                    QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.import_failed"),
+                                         translate("dialogs.pulse.import_pulse.all_invalid"))
                 else:
-                    QMessageBox.warning(self, translate("pulse_dialogs.import_pulse.import_failed"),
-                                        translate("pulse_dialogs.import_pulse.no_valid_data"))
+                    QMessageBox.warning(self, translate("dialogs.pulse.import_pulse.import_failed"),
+                                        translate("dialogs.pulse.import_pulse.no_valid_data"))
 
         except KeyError as e:
-            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.data_error"),
-                                 translate("pulse_dialogs.import_pulse.missing_field").format(str(e)))
+            QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.data_error"),
+                                 translate("dialogs.pulse.import_pulse.missing_field").format(str(e)))
         except Exception as e:
-            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.process_error"),
-                                 translate("pulse_dialogs.import_pulse.process_failed").format(str(e)))
+            QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.process_error"),
+                                 translate("dialogs.pulse.import_pulse.process_failed").format(str(e)))
 
     def update_preview(self) -> None:
         """更新预览"""
@@ -817,23 +817,23 @@ class ImportPulseDialog(QDialog):
             index: int = item.data(Qt.ItemDataRole.UserRole)
             pulse: PulseDict = self.imported_pulses[index]
 
-            preview_text = f"{translate('pulse_dialogs.import_pulse.preview.name')}: {pulse['name']}\n"
-            preview_text += f"{translate('pulse_dialogs.import_pulse.preview.steps')}: {len(pulse['data'])}\n"
+            preview_text = f"{translate('dialogs.pulse.import_pulse.preview.name')}: {pulse['name']}\n"
+            preview_text += f"{translate('dialogs.pulse.import_pulse.preview.steps')}: {len(pulse['data'])}\n"
 
             # 显示统计信息
             if 'integrity' in pulse:
                 stats = pulse['integrity']['stats']
-                preview_text += f"{translate('pulse_dialogs.import_pulse.preview.duration')}: {stats['duration_ms']}ms\n"
-                preview_text += f"{translate('pulse_dialogs.import_pulse.preview.max_frequency')}: {stats['max_frequency']}\n"
-                preview_text += f"{translate('pulse_dialogs.import_pulse.preview.max_intensity')}: {stats['max_intensity']}\n"
+                preview_text += f"{translate('dialogs.pulse.import_pulse.preview.duration')}: {stats['duration_ms']}ms\n"
+                preview_text += f"{translate('dialogs.pulse.import_pulse.preview.max_frequency')}: {stats['max_frequency']}\n"
+                preview_text += f"{translate('dialogs.pulse.import_pulse.preview.max_intensity')}: {stats['max_intensity']}\n"
 
                 # 显示警告
                 if pulse['integrity']['warnings']:
-                    preview_text += f"\n{translate('pulse_dialogs.import_pulse.preview.warnings')}:\n"
+                    preview_text += f"\n{translate('dialogs.pulse.import_pulse.preview.warnings')}:\n"
                     for warning in pulse['integrity']['warnings']:
                         preview_text += f"• {warning}\n"
 
-            preview_text += f"\n{translate('pulse_dialogs.import_pulse.preview.first_3_steps')}:\n{str(pulse['data'][:3])}"
+            preview_text += f"\n{translate('dialogs.pulse.import_pulse.preview.first_3_steps')}:\n{str(pulse['data'][:3])}"
 
             self.preview_text.setText(preview_text)
         else:
@@ -904,7 +904,7 @@ class ImportPulseDialog(QDialog):
     def browse_official_pulse_files(self) -> None:
         """浏览并选择多个.pulse文件"""
         file_paths, _ = QFileDialog.getOpenFileNames(
-            self, translate("pulse_dialogs.import_pulse.select_official_files"), "", "Pulse文件 (*.pulse);;所有文件 (*)"
+            self, translate("dialogs.pulse.import_pulse.select_official_files"), "", "Pulse文件 (*.pulse);;所有文件 (*)"
         )
         
         if file_paths:
@@ -982,23 +982,23 @@ class ImportPulseDialog(QDialog):
             
             # 显示加载结果
             if error_count > 0:
-                message = translate("pulse_dialogs.import_pulse.partial_load_msg").format(success_count, error_count) + "\n\n"
+                message = translate("dialogs.pulse.import_pulse.partial_load_msg").format(success_count, error_count) + "\n\n"
                 if error_messages:
-                    message += translate("pulse_dialogs.import_pulse.error_details") + "\n" + "\n".join(error_messages[:5])  # 只显示前5个错误
+                    message += translate("dialogs.pulse.import_pulse.error_details") + "\n" + "\n".join(error_messages[:5])  # 只显示前5个错误
                     if len(error_messages) > 5:
-                        message += "\n" + translate("pulse_dialogs.import_pulse.more_errors").format(len(error_messages) - 5)
-                QMessageBox.warning(self, translate("pulse_dialogs.import_pulse.partial_load_success"), message)
+                        message += "\n" + translate("dialogs.pulse.import_pulse.more_errors").format(len(error_messages) - 5)
+                QMessageBox.warning(self, translate("dialogs.pulse.import_pulse.partial_load_success"), message)
             else:
-                QMessageBox.information(self, translate("pulse_dialogs.import_pulse.load_success"), 
-                                      translate("pulse_dialogs.import_pulse.load_success_msg").format(success_count))
+                QMessageBox.information(self, translate("dialogs.pulse.import_pulse.load_success"), 
+                                      translate("dialogs.pulse.import_pulse.load_success_msg").format(success_count))
         else:
             if error_messages:
-                message = translate("pulse_dialogs.import_pulse.all_files_failed") + ":\n" + "\n".join(error_messages[:3])
+                message = translate("dialogs.pulse.import_pulse.all_files_failed") + ":\n" + "\n".join(error_messages[:3])
                 if len(error_messages) > 3:
-                    message += "\n" + translate("pulse_dialogs.import_pulse.more_errors").format(len(error_messages) - 3)
+                    message += "\n" + translate("dialogs.pulse.import_pulse.more_errors").format(len(error_messages) - 3)
             else:
-                message = translate("pulse_dialogs.import_pulse.no_files_loaded")
-            QMessageBox.critical(self, translate("pulse_dialogs.import_pulse.load_failed"), message)
+                message = translate("dialogs.pulse.import_pulse.no_files_loaded")
+            QMessageBox.critical(self, translate("dialogs.pulse.import_pulse.load_failed"), message)
     
     def update_official_files_list(self) -> None:
         """更新官方文件列表显示"""
@@ -1030,30 +1030,30 @@ class ImportPulseDialog(QDialog):
             file_info: OfficialPulseFileInfo = self.official_pulse_files[index]
             
             # 合并文件信息和波形预览
-            combined_text = f"📁 {translate('pulse_dialogs.import_pulse.file_stats.file')}: {file_info['file_name']}\n"
-            combined_text += f"⏱️ {translate('pulse_dialogs.import_pulse.file_stats.rest_duration')}: {file_info['stats']['rest_duration']:.1f}s\n"
-            combined_text += f"⚡ {translate('pulse_dialogs.import_pulse.file_stats.speed_multiplier')}: {file_info['stats']['speed_multiplier']}x\n"
-            combined_text += f"📊 {translate('pulse_dialogs.import_pulse.file_stats.sections')}: {file_info['stats']['sections']}\n"
-            combined_text += f"✅ {translate('pulse_dialogs.import_pulse.file_stats.enabled_sections')}: {file_info['stats']['enabled_sections']}\n"
+            combined_text = f"📁 {translate('dialogs.pulse.import_pulse.file_stats.file')}: {file_info['file_name']}\n"
+            combined_text += f"⏱️ {translate('dialogs.pulse.import_pulse.file_stats.rest_duration')}: {file_info['stats']['rest_duration']:.1f}s\n"
+            combined_text += f"⚡ {translate('dialogs.pulse.import_pulse.file_stats.speed_multiplier')}: {file_info['stats']['speed_multiplier']}x\n"
+            combined_text += f"📊 {translate('dialogs.pulse.import_pulse.file_stats.sections')}: {file_info['stats']['sections']}\n"
+            combined_text += f"✅ {translate('dialogs.pulse.import_pulse.file_stats.enabled_sections')}: {file_info['stats']['enabled_sections']}\n"
             
             if file_info['warnings']:
-                combined_text += f"⚠️ {translate('pulse_dialogs.import_pulse.file_stats.warnings')}: {len(file_info['warnings'])}个\n"
+                combined_text += f"⚠️ {translate('dialogs.pulse.import_pulse.file_stats.warnings')}: {len(file_info['warnings'])}个\n"
             
             # 分隔线
             combined_text += "\n" + "─" * 40 + "\n\n"
             
             # 波形预览信息
             stats = file_info['stats']
-            combined_text += f"🎵 {translate('pulse_dialogs.import_pulse.file_stats.waveform_name')}: {file_info['pulse_name']}\n"
-            combined_text += f"📈 {translate('pulse_dialogs.import_pulse.file_stats.total_steps')}: {stats['steps']}\n"
-            combined_text += f"⏰ {translate('pulse_dialogs.import_pulse.file_stats.duration')}: {stats['duration_ms']}ms ({stats['duration_ms']/1000:.1f}s)\n"
-            combined_text += f"🔊 {translate('pulse_dialogs.import_pulse.file_stats.max_frequency')}: {stats['max_frequency']}\n"
-            combined_text += f"💪 {translate('pulse_dialogs.import_pulse.file_stats.max_intensity')}: {stats['max_intensity']}%"
+            combined_text += f"🎵 {translate('dialogs.pulse.import_pulse.file_stats.waveform_name')}: {file_info['pulse_name']}\n"
+            combined_text += f"📈 {translate('dialogs.pulse.import_pulse.file_stats.total_steps')}: {stats['steps']}\n"
+            combined_text += f"⏰ {translate('dialogs.pulse.import_pulse.file_stats.duration')}: {stats['duration_ms']}ms ({stats['duration_ms']/1000:.1f}s)\n"
+            combined_text += f"🔊 {translate('dialogs.pulse.import_pulse.file_stats.max_frequency')}: {stats['max_frequency']}\n"
+            combined_text += f"💪 {translate('dialogs.pulse.import_pulse.file_stats.max_intensity')}: {stats['max_intensity']}%"
             
             if file_info['warnings']:
-                combined_text += f"\n\n⚠️ {translate('pulse_dialogs.import_pulse.file_stats.warnings')}:\n" + "\n".join(f"• {w}" for w in file_info['warnings'][:3])
+                combined_text += f"\n\n⚠️ {translate('dialogs.pulse.import_pulse.file_stats.warnings')}:\n" + "\n".join(f"• {w}" for w in file_info['warnings'][:3])
                 if len(file_info['warnings']) > 3:
-                    combined_text += f"\n" + translate("pulse_dialogs.import_pulse.more_errors").format(len(file_info['warnings']) - 3)
+                    combined_text += f"\n" + translate("dialogs.pulse.import_pulse.more_errors").format(len(file_info['warnings']) - 3)
             
             self.official_files_info_preview.setText(combined_text)
         else:
@@ -1070,14 +1070,14 @@ class ImportPulseDialog(QDialog):
                 total_warnings += len(item_file_info['warnings'])
             
             # 合并多文件统计信息
-            combined_text = f"📁 {translate('pulse_dialogs.import_pulse.file_stats.selected_files_count').format(len(selected_items))}\n\n"
-            combined_text += f"📊 {translate('pulse_dialogs.import_pulse.file_stats.selected_stats')}:\n"
-            combined_text += f"📈 {translate('pulse_dialogs.import_pulse.file_stats.total_steps')}: {total_steps}\n"
-            combined_text += f"⏰ {translate('pulse_dialogs.import_pulse.file_stats.total_duration')}: {total_duration}ms ({total_duration/1000:.1f}s)\n"
-            combined_text += f"🗂️ {translate('pulse_dialogs.import_pulse.file_stats.file_count')}: {len(selected_items)}"
+            combined_text = f"📁 {translate('dialogs.pulse.import_pulse.file_stats.selected_files_count').format(len(selected_items))}\n\n"
+            combined_text += f"📊 {translate('dialogs.pulse.import_pulse.file_stats.selected_stats')}:\n"
+            combined_text += f"📈 {translate('dialogs.pulse.import_pulse.file_stats.total_steps')}: {total_steps}\n"
+            combined_text += f"⏰ {translate('dialogs.pulse.import_pulse.file_stats.total_duration')}: {total_duration}ms ({total_duration/1000:.1f}s)\n"
+            combined_text += f"🗂️ {translate('dialogs.pulse.import_pulse.file_stats.file_count')}: {len(selected_items)}"
             
             if total_warnings > 0:
-                combined_text += f"\n⚠️ {translate('pulse_dialogs.import_pulse.file_stats.total_warnings')}: {total_warnings}"
+                combined_text += f"\n⚠️ {translate('dialogs.pulse.import_pulse.file_stats.total_warnings')}: {total_warnings}"
             
             self.official_files_info_preview.setText(combined_text)
     
@@ -1139,7 +1139,7 @@ class ExportPulseDialog(QDialog):
         self.share_pulse_list: QListWidget
         self.share_code_text: QTextEdit
 
-        self.setWindowTitle(translate("pulse_dialogs.export_pulse.title"))
+        self.setWindowTitle(translate("dialogs.pulse.export_pulse.title"))
         self.setModal(True)
         self.resize(800, 650)
         self.setup_ui()
@@ -1150,7 +1150,7 @@ class ExportPulseDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # 标题
-        title = QLabel(translate("pulse_dialogs.export_pulse.export_file"))
+        title = QLabel(translate("dialogs.pulse.export_pulse.export_file"))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont()
         font.setPointSize(16)
@@ -1190,7 +1190,7 @@ class ExportPulseDialog(QDialog):
         layout = QVBoxLayout(tab)
         
         # 波形选择
-        list_label = QLabel(translate("pulse_dialogs.export_pulse.select_pulses"))
+        list_label = QLabel(translate("dialogs.pulse.export_pulse.select_pulses"))
         layout.addWidget(list_label)
 
         self.pulse_list = QListWidget()
@@ -1208,10 +1208,10 @@ class ExportPulseDialog(QDialog):
         file_layout = QHBoxLayout()
 
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText(translate("pulse_dialogs.export_pulse.save_path"))
+        self.file_path_edit.setPlaceholderText(translate("dialogs.pulse.export_pulse.save_path"))
         file_layout.addWidget(self.file_path_edit)
 
-        browse_btn = QPushButton(translate("pulse_dialogs.import_pulse.browse"))
+        browse_btn = QPushButton(translate("dialogs.pulse.import_pulse.browse"))
         browse_btn.clicked.connect(self.browse_save_path)
         file_layout.addWidget(browse_btn)
 
@@ -1224,7 +1224,7 @@ class ExportPulseDialog(QDialog):
         select_all_btn.clicked.connect(self.select_all)
         button_layout.addWidget(select_all_btn)
 
-        clear_btn = QPushButton(translate("pulse_dialogs.import_pulse.clear_selection"))
+        clear_btn = QPushButton(translate("dialogs.pulse.import_pulse.clear_selection"))
         clear_btn.clicked.connect(self.clear_selection)
         button_layout.addWidget(clear_btn)
         
@@ -1418,7 +1418,7 @@ class ExportPulseDialog(QDialog):
         """浏览保存路径"""
         default_filename = self.get_default_filename()
         file_path, _ = QFileDialog.getSaveFileName(
-            self, translate("pulse_dialogs.export_pulse.save_path"), default_filename, "JSON文件 (*.json);;所有文件 (*)"
+            self, translate("dialogs.pulse.export_pulse.save_path"), default_filename, "JSON文件 (*.json);;所有文件 (*)"
         )
 
         if file_path:
@@ -1493,14 +1493,14 @@ class ExportPulseDialog(QDialog):
         """导出波形"""
         file_path = self.file_path_edit.text().strip()
         if not file_path:
-            QMessageBox.warning(self, translate("pulse_dialogs.export_pulse.path_error"),
-                                translate("pulse_dialogs.export_pulse.select_save_path"))
+            QMessageBox.warning(self, translate("dialogs.pulse.export_pulse.path_error"),
+                                translate("dialogs.pulse.export_pulse.select_save_path"))
             return
 
         selected_items = self.pulse_list.selectedItems()
         if not selected_items:
-            QMessageBox.warning(self, translate("pulse_dialogs.export_pulse.selection_error"),
-                                translate("pulse_dialogs.export_pulse.select_at_least_one"))
+            QMessageBox.warning(self, translate("dialogs.pulse.export_pulse.selection_error"),
+                                translate("dialogs.pulse.export_pulse.select_at_least_one"))
             return
 
         try:
@@ -1528,7 +1528,7 @@ class ExportPulseDialog(QDialog):
             # 显示导出成功信息
             duration_ms = total_steps * 100
 
-            message = translate("pulse_dialogs.export_pulse.export_success_msg").format(
+            message = translate("dialogs.pulse.export_pulse.export_success_msg").format(
                 os.path.basename(file_path),
                 len(selected_items),
                 total_steps,
@@ -1536,18 +1536,18 @@ class ExportPulseDialog(QDialog):
                 duration_ms / 1000
             )
 
-            QMessageBox.information(self, translate("pulse_dialogs.export_pulse.export_success"), message)
+            QMessageBox.information(self, translate("dialogs.pulse.export_pulse.export_success"), message)
             self.accept()
 
         except PermissionError:
-            QMessageBox.critical(self, translate("pulse_dialogs.export_pulse.permission_error"),
-                                 translate("pulse_dialogs.export_pulse.no_write_permission"))
+            QMessageBox.critical(self, translate("dialogs.pulse.export_pulse.permission_error"),
+                                 translate("dialogs.pulse.export_pulse.no_write_permission"))
         except OSError as e:
-            QMessageBox.critical(self, translate("pulse_dialogs.export_pulse.file_error"),
-                                 translate("pulse_dialogs.export_pulse.cannot_create").format(str(e)))
+            QMessageBox.critical(self, translate("dialogs.pulse.export_pulse.file_error"),
+                                 translate("dialogs.pulse.export_pulse.cannot_create").format(str(e)))
         except Exception as e:
-            QMessageBox.critical(self, translate("pulse_dialogs.export_pulse.export_error"),
-                                 translate("pulse_dialogs.export_pulse.save_failed").format(str(e)))
+            QMessageBox.critical(self, translate("dialogs.pulse.export_pulse.export_error"),
+                                 translate("dialogs.pulse.export_pulse.save_failed").format(str(e)))
     
     def handle_export(self) -> None:
         """处理导出操作"""
@@ -1587,7 +1587,7 @@ class PulseInfoDialog(QDialog):
         # UI组件类型注解
         self.data_text: QTextEdit
 
-        self.setWindowTitle(f"{translate('pulse_dialogs.pulse_info.title')} - {pulse.name}")
+        self.setWindowTitle(f"{translate('dialogs.pulse.pulse_info.title')} - {pulse.name}")
         self.setModal(True)
         self.resize(800, 650)
         self.setMinimumSize(700, 500)
@@ -1599,7 +1599,7 @@ class PulseInfoDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # 标题
-        title = QLabel(f"{translate('pulse_dialogs.pulse_info.pulse_name')}: {self.pulse.name}")
+        title = QLabel(f"{translate('dialogs.pulse.pulse_info.pulse_name')}: {self.pulse.name}")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont()
         font.setPointSize(16)
@@ -1611,30 +1611,30 @@ class PulseInfoDialog(QDialog):
         form_layout = QFormLayout()
 
         # 基本信息
-        form_layout.addRow(translate("pulse_dialogs.pulse_info.index_label"), QLabel(str(self.pulse.id)))
-        form_layout.addRow(translate("pulse_dialogs.pulse_info.steps_label"), QLabel(str(len(self.pulse.data))))
+        form_layout.addRow(translate("dialogs.pulse.pulse_info.index_label"), QLabel(str(self.pulse.id)))
+        form_layout.addRow(translate("dialogs.pulse.pulse_info.steps_label"), QLabel(str(len(self.pulse.data))))
 
         # 强度统计
         intensities = [step[1][0] for step in self.pulse.data]  # 使用第一个强度值
         if intensities:
-            form_layout.addRow(translate("pulse_dialogs.pulse_info.min_intensity_label"),
+            form_layout.addRow(translate("dialogs.pulse.pulse_info.min_intensity_label"),
                                QLabel(f"{min(intensities)}%"))
-            form_layout.addRow(translate("pulse_dialogs.pulse_info.max_intensity_label"),
+            form_layout.addRow(translate("dialogs.pulse.pulse_info.max_intensity_label"),
                                QLabel(f"{max(intensities)}%"))
-            form_layout.addRow(translate("pulse_dialogs.pulse_info.avg_intensity_label"),
+            form_layout.addRow(translate("dialogs.pulse.pulse_info.avg_intensity_label"),
                                QLabel(f"{sum(intensities) / len(intensities):.1f}%"))
 
         layout.addLayout(form_layout)
 
         # 详细数据
-        data_label = QLabel(translate("pulse_dialogs.pulse_info.detailed_data_label"))
+        data_label = QLabel(translate("dialogs.pulse.pulse_info.detailed_data_label"))
         layout.addWidget(data_label)
 
         self.data_text = QTextEdit()
         self.data_text.setReadOnly(True)
 
         # 格式化显示数据
-        data_str = translate("pulse_dialogs.pulse_info.step_header") + "\n"
+        data_str = translate("dialogs.pulse.pulse_info.step_header") + "\n"
         data_str += "-" * 40 + "\n"
 
         for i, (duration, intensity) in enumerate(self.pulse.data):
@@ -1644,7 +1644,7 @@ class PulseInfoDialog(QDialog):
         layout.addWidget(self.data_text)
 
         # 关闭按钮
-        close_btn = QPushButton(translate("pulse_dialogs.pulse_info.close"))
+        close_btn = QPushButton(translate("dialogs.pulse.pulse_info.close"))
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn)
 

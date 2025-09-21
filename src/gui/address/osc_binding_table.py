@@ -31,7 +31,7 @@ class AddBindingDialog(QDialog):
         self.address_combo: QComboBox
         self.action_combo: QComboBox
 
-        self.setWindowTitle(translate("osc_address_tab.add_binding"))
+        self.setWindowTitle(translate("tabs.osc.add_binding"))
         self.setModal(True)
         self.resize(450, 200)
 
@@ -54,12 +54,12 @@ class AddBindingDialog(QDialog):
         # 地址选择
         address_options = [addr.name for addr in self.registries.address_registry.addresses]
         self.address_combo = EditableComboBox(address_options, allow_manual_input=False)
-        form_layout.addRow(translate("osc_address_tab.address_name_label"), self.address_combo)
+        form_layout.addRow(translate("tabs.osc.address_name_label"), self.address_combo)
 
         # 动作选择
         action_options = [action.name for action in self.registries.action_registry.actions]
         self.action_combo = EditableComboBox(action_options, allow_manual_input=False)
-        form_layout.addRow(translate("osc_address_tab.action_name_label"), self.action_combo)
+        form_layout.addRow(translate("tabs.osc.action_name_label"), self.action_combo)
 
         layout.addLayout(form_layout)
 
@@ -74,7 +74,7 @@ class AddBindingDialog(QDialog):
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
-        self.setWindowTitle(translate("osc_address_tab.add_binding"))
+        self.setWindowTitle(translate("tabs.osc.add_binding"))
 
     def get_binding_data(self) -> tuple[str, str]:
         """获取选中的绑定数据"""
@@ -84,8 +84,8 @@ class AddBindingDialog(QDialog):
         """验证输入"""
         address_name, action_name = self.get_binding_data()
         if not address_name or not action_name:
-            QMessageBox.warning(self, translate("osc_address_tab.input_error"),
-                                translate("osc_address_tab.select_address_action"))
+            QMessageBox.warning(self, translate("tabs.osc.input_error"),
+                                translate("tabs.osc.select_address_action"))
             return False
         return True
 
@@ -139,7 +139,7 @@ class OSCBindingTableTab(QWidget):
 
     def create_description_label(self, parent_layout: QVBoxLayout) -> None:
         """创建描述标签"""
-        self.description_label = QLabel(translate("osc_address_tab.binding_description"))
+        self.description_label = QLabel(translate("tabs.osc.binding_description"))
         self.description_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -156,7 +156,7 @@ class OSCBindingTableTab(QWidget):
 
     def create_binding_list_group(self, parent_layout: QVBoxLayout) -> None:
         """创建绑定列表组"""
-        self.binding_list_group = QGroupBox(translate("osc_address_tab.binding_list"))
+        self.binding_list_group = QGroupBox(translate("tabs.osc.binding_list"))
         group = self.binding_list_group
         layout = QVBoxLayout(group)
 
@@ -164,12 +164,12 @@ class OSCBindingTableTab(QWidget):
         self.binding_table = QTableWidget()
         self.binding_table.setColumnCount(6)
         self.binding_table.setHorizontalHeaderLabels([
-            translate("osc_address_tab.id"),
-            translate("osc_address_tab.address_name"),
-            translate("osc_address_tab.action_name"),
-            translate("osc_address_tab.action_types"),
-            translate("osc_address_tab.status"),
-            translate("osc_address_tab.edit_state")
+            translate("tabs.osc.id"),
+            translate("tabs.osc.address_name"),
+            translate("tabs.osc.action_name"),
+            translate("tabs.osc.action_types"),
+            translate("tabs.osc.status"),
+            translate("tabs.osc.edit_state")
         ])
 
         # 隐藏ID列和编辑状态列
@@ -204,7 +204,7 @@ class OSCBindingTableTab(QWidget):
         layout.addWidget(self.binding_table)
 
         # 绑定状态标签
-        self.binding_status_label = QLabel(translate("osc_address_tab.binding_status_all_valid").format(0))
+        self.binding_status_label = QLabel(translate("tabs.osc.binding_status_all_valid").format(0))
         self.binding_status_label.setStyleSheet("""
             QLabel {
                 color: #666666;
@@ -221,32 +221,32 @@ class OSCBindingTableTab(QWidget):
         button_layout = QHBoxLayout()
 
         # 添加绑定按钮
-        self.add_binding_btn = QPushButton(translate("osc_address_tab.add_binding"))
+        self.add_binding_btn = QPushButton(translate("tabs.osc.add_binding"))
         self.add_binding_btn.clicked.connect(self.add_binding)
         self.add_binding_btn.setStyleSheet(CommonColors.get_primary_button_style())
-        self.add_binding_btn.setToolTip(translate("osc_address_tab.add_binding_tooltip"))
+        self.add_binding_btn.setToolTip(translate("tabs.osc.add_binding_tooltip"))
         button_layout.addWidget(self.add_binding_btn)
 
         # 删除绑定按钮
-        self.delete_binding_btn = QPushButton(translate("osc_address_tab.delete_binding"))
+        self.delete_binding_btn = QPushButton(translate("tabs.osc.delete_binding"))
         self.delete_binding_btn.clicked.connect(self.delete_binding)
         self.delete_binding_btn.setEnabled(False)
         self.delete_binding_btn.setStyleSheet(CommonColors.get_warning_button_style())
-        self.delete_binding_btn.setToolTip(translate("osc_address_tab.delete_binding_tooltip"))
+        self.delete_binding_btn.setToolTip(translate("tabs.osc.delete_binding_tooltip"))
         button_layout.addWidget(self.delete_binding_btn)
 
         # 刷新按钮
-        self.refresh_btn = QPushButton(translate("osc_address_tab.refresh"))
+        self.refresh_btn = QPushButton(translate("tabs.osc.refresh"))
         self.refresh_btn.clicked.connect(self.refresh_binding_table)
         self.refresh_btn.setStyleSheet(CommonColors.get_secondary_button_style())
-        self.refresh_btn.setToolTip(translate("osc_address_tab.refresh_binding_tooltip"))
+        self.refresh_btn.setToolTip(translate("tabs.osc.refresh_binding_tooltip"))
         button_layout.addWidget(self.refresh_btn)
 
         # 保存配置按钮
-        self.save_config_btn = QPushButton(translate("osc_address_tab.save_config"))
+        self.save_config_btn = QPushButton(translate("tabs.osc.save_config"))
         self.save_config_btn.clicked.connect(self.save_bindings)
         self.save_config_btn.setStyleSheet(CommonColors.get_special_button_style())
-        self.save_config_btn.setToolTip(translate("osc_address_tab.save_config_tooltip"))
+        self.save_config_btn.setToolTip(translate("tabs.osc.save_config_tooltip"))
         button_layout.addWidget(self.save_config_btn)
 
         button_layout.addStretch()  # 添加弹性空间
@@ -303,12 +303,12 @@ class OSCBindingTableTab(QWidget):
             
             # 显示成功消息
             QMessageBox.information(self, translate("common.success"),
-                                    translate("osc_address_tab.config_saved"))
+                                    translate("tabs.osc.config_saved"))
                                     
         except Exception as e:
             logger.error(f"Failed to save bindings: {e}")
             QMessageBox.critical(self, translate("common.error"),
-                                 translate("osc_address_tab.save_config_failed").format(str(e)))
+                                 translate("tabs.osc.save_config_failed").format(str(e)))
 
     def _handle_new_binding(self, row: int) -> None:
         """处理新增绑定"""
@@ -405,23 +405,23 @@ class OSCBindingTableTab(QWidget):
         
         # 状态列
         if is_valid:
-            status_text = translate("osc_address_tab.available")
+            status_text = translate("tabs.osc.available")
             status_item = QTableWidgetItem(status_text)
             # 有效绑定：明显的绿色背景
             status_item.setBackground(QColor(144, 238, 144))  # 浅绿色
             status_item.setForeground(QColor(0, 128, 0))  # 深绿色文字
-            status_item.setToolTip(translate("osc_address_tab.binding_valid_tooltip"))
+            status_item.setToolTip(translate("tabs.osc.binding_valid_tooltip"))
 
             # 为有效绑定的行设置正常样式
             addr_item.setBackground(Qt.GlobalColor.white)
             action_item.setBackground(Qt.GlobalColor.white)
         else:
-            status_text = translate("osc_address_tab.invalid")
+            status_text = translate("tabs.osc.invalid")
             status_item = QTableWidgetItem(status_text)
             # 无效绑定：浅红色背景
             status_item.setBackground(QColor(255, 200, 200))  # 浅红色
             status_item.setForeground(QColor(150, 0, 0))  # 深红色文字
-            status_item.setToolTip(translate("osc_address_tab.binding_invalid").format(error_msg))
+            status_item.setToolTip(translate("tabs.osc.binding_invalid").format(error_msg))
 
             # 为无效绑定的行设置警告样式
             addr_item.setBackground(QColor(240, 240, 240))  # 浅灰色
@@ -483,7 +483,7 @@ class OSCBindingTableTab(QWidget):
 
                 if not address or not action:
                     QMessageBox.critical(self, translate("common.error"),
-                                         translate("osc_address_tab.address_action_not_found").format(address_name,
+                                         translate("tabs.osc.address_action_not_found").format(address_name,
                                                                                                       action_name))
                     return
                 
@@ -503,17 +503,17 @@ class OSCBindingTableTab(QWidget):
                 # 验证绑定有效性并设置状态
                 is_valid, error_msg = self.validate_binding(address, action)
                 if is_valid:
-                    status_text = translate("osc_address_tab.available")
+                    status_text = translate("tabs.osc.available")
                     status_item = QTableWidgetItem(status_text)
                     status_item.setBackground(QColor(144, 238, 144))
                     status_item.setForeground(QColor(0, 128, 0))
-                    status_item.setToolTip(translate("osc_address_tab.binding_valid_tooltip"))
+                    status_item.setToolTip(translate("tabs.osc.binding_valid_tooltip"))
                 else:
-                    status_text = translate("osc_address_tab.invalid")
+                    status_text = translate("tabs.osc.invalid")
                     status_item = QTableWidgetItem(status_text)
                     status_item.setBackground(QColor(255, 200, 200))
                     status_item.setForeground(QColor(150, 0, 0))
-                    status_item.setToolTip(translate("osc_address_tab.binding_invalid").format(error_msg))
+                    status_item.setToolTip(translate("tabs.osc.binding_invalid").format(error_msg))
                     
                     # 为无效绑定的行设置警告样式
                     addr_item.setBackground(QColor(240, 240, 240))
@@ -554,7 +554,7 @@ class OSCBindingTableTab(QWidget):
 
                 # 显示成功消息
                 QMessageBox.information(self, translate("common.success"),
-                                        translate("osc_address_tab.binding_added").format(address_name,
+                                        translate("tabs.osc.binding_added").format(address_name,
                                                                                           action_name))
 
     def delete_binding(self) -> None:
@@ -574,8 +574,8 @@ class OSCBindingTableTab(QWidget):
         action_name = action_name_item.text()
 
         # 确认删除
-        reply = QMessageBox.question(self, translate("osc_address_tab.confirm_delete"),
-                                     translate("osc_address_tab.delete_binding_msg").format(address_name, action_name),
+        reply = QMessageBox.question(self, translate("tabs.osc.confirm_delete"),
+                                     translate("tabs.osc.delete_binding_msg").format(address_name, action_name),
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -599,7 +599,7 @@ class OSCBindingTableTab(QWidget):
 
             # 显示成功消息
             QMessageBox.information(self, translate("common.success"),
-                                    translate("osc_address_tab.binding_deleted").format(address_name, action_name))
+                                    translate("tabs.osc.binding_deleted").format(address_name, action_name))
 
     def has_binding_in_table(self, address_name: str, exclude_row: int = -1) -> bool:
         """检查表格中是否已存在相同地址的绑定
@@ -657,7 +657,7 @@ class OSCBindingTableTab(QWidget):
         # 更新状态标签
         if invalid_count > 0:
             self.binding_status_label.setText(
-                translate("osc_address_tab.binding_status_with_invalid").format(total_count, valid_count, invalid_count))
+                translate("tabs.osc.binding_status_with_invalid").format(total_count, valid_count, invalid_count))
             self.binding_status_label.setStyleSheet("""
                 QLabel {
                     color: #d32f2f;
@@ -667,7 +667,7 @@ class OSCBindingTableTab(QWidget):
                 }
             """)
         else:
-            self.binding_status_label.setText(translate("osc_address_tab.binding_status_all_valid").format(total_count))
+            self.binding_status_label.setText(translate("tabs.osc.binding_status_all_valid").format(total_count))
             self.binding_status_label.setStyleSheet("""
                 QLabel {
                     color: #2e7d32;
@@ -714,33 +714,33 @@ class OSCBindingTableTab(QWidget):
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新分组框标题
-        self.binding_list_group.setTitle(translate("osc_address_tab.binding_list"))
+        self.binding_list_group.setTitle(translate("tabs.osc.binding_list"))
         
         # 更新描述标签
-        self.description_label.setText(translate("osc_address_tab.binding_description"))
+        self.description_label.setText(translate("tabs.osc.binding_description"))
 
         # 更新表格标题
         self.binding_table.setHorizontalHeaderLabels([
-            translate("osc_address_tab.id"),
-            translate("osc_address_tab.address_name"),
-            translate("osc_address_tab.action_name"),
-            translate("osc_address_tab.action_types"),
-            translate("osc_address_tab.status"),
-            translate("osc_address_tab.edit_state")
+            translate("tabs.osc.id"),
+            translate("tabs.osc.address_name"),
+            translate("tabs.osc.action_name"),
+            translate("tabs.osc.action_types"),
+            translate("tabs.osc.status"),
+            translate("tabs.osc.edit_state")
             
         ])
 
         # 更新按钮文本
-        self.add_binding_btn.setText(translate("osc_address_tab.add_binding"))
-        self.delete_binding_btn.setText(translate("osc_address_tab.delete_binding"))
-        self.refresh_btn.setText(translate("osc_address_tab.refresh"))
-        self.save_config_btn.setText(translate("osc_address_tab.save_config"))
+        self.add_binding_btn.setText(translate("tabs.osc.add_binding"))
+        self.delete_binding_btn.setText(translate("tabs.osc.delete_binding"))
+        self.refresh_btn.setText(translate("tabs.osc.refresh"))
+        self.save_config_btn.setText(translate("tabs.osc.save_config"))
 
         # 更新工具提示
-        self.add_binding_btn.setToolTip(translate("osc_address_tab.add_binding_tooltip"))
-        self.delete_binding_btn.setToolTip(translate("osc_address_tab.delete_binding_tooltip"))
-        self.refresh_btn.setToolTip(translate("osc_address_tab.refresh_binding_tooltip"))
-        self.save_config_btn.setToolTip(translate("osc_address_tab.save_config_tooltip"))
+        self.add_binding_btn.setToolTip(translate("tabs.osc.add_binding_tooltip"))
+        self.delete_binding_btn.setToolTip(translate("tabs.osc.delete_binding_tooltip"))
+        self.refresh_btn.setToolTip(translate("tabs.osc.refresh_binding_tooltip"))
+        self.save_config_btn.setToolTip(translate("tabs.osc.save_config_tooltip"))
 
         # 刷新表格内容以更新状态列
         self.refresh_binding_table()

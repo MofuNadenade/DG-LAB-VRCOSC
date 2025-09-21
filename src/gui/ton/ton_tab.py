@@ -60,20 +60,20 @@ class TonTab(QWidget):
         layout = QVBoxLayout()
 
         # ToN Damage System
-        damage_group = QGroupBox(translate("game_tab.title"))
+        damage_group = QGroupBox(translate("tabs.ton.title"))
         self.damage_group = damage_group  # 保持引用
         damage_layout = QFormLayout()
 
         damage_info_layout = QHBoxLayout()
-        self.enable_damage_checkbox = QCheckBox(translate("game_tab.enable_damage_system"))
+        self.enable_damage_checkbox = QCheckBox(translate("tabs.ton.enable_damage_system"))
         self.enable_damage_checkbox.stateChanged.connect(self.toggle_damage_system)
         damage_info_layout.addWidget(self.enable_damage_checkbox)
 
-        self.display_name_label = QLabel(f"{translate('game_tab.user_display_name')}: {translate('game_tab.unknown')}")
+        self.display_name_label = QLabel(f"{translate('tabs.ton.user_display_name')}: {translate('tabs.ton.unknown')}")
         damage_info_layout.addWidget(self.display_name_label)
 
         self.websocket_status_label = QLabel(
-            f"{translate('game_tab.websocket_status')}: {translate('game_tab.disconnected')}")
+            f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.disconnected')}")
         damage_info_layout.addWidget(self.websocket_status_label)
 
         damage_layout.addRow(damage_info_layout)
@@ -82,7 +82,7 @@ class TonTab(QWidget):
         self.damage_progress_bar = QProgressBar()
         self.damage_progress_bar.setRange(0, 100)
         self.damage_progress_bar.setValue(0)
-        self.accumulated_damage_label = QLabel(translate("game_tab.accumulated_damage_label"))
+        self.accumulated_damage_label = QLabel(translate("tabs.ton.accumulated_damage_label"))
         damage_layout.addRow(self.accumulated_damage_label, self.damage_progress_bar)
 
         # 配置滑动条
@@ -90,7 +90,7 @@ class TonTab(QWidget):
 
         # 伤害减免滑动条
         damage_reduction_layout = QHBoxLayout()
-        self.damage_reduction_label = QLabel(f"{translate('game_tab.damage_reduction')}: 2 / 10")
+        self.damage_reduction_label = QLabel(f"{translate('tabs.ton.damage_reduction')}: 2 / 10")
         self.damage_reduction_slider = QSlider(Qt.Orientation.Horizontal)
         self.damage_reduction_slider.setRange(0, 10)
         self.damage_reduction_slider.setValue(2)
@@ -104,7 +104,7 @@ class TonTab(QWidget):
 
         # 伤害强度滑动条
         damage_strength_layout = QHBoxLayout()
-        self.damage_strength_label = QLabel(f"{translate('game_tab.damage_strength')}: 60 / 200")
+        self.damage_strength_label = QLabel(f"{translate('tabs.ton.damage_strength')}: 60 / 200")
         self.damage_strength_slider = QSlider(Qt.Orientation.Horizontal)
         self.damage_strength_slider.setRange(0, 200)
         self.damage_strength_slider.setValue(60)
@@ -118,7 +118,7 @@ class TonTab(QWidget):
 
         # 死亡惩罚强度滑动条
         death_penalty_strength_layout = QHBoxLayout()
-        self.death_penalty_strength_label = QLabel(f"{translate('game_tab.death_penalty')}: 30 / 100")
+        self.death_penalty_strength_label = QLabel(f"{translate('tabs.ton.death_penalty')}: 30 / 100")
         self.death_penalty_strength_slider = QSlider(Qt.Orientation.Horizontal)
         self.death_penalty_strength_slider.setRange(0, 100)
         self.death_penalty_strength_slider.setValue(30)
@@ -135,7 +135,7 @@ class TonTab(QWidget):
         self.death_penalty_time_spinbox = QSpinBox()
         self.death_penalty_time_spinbox.setRange(0, 60)
         self.death_penalty_time_spinbox.setValue(5)
-        self.death_penalty_time_label = QLabel(translate("game_tab.death_penalty_time_label"))
+        self.death_penalty_time_label = QLabel(translate("tabs.ton.death_penalty_time_label"))
         damage_layout.addRow(self.death_penalty_time_label, self.death_penalty_time_spinbox)
 
         damage_group.setLayout(damage_layout)
@@ -198,7 +198,7 @@ class TonTab(QWidget):
 
             # Reset WebSocket status display
             self.websocket_status_label.setText(
-                f"{translate('game_tab.websocket_status')}: {translate('game_tab.disconnected')}")
+                f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.disconnected')}")
             self.websocket_status_label.setStyleSheet("color: red;")
 
     def reduce_damage(self) -> None:
@@ -246,11 +246,11 @@ class TonTab(QWidget):
         elif parsed_message.get("Type") == "STATS":
             if parsed_message.get("DisplayName"):
                 user_display_name = parsed_message.get("DisplayName")
-                self.display_name_label.setText(f"{translate('game_tab.user_display_name')}: {user_display_name}")
+                self.display_name_label.setText(f"{translate('tabs.ton.user_display_name')}: {user_display_name}")
         elif parsed_message.get("Type") == "CONNECTED":
             if parsed_message.get("DisplayName"):
                 user_display_name = parsed_message.get("DisplayName")
-                self.display_name_label.setText(f"{translate('game_tab.user_display_name')}: {user_display_name}")
+                self.display_name_label.setText(f"{translate('tabs.ton.user_display_name')}: {user_display_name}")
 
     def update_websocket_status(self, status: str) -> None:
         """Update WebSocket status label based on connection status."""
@@ -258,23 +258,23 @@ class TonTab(QWidget):
 
         if status.lower() == "connected":
             self.websocket_status_label.setText(
-                f"{translate('game_tab.websocket_status')}: {translate('game_tab.connected')}")
+                f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.connected')}")
             self.websocket_status_label.setStyleSheet("color: green;")
         elif status.lower() == "disconnected":
             self.websocket_status_label.setText(
-                f"{translate('game_tab.websocket_status')}: {translate('game_tab.disconnected')}")
+                f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.disconnected')}")
             self.websocket_status_label.setStyleSheet("color: red;")
         else:
             logger.warning(f"Unexpected WebSocket status: {status}")
             self.websocket_status_label.setText(
-                f"{translate('game_tab.websocket_status')}: {translate('websocket.error_status')} - {status}")
+                f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.error_status')} - {status}")
             self.websocket_status_label.setStyleSheet("color: orange;")
 
     def handle_websocket_error(self, error_message: str) -> None:
         """Handle WebSocket errors by displaying an error message."""
         logger.error(f"WebSocket error: {error_message}")
         self.websocket_status_label.setText(
-            f"{translate('game_tab.websocket_status')}: {translate('websocket.error_status')} - {error_message}")
+            f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.error_status')} - {error_message}")
         self.websocket_status_label.setStyleSheet("color: orange;")
 
     def accumulate_damage(self, value: int) -> None:
@@ -327,33 +327,33 @@ class TonTab(QWidget):
     def update_damage_reduction_label(self) -> None:
         """更新伤害减免标签"""
         value = self.damage_reduction_slider.value()
-        self.damage_reduction_label.setText(f"{translate('game_tab.damage_reduction')}: {value} / 10")
+        self.damage_reduction_label.setText(f"{translate('tabs.ton.damage_reduction')}: {value} / 10")
 
     def update_damage_strength_label(self) -> None:
         """更新伤害强度标签"""
         value = self.damage_strength_slider.value()
-        self.damage_strength_label.setText(f"{translate('game_tab.damage_strength')}: {value} / 200")
+        self.damage_strength_label.setText(f"{translate('tabs.ton.damage_strength')}: {value} / 200")
 
     def update_death_penalty_label(self) -> None:
         """更新死亡惩罚标签"""
         value = self.death_penalty_strength_slider.value()
-        self.death_penalty_strength_label.setText(f"{translate('game_tab.death_penalty')}: {value} / 100")
+        self.death_penalty_strength_label.setText(f"{translate('tabs.ton.death_penalty')}: {value} / 100")
 
     def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""
-        self.damage_group.setTitle(translate("game_tab.title"))
-        self.enable_damage_checkbox.setText(translate("game_tab.enable_damage_system"))
+        self.damage_group.setTitle(translate("tabs.ton.title"))
+        self.enable_damage_checkbox.setText(translate("tabs.ton.enable_damage_system"))
 
         # 更新显示名称标签 - 保持当前显示的用户名
         current_display_text = self.display_name_label.text()
         if ": " in current_display_text:
             # 提取当前显示的用户名
             current_name = current_display_text.split(": ", 1)[1]
-            self.display_name_label.setText(f"{translate('game_tab.user_display_name')}: {current_name}")
+            self.display_name_label.setText(f"{translate('tabs.ton.user_display_name')}: {current_name}")
         else:
             # 如果没有用户名，显示默认值
             self.display_name_label.setText(
-                f"{translate('game_tab.user_display_name')}: {translate('game_tab.unknown')}")
+                f"{translate('tabs.ton.user_display_name')}: {translate('tabs.ton.unknown')}")
 
         # 更新WebSocket状态标签 - 保持当前连接状态
         current_status_text = self.websocket_status_label.text()
@@ -361,28 +361,28 @@ class TonTab(QWidget):
             # 从当前文本中提取状态部分，但需要重新翻译
             if "connected" in current_status_text.lower() or "已连接" in current_status_text or "接続済み" in current_status_text:
                 self.websocket_status_label.setText(
-                    f"{translate('game_tab.websocket_status')}: {translate('game_tab.connected')}")
+                    f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.connected')}")
             elif "error" in current_status_text.lower() or "错误" in current_status_text or "エラー" in current_status_text:
                 # 保持错误信息，只更新前缀
                 error_part = current_status_text.split(": ", 1)[1]
-                self.websocket_status_label.setText(f"{translate('game_tab.websocket_status')}: {error_part}")
+                self.websocket_status_label.setText(f"{translate('tabs.ton.websocket_status')}: {error_part}")
             else:
                 self.websocket_status_label.setText(
-                    f"{translate('game_tab.websocket_status')}: {translate('game_tab.disconnected')}")
+                    f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.disconnected')}")
         else:
             self.websocket_status_label.setText(
-                f"{translate('game_tab.websocket_status')}: {translate('game_tab.disconnected')}")
+                f"{translate('tabs.ton.websocket_status')}: {translate('tabs.ton.disconnected')}")
 
         # 更新滑动条标签 - 使用当前滑动条的值
         damage_reduction_value = self.damage_reduction_slider.value()
-        self.damage_reduction_label.setText(f"{translate('game_tab.damage_reduction')}: {damage_reduction_value} / 10")
+        self.damage_reduction_label.setText(f"{translate('tabs.ton.damage_reduction')}: {damage_reduction_value} / 10")
 
         damage_strength_value = self.damage_strength_slider.value()
-        self.damage_strength_label.setText(f"{translate('game_tab.damage_strength')}: {damage_strength_value} / 200")
+        self.damage_strength_label.setText(f"{translate('tabs.ton.damage_strength')}: {damage_strength_value} / 200")
 
         death_penalty_value = self.death_penalty_strength_slider.value()
-        self.death_penalty_strength_label.setText(f"{translate('game_tab.death_penalty')}: {death_penalty_value} / 100")
+        self.death_penalty_strength_label.setText(f"{translate('tabs.ton.death_penalty')}: {death_penalty_value} / 100")
 
         # 更新其他标签
-        self.accumulated_damage_label.setText(translate("game_tab.accumulated_damage_label"))
-        self.death_penalty_time_label.setText(translate("game_tab.death_penalty_time_label"))
+        self.accumulated_damage_label.setText(translate("tabs.ton.accumulated_damage_label"))
+        self.death_penalty_time_label.setText(translate("tabs.ton.death_penalty_time_label"))

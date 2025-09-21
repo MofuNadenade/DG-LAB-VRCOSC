@@ -86,13 +86,13 @@ class SettingsTab(QWidget):
         layout = QVBoxLayout()
 
         # 控制器参数设置
-        controller_group = QGroupBox(translate("controller_tab.title"))
+        controller_group = QGroupBox(translate("tabs.settings.title"))
         self.controller_group = controller_group  # 保持引用以便启用/禁用
         controller_group.setEnabled(False)  # 默认禁用
         controller_form = QFormLayout()
 
         # 添加 A 通道滑动条和标签
-        self.a_channel_label = QLabel(f"A {translate('controller_tab.channel_intensity')}: 0 / 100")
+        self.a_channel_label = QLabel(f"A {translate('tabs.settings.channel_intensity')}: 0 / 100")
         self.a_channel_slider = QSlider(Qt.Orientation.Horizontal)
         self.a_channel_slider.setRange(0, 100)
         self.a_channel_slider.valueChanged.connect(self.set_a_channel_strength)
@@ -101,7 +101,7 @@ class SettingsTab(QWidget):
         controller_form.addRow(self.a_channel_slider)
 
         # 添加 B 通道滑动条和标签
-        self.b_channel_label = QLabel(f"B {translate('controller_tab.channel_intensity')}: 0 / 100")
+        self.b_channel_label = QLabel(f"B {translate('tabs.settings.channel_intensity')}: 0 / 100")
         self.b_channel_slider = QSlider(Qt.Orientation.Horizontal)
         self.b_channel_slider.setRange(0, 100)
         self.b_channel_slider.valueChanged.connect(self.set_b_channel_strength)
@@ -110,24 +110,24 @@ class SettingsTab(QWidget):
         controller_form.addRow(self.b_channel_slider)
 
         # 功能选项
-        self.fire_mode_disabled_checkbox = QCheckBox(translate("controller_tab.disable_fire_mode"))
+        self.fire_mode_disabled_checkbox = QCheckBox(translate("tabs.settings.disable_fire_mode"))
         self.fire_mode_disabled_checkbox.setChecked(False)
         controller_form.addRow(self.fire_mode_disabled_checkbox)
 
-        self.enable_panel_control_checkbox = QCheckBox(translate("controller_tab.enable_panel_control"))
+        self.enable_panel_control_checkbox = QCheckBox(translate("tabs.settings.enable_panel_control"))
         self.enable_panel_control_checkbox.setChecked(True)
         controller_form.addRow(self.enable_panel_control_checkbox)
 
-        self.disable_panel_pulse_setting_checkbox = QCheckBox(translate("controller_tab.disable_panel_pulse_setting"))
+        self.disable_panel_pulse_setting_checkbox = QCheckBox(translate("tabs.settings.disable_panel_pulse_setting"))
         self.disable_panel_pulse_setting_checkbox.setChecked(False)
         controller_form.addRow(self.disable_panel_pulse_setting_checkbox)
 
-        self.enable_chatbox_status_checkbox = QCheckBox(translate("controller_tab.enable_chatbox"))
+        self.enable_chatbox_status_checkbox = QCheckBox(translate("tabs.settings.enable_chatbox"))
         self.enable_chatbox_status_checkbox.setChecked(False)  # 默认关闭ChatBox
         controller_form.addRow(self.enable_chatbox_status_checkbox)
 
         # 交互设置GroupBox - 包含所有交互相关控件
-        self.interaction_group = QGroupBox(translate("controller_tab.interaction_settings_label"))
+        self.interaction_group = QGroupBox(translate("tabs.settings.interaction_settings_label"))
         self.interaction_group.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
@@ -153,9 +153,9 @@ class SettingsTab(QWidget):
         # 1. 交互模式开关
         interaction_mode_layout = QHBoxLayout()
         interaction_mode_layout.setSpacing(15)  # 设置复选框之间的间距
-        self.interaction_mode_a_checkbox = QCheckBox(f"A {translate('controller_tab.interaction_mode')}")
+        self.interaction_mode_a_checkbox = QCheckBox(f"A {translate('tabs.settings.interaction_mode')}")
         self.interaction_mode_a_checkbox.setStyleSheet("QCheckBox { color: #2E5BBA; font-weight: bold; }")
-        self.interaction_mode_b_checkbox = QCheckBox(f"B {translate('controller_tab.interaction_mode')}")
+        self.interaction_mode_b_checkbox = QCheckBox(f"B {translate('tabs.settings.interaction_mode')}")
         self.interaction_mode_b_checkbox.setStyleSheet("QCheckBox { color: #BA2E5B; font-weight: bold; }")
         
         interaction_mode_layout.addWidget(self.interaction_mode_a_checkbox)
@@ -173,7 +173,7 @@ class SettingsTab(QWidget):
         interaction_layout.addRow(self.current_channel_label)
         
         # 3. 交互模式范围设置
-        self.range_title_label = QLabel(translate("controller_tab.interaction_mode_range_label"))
+        self.range_title_label = QLabel(translate("tabs.settings.interaction_mode_range_label"))
         self.range_title_label.setStyleSheet("QLabel { font-weight: bold; color: #333333; margin-top: 2px; margin-bottom: 1px; }")
         interaction_layout.addRow(self.range_title_label)
         
@@ -191,7 +191,7 @@ class SettingsTab(QWidget):
         range_a_channel_label.setFixedWidth(15)
         range_a_channel_label.setStyleSheet("font-weight: bold; color: #2E5BBA;")
         
-        self.range_a_min_label = QLabel(translate('controller_tab.min_value_label'))
+        self.range_a_min_label = QLabel(translate('tabs.settings.min_value_label'))
         self.range_a_min_label.setFixedWidth(45)
         self.interaction_range_a_min_spinbox = QSpinBox()
         self.interaction_range_a_min_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
@@ -199,7 +199,7 @@ class SettingsTab(QWidget):
         self.interaction_range_a_min_spinbox.setValue(0)
         self.interaction_range_a_min_spinbox.setFixedWidth(70)
         
-        self.range_a_max_label = QLabel(translate('controller_tab.max_value_label'))
+        self.range_a_max_label = QLabel(translate('tabs.settings.max_value_label'))
         self.range_a_max_label.setFixedWidth(45)
         self.interaction_range_a_max_spinbox = QSpinBox()
         self.interaction_range_a_max_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
@@ -223,7 +223,7 @@ class SettingsTab(QWidget):
         range_b_channel_label.setFixedWidth(15)
         range_b_channel_label.setStyleSheet("font-weight: bold; color: #BA2E5B;")
         
-        self.range_b_min_label = QLabel(translate('controller_tab.min_value_label'))
+        self.range_b_min_label = QLabel(translate('tabs.settings.min_value_label'))
         self.range_b_min_label.setFixedWidth(45)
         self.interaction_range_b_min_spinbox = QSpinBox()
         self.interaction_range_b_min_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
@@ -231,7 +231,7 @@ class SettingsTab(QWidget):
         self.interaction_range_b_min_spinbox.setValue(0)
         self.interaction_range_b_min_spinbox.setFixedWidth(70)
         
-        self.range_b_max_label = QLabel(translate('controller_tab.max_value_label'))
+        self.range_b_max_label = QLabel(translate('tabs.settings.max_value_label'))
         self.range_b_max_label.setFixedWidth(45)
         self.interaction_range_b_max_spinbox = QSpinBox()
         self.interaction_range_b_max_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
@@ -272,8 +272,8 @@ class SettingsTab(QWidget):
         self.current_pulse_b_combobox = EditableComboBox(pulse_options, allow_manual_input=False)
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.current_pulse_b_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.current_pulse_a_label = QLabel(f"A{translate('controller_tab.pulse')}:")
-        self.current_pulse_b_label = QLabel(f"B{translate('controller_tab.pulse')}:")
+        self.current_pulse_a_label = QLabel(f"A{translate('tabs.settings.pulse')}:")
+        self.current_pulse_b_label = QLabel(f"B{translate('tabs.settings.pulse')}:")
         controller_form.addRow(self.current_pulse_a_label, self.current_pulse_a_combobox)
         controller_form.addRow(self.current_pulse_b_label, self.current_pulse_b_combobox)
 
@@ -283,14 +283,14 @@ class SettingsTab(QWidget):
         self.fire_mode_strength_step_spinbox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         self.fire_mode_strength_step_spinbox.setRange(0, 100)
         self.fire_mode_strength_step_spinbox.setValue(30)
-        self.fire_mode_strength_step_label = QLabel(translate("controller_tab.fire_mode_strength_step_label"))
+        self.fire_mode_strength_step_label = QLabel(translate("tabs.settings.fire_mode_strength_step_label"))
         controller_form.addRow(self.fire_mode_strength_step_label, self.fire_mode_strength_step_spinbox)
 
         # 添加保存设置按钮
-        self.save_settings_btn = QPushButton(translate("osc_address_tab.save_config"))
+        self.save_settings_btn = QPushButton(translate("tabs.osc.save_config"))
         self.save_settings_btn.clicked.connect(self.save_settings)
         self.save_settings_btn.setStyleSheet(CommonColors.get_primary_button_style())
-        self.save_settings_btn.setToolTip(translate("controller_tab.save_settings_tooltip"))
+        self.save_settings_btn.setToolTip(translate("tabs.settings.save_settings_tooltip"))
         controller_form.addRow(self.save_settings_btn)
 
         controller_group.setLayout(controller_form)
@@ -309,7 +309,7 @@ class SettingsTab(QWidget):
         self.current_pulse_b_combobox.blockSignals(True)
 
         # 添加"无波形"选项，UserData为-1
-        no_waveform_text = translate("controller_tab.no_waveform")
+        no_waveform_text = translate("tabs.settings.no_waveform")
         self.current_pulse_a_combobox.addItem(no_waveform_text, -1)
         self.current_pulse_b_combobox.addItem(no_waveform_text, -1)
 
@@ -534,11 +534,11 @@ class SettingsTab(QWidget):
 
             # 显示成功消息
             QMessageBox.information(self, translate("common.save_success"),
-                                    translate("controller_tab.settings_saved"))
+                                    translate("tabs.settings.settings_saved"))
             logger.info("Controller settings saved successfully")
 
         except Exception as e:
-            error_msg = translate("controller_tab.save_failed").format(str(e))
+            error_msg = translate("tabs.settings.save_failed").format(str(e))
             logger.error(error_msg)
             QMessageBox.critical(self, translate("common.save_failed"), error_msg)
 
@@ -551,7 +551,7 @@ class SettingsTab(QWidget):
             if last_strength:
                 last_strength['strength'][Channel.A] = value  # 同步更新 last_strength 的 A 通道值
 
-        self.a_channel_slider.setToolTip(f"SET A {translate('channel.strength_display')}: {value}")
+        self.a_channel_slider.setToolTip(f"SET A {translate('tabs.settings.strength_display')}: {value}")
 
     def set_b_channel_strength(self, value: int) -> None:
         """根据滑动条的值设定 B 通道强度"""
@@ -562,7 +562,7 @@ class SettingsTab(QWidget):
             if last_strength:
                 last_strength['strength'][Channel.B] = value  # 同步更新 last_strength 的 B 通道值
 
-        self.b_channel_slider.setToolTip(f"SET B {translate('channel.strength_display')}: {value}")
+        self.b_channel_slider.setToolTip(f"SET B {translate('tabs.settings.strength_display')}: {value}")
 
     def show_tooltip(self, slider: QSlider) -> None:
         """显示滑动条当前值的工具提示在滑块上方"""
@@ -584,10 +584,10 @@ class SettingsTab(QWidget):
     def _update_current_channel_display(self) -> None:
         """更新当前通道显示文本"""
         if self._current_channel is None:
-            display_text = f"{translate('controller_tab.current_panel_channel')}: {translate('controller_tab.not_set')}"
+            display_text = f"{translate('tabs.settings.current_panel_channel')}: {translate('tabs.settings.not_set')}"
         else:
             channel_name = "A" if self._current_channel == Channel.A else "B"
-            display_text = f"{translate('controller_tab.current_panel_channel')}: {channel_name}"
+            display_text = f"{translate('tabs.settings.current_panel_channel')}: {channel_name}"
         self.current_channel_label.setText(display_text)
 
     def on_strength_data_updated(self, strength_data: StrengthData) -> None:
@@ -601,54 +601,54 @@ class SettingsTab(QWidget):
             self.a_channel_slider.setValue(last_strength['strength'][Channel.A])
             self.a_channel_slider.blockSignals(False)
             pulse_a = self.service_controller.osc_action_service.get_current_pulse(Channel.A)
-            pulse_a_name = pulse_a.name if pulse_a else translate("controller_tab.no_waveform")
+            pulse_a_name = pulse_a.name if pulse_a else translate("tabs.settings.no_waveform")
             self.a_channel_label.setText(
-                f"A {translate('channel.strength_display')}: {last_strength['strength'][Channel.A]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.A]}  {translate('channel.pulse')}: {pulse_a_name}")
+                f"A {translate('tabs.settings.strength_display')}: {last_strength['strength'][Channel.A]} {translate('tabs.settings.strength_limit')}: {last_strength['strength_limit'][Channel.A]}  {translate('tabs.settings.channel_pulse')}: {pulse_a_name}")
 
             self.b_channel_slider.blockSignals(True)
             self.b_channel_slider.setRange(0, last_strength['strength_limit'][Channel.B])  # 根据限制更新范围
             self.b_channel_slider.setValue(last_strength['strength'][Channel.B])
             self.b_channel_slider.blockSignals(False)
             pulse_b = self.service_controller.osc_action_service.get_current_pulse(Channel.B)
-            pulse_b_name = pulse_b.name if pulse_b else translate("controller_tab.no_waveform")
+            pulse_b_name = pulse_b.name if pulse_b else translate("tabs.settings.no_waveform")
             self.b_channel_label.setText(
-                f"B {translate('channel.strength_display')}: {last_strength['strength'][Channel.B]} {translate('channel.strength_limit')}: {last_strength['strength_limit'][Channel.B]}  {translate('channel.pulse')}: {pulse_b_name}")
+                f"B {translate('tabs.settings.strength_display')}: {last_strength['strength'][Channel.B]} {translate('tabs.settings.strength_limit')}: {last_strength['strength_limit'][Channel.B]}  {translate('tabs.settings.channel_pulse')}: {pulse_b_name}")
 
     def update_ui_texts(self) -> None:
         """更新UI文本为当前语言"""
-        self.controller_group.setTitle(translate("controller_tab.title"))
-        self.fire_mode_disabled_checkbox.setText(translate("controller_tab.disable_fire_mode"))
-        self.enable_panel_control_checkbox.setText(translate("controller_tab.enable_panel_control"))
-        self.disable_panel_pulse_setting_checkbox.setText(translate("controller_tab.disable_panel_pulse_setting"))
-        self.enable_chatbox_status_checkbox.setText(translate("controller_tab.enable_chatbox"))
-        self.interaction_mode_a_checkbox.setText(f"A{translate('controller_tab.interaction_mode')}")
-        self.interaction_mode_b_checkbox.setText(f"B{translate('controller_tab.interaction_mode')}")
-        self.save_settings_btn.setText(translate("osc_address_tab.save_config"))
+        self.controller_group.setTitle(translate("tabs.settings.title"))
+        self.fire_mode_disabled_checkbox.setText(translate("tabs.settings.disable_fire_mode"))
+        self.enable_panel_control_checkbox.setText(translate("tabs.settings.enable_panel_control"))
+        self.disable_panel_pulse_setting_checkbox.setText(translate("tabs.settings.disable_panel_pulse_setting"))
+        self.enable_chatbox_status_checkbox.setText(translate("tabs.settings.enable_chatbox"))
+        self.interaction_mode_a_checkbox.setText(f"A{translate('tabs.settings.interaction_mode')}")
+        self.interaction_mode_b_checkbox.setText(f"B{translate('tabs.settings.interaction_mode')}")
+        self.save_settings_btn.setText(translate("tabs.osc.save_config"))
 
         # 更新通道强度标签
         a_value = self.a_channel_slider.value()
         b_value = self.b_channel_slider.value()
-        self.a_channel_label.setText(f"A {translate('controller_tab.channel_intensity')}: {a_value} / 100")
-        self.b_channel_label.setText(f"B {translate('controller_tab.channel_intensity')}: {b_value} / 100")
+        self.a_channel_label.setText(f"A {translate('tabs.settings.channel_intensity')}: {a_value} / 100")
+        self.b_channel_label.setText(f"B {translate('tabs.settings.channel_intensity')}: {b_value} / 100")
 
         # 更新当前通道标签
         self._update_current_channel_display()
 
         # 更新表单行标签
-        self.current_pulse_a_label.setText(f"A{translate('controller_tab.pulse')}:")
-        self.current_pulse_b_label.setText(f"B{translate('controller_tab.pulse')}:")
-        self.fire_mode_strength_step_label.setText(translate("controller_tab.fire_mode_strength_step_label"))
+        self.current_pulse_a_label.setText(f"A{translate('tabs.settings.pulse')}:")
+        self.current_pulse_b_label.setText(f"B{translate('tabs.settings.pulse')}:")
+        self.fire_mode_strength_step_label.setText(translate("tabs.settings.fire_mode_strength_step_label"))
 
         # 更新交互设置相关标签
-        self.interaction_group.setTitle(translate("controller_tab.interaction_settings_label"))
-        self.range_title_label.setText(translate("controller_tab.interaction_mode_range_label"))
-        self.range_a_min_label.setText(translate('controller_tab.min_value_label'))
-        self.range_a_max_label.setText(translate('controller_tab.max_value_label'))
-        self.range_b_min_label.setText(translate('controller_tab.min_value_label'))
-        self.range_b_max_label.setText(translate('controller_tab.max_value_label'))
+        self.interaction_group.setTitle(translate("tabs.settings.interaction_settings_label"))
+        self.range_title_label.setText(translate("tabs.settings.interaction_mode_range_label"))
+        self.range_a_min_label.setText(translate('tabs.settings.min_value_label'))
+        self.range_a_max_label.setText(translate('tabs.settings.max_value_label'))
+        self.range_b_min_label.setText(translate('tabs.settings.min_value_label'))
+        self.range_b_max_label.setText(translate('tabs.settings.max_value_label'))
 
         # 更新工具提示
-        self.save_settings_btn.setToolTip(translate("controller_tab.save_settings_tooltip"))
+        self.save_settings_btn.setToolTip(translate("tabs.settings.save_settings_tooltip"))
 
     def _on_pulse_added(self, pulse: Pulse) -> None:
         self.update_pulse_comboboxes()

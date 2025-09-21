@@ -70,7 +70,7 @@ class AboutTab(QWidget):
         version_layout = QVBoxLayout()
         current_version = get_version()
         build_info = get_build_info()
-        self.version_label = QLabel(translate("about_tab.current_version_label").format(current_version))
+        self.version_label = QLabel(translate("tabs.about.current_version_label").format(current_version))
 
         # 添加构建信息
         if build_info.get('commit_short') != 'unknown':
@@ -85,13 +85,13 @@ class AboutTab(QWidget):
         buttons_layout = QHBoxLayout()
 
         # 问题反馈按钮
-        self.feedback_btn = QPushButton(translate('about_tab.feedback'))
+        self.feedback_btn = QPushButton(translate('tabs.about.feedback'))
         self.feedback_btn.setStyleSheet(CommonColors.get_secondary_button_style())
         self.feedback_btn.clicked.connect(self.open_feedback)
         buttons_layout.addWidget(self.feedback_btn)
         
         # 检查更新按钮
-        self.check_update_btn = QPushButton(translate('about_tab.check_updates'))
+        self.check_update_btn = QPushButton(translate('tabs.about.check_updates'))
         self.check_update_btn.setStyleSheet(CommonColors.get_special_button_style())
         self.check_update_btn.clicked.connect(self.check_for_updates)
         buttons_layout.addWidget(self.check_update_btn)
@@ -177,22 +177,22 @@ class AboutTab(QWidget):
         if not enabled:
             QMessageBox.information(
                 self,
-                translate('about_tab.update_check_title'),
-                translate('about_tab.auto_update_disabled')
+                translate('tabs.about.update_check_title'),
+                translate('tabs.about.auto_update_disabled')
             )
             return
             
         if not self.updater:
             QMessageBox.warning(
                 self, 
-                translate('about_tab.update_check_title'),
-                translate('about_tab.no_repo_configured')
+                translate('tabs.about.update_check_title'),
+                translate('tabs.about.no_repo_configured')
             )
             return
             
         # 禁用按钮防止重复点击
         self.check_update_btn.setEnabled(False)
-        self.check_update_btn.setText(translate('about_tab.checking_updates'))
+        self.check_update_btn.setText(translate('tabs.about.checking_updates'))
         
         # 使用AutoUpdater检查更新
         asyncio.create_task(self._check_updates_async())
@@ -208,13 +208,13 @@ class AboutTab(QWidget):
         # 如果不是启动时自动检查，恢复按钮状态
         if not self.is_startup_check:
             self.check_update_btn.setEnabled(True)
-            self.check_update_btn.setText(translate('about_tab.check_updates'))
+            self.check_update_btn.setText(translate('tabs.about.check_updates'))
         
         # 显示更新可用对话框
         reply = QMessageBox.question(
             self,
-            translate('about_tab.update_available_title'),
-            translate('about_tab.update_available_message').format(
+            translate('tabs.about.update_available_title'),
+            translate('tabs.about.update_available_message').format(
                 release_info.version, release_info.name
             ),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -229,13 +229,13 @@ class AboutTab(QWidget):
         # 如果不是启动时自动检查，恢复按钮状态并显示信息
         if not self.is_startup_check:
             self.check_update_btn.setEnabled(True)
-            self.check_update_btn.setText(translate('about_tab.check_updates'))
+            self.check_update_btn.setText(translate('tabs.about.check_updates'))
             
             # 显示无更新信息
             QMessageBox.information(
                 self,
-                translate('about_tab.no_update_title'),
-                translate('about_tab.no_update_message')
+                translate('tabs.about.no_update_title'),
+                translate('tabs.about.no_update_message')
             )
         else:
             # 启动时自动检查，只记录日志
@@ -246,13 +246,13 @@ class AboutTab(QWidget):
         # 如果不是启动时自动检查，恢复按钮状态并显示错误信息
         if not self.is_startup_check:
             self.check_update_btn.setEnabled(True)
-            self.check_update_btn.setText(translate('about_tab.check_updates'))
+            self.check_update_btn.setText(translate('tabs.about.check_updates'))
             
             # 显示错误信息
             QMessageBox.critical(
                 self,
-                translate('about_tab.check_error_title'),
-                translate('about_tab.check_error_message').format(error_message)
+                translate('tabs.about.check_error_title'),
+                translate('tabs.about.check_error_message').format(error_message)
             )
         else:
             # 启动时自动检查，只记录错误日志
@@ -270,8 +270,8 @@ class AboutTab(QWidget):
             download_dir = str(Path(download_path).parent)
             reply = QMessageBox.question(
                 self,
-                translate('about_tab.open_file_location_title'),
-                translate('about_tab.open_file_location_message').format(download_path),
+                translate('tabs.about.open_file_location_title'),
+                translate('tabs.about.open_file_location_message').format(download_path),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
             )
@@ -282,16 +282,16 @@ class AboutTab(QWidget):
             
             QMessageBox.information(
                 self,
-                translate('about_tab.download_complete_title'),
-                translate('about_tab.download_saved_message').format(download_path)
+                translate('tabs.about.download_complete_title'),
+                translate('tabs.about.download_saved_message').format(download_path)
             )
 
     def _on_download_error(self, error_message: str) -> None:
         """处理下载错误信号"""
         QMessageBox.critical(
             self,
-            translate('about_tab.download_error_title'),
-            translate('about_tab.download_error_detail').format(error_message)
+            translate('tabs.about.download_error_title'),
+            translate('tabs.about.download_error_detail').format(error_message)
         )
 
     def _on_install_complete(self) -> None:
@@ -299,8 +299,8 @@ class AboutTab(QWidget):
         # 询问是否重启
         reply = QMessageBox.question(
             self,
-            translate('about_tab.install_success_title'),
-            translate('about_tab.install_success_message'),
+            translate('tabs.about.install_success_title'),
+            translate('tabs.about.install_success_message'),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes
         )
@@ -312,8 +312,8 @@ class AboutTab(QWidget):
         """处理安装错误信号"""
         QMessageBox.critical(
             self,
-            translate('about_tab.install_error_title'),
-            translate('about_tab.install_error_detail').format(error_message)
+            translate('tabs.about.install_error_title'),
+            translate('tabs.about.install_error_detail').format(error_message)
         )
 
     def _handle_update_download(self, release_info: ReleaseInfo) -> None:
@@ -334,8 +334,8 @@ class AboutTab(QWidget):
         """处理手动下载"""
         reply = QMessageBox.question(
             self,
-            translate('about_tab.manual_download_title'),
-            translate('about_tab.manual_download_message').format(release_info.version),
+            translate('tabs.about.manual_download_title'),
+            translate('tabs.about.manual_download_message').format(release_info.version),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes
         )
@@ -358,8 +358,8 @@ class AboutTab(QWidget):
         # 确认安装
         reply = QMessageBox.question(
             self,
-            translate('about_tab.auto_install_title'),
-            translate('about_tab.auto_install_message').format(release_info.version),
+            translate('tabs.about.auto_install_title'),
+            translate('tabs.about.auto_install_message').format(release_info.version),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes
         )
@@ -371,7 +371,7 @@ class AboutTab(QWidget):
 
     def update_ui_texts(self) -> None:
         """更新UI上的所有文本为当前语言"""
-        self.feedback_btn.setText(translate('about_tab.feedback'))
-        self.check_update_btn.setText(translate('about_tab.check_updates'))
+        self.feedback_btn.setText(translate('tabs.about.feedback'))
+        self.check_update_btn.setText(translate('tabs.about.check_updates'))
         current_version = get_version()
-        self.version_label.setText(translate("about_tab.current_version_label").format(current_version))
+        self.version_label.setText(translate("tabs.about.current_version_label").format(current_version))

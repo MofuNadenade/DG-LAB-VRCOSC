@@ -87,7 +87,7 @@ class WebSocketConnectionWidget(QWidget):
         self.network_group_layout.setSpacing(5)  # 保持少量间距
 
         # =================== 左侧：连接设置组 ===================
-        self.connection_settings_group = QGroupBox(translate("connection_tab.connection_settings"))
+        self.connection_settings_group = QGroupBox(translate("devices.websocket.connection_settings"))
         self.connection_settings_layout = QFormLayout()
 
         # 网卡选择
@@ -97,7 +97,7 @@ class WebSocketConnectionWidget(QWidget):
         self.ip_combobox = EditableComboBox(ip_options)
         # 强制使用英文区域设置，避免数字显示为繁体中文
         self.ip_combobox.setLocale(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        self.interface_label = QLabel(translate("connection_tab.interface_label"))
+        self.interface_label = QLabel(translate("devices.websocket.interface_label"))
         self.connection_settings_layout.addRow(self.interface_label, self.ip_combobox)
 
         # 端口选择
@@ -107,14 +107,14 @@ class WebSocketConnectionWidget(QWidget):
         self.port_spinbox.setRange(1024, 65535)
         websocket_settings = self.settings.get('connection', {}).get('websocket', {})
         self.port_spinbox.setValue(websocket_settings.get('port', 8080))
-        self.websocket_port_label = QLabel(translate("connection_tab.websocket_port_label"))
+        self.websocket_port_label = QLabel(translate("devices.websocket.websocket_port_label"))
         self.connection_settings_layout.addRow(self.websocket_port_label, self.port_spinbox)
 
         # 创建远程地址控制布局
         self.remote_address_layout = QHBoxLayout()
 
         # 创建开启异地复选框
-        self.enable_remote_checkbox = QCheckBox(translate("connection_tab.enable_remote"))
+        self.enable_remote_checkbox = QCheckBox(translate("devices.websocket.enable_remote"))
         self.enable_remote_checkbox.setChecked(websocket_settings.get('enable_remote', False))
         self.enable_remote_checkbox.stateChanged.connect(self.on_remote_enabled_changed)
 
@@ -125,10 +125,10 @@ class WebSocketConnectionWidget(QWidget):
         self.remote_address_edit.setText(websocket_settings.get('remote_address', ''))
         self.remote_address_edit.setEnabled(self.enable_remote_checkbox.isChecked())
         self.remote_address_edit.textChanged.connect(self.on_remote_address_changed)
-        self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))
+        self.remote_address_edit.setPlaceholderText(translate("devices.websocket.please_enter_valid_ip"))
 
         # 获取公网地址按钮
-        self.get_public_ip_button = QPushButton(translate("connection_tab.get_public_ip"))
+        self.get_public_ip_button = QPushButton(translate("devices.websocket.get_public_ip"))
         self.get_public_ip_button.setStyleSheet(CommonColors.get_secondary_button_style())
         self.get_public_ip_button.clicked.connect(self.get_public_ip)
         self.get_public_ip_button.setEnabled(self.enable_remote_checkbox.isChecked())
@@ -138,11 +138,11 @@ class WebSocketConnectionWidget(QWidget):
         self.remote_address_layout.addWidget(self.remote_address_edit)
         self.remote_address_layout.addWidget(self.get_public_ip_button)
 
-        self.remote_address_label = QLabel(translate("connection_tab.remote_address_label"))
+        self.remote_address_label = QLabel(translate("devices.websocket.remote_address_label"))
         self.connection_settings_layout.addRow(self.remote_address_label, self.remote_address_layout)
 
         # 添加客户端连接状态标签
-        self.connection_status_label = QLabel(translate("connection_tab.offline"))
+        self.connection_status_label = QLabel(translate("devices.websocket.offline"))
         self.connection_status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.connection_status_label.setStyleSheet("""
             QLabel {
@@ -153,11 +153,11 @@ class WebSocketConnectionWidget(QWidget):
             }
         """)
         self.connection_status_label.adjustSize()
-        self.status_label = QLabel(translate("connection_tab.status_label"))
+        self.status_label = QLabel(translate("devices.websocket.status_label"))
         self.connection_settings_layout.addRow(self.status_label, self.connection_status_label)
 
         # 启动按钮
-        self.start_button = QPushButton(translate("connection_tab.connect"))
+        self.start_button = QPushButton(translate("devices.websocket.connect"))
         self.start_button.setStyleSheet(CommonColors.get_primary_button_style())
         self.start_button.clicked.connect(self.start_button_clicked)
         self.connection_settings_layout.addRow(self.start_button)
@@ -168,11 +168,11 @@ class WebSocketConnectionWidget(QWidget):
         self.network_group_layout.addWidget(self.connection_settings_group)
 
         # =================== 右侧：设备配对组 ===================
-        self.device_pairing_group = QGroupBox(translate("connection_tab.device_pairing"))
+        self.device_pairing_group = QGroupBox(translate("devices.websocket.device_pairing"))
         self.device_pairing_layout = QVBoxLayout()
 
         # 说明文字
-        self.pairing_instruction = QLabel(translate("connection_tab.pairing_instruction"))
+        self.pairing_instruction = QLabel(translate("devices.websocket.pairing_instruction"))
         self.pairing_instruction.setWordWrap(True)
         self.pairing_instruction.setStyleSheet("color: #666; margin-bottom: 10px;")
         self.device_pairing_layout.addWidget(self.pairing_instruction)
@@ -184,7 +184,7 @@ class WebSocketConnectionWidget(QWidget):
         self.qrcode_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.qrcode_label.setFixedSize(280, 280)  # 固定为正方形
         # 设置初始样式和占位文字
-        self.qrcode_label.setText(translate("connection_tab.qrcode_placeholder"))
+        self.qrcode_label.setText(translate("devices.websocket.qrcode_placeholder"))
         self._set_qrcode_style(has_qrcode=False)
         
         self.device_pairing_layout.addWidget(self.qrcode_label)
@@ -291,7 +291,7 @@ class WebSocketConnectionWidget(QWidget):
         self.qrcode_label.clear()
         self.original_qrcode_pixmap = None
         # 恢复占位文字和样式
-        self.qrcode_label.setText(translate("connection_tab.qrcode_placeholder"))
+        self.qrcode_label.setText(translate("devices.websocket.qrcode_placeholder"))
         self._set_qrcode_style(has_qrcode=False)
         logger.info("二维码已清理")
 
@@ -334,23 +334,23 @@ class WebSocketConnectionWidget(QWidget):
         enabled: bool
 
         if state == ConnectionState.DISCONNECTED:
-            text = translate('connection_tab.connect')
+            text = translate('devices.websocket.connect')
             style = CommonColors.get_primary_button_style()  # 绿色 - 连接
             enabled = True
         elif state == ConnectionState.CONNECTING:
-            text = translate('connection_tab.cancel')
+            text = translate('devices.websocket.cancel')
             style = CommonColors.get_special_button_style()  # 橙色 - 取消
             enabled = True
         elif state == ConnectionState.WAITING:
-            text = translate('connection_tab.disconnect')
+            text = translate('devices.websocket.disconnect')
             style = CommonColors.get_secondary_button_style()  # 蓝色 - 断开连接
             enabled = True
         elif state == ConnectionState.CONNECTED:
-            text = translate('connection_tab.disconnect')
+            text = translate('devices.websocket.disconnect')
             style = CommonColors.get_warning_button_style()  # 红色 - 断开连接
             enabled = True
         elif state == ConnectionState.FAILED:
-            text = message or translate('connection_tab.failed')
+            text = message or translate('devices.websocket.failed')
             style = CommonColors.get_warning_button_style()  # 红色 - 失败
             enabled = True
         elif state == ConnectionState.ERROR:
@@ -375,7 +375,7 @@ class WebSocketConnectionWidget(QWidget):
     def update_client_state(self, is_online: bool) -> None:
         """根据设备连接状态更新标签的文本和颜色"""
         if is_online:
-            self.connection_status_label.setText(translate('connection_tab.online'))
+            self.connection_status_label.setText(translate('devices.websocket.online'))
             self.connection_status_label.setStyleSheet("""
                 QLabel {
                     background-color: green;
@@ -385,7 +385,7 @@ class WebSocketConnectionWidget(QWidget):
                 }
             """)
         else:
-            self.connection_status_label.setText(translate('connection_tab.offline'))
+            self.connection_status_label.setText(translate('devices.websocket.offline'))
             self.connection_status_label.setStyleSheet("""
                 QLabel {
                     background-color: red;
@@ -479,22 +479,22 @@ class WebSocketConnectionWidget(QWidget):
         """更新UI上的文本为当前语言"""
         
         # 更新组标题和标签
-        self.connection_settings_group.setTitle(translate("connection_tab.connection_settings"))
-        self.device_pairing_group.setTitle(translate("connection_tab.device_pairing"))
+        self.connection_settings_group.setTitle(translate("devices.websocket.connection_settings"))
+        self.device_pairing_group.setTitle(translate("devices.websocket.device_pairing"))
         
         # 更新表单标签
-        self.interface_label.setText(translate("connection_tab.interface_label"))
-        self.websocket_port_label.setText(translate("connection_tab.websocket_port_label"))
-        self.status_label.setText(translate("connection_tab.status_label"))
-        self.remote_address_label.setText(translate("connection_tab.remote_address_label"))
+        self.interface_label.setText(translate("devices.websocket.interface_label"))
+        self.websocket_port_label.setText(translate("devices.websocket.websocket_port_label"))
+        self.status_label.setText(translate("devices.websocket.status_label"))
+        self.remote_address_label.setText(translate("devices.websocket.remote_address_label"))
         
         # 更新配对说明文字
-        self.pairing_instruction.setText(translate("connection_tab.pairing_instruction"))
+        self.pairing_instruction.setText(translate("devices.websocket.pairing_instruction"))
         
         # 更新其他UI文本
-        self.enable_remote_checkbox.setText(translate("connection_tab.enable_remote"))
-        self.remote_address_edit.setPlaceholderText(translate("connection_tab.please_enter_valid_ip"))
-        self.get_public_ip_button.setText(translate("connection_tab.get_public_ip"))
+        self.enable_remote_checkbox.setText(translate("devices.websocket.enable_remote"))
+        self.remote_address_edit.setPlaceholderText(translate("devices.websocket.please_enter_valid_ip"))
+        self.get_public_ip_button.setText(translate("devices.websocket.get_public_ip"))
 
         # 更新客户端状态
         self.update_connection_state(self.ui_interface.get_connection_state())

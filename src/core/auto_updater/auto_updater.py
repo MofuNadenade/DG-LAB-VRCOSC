@@ -506,8 +506,8 @@ class AutoUpdater(QObject):
             # 询问用户是否重启程序
             reply = QMessageBox.question(
                 None,
-                translate('download_dialog.restart_confirm_title'),
-                translate('download_dialog.restart_confirm_message'),
+                translate('dialogs.download.restart_confirm_title'),
+                translate('dialogs.download.restart_confirm_message'),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
             )

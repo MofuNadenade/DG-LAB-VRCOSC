@@ -58,7 +58,7 @@ class ConnectionTab(QWidget):
         layout.setSpacing(8)  # 减少组件间的垂直间距
 
         # =================== 连接模式选择组 ===================
-        self.connection_mode_group = QGroupBox(translate("connection_tab.connection_mode"))
+        self.connection_mode_group = QGroupBox(translate("tabs.connection.connection_mode"))
         self.connection_mode_layout = QFormLayout()
         self.connection_mode_layout.setContentsMargins(15, 8, 15, 8)  # 减少上下内边距
         self.connection_mode_layout.setVerticalSpacing(6)  # 减少垂直间距
@@ -66,15 +66,15 @@ class ConnectionTab(QWidget):
 
         # 连接模式分段控制器（WebSocket/蓝牙）
         segments = [
-            translate("connection_tab.websocket_mode"),
-            translate("connection_tab.bluetooth_mode")
+            translate("tabs.connection.websocket_mode"),
+            translate("tabs.connection.bluetooth_mode")
         ]
         self.connection_mode_control = SegmentedControl(segments)
         self.connection_mode_control.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.connection_mode_control.selectionChanged.connect(self.on_connection_mode_changed)
         
         # 添加标签和控件到表单布局
-        self.connection_mode_label = QLabel(translate("connection_tab.connection_mode_label"))
+        self.connection_mode_label = QLabel(translate("tabs.connection.connection_mode_label"))
         self.connection_mode_layout.addRow(self.connection_mode_label, self.connection_mode_control)
         
         self.connection_mode_group.setLayout(self.connection_mode_layout)
@@ -95,19 +95,19 @@ class ConnectionTab(QWidget):
         layout.addStretch()  # 添加弹性空间
 
         # =================== 全局设置组 ===================
-        self.global_settings_group = QGroupBox(translate("connection_tab.global_settings"))
+        self.global_settings_group = QGroupBox(translate("tabs.connection.global_settings"))
         self.global_settings_layout = QFormLayout()
 
         # OSC端口选择
         self.osc_port_spinbox = QSpinBox()
         self.osc_port_spinbox.setRange(1024, 65535)
         self.osc_port_spinbox.setValue(self.settings.get('osc_port', 9001))
-        self.osc_port_label = QLabel(translate("connection_tab.osc_port_label"))
+        self.osc_port_label = QLabel(translate("tabs.connection.osc_port_label"))
         self.global_settings_layout.addRow(self.osc_port_label, self.osc_port_spinbox)
 
         # 语言选择
         self.language_layout = QHBoxLayout()
-        self.language_label = QLabel(translate("main.settings.language_label"))
+        self.language_label = QLabel(translate("ui.settings.language_label"))
 
         language_options = list(LANGUAGES.values())
         self.language_combo = QComboBox()
@@ -134,7 +134,7 @@ class ConnectionTab(QWidget):
         self.global_settings_layout.addRow(self.language_layout)
 
         # 添加保存设置按钮
-        self.save_settings_button = QPushButton(translate("connection_tab.save_settings"))
+        self.save_settings_button = QPushButton(translate("tabs.connection.save_settings"))
         self.save_settings_button.setStyleSheet(CommonColors.get_primary_button_style())
         self.save_settings_button.clicked.connect(self.save_all_settings)
         self.global_settings_layout.addRow(self.save_settings_button)
@@ -201,11 +201,11 @@ class ConnectionTab(QWidget):
             save_settings(self.settings)
             
             # 显示保存成功提示
-            QMessageBox.information(self, translate("common.save_success"), translate("connection_tab.settings_saved_successfully"))
+            QMessageBox.information(self, translate("common.save_success"), translate("tabs.connection.settings_saved_successfully"))
             
         except Exception as e:
             # 显示保存失败提示
-            error_msg = translate("connection_tab.save_settings_failed").format(str(e))
+            error_msg = translate("tabs.connection.save_settings_failed").format(str(e))
             QMessageBox.warning(self, translate("common.error"), error_msg)
 
     def update_connection_state(self, state: ConnectionState, message: str = "") -> None:
@@ -231,19 +231,19 @@ class ConnectionTab(QWidget):
         """更新UI上的文本为当前语言"""
         
         # 更新组标题和标签
-        self.connection_mode_group.setTitle(translate("connection_tab.connection_mode"))
-        self.global_settings_group.setTitle(translate("connection_tab.global_settings"))
-        self.language_label.setText(translate("main.settings.language_label"))
+        self.connection_mode_group.setTitle(translate("tabs.connection.connection_mode"))
+        self.global_settings_group.setTitle(translate("tabs.connection.global_settings"))
+        self.language_label.setText(translate("ui.settings.language_label"))
         
         # 更新表单标签
-        self.connection_mode_label.setText(translate("connection_tab.connection_mode_label"))
-        self.osc_port_label.setText(translate("connection_tab.osc_port_label"))
-        self.save_settings_button.setText(translate("connection_tab.save_settings"))
+        self.connection_mode_label.setText(translate("tabs.connection.connection_mode_label"))
+        self.osc_port_label.setText(translate("tabs.connection.osc_port_label"))
+        self.save_settings_button.setText(translate("tabs.connection.save_settings"))
         
         # 更新分段控制器的标签 - 使用更优雅的方式
         segments = [
-            translate("connection_tab.websocket_mode"),
-            translate("connection_tab.bluetooth_mode")
+            translate("tabs.connection.websocket_mode"),
+            translate("tabs.connection.bluetooth_mode")
         ]
         
         # 直接更新分段文本，无需重新创建

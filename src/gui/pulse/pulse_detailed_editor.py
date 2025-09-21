@@ -42,14 +42,14 @@ class DetailedPulseStepDialog(QDialog):
 
     def setup_ui(self) -> None:
         """设置UI"""
-        self.setWindowTitle(translate("pulse_editor.detailed_edit_title"))
+        self.setWindowTitle(translate("editors.pulse.detailed_edit_title"))
         self.setModal(True)
         self.setMinimumSize(500, 400)
 
         layout = QVBoxLayout(self)
 
         # 标题
-        title_label = QLabel(translate("pulse_editor.detailed_edit_step").format(self.step_index + 1))
+        title_label = QLabel(translate("editors.pulse.detailed_edit_step").format(self.step_index + 1))
         title_font = QFont()
         title_font.setPointSize(14)
         title_font.setBold(True)
@@ -62,15 +62,15 @@ class DetailedPulseStepDialog(QDialog):
 
         # 频率编辑标签页
         freq_tab = self.create_frequency_tab()
-        tab_widget.addTab(freq_tab, translate("pulse_editor.frequency_tab"))
+        tab_widget.addTab(freq_tab, translate("editors.pulse.frequency_tab"))
 
         # 强度编辑标签页
         strength_tab = self.create_strength_tab()
-        tab_widget.addTab(strength_tab, translate("pulse_editor.strength_tab"))
+        tab_widget.addTab(strength_tab, translate("editors.pulse.strength_tab"))
 
         # 预览标签页
         preview_tab = self.create_preview_tab()
-        tab_widget.addTab(preview_tab, translate("pulse_editor.preview_tab"))
+        tab_widget.addTab(preview_tab, translate("editors.pulse.preview_tab"))
 
         layout.addWidget(tab_widget)
 
@@ -88,19 +88,19 @@ class DetailedPulseStepDialog(QDialog):
         layout = QVBoxLayout(widget)
 
         # 说明文字
-        desc_label = QLabel(translate("pulse_editor.frequency_desc"))
+        desc_label = QLabel(translate("editors.pulse.frequency_desc"))
         desc_label.setWordWrap(True)
         layout.addWidget(desc_label)
 
         # 频率编辑组
-        freq_group = QGroupBox(translate("pulse_editor.frequency_values"))
+        freq_group = QGroupBox(translate("editors.pulse.frequency_values"))
         freq_layout = QGridLayout(freq_group)
 
         self.frequency_sliders = []
         self.frequency_labels = []
         for i in range(4):
             # 子步骤标签
-            substep_label = QLabel(translate("pulse_editor.frequency_substep").format(i + 1))
+            substep_label = QLabel(translate("editors.pulse.frequency_substep").format(i + 1))
             freq_layout.addWidget(substep_label, i, 0)
 
             # 数值显示标签
@@ -149,21 +149,21 @@ class DetailedPulseStepDialog(QDialog):
         layout.addWidget(freq_group)
 
         # 快速设置按钮
-        quick_group = QGroupBox(translate("pulse_editor.quick_frequency_settings"))
+        quick_group = QGroupBox(translate("editors.pulse.quick_frequency_settings"))
         quick_layout = QHBoxLayout(quick_group)
 
         # 统一设置
-        uniform_btn = QPushButton(translate("pulse_editor.set_uniform_frequency"))
+        uniform_btn = QPushButton(translate("editors.pulse.set_uniform_frequency"))
         uniform_btn.clicked.connect(self.set_uniform_frequency)
         quick_layout.addWidget(uniform_btn)
 
         # 渐变设置
-        gradient_btn = QPushButton(translate("pulse_editor.set_gradient_frequency"))
+        gradient_btn = QPushButton(translate("editors.pulse.set_gradient_frequency"))
         gradient_btn.clicked.connect(self.set_gradient_frequency)
         quick_layout.addWidget(gradient_btn)
 
         # 复制第一个值
-        copy_first_btn = QPushButton(translate("pulse_editor.copy_first_frequency"))
+        copy_first_btn = QPushButton(translate("editors.pulse.copy_first_frequency"))
         copy_first_btn.clicked.connect(self.copy_first_frequency)
         quick_layout.addWidget(copy_first_btn)
 
@@ -178,19 +178,19 @@ class DetailedPulseStepDialog(QDialog):
         layout = QVBoxLayout(widget)
 
         # 说明文字
-        desc_label = QLabel(translate("pulse_editor.strength_desc"))
+        desc_label = QLabel(translate("editors.pulse.strength_desc"))
         desc_label.setWordWrap(True)
         layout.addWidget(desc_label)
 
         # 强度编辑组
-        strength_group = QGroupBox(translate("pulse_editor.strength_values"))
+        strength_group = QGroupBox(translate("editors.pulse.strength_values"))
         strength_layout = QGridLayout(strength_group)
 
         self.strength_sliders = []
         self.strength_labels = []
         for i in range(4):
             # 子步骤标签
-            substep_label = QLabel(translate("pulse_editor.strength_substep").format(i + 1))
+            substep_label = QLabel(translate("editors.pulse.strength_substep").format(i + 1))
             strength_layout.addWidget(substep_label, i, 0)
 
             # 数值显示标签
@@ -239,21 +239,21 @@ class DetailedPulseStepDialog(QDialog):
         layout.addWidget(strength_group)
 
         # 快速设置按钮
-        quick_group = QGroupBox(translate("pulse_editor.quick_strength_settings"))
+        quick_group = QGroupBox(translate("editors.pulse.quick_strength_settings"))
         quick_layout = QHBoxLayout(quick_group)
 
         # 统一设置
-        uniform_btn = QPushButton(translate("pulse_editor.set_uniform_strength"))
+        uniform_btn = QPushButton(translate("editors.pulse.set_uniform_strength"))
         uniform_btn.clicked.connect(self.set_uniform_strength)
         quick_layout.addWidget(uniform_btn)
 
         # 渐变设置
-        gradient_btn = QPushButton(translate("pulse_editor.set_gradient_strength"))
+        gradient_btn = QPushButton(translate("editors.pulse.set_gradient_strength"))
         gradient_btn.clicked.connect(self.set_gradient_strength)
         quick_layout.addWidget(gradient_btn)
 
         # 复制第一个值
-        copy_first_btn = QPushButton(translate("pulse_editor.copy_first_strength"))
+        copy_first_btn = QPushButton(translate("editors.pulse.copy_first_strength"))
         copy_first_btn.clicked.connect(self.copy_first_strength)
         quick_layout.addWidget(copy_first_btn)
 
@@ -268,7 +268,7 @@ class DetailedPulseStepDialog(QDialog):
         layout = QVBoxLayout(widget)
 
         # 预览组
-        preview_group = QGroupBox(translate("pulse_editor.data_preview"))
+        preview_group = QGroupBox(translate("editors.pulse.data_preview"))
         preview_layout = QVBoxLayout(preview_group)
 
         self.preview_label = QLabel()
@@ -324,18 +324,18 @@ class DetailedPulseStepDialog(QDialog):
         frequency_values = [slider.value() for slider in self.frequency_sliders]
         strength_values = [slider.value() for slider in self.strength_sliders]
 
-        preview_text = translate("pulse_editor.preview_format").format(
+        preview_text = translate("editors.pulse.preview_format").format(
             self.step_index + 1,
             ', '.join(map(str, frequency_values)),
             ', '.join(map(str, strength_values))
         )
 
         # 添加数据分析
-        preview_text += "\n\n" + translate("pulse_editor.data_analysis") + ":\n"
-        preview_text += f"• {translate('pulse_editor.frequency_range')}: {min(frequency_values)} - {max(frequency_values)}\n"
-        preview_text += f"• {translate('pulse_editor.strength_range')}: {min(strength_values)} - {max(strength_values)}%\n"
-        preview_text += f"• {translate('pulse_editor.frequency_uniform')}: {translate('pulse_editor.yes') if len(set(frequency_values)) == 1 else translate('pulse_editor.no')}\n"
-        preview_text += f"• {translate('pulse_editor.strength_uniform')}: {translate('pulse_editor.yes') if len(set(strength_values)) == 1 else translate('pulse_editor.no')}\n"
+        preview_text += "\n\n" + translate("editors.pulse.data_analysis") + ":\n"
+        preview_text += f"• {translate('editors.pulse.frequency_range')}: {min(frequency_values)} - {max(frequency_values)}\n"
+        preview_text += f"• {translate('editors.pulse.strength_range')}: {min(strength_values)} - {max(strength_values)}%\n"
+        preview_text += f"• {translate('editors.pulse.frequency_uniform')}: {translate('editors.pulse.yes') if len(set(frequency_values)) == 1 else translate('editors.pulse.no')}\n"
+        preview_text += f"• {translate('editors.pulse.strength_uniform')}: {translate('editors.pulse.yes') if len(set(strength_values)) == 1 else translate('editors.pulse.no')}\n"
 
         self.preview_label.setText(preview_text)
 
@@ -481,5 +481,5 @@ class DetailedPulseStepDialog(QDialog):
 
     def update_ui_texts(self) -> None:
         """更新UI文本"""
-        self.setWindowTitle(translate("pulse_editor.detailed_edit_title"))
+        self.setWindowTitle(translate("editors.pulse.detailed_edit_title"))
         # 这里可以添加更多UI文本更新逻辑

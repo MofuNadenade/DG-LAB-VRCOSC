@@ -42,15 +42,15 @@ class OSCTab(QWidget):
 
         # 绑定列表标签页
         self.binding_table_tab = OSCBindingTableTab(self.ui_interface, self.registries, self.options_provider)
-        self.tab_widget.addTab(self.binding_table_tab, translate("osc_address_tab.binding_list"))
+        self.tab_widget.addTab(self.binding_table_tab, translate("tabs.osc.binding_list"))
 
         # 地址列表标签页
         self.address_table_tab = OSCAddressTableTab(self.ui_interface, self.registries, self.options_provider)
-        self.tab_widget.addTab(self.address_table_tab, translate("osc_address_tab.address_list"))
+        self.tab_widget.addTab(self.address_table_tab, translate("tabs.osc.address_list"))
 
         # 地址信息标签页
         self.address_info_tab = OSCAddressInfoTab(self.ui_interface, self.registries, self.options_provider)
-        self.tab_widget.addTab(self.address_info_tab, translate("osc_address_tab.address_info"))
+        self.tab_widget.addTab(self.address_info_tab, translate("tabs.osc.address_info"))
 
         layout.addWidget(self.tab_widget)
 
@@ -69,9 +69,9 @@ class OSCTab(QWidget):
     def update_ui_texts(self) -> None:
         """更新UI文本"""
         # 更新内部标签页标题
-        self.tab_widget.setTabText(0, translate("osc_address_tab.binding_list"))
-        self.tab_widget.setTabText(1, translate("osc_address_tab.address_list"))
-        self.tab_widget.setTabText(2, translate("osc_address_tab.address_info"))
+        self.tab_widget.setTabText(0, translate("tabs.osc.binding_list"))
+        self.tab_widget.setTabText(1, translate("tabs.osc.address_list"))
+        self.tab_widget.setTabText(2, translate("tabs.osc.address_info"))
 
         # 更新子标签页的文本
         self.address_table_tab.update_ui_texts()

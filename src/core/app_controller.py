@@ -331,7 +331,7 @@ class AppController(UIInterface):
             async def osc_set_pulse(pulse: Pulse, *args: OSCInt | OSCFloat | OSCBool) -> None:
                 current_channel = osc_action_service.get_current_channel()
                 await osc_action_service.osc_set_pulse(current_channel, pulse)
-            self.registries.action_registry.register_action(translate("main.action.set_pulse").format(pulse.name), functools.partial(osc_set_pulse, pulse), OSCInt, OSCFloat, OSCBool)
+            self.registries.action_registry.register_action(translate("ui.actions.set_pulse").format(pulse.name), functools.partial(osc_set_pulse, pulse), OSCInt, OSCFloat, OSCBool)
 
         # 更新波形下拉框
         self.main_window.settings_tab.update_pulse_comboboxes()
