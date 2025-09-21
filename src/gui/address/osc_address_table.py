@@ -15,6 +15,7 @@ from core.registries import Registries
 from i18n import translate, language_signals
 from ..ui_interface import UIInterface
 from ..widgets import EditableComboBox, EditState
+from ..styles import CommonColors
 
 logger = logging.getLogger(__name__)
 
@@ -234,22 +235,7 @@ class OSCAddressTableTab(QWidget):
         # 添加地址按钮
         self.add_address_btn = QPushButton(translate("osc_address_tab.add_address"))
         self.add_address_btn.clicked.connect(self.add_address)
-        self.add_address_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:pressed {
-                background-color: #3d8b40;
-            }
-        """)
+        self.add_address_btn.setStyleSheet(CommonColors.get_primary_button_style())
         self.add_address_btn.setToolTip(translate("osc_address_tab.add_address_tooltip"))
         button_layout.addWidget(self.add_address_btn)
 
@@ -257,70 +243,21 @@ class OSCAddressTableTab(QWidget):
         self.delete_address_btn = QPushButton(translate("osc_address_tab.delete_address"))
         self.delete_address_btn.clicked.connect(self.delete_address)
         self.delete_address_btn.setEnabled(False)
-        self.delete_address_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover:enabled {
-                background-color: #d32f2f;
-            }
-            QPushButton:pressed:enabled {
-                background-color: #b71c1c;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-                color: #666666;
-            }
-        """)
+        self.delete_address_btn.setStyleSheet(CommonColors.get_warning_button_style())
         self.delete_address_btn.setToolTip(translate("osc_address_tab.delete_address_tooltip"))
         button_layout.addWidget(self.delete_address_btn)
 
         # 刷新按钮
         self.refresh_btn = QPushButton(translate("osc_address_tab.refresh"))
         self.refresh_btn.clicked.connect(self.refresh_address_table)
-        self.refresh_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-            QPushButton:pressed {
-                background-color: #1565C0;
-            }
-        """)
+        self.refresh_btn.setStyleSheet(CommonColors.get_secondary_button_style())
         self.refresh_btn.setToolTip(translate("osc_address_tab.refresh_tooltip"))
         button_layout.addWidget(self.refresh_btn)
 
         # 保存地址按钮
         self.save_addresses_btn = QPushButton(translate("osc_address_tab.save_config"))
         self.save_addresses_btn.clicked.connect(self.save_addresses)
-        self.save_addresses_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #FF9800;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #F57C00;
-            }
-            QPushButton:pressed {
-                background-color: #E65100;
-            }
-        """)
+        self.save_addresses_btn.setStyleSheet(CommonColors.get_special_button_style())
         self.save_addresses_btn.setToolTip(translate("osc_address_tab.save_addresses_tooltip"))
         button_layout.addWidget(self.save_addresses_btn)
 

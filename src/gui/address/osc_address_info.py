@@ -9,6 +9,7 @@ from core import OSCOptionsProvider
 from core.registries import Registries
 from gui.ui_interface import UIInterface
 from i18n import translate, language_signals
+from gui.styles import CommonColors
 
 logger = logging.getLogger(__name__)
 
@@ -154,22 +155,7 @@ class OSCAddressInfoTab(QWidget):
         # 刷新地址信息按钮
         self.refresh_address_info_btn = QPushButton(translate("osc_address_tab.refresh_address_info"))
         self.refresh_address_info_btn.clicked.connect(self.refresh_address_info_table)
-        self.refresh_address_info_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-            QPushButton:pressed {
-                background-color: #1565C0;
-            }
-        """)
+        self.refresh_address_info_btn.setStyleSheet(CommonColors.get_secondary_button_style())
         self.refresh_address_info_btn.setToolTip(translate("osc_address_tab.refresh_address_info_tooltip"))
         button_layout.addWidget(self.refresh_address_info_btn)
 

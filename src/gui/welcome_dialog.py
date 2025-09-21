@@ -12,6 +12,7 @@ from typing import Optional
 
 from util import resource_path
 from i18n import translate
+from gui.styles import CommonColors
 
 
 class WelcomeDialog(QDialog):
@@ -99,6 +100,7 @@ class WelcomeDialog(QDialog):
         # 左侧：帮助按钮
         self.help_button = QPushButton(translate("welcome_dialog.more_help"))
         self.help_button.setMinimumHeight(36)
+        self.help_button.setStyleSheet(CommonColors.get_secondary_button_style())
         self.help_button.clicked.connect(self._show_help)
         button_layout.addWidget(self.help_button)
         
@@ -110,21 +112,7 @@ class WelcomeDialog(QDialog):
         self.start_button.setMinimumHeight(36)
         self.start_button.setMinimumWidth(120)
         self.start_button.setDefault(True)
-        self.start_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-            QPushButton:pressed {
-                background-color: #21618c;
-            }
-        """)
+        self.start_button.setStyleSheet(CommonColors.get_primary_button_style())
         self.start_button.clicked.connect(self.accept)
         button_layout.addWidget(self.start_button)
         

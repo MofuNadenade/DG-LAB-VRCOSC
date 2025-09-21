@@ -23,6 +23,7 @@ from gui.connection.bluetooth.bluetooth_manager import BluetoothConnectionManage
 from gui.ui_interface import UIInterface
 from i18n import translate
 from models import SettingsDict, ConnectionState, WebsocketDeviceParamsDict
+from gui.styles import CommonColors
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +144,7 @@ class BluetoothConnectionWidget(QWidget):
         # 扫描按钮
         self.scan_button = QPushButton(translate("bluetooth.scan_devices"))
         self.scan_button.setMinimumHeight(30)
+        self.scan_button.setStyleSheet(CommonColors.get_secondary_button_style())
         self.scan_button.clicked.connect(self.on_scan_clicked)
         button_layout.addWidget(self.scan_button)
         
@@ -152,12 +154,14 @@ class BluetoothConnectionWidget(QWidget):
         
         self.connect_button = QPushButton(translate("bluetooth.connect_device"))
         self.connect_button.setMinimumHeight(30)
+        self.connect_button.setStyleSheet(CommonColors.get_primary_button_style())
         self.connect_button.setEnabled(False)
         self.connect_button.clicked.connect(self.on_connect_clicked)
         connection_layout.addWidget(self.connect_button)
         
         self.disconnect_button = QPushButton(translate("bluetooth.disconnect_device"))
         self.disconnect_button.setMinimumHeight(30)
+        self.disconnect_button.setStyleSheet(CommonColors.get_warning_button_style())
         self.disconnect_button.setEnabled(False)
         self.disconnect_button.clicked.connect(self.on_disconnect_clicked)
         connection_layout.addWidget(self.disconnect_button)
@@ -252,19 +256,7 @@ class BluetoothConnectionWidget(QWidget):
         
         # 应用按钮 - 最大化并放在底部
         self.apply_params_button = QPushButton(translate("bluetooth.apply_parameters"))
-        self.apply_params_button.setStyleSheet("""
-            QPushButton:enabled {
-                background-color: green;
-                color: white;
-                font-weight: bold;
-                padding: 8px;
-            }
-            QPushButton:disabled {
-                background-color: lightgray;
-                color: gray;
-                padding: 8px;
-            }
-        """)
+        self.apply_params_button.setStyleSheet(CommonColors.get_special_button_style())
         self.apply_params_button.setEnabled(False)
         self.apply_params_button.clicked.connect(self.on_apply_params_clicked)
         layout.addWidget(self.apply_params_button)

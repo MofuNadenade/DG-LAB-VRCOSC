@@ -10,6 +10,7 @@ from gui.connection.bluetooth.bluetooth_widget import BluetoothConnectionWidget
 from i18n import translate, language_signals, LANGUAGES, get_current_language, set_language
 from models import ConnectionState, SettingsDict, ConnectionMode
 from gui.ui_interface import UIInterface
+from gui.styles import CommonColors
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,7 @@ class ConnectionTab(QWidget):
 
         # 添加保存设置按钮
         self.save_settings_button = QPushButton(translate("connection_tab.save_settings"))
-        self.save_settings_button.setStyleSheet("background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;")
+        self.save_settings_button.setStyleSheet(CommonColors.get_primary_button_style())
         self.save_settings_button.clicked.connect(self.save_all_settings)
         self.global_settings_layout.addRow(self.save_settings_button)
 

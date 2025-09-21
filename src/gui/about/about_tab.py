@@ -18,6 +18,7 @@ from gui.about.download_dialog import DownloadDialog
 from util import resource_path
 from core.auto_updater.auto_updater import AutoUpdater
 from core.auto_updater.models import ReleaseInfo
+from gui.styles import CommonColors
 
 try:
     from version import get_version, get_build_info
@@ -85,11 +86,13 @@ class AboutTab(QWidget):
 
         # 问题反馈按钮
         self.feedback_btn = QPushButton(translate('about_tab.feedback'))
+        self.feedback_btn.setStyleSheet(CommonColors.get_secondary_button_style())
         self.feedback_btn.clicked.connect(self.open_feedback)
         buttons_layout.addWidget(self.feedback_btn)
         
         # 检查更新按钮
         self.check_update_btn = QPushButton(translate('about_tab.check_updates'))
+        self.check_update_btn.setStyleSheet(CommonColors.get_special_button_style())
         self.check_update_btn.clicked.connect(self.check_for_updates)
         buttons_layout.addWidget(self.check_update_btn)
 

@@ -14,6 +14,7 @@ from i18n import translate, language_signals
 from models import Channel, OSCBool, OSCFloat, StrengthData, StrengthOperationType, SettingsDict
 from gui.ui_interface import UIInterface
 from gui.widgets import EditableComboBox
+from gui.styles import CommonColors
 
 logger = logging.getLogger(__name__)
 
@@ -288,23 +289,7 @@ class SettingsTab(QWidget):
         # 添加保存设置按钮
         self.save_settings_btn = QPushButton(translate("osc_address_tab.save_config"))
         self.save_settings_btn.clicked.connect(self.save_settings)
-        self.save_settings_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                font-weight: bold;
-                margin-top: 10px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:pressed {
-                background-color: #3d8b40;
-            }
-        """)
+        self.save_settings_btn.setStyleSheet(CommonColors.get_primary_button_style())
         self.save_settings_btn.setToolTip(translate("controller_tab.save_settings_tooltip"))
         controller_form.addRow(self.save_settings_btn)
 

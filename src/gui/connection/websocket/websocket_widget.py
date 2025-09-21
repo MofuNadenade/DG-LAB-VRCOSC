@@ -14,6 +14,7 @@ from gui.ui_interface import UIInterface
 from gui.widgets import EditableComboBox
 from i18n import translate
 from models import ConnectionState, SettingsDict
+from gui.styles import CommonColors
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,7 @@ class WebSocketConnectionWidget(QWidget):
 
         # 获取公网地址按钮
         self.get_public_ip_button = QPushButton(translate("connection_tab.get_public_ip"))
+        self.get_public_ip_button.setStyleSheet(CommonColors.get_secondary_button_style())
         self.get_public_ip_button.clicked.connect(self.get_public_ip)
         self.get_public_ip_button.setEnabled(self.enable_remote_checkbox.isChecked())
 
@@ -156,7 +158,7 @@ class WebSocketConnectionWidget(QWidget):
 
         # 启动按钮
         self.start_button = QPushButton(translate("connection_tab.connect"))
-        self.start_button.setStyleSheet("background-color: green; color: white;")
+        self.start_button.setStyleSheet(CommonColors.get_primary_button_style())
         self.start_button.clicked.connect(self.start_button_clicked)
         self.connection_settings_layout.addRow(self.start_button)
 
@@ -333,27 +335,27 @@ class WebSocketConnectionWidget(QWidget):
 
         if state == ConnectionState.DISCONNECTED:
             text = translate('connection_tab.connect')
-            style = 'background-color: green; color: white;'
+            style = CommonColors.get_primary_button_style()  # 绿色 - 连接
             enabled = True
         elif state == ConnectionState.CONNECTING:
             text = translate('connection_tab.cancel')
-            style = 'background-color: orange; color: white;'
+            style = CommonColors.get_special_button_style()  # 橙色 - 取消
             enabled = True
         elif state == ConnectionState.WAITING:
             text = translate('connection_tab.disconnect')
-            style = 'background-color: blue; color: white;'
+            style = CommonColors.get_secondary_button_style()  # 蓝色 - 断开连接
             enabled = True
         elif state == ConnectionState.CONNECTED:
             text = translate('connection_tab.disconnect')
-            style = 'background-color: red; color: white;'
+            style = CommonColors.get_warning_button_style()  # 红色 - 断开连接
             enabled = True
         elif state == ConnectionState.FAILED:
             text = message or translate('connection_tab.failed')
-            style = 'background-color: red; color: white;'
+            style = CommonColors.get_warning_button_style()  # 红色 - 失败
             enabled = True
         elif state == ConnectionState.ERROR:
             text = message or translate('common.error')
-            style = 'background-color: darkred; color: white;'
+            style = CommonColors.get_warning_button_style()  # 红色 - 错误
             enabled = True
 
         self.start_button.setText(text)
@@ -470,7 +472,8 @@ class WebSocketConnectionWidget(QWidget):
     def _set_button_disabled(self) -> None:
         """禁用按钮状态（用于地址验证失败等情况）"""
         self.start_button.setEnabled(False)
-        self.start_button.setStyleSheet("background-color: grey; color: white;")
+        # 使用主要按钮样式，禁用状态会自动应用灰色
+        self.start_button.setStyleSheet(CommonColors.get_primary_button_style())
 
     def update_ui_texts(self) -> None:
         """更新UI上的文本为当前语言"""
