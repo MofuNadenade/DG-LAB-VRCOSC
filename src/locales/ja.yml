@@ -261,8 +261,7 @@ tabs:
     open_file_location_title: "ファイルの場所を開く"
     open_file_location_message: "ファイルのダウンロードが完了しました:\n{0}\n\nファイルの場所を開きますか？"
     auto_install_title: "自動インストール"
-    auto_install_message: "バージョン {0} を自動的にダウンロードしてインストールします。\n\n注意：インストール中にプログラムが再起動されます。\n\
-      \n続行しますか？"
+    auto_install_message: "GitHubからバージョン {0} を自動的にダウンロードしてインストールします。\n\n注意：\n• インストール中にプログラムが再起動されます\n• GitHubからのダウンロードのため、一部地域ではプロキシが必要な場合があります\n\n続行しますか？"
     install_success_title: "インストール成功"
     install_success_message: "更新のインストールが完了しました！今すぐプログラムを再起動しますか？"
     install_error_title: "インストール失敗"

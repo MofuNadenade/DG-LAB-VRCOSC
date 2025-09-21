@@ -179,7 +179,11 @@ class AutoUpdater(QObject):
         api_url: str = f"https://api.github.com/repos/{self.repo}/releases/latest"
         
         try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout)) as session:
+            # 使用trust_env=True自动使用系统代理
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+                trust_env=True
+            ) as session:
                 async with session.get(api_url) as response:
                     response.raise_for_status()
                     data: GitHubReleaseDict = await response.json()
@@ -294,7 +298,11 @@ class AutoUpdater(QObject):
         try:
             logger.info(f"开始下载: {download_url}")
             
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout)) as session:
+            # 使用trust_env=True自动使用系统代理
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+                trust_env=True
+            ) as session:
                 async with session.get(download_url) as response:
                     response.raise_for_status()
                     

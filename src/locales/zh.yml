@@ -259,7 +259,7 @@ tabs:
     open_file_location_title: "打开文件位置"
     open_file_location_message: "文件已下载完成:\n{0}\n\n是否打开文件所在位置？"
     auto_install_title: "自动安装"
-    auto_install_message: "即将自动下载并安装版本 {0}。\n\n注意：安装过程中程序将会重启。\n\n是否继续？"
+    auto_install_message: "即将从GitHub自动下载并安装版本 {0}。\n\n注意：\n• 安装过程中程序将会重启\n• 从GitHub下载，国内用户可能需要代理\n\n是否继续？"
     install_success_title: "安装成功"
     install_success_message: "更新安装完成！是否现在重启程序？"
     install_error_title: "安装失败"

@@ -270,8 +270,8 @@ tabs:
     open_file_location_title: "Open File Location"
     open_file_location_message: "File download completed:\n{0}\n\nOpen file location?"
     auto_install_title: "Auto Install"
-    auto_install_message: "About to automatically download and install version {0}.\n\
-      \nNote: The program will restart during installation.\n\nContinue?"
+    auto_install_message: "About to automatically download and install version {0} from GitHub.\n\
+      \nNote:\n• The program will restart during installation\n• Downloads from GitHub, users in some regions may need a proxy\n\nContinue?"
     install_success_title: "Installation Successful"
     install_success_message: "Update installation completed! Restart program now?"
     install_error_title: "Installation Failed"
