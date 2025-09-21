@@ -101,21 +101,27 @@ python scripts/dev_build.py --watch
 ```
 
 ### `i18n_manager.py`
-国际化管理工具，用于管理和维护多语言支持。
+国际化管理工具，用于管理和维护多语言支持。这是一个功能完整的本地化键管理系统，支持分析、清理、重命名等操作。
 
-**Features:**
-- 提取代码中使用的本地化键
-- 提取语言文件中定义的键
-- 查找未使用的本地化键
-- 分析本地化键的使用情况
-- 验证语言文件的一致性
+**核心功能:**
+- 📊 **智能分析**: 提取和分析代码中使用的本地化键，支持引用统计和热门键排行
+- 🔍 **一致性检查**: 验证语言文件的一致性和完整性
+- 🧹 **智能清理**: 清理未使用的键和空分组，支持预览模式
+- ✏️ **智能编辑**: 重命名、移动和批量管理本地化键，支持父级键自动处理
+- 📁 **引用管理**: 按文件分组显示本地化键使用情况，精确定位引用位置
+- 🎯 **代码同步**: 智能更新代码中的键引用，支持父级键的所有子键自动更新
 
-**Usage:**
+**支持的命令:**
+
+#### 分析和检查命令
 ```bash
-# 分析本地化键使用情况
+# 完整分析本地化键使用情况
 python scripts/i18n_manager.py analyze
 
-# 检查语言文件一致性
+# 详细分析（显示源代码目录和语言文件信息）
+python scripts/i18n_manager.py analyze --verbose
+
+# 检查所有语言文件的键一致性
 python scripts/i18n_manager.py check
 
 # 列出代码中使用的所有键
@@ -124,15 +130,187 @@ python scripts/i18n_manager.py list-used
 # 列出语言文件中定义的所有键
 python scripts/i18n_manager.py list-defined
 
+# 按文件分组显示本地化键使用情况
+python scripts/i18n_manager.py list-by-file
+
 # 查找未使用的键
 python scripts/i18n_manager.py find-unused
 
-# 详细分析（包含更多信息）
+# 分析键引用详情（查看特定键的所有引用位置）
+python scripts/i18n_manager.py analyze-refs main.tabs
+
+# 显示所有键引用统计和热门键排行
+python scripts/i18n_manager.py analyze-refs
+```
+
+#### 清理命令
+```bash
+# 预览清理未使用的键（安全模式）
+python scripts/i18n_manager.py --dry-run clean
+
+# 执行清理未使用的键
+python scripts/i18n_manager.py clean
+
+# 预览清理空分组
+python scripts/i18n_manager.py --dry-run clean-empty
+
+# 执行清理空分组
+python scripts/i18n_manager.py clean-empty
+```
+
+#### 键管理命令
+```bash
+# 重命名本地化键（预览模式）
+python scripts/i18n_manager.py --dry-run rename old.key new.key --update-code
+
+# 重命名键并同时更新代码中的引用
+python scripts/i18n_manager.py rename old.key new.key --update-code
+
+# 移动键到新分组
+python scripts/i18n_manager.py move old.group.key new.group --update-code
+
+# 批量重命名键（从YAML映射文件）
+python scripts/i18n_manager.py batch-rename mapping.yml --update-code
+```
+
+#### 自定义配置
+```bash
+# 自定义源代码目录和语言文件
+python scripts/i18n_manager.py analyze --src-dir custom/src --locales custom/zh.yml custom/en.yml custom/ja.yml
+
+# 使用预览模式（所有修改操作都支持）
+python scripts/i18n_manager.py --dry-run [command]
+```
+
+**批量重命名映射文件格式:**
+```yaml
+# mapping.yml
+old.key.name: new.key.name
+another.old.key: another.new.key
+group.old.item: newgroup.item
+```
+
+#### 键引用分析命令
+```bash
+# 分析特定键或键前缀的所有引用
+python scripts/i18n_manager.py analyze-refs main.tabs
+
+# 查看单个键的详细引用信息
+python scripts/i18n_manager.py analyze-refs pulse_editor.save_pulse
+
+# 显示所有键的引用统计
+python scripts/i18n_manager.py analyze-refs
+
+# 查看前缀分组统计
+python scripts/i18n_manager.py analyze-refs connection_tab
+```
+
+**高级功能:**
+- 🔍 **智能键引用扫描**: 一次性扫描所有Python文件，建立完整的键引用映射
+- 🎯 **父级键支持**: 移动父级键时自动处理所有子键（如移动 `main.tabs` 会自动更新 `main.tabs.*`）
+- 📊 **引用统计分析**: 显示键使用频率、热门键排行和前缀分组统计
+- 🔗 **精确位置定位**: 显示每个键在代码中的具体使用位置（文件、行号、代码行）
+
+**安全特性:**
+- 🛡️ **预览模式**: 所有修改操作默认支持 `--dry-run` 预览
+- 🔄 **智能代码同步**: 支持同时更新代码中的键引用，包括父级键的所有子键
+- ✅ **一致性检查**: 确保所有语言文件保持同步
+- 📋 **详细报告**: 提供完整的操作结果和统计信息
+- 🎯 **精确替换**: 避免误替换相似键名，按键长度排序处理
+
+#### 实际使用示例
+
+**场景1: 重组标签页键结构**
+```bash
+# 1. 先分析当前的键引用情况
+python scripts/i18n_manager.py analyze-refs main.tabs
+
+# 2. 预览移动操作（智能处理所有子键）
+python scripts/i18n_manager.py --dry-run move main.tabs ui.tabs --update-code
+
+# 3. 执行移动操作
+python scripts/i18n_manager.py move main.tabs ui.tabs --update-code
+
+# 4. 验证结果
+python scripts/i18n_manager.py check
+```
+
+**场景2: 批量重组键结构**
+```bash
+# 创建映射文件 reorganize.yml
+# main.title: ui.app.title
+# main.settings: ui.settings
+# main.action: ui.action
+
+# 执行批量重命名
+python scripts/i18n_manager.py batch-rename reorganize.yml --update-code
+```
+
+**场景3: 清理和优化**
+```bash
+# 1. 查找未使用的键
+python scripts/i18n_manager.py find-unused
+
+# 2. 清理未使用的键
+python scripts/i18n_manager.py clean
+
+# 3. 清理空分组
+python scripts/i18n_manager.py clean-empty
+
+# 4. 最终验证
+python scripts/i18n_manager.py analyze --verbose
+```
+
+#### 性能和最佳实践
+
+**性能特性:**
+- ⚡ **一次扫描多次使用**: 智能缓存键引用映射，避免重复文件读取
+- 🚀 **批量处理优化**: 按文件分组处理，减少I/O操作
+- 💾 **内存高效**: 流式处理大型项目，支持数千个键的管理
+- 🔧 **增量更新**: 只更新实际发生变化的文件
+
+**最佳实践建议:**
+1. **重构前先分析**: 使用 `analyze-refs` 了解键的使用情况
+2. **始终预览**: 使用 `--dry-run` 预览所有修改操作
+3. **分步进行**: 大规模重构时分批处理，便于回滚
+4. **保持备份**: 重要操作前备份语言文件
+5. **验证一致性**: 操作后使用 `check` 命令验证文件一致性
+
+**故障排除:**
+```bash
+# 检查键引用不一致
+python scripts/i18n_manager.py analyze-refs problematic.key
+
+# 验证语言文件完整性
+python scripts/i18n_manager.py check
+
+# 查看详细的使用统计
 python scripts/i18n_manager.py analyze --verbose
 
-# 自定义源代码目录和语言文件
-python scripts/i18n_manager.py analyze --src-dir custom/src --locales custom/zh.yml custom/en.yml
+# 清理孤立的键和空分组
+python scripts/i18n_manager.py clean-empty
 ```
+
+#### 快速参考
+
+**常用命令速查:**
+| 命令 | 功能 | 示例 |
+|------|------|------|
+| `analyze` | 分析键使用情况 | `python scripts/i18n_manager.py analyze` |
+| `analyze-refs` | 分析键引用详情 | `python scripts/i18n_manager.py analyze-refs main` |
+| `check` | 检查文件一致性 | `python scripts/i18n_manager.py check` |
+| `move` | 移动键到新分组 | `python scripts/i18n_manager.py move old.key new --update-code` |
+| `rename` | 重命名键 | `python scripts/i18n_manager.py rename old.key new.key --update-code` |
+| `clean` | 清理未使用的键 | `python scripts/i18n_manager.py --dry-run clean` |
+| `clean-empty` | 清理空分组 | `python scripts/i18n_manager.py clean-empty` |
+| `batch-rename` | 批量重命名 | `python scripts/i18n_manager.py batch-rename mapping.yml --update-code` |
+
+**重要参数:**
+- `--dry-run`: 预览模式，不执行实际修改
+- `--update-code`: 同时更新代码中的键引用
+- `--verbose`: 显示详细信息
+- `--src-dir`: 指定源代码目录
+- `--locales`: 指定语言文件列表
 
 ### `i18n_checker.py`
 国际化文件一致性检查工具，专门用于验证多语言文件的完整性和一致性。
