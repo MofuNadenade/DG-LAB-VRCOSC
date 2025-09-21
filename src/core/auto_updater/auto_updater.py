@@ -10,14 +10,14 @@ import sys
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Optional, List, TypedDict, Any
+from typing import List, TypedDict, Any, Callable, Optional
 from enum import Enum
 from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 
 import aiohttp
 from packaging import version
-from PySide6.QtCore import QObject, Signal, SignalInstance
+from PySide6.QtCore import QObject, Signal
 
 from .models import ReleaseInfo
 from models import SettingsDict
@@ -54,6 +54,12 @@ class UpdateState(Enum):
     INSTALLING = "installing"
 
 
+class CheckType(Enum):
+    """检查类型枚举"""
+    AUTO = "auto"      # 自动检查（启动时）
+    MANUAL = "manual"  # 手动检查（用户触发）
+
+
 # GitHub API 响应类型定义
 class GitHubAssetDict(TypedDict):
     """GitHub Release Asset 类型"""
@@ -78,8 +84,8 @@ class AutoUpdater(QObject):
     
     # 信号定义
     update_available = Signal(ReleaseInfo)
-    no_update_available = Signal()
-    check_error = Signal(str)
+    no_update_available = Signal(CheckType)  # 传递检查类型
+    check_error = Signal(str, CheckType)     # 传递错误信息和检查类型
     download_progress = Signal(int)
     download_complete = Signal(str)
     download_error = Signal(str)
@@ -111,7 +117,7 @@ class AutoUpdater(QObject):
         return self._current_state
     
     @asynccontextmanager
-    async def _task_context(self, state: UpdateState, error_signal: SignalInstance, task_name: str, allowed_states: Optional[List[UpdateState]] = None):
+    async def _task_context(self, state: UpdateState, task_name: str, error_handler: Callable[[str], None], allowed_states: Optional[List[UpdateState]] = None):
         """统一的任务执行上下文管理器"""
         if allowed_states is None:
             allowed_states = [UpdateState.IDLE]
@@ -129,7 +135,7 @@ class AutoUpdater(QObject):
             raise  # 重新抛出取消异常
         except Exception as e:
             logger.error(f"{task_name}失败: {e}")
-            error_signal.emit(str(e))
+            error_handler(str(e))
             raise  # 重新抛出异常以便调用者处理
         finally:
             self._set_state(UpdateState.IDLE)
@@ -198,10 +204,18 @@ class AutoUpdater(QObject):
         else:
             return AutoUpdaterConstants.STRATEGY_DOWNLOAD_AND_INSTALL
         
-    async def check_for_updates(self) -> Optional[ReleaseInfo]:
-        """Check for new releases on GitHub"""
+    async def check_for_updates(self, check_type: CheckType = CheckType.AUTO) -> Optional[ReleaseInfo]:
+        """Check for new releases on GitHub
+        
+        Args:
+            check_type: 检查类型，AUTO为自动检查，MANUAL为手动检查
+        """
         try:
-            async with self._task_context(UpdateState.CHECKING, self.check_error, "更新检查") as should_continue:
+            # 创建带检查类型的错误处理函数
+            def error_handler(error_msg: str) -> None:
+                self.check_error.emit(error_msg, check_type)
+            
+            async with self._task_context(UpdateState.CHECKING, "更新检查", error_handler) as should_continue:
                 if not should_continue:
                     return None
                     
@@ -216,7 +230,7 @@ class AutoUpdater(QObject):
                     return release_info
                 else:
                     logger.info("No updates available")
-                    self.no_update_available.emit()
+                    self.no_update_available.emit(check_type)
                     return None
         except asyncio.CancelledError:
             return None
@@ -277,7 +291,7 @@ class AutoUpdater(QObject):
             return None
             
         try:
-            async with self._task_context(UpdateState.DOWNLOADING, self.download_error, "下载", 
+            async with self._task_context(UpdateState.DOWNLOADING, "下载", lambda msg: self.download_error.emit(msg), 
                                        [UpdateState.IDLE, UpdateState.CHECKING]) as should_continue:
                 if not should_continue:
                     return None

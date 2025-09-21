@@ -16,7 +16,7 @@ from models import SettingsDict
 from gui.ui_interface import UIInterface
 from gui.about.download_dialog import DownloadDialog
 from util import resource_path
-from core.auto_updater.auto_updater import AutoUpdater
+from core.auto_updater.auto_updater import AutoUpdater, CheckType
 from core.auto_updater.models import ReleaseInfo
 from gui.styles import CommonColors
 
@@ -186,8 +186,8 @@ class AboutTab(QWidget):
             )
             return
             
-        # 直接调用检查更新，状态管理由AutoUpdater处理
-        asyncio.create_task(self.updater.check_for_updates())
+        # 直接调用检查更新，标记为手动检查
+        asyncio.create_task(self.updater.check_for_updates(CheckType.MANUAL))
 
     def _on_state_changed(self, state: str) -> None:
         """处理状态变化信号 - 统一管理按钮状态"""
@@ -253,14 +253,13 @@ class AboutTab(QWidget):
                 dialog = DownloadDialog(release_info, self.updater, allow_choose_path=False, parent=self)
                 dialog.show()
 
-    def _on_no_update_available(self) -> None:
+    def _on_no_update_available(self, check_type: CheckType) -> None:
         """处理无更新信号"""
-        # 根据按钮是否禁用来判断是否为手动检查
-        if not self.check_update_btn.isEnabled():
+        if check_type == CheckType.MANUAL:
             # 手动检查 - 显示对话框
             QTimer.singleShot(0, self._show_no_update_dialog)
         else:
-            # 启动检查 - 仅记录日志
+            # 自动检查 - 仅记录日志
             logger.info("启动时检查更新：当前已是最新版本")
             
     def _show_no_update_dialog(self) -> None:
@@ -271,14 +270,13 @@ class AboutTab(QWidget):
             translate('tabs.about.no_update_message')
         )
 
-    def _on_check_error(self, error_message: str) -> None:
+    def _on_check_error(self, error_message: str, check_type: CheckType) -> None:
         """处理检查错误信号"""
-        # 根据按钮是否禁用来判断是否为手动检查
-        if not self.check_update_btn.isEnabled():
+        if check_type == CheckType.MANUAL:
             # 手动检查 - 显示错误对话框
             QTimer.singleShot(0, lambda: self._show_check_error_dialog(error_message))
         else:
-            # 启动检查 - 仅记录日志
+            # 自动检查 - 仅记录日志
             logger.error(f"启动时检查更新失败: {error_message}")
             
     def _show_check_error_dialog(self, error_message: str) -> None:
