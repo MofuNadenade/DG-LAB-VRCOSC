@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Optional
 
 
 
 from core.dglab_pulse import Pulse
 from core.registries import Registries
-from models import ConnectionState, StrengthData, Channel, UIFeature, OSCValue
+from models import ConnectionState, StrengthData, Channel, UIFeature
 
 
 class CoreInterface(ABC):
@@ -74,25 +74,3 @@ class CoreInterface(ABC):
 
     @abstractmethod
     def on_strength_data_updated(self, strength_data: StrengthData) -> None: ...
-
-    # OSC调试显示管理
-    @abstractmethod
-    def osc_debug_add_or_update_item(self, address: str, values: List[OSCValue]) -> None: ...
-
-    @abstractmethod
-    def osc_debug_set_enabled(self, enabled: bool) -> None: ...
-
-    @abstractmethod
-    def osc_debug_is_enabled(self) -> bool: ...
-
-    @abstractmethod
-    def osc_debug_set_display_duration(self, duration: float) -> None: ...
-
-    @abstractmethod
-    def osc_debug_get_display_duration(self) -> float: ...
-
-    @abstractmethod
-    def osc_debug_set_fadeout_duration(self, duration: float) -> None: ...
-
-    @abstractmethod
-    def osc_debug_get_fadeout_duration(self) -> float: ...

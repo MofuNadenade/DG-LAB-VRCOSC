@@ -67,6 +67,16 @@ def get_default_settings() -> SettingsDict:
             'auto_install': True,
         },
 
+        # 调试设置
+        'debug': {
+            'filter': {
+                'enabled': False,
+                'filter_text': '',
+                'filter_mode': 'partial',
+                'case_sensitive': False
+            }
+        },
+
         # 默认配置数据
         'addresses': DEFAULT_ADDRESSES,
         'pulses': {name: list(data) for name, data in DEFAULT_PULSES.items()},

@@ -15,6 +15,8 @@ from core.osc_common import OSCAddress, OSCBinding
 from models import ConnectionState, OSCPrimitive, OSCValue, OSCValueType, get_osc_value
 from i18n import translate
 from .service_interface import IService
+from gui.address.osc_debug_display import OSCDebugDisplayManager
+from gui.address.osc_debug_filter import OSCDebugFilter
 
 # 移除对UI组件的直接导入，通过CoreInterface访问
 
@@ -74,6 +76,9 @@ class OSCService(IService):
         self._debug_display_enabled: bool = False
         self._debug_display_duration: float = 5.0  # 显示5秒
         self._debug_fadeout_duration: float = 1.0  # 淡出1秒
+        
+        # OSC调试显示管理器
+        self._debug_display_manager: OSCDebugDisplayManager = OSCDebugDisplayManager()
 
     async def start_service(self) -> bool:
         """
@@ -175,10 +180,10 @@ class OSCService(IService):
 
         # OSC调试显示
         if self._debug_display_enabled:
-            self._core_interface.osc_debug_set_display_duration(self._debug_display_duration)
-            self._core_interface.osc_debug_set_fadeout_duration(self._debug_fadeout_duration)
-            self._core_interface.osc_debug_set_enabled(True)
-            self._core_interface.osc_debug_add_or_update_item(address, list(args))
+            self._debug_display_manager.set_display_duration(self._debug_display_duration)
+            self._debug_display_manager.set_fadeout_duration(self._debug_fadeout_duration)
+            self._debug_display_manager.set_enabled(True)
+            self._debug_display_manager.add_or_update_debug_item(address, list(args))
 
         # 通过UI接口的绑定注册表处理消息
         address_obj = self._core_interface.registries.address_registry.get_address_by_code(address)
@@ -292,7 +297,7 @@ class OSCService(IService):
         
         # 如果禁用调试显示，清理调试管理器
         if not enabled:
-            self._core_interface.osc_debug_set_enabled(False)
+            self._debug_display_manager.set_enabled(False)
         
     def is_debug_display_enabled(self) -> bool:
         """获取OSC调试显示开关状态"""
@@ -301,6 +306,7 @@ class OSCService(IService):
     def set_debug_display_duration(self, duration: float) -> None:
         """设置OSC调试显示时间（秒）"""
         self._debug_display_duration = max(0.1, duration)
+        self._debug_display_manager.set_display_duration(self._debug_display_duration)
         
     def get_debug_display_duration(self) -> float:
         """获取OSC调试显示时间（秒）"""
@@ -309,10 +315,19 @@ class OSCService(IService):
     def set_debug_fadeout_duration(self, duration: float) -> None:
         """设置OSC调试显示淡出时间（秒）"""
         self._debug_fadeout_duration = max(0.1, duration)
+        self._debug_display_manager.set_fadeout_duration(self._debug_fadeout_duration)
         
     def get_debug_fadeout_duration(self) -> float:
         """获取OSC调试显示淡出时间（秒）"""
         return self._debug_fadeout_duration
+    
+    def set_debug_filter(self, debug_filter: Optional[OSCDebugFilter]) -> None:
+        """设置调试过滤器"""
+        self._debug_display_manager.set_debug_filter(debug_filter)
+    
+    def get_debug_display_manager(self) -> OSCDebugDisplayManager:
+        """获取调试显示管理器"""
+        return self._debug_display_manager
         
     # ============ 生命周期管理 ============
 
@@ -323,6 +338,6 @@ class OSCService(IService):
         
         # 清理调试显示
         if self._debug_display_enabled:
-            self._core_interface.osc_debug_set_enabled(False)
+            self._debug_display_manager.set_enabled(False)
                 
         logger.info("OSC服务已清理")

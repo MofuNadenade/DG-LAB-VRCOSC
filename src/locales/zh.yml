@@ -376,6 +376,17 @@ tabs:
     debug_options: "调试选项"
     enable_debug_display: "启用调试显示"
     enable_debug_display_tooltip: "在屏幕左上角显示OSC消息的实时调试信息，包含参数地址、值和类型"
+    
+    # 过滤器相关
+    filter_settings: "过滤设置"
+    enable_filter: "启用过滤"
+    filter_text: "过滤文本"
+    filter_placeholder: "输入OSC地址过滤条件..."
+    filter_mode: "过滤模式"
+    partial_match: "部分匹配"
+    regex_match: "正则表达式"
+    case_sensitive: "区分大小写"
+    
     edit_state: "编辑状态"
 editors:
   pulse:

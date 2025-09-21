@@ -392,6 +392,17 @@ tabs:
     enable_debug_display_tooltip: "Display real-time OSC message debug information
       in the top-left corner of screen, including parameter addresses, values and
       types"
+    
+    # Filter related
+    filter_settings: "Filter Settings"
+    enable_filter: "Enable Filter"
+    filter_text: "Filter Text"
+    filter_placeholder: "Enter OSC address filter condition..."
+    filter_mode: "Filter Mode"
+    partial_match: "Partial Match"
+    regex_match: "Regular Expression"
+    case_sensitive: "Case Sensitive"
+    
     edit_state: "Edit State"
 editors:
   pulse:

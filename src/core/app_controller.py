@@ -9,10 +9,9 @@ from core import ServiceController, OSCOptionsProvider, Pulse
 from core.registries import Registries
 from gui.main_window import MainWindow
 from gui.ui_interface import UIInterface
-from gui.address.osc_debug_display import OSCDebugDisplayManager
 from gui.welcome_dialog import WelcomeDialog
 from i18n import set_language, translate
-from models import OSCBool, OSCFloat, OSCInt, SettingsDict, ConnectionState, UIFeature, Channel, OSCBindingDict, StrengthData, OSCValue
+from models import OSCBool, OSCFloat, OSCInt, SettingsDict, ConnectionState, UIFeature, Channel, OSCBindingDict, StrengthData
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +38,6 @@ class AppController(UIInterface):
         self.registries: Registries = Registries()
         self.options_provider: OSCOptionsProvider = OSCOptionsProvider(self.registries)
         
-        # OSC调试显示管理器
-        self.debug_display_manager: OSCDebugDisplayManager = OSCDebugDisplayManager()
-
         # 从配置加载所有数据
         self._load_all_settings()
 
@@ -493,36 +489,6 @@ class AppController(UIInterface):
         """客户端重新连接时的回调"""
         logger.info("客户端已重新连接")
         self.set_connection_state(ConnectionState.CONNECTED)
-
-    # ============ OSC调试显示管理接口实现 ============
-
-    def osc_debug_add_or_update_item(self, address: str, values: List[OSCValue]) -> None:
-        """添加或更新OSC调试项目"""
-        self.debug_display_manager.add_or_update_debug_item(address, values)
-
-    def osc_debug_set_enabled(self, enabled: bool) -> None:
-        """设置OSC调试显示开关"""
-        self.debug_display_manager.set_enabled(enabled)
-
-    def osc_debug_is_enabled(self) -> bool:
-        """获取OSC调试显示开关状态"""
-        return self.debug_display_manager.enabled
-
-    def osc_debug_set_display_duration(self, duration: float) -> None:
-        """设置OSC调试显示时长"""
-        self.debug_display_manager.set_display_duration(duration)
-
-    def osc_debug_get_display_duration(self) -> float:
-        """获取OSC调试显示时长"""
-        return self.debug_display_manager.display_duration
-
-    def osc_debug_set_fadeout_duration(self, duration: float) -> None:
-        """设置OSC调试淡出时长"""
-        self.debug_display_manager.set_fadeout_duration(duration)
-
-    def osc_debug_get_fadeout_duration(self) -> float:
-        """获取OSC调试淡出时长"""
-        return self.debug_display_manager.fadeout_duration
 
     # ============ 首次启动欢迎对话框 ============
 

@@ -479,6 +479,25 @@ class AppSettingsDict(TypedDict, total=False):
     show_welcome_dialog: bool
 
 
+class OSCDebugFilterMode(Enum):
+    """OSC调试显示过滤模式"""
+    PARTIAL_MATCH = "partial"      # 部分匹配
+    REGEX = "regex"               # 正则表达式
+
+
+class OSCDebugFilterDict(TypedDict, total=False):
+    """OSC调试过滤器配置"""
+    enabled: bool
+    filter_text: str
+    filter_mode: str  # OSCDebugFilterMode.value
+    case_sensitive: bool
+    
+
+class DebugSettingsDict(TypedDict, total=False):
+    """调试相关设置"""
+    filter: OSCDebugFilterDict
+
+
 class SettingsDict(TypedDict, total=False):
     """应用程序设置配置类型定义"""
     # 全局设置
@@ -496,6 +515,9 @@ class SettingsDict(TypedDict, total=False):
 
     # 自动更新设置
     auto_updater: AutoUpdaterSettingsDict
+
+    # 调试设置
+    debug: DebugSettingsDict
 
     # 配置数据 - 使用具体的TypedDict类型
     addresses: List[OSCAddressDict]

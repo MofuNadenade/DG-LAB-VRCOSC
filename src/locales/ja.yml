@@ -377,6 +377,17 @@ tabs:
     debug_options: "デバッグオプション"
     enable_debug_display: "デバッグ表示を有効にする"
     enable_debug_display_tooltip: "画面の左上隅にOSCメッセージのリアルタイムデバッグ情報を表示します。パラメータアドレス、値、タイプが含まれます"
+    
+    # フィルター関連
+    filter_settings: "フィルター設定"
+    enable_filter: "フィルターを有効にする"
+    filter_text: "フィルターテキスト"
+    filter_placeholder: "OSCアドレスフィルター条件を入力..."
+    filter_mode: "フィルターモード"
+    partial_match: "部分一致"
+    regex_match: "正規表現"
+    case_sensitive: "大文字小文字を区別"
+    
     edit_state: "編集状態"
 editors:
   pulse:

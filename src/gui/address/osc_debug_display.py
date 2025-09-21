@@ -11,8 +11,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QSizePolicy, QApplication
 
 from models import OSCValue
-
-# 移除Windows特定导入，使用纯Qt解决方案
+from gui.address.osc_debug_filter import OSCDebugFilter
 
 logger = logging.getLogger(__name__)
 
@@ -320,6 +319,10 @@ class OSCDebugDisplayManager:
         self.fadeout_duration = 1.0
         self.enabled = False
         
+        # 新增：调试过滤器
+        self.debug_filter: Optional[OSCDebugFilter] = None
+        self.filtered_count: int = 0
+        
     def set_enabled(self, enabled: bool) -> None:
         """设置调试显示开关"""
         self.enabled = enabled
@@ -333,10 +336,32 @@ class OSCDebugDisplayManager:
     def set_fadeout_duration(self, duration: float) -> None:
         """设置淡出时间"""
         self.fadeout_duration = duration
+    
+    def set_debug_filter(self, debug_filter: Optional[OSCDebugFilter]) -> None:
+        """设置调试过滤器"""
+        self.debug_filter = debug_filter
+        self.update_filter()
+    
+    def update_filter(self) -> None:
+        """更新过滤器，重新计算显示内容"""
+        if self.enabled:
+            self._update_display()
+    
+    def get_filtered_count(self) -> int:
+        """获取过滤后的项目数量"""
+        return self.filtered_count
         
     def add_or_update_debug_item(self, address: str, values: List[OSCValue]) -> None:
         """添加或更新调试信息项"""
         if not self.enabled:
+            return
+        
+        # 新增：应用过滤器
+        if self.debug_filter and not self.debug_filter.matches(address):
+            # 如果不匹配过滤条件，从显示列表中移除（如果存在）
+            if address in self.debug_items:
+                del self.debug_items[address]
+                self._update_display()
             return
             
         # 格式化类型信息
@@ -348,14 +373,12 @@ class OSCDebugDisplayManager:
             item.values = values
             item.types = types_text
             item.last_update_time = time.time()
-            logger.debug(f"更新OSC调试项: {address}")
         else:
             # 创建新项
             item = OSCDebugItem(address, values, types_text)
             item.display_order = self.next_display_order
             self.next_display_order += 1
             self.debug_items[address] = item
-            logger.debug(f"添加新OSC调试项: {address}")
             
         self._update_display()
         self._schedule_cleanup()
@@ -364,6 +387,22 @@ class OSCDebugDisplayManager:
         """更新显示内容"""
         if not self.enabled or not self.debug_items:
             self.hide_display()
+            self.filtered_count = 0
+            return
+        
+        # 应用过滤器
+        filtered_items = {}
+        if self.debug_filter:
+            for address, item in self.debug_items.items():
+                if self.debug_filter.matches(address):
+                    filtered_items[address] = item
+        else:
+            filtered_items = self.debug_items
+        
+        self.filtered_count = len(filtered_items)
+        
+        if not filtered_items:
+            self.hide_display()
             return
             
         # 创建覆盖窗口（如果不存在）
@@ -371,7 +410,7 @@ class OSCDebugDisplayManager:
             self.overlay_window = OSCDebugOverlay()
             
         # 按照第一次出现的顺序排序
-        sorted_items = sorted(self.debug_items.values(), key=lambda x: x.display_order)
+        sorted_items = sorted(filtered_items.values(), key=lambda x: x.display_order)
         
         # 计算每个项目的文本和透明度
         current_time = time.time()
