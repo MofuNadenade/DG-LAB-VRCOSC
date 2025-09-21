@@ -15,24 +15,46 @@ DEFAULT_ADDRESSES: List[OSCAddressDict] = [
     {"name": "DG-LAB碰右小腿", "code": "/avatar/parameters/DG-LAB/UpperLeg_R"},
     {"name": "DG-LAB拉尾巴", "code": "/avatar/parameters/DG-LAB/Tail_Stretch"},
 
+    # PCS地址（完整OSC路径）
+    {"name": "PCS进入", "code": "/avatar/parameters/pcs/contact/enterPass"},
+    {"name": "PCS距离感应", "code": "/avatar/parameters/pcs/contact/proximity"},
+    {"name": "PCS进入速度", "code": "/avatar/parameters/pcs/contact/velocity-in"},
+    {"name": "PCS离开速度", "code": "/avatar/parameters/pcs/contact/velocity-out"},
+    {"name": "PCS撞击速度", "code": "/avatar/parameters/pcs/contact/velocity-smash"},
+
     # SoundPad地址（完整OSC路径）
     {"name": "SoundPad面板控制开关", "code": "/avatar/parameters/SoundPad/PanelControl"},
     {"name": "SoundPad设置开火强度步长", "code": "/avatar/parameters/SoundPad/Volume"},
     {"name": "SoundPad设置当前通道", "code": "/avatar/parameters/SoundPad/Page"},
 
-    # PCS地址（完整OSC路径）
-    {"name": "PCS进入", "code": "/avatar/parameters/pcs/contact/enterPass"},
+    # SoundPad按钮1-15（完整OSC路径）
+    {"name": "SoundPad按钮1", "code": "/avatar/parameters/SoundPad/Button/1"},
+    {"name": "SoundPad按钮2", "code": "/avatar/parameters/SoundPad/Button/2"},
+    {"name": "SoundPad按钮3", "code": "/avatar/parameters/SoundPad/Button/3"},
+    {"name": "SoundPad按钮4", "code": "/avatar/parameters/SoundPad/Button/4"},
+    {"name": "SoundPad按钮5", "code": "/avatar/parameters/SoundPad/Button/5"},
+    {"name": "SoundPad按钮6", "code": "/avatar/parameters/SoundPad/Button/6"},
+    {"name": "SoundPad按钮7", "code": "/avatar/parameters/SoundPad/Button/7"},
+    {"name": "SoundPad按钮8", "code": "/avatar/parameters/SoundPad/Button/8"},
+    {"name": "SoundPad按钮9", "code": "/avatar/parameters/SoundPad/Button/9"},
+    {"name": "SoundPad按钮10", "code": "/avatar/parameters/SoundPad/Button/10"},
+    {"name": "SoundPad按钮11", "code": "/avatar/parameters/SoundPad/Button/11"},
+    {"name": "SoundPad按钮12", "code": "/avatar/parameters/SoundPad/Button/12"},
+    {"name": "SoundPad按钮13", "code": "/avatar/parameters/SoundPad/Button/13"},
+    {"name": "SoundPad按钮14", "code": "/avatar/parameters/SoundPad/Button/14"},
+    {"name": "SoundPad按钮15", "code": "/avatar/parameters/SoundPad/Button/15"}
 ]
-
-# SoundPad按钮1-15（完整OSC路径）
-for i in range(1, 16):
-    DEFAULT_ADDRESSES.append({
-        "name": f"按钮{i}",
-        "code": f"/avatar/parameters/SoundPad/Button/{i}"
-    })
 
 # 默认波形配置
 DEFAULT_PULSES: Dict[str, List[PulseOperation]] = {
+    '满强度': [
+        ((10, 10, 10, 10), (100, 100, 100, 100)),
+        ((10, 10, 10, 10), (100, 100, 100, 100))
+    ],
+    '零强度': [
+        ((10, 10, 10, 10), (0, 0, 0, 0)),
+        ((10, 10, 10, 10), (0, 0, 0, 0))
+    ],
     '呼吸': [
         ((10, 10, 10, 10), (0, 0, 0, 0)), ((10, 10, 10, 10), (0, 5, 10, 20)),
         ((10, 10, 10, 10), (20, 25, 30, 40)), ((10, 10, 10, 10), (40, 45, 50, 60)),
@@ -178,19 +200,19 @@ DEFAULT_BINDINGS: List[OSCBindingDict] = [
     {"address_name": "SoundPad设置当前通道", "action_name": "设置当前通道"},
 
     # SoundPad按钮1-15
-    {"address_name": "按钮1", "action_name": "设置模式"},
-    {"address_name": "按钮2", "action_name": "重置强度"},
-    {"address_name": "按钮3", "action_name": "降低强度"},
-    {"address_name": "按钮4", "action_name": "增加强度"},
-    {"address_name": "按钮5", "action_name": "一键开火"},
-    {"address_name": "按钮6", "action_name": "ChatBox状态开关"},
-    {"address_name": "按钮7", "action_name": "设置波形为(连击)"},
-    {"address_name": "按钮8", "action_name": "设置波形为(挑逗1)"},
-    {"address_name": "按钮9", "action_name": "设置波形为(按捏渐强)"},
-    {"address_name": "按钮10", "action_name": "设置波形为(心跳节奏)"},
-    {"address_name": "按钮11", "action_name": "设置波形为(压缩)"},
-    {"address_name": "按钮12", "action_name": "设置波形为(节奏步伐)"},
-    {"address_name": "按钮13", "action_name": "设置波形为(颗粒摩擦)"},
-    {"address_name": "按钮14", "action_name": "设置波形为(渐变弹跳)"},
-    {"address_name": "按钮15", "action_name": "设置波形为(潮汐)"}
+    {"address_name": "SoundPad按钮1", "action_name": "设置模式"},
+    {"address_name": "SoundPad按钮2", "action_name": "重置强度"},
+    {"address_name": "SoundPad按钮3", "action_name": "降低强度"},
+    {"address_name": "SoundPad按钮4", "action_name": "增加强度"},
+    {"address_name": "SoundPad按钮5", "action_name": "一键开火"},
+    {"address_name": "SoundPad按钮6", "action_name": "ChatBox状态开关"},
+    {"address_name": "SoundPad按钮7", "action_name": "设置波形为(连击)"},
+    {"address_name": "SoundPad按钮8", "action_name": "设置波形为(挑逗1)"},
+    {"address_name": "SoundPad按钮9", "action_name": "设置波形为(按捏渐强)"},
+    {"address_name": "SoundPad按钮10", "action_name": "设置波形为(心跳节奏)"},
+    {"address_name": "SoundPad按钮11", "action_name": "设置波形为(压缩)"},
+    {"address_name": "SoundPad按钮12", "action_name": "设置波形为(节奏步伐)"},
+    {"address_name": "SoundPad按钮13", "action_name": "设置波形为(颗粒摩擦)"},
+    {"address_name": "SoundPad按钮14", "action_name": "设置波形为(渐变弹跳)"},
+    {"address_name": "SoundPad按钮15", "action_name": "设置波形为(潮汐)"}
 ]
