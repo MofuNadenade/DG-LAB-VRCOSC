@@ -50,7 +50,7 @@ class WebSocketController:
         # 通道状态处理器（统一管理AB通道）
         self._channel_handler = WebSocketChannelStateHandler()
         self._pulse_buffer_count = 0
-        self._pulse_buffer_min = 1
+        self._pulse_buffer_min = 5
         self._pulse_buffer_max = 5
         self._is_running: bool = False
         self._is_connected: bool = False

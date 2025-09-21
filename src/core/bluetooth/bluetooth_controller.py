@@ -73,7 +73,7 @@ class BluetoothController:
         self._is_running = False
         self._battery_polling_interval = 5.0
         self._pulse_buffer_count = 0
-        self._pulse_buffer_min = 1
+        self._pulse_buffer_min = 5
         self._pulse_buffer_max = 5
         
         # 暂停状态
@@ -971,6 +971,13 @@ class BluetoothController:
                 # 计算最终强度值
                 final_strength_a = current_strength_a + self._accumulated_changes[Channel.A]
                 final_strength_b = current_strength_b + self._accumulated_changes[Channel.B]
+
+                # 更新设备强度值
+                # 这里需要提前在发送B0后，收到B1回复前更新设备当前强度值
+                # 否则会导致后续set_strength_*还是以收到B1回复前的强度值为准
+                # 从而计算出错误的strength_change
+                self._device_state['channel_a']['strength'] = final_strength_a
+                self._device_state['channel_b']['strength'] = final_strength_b
                 
                 # 记录详细的调试信息
                 strength_a_text = f"A={final_strength_a}({current_strength_a}{self._accumulated_changes[Channel.A]:+d})"

@@ -188,7 +188,6 @@ class OSCService(IService):
         # 通过UI接口的绑定注册表处理消息
         address_obj = self._core_interface.registries.address_registry.get_address_by_code(address)
         if address_obj:
-            logger.debug(f"收到OSC消息: {address} 参数: {args}")
             await self._handle_osc_message(address_obj, *args)
 
     async def _handle_osc_message(self, address: OSCAddress, *args: OSCValue) -> None:
