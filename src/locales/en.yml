@@ -239,7 +239,8 @@ dialogs:
     install_complete: "Installation complete"
     install_failed: "Installation failed"
     install_error_detail: "Installation error details: {0}"
-    install_success: "Installation successful! Please restart the application to use the new version."
+    install_success: "Installation successful! Please restart the application to use
+      the new version."
     auto_installing: "Auto-installing..."
 tabs:
   about:
@@ -392,9 +393,6 @@ tabs:
     enable_debug_display_tooltip: "Display real-time OSC message debug information
       in the top-left corner of screen, including parameter addresses, values and
       types"
-    
-    # Filter related
-    filter_settings: "Filter Settings"
     enable_filter: "Enable Filter"
     filter_text: "Filter Text"
     filter_placeholder: "Enter OSC address filter condition..."
@@ -402,7 +400,6 @@ tabs:
     partial_match: "Partial Match"
     regex_match: "Regular Expression"
     case_sensitive: "Case Sensitive"
-    
     edit_state: "Edit State"
 editors:
   pulse:
